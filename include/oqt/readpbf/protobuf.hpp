@@ -20,19 +20,37 @@
  *
  *****************************************************************************/
 
-#ifndef IDSET_HPP
-#define IDSET_HPP
+#ifndef READPBF_PROTOBUF_HPP
+#define READPBF_PROTOBUF_HPP
 
-
-#include "oqt/elements/rawelement.hpp"
-
+#include "oqt/common.hpp"
 
 namespace oqt {
-class idset {
-    public:
-        virtual bool contains(elementtype ty, int64 id) const=0;
-        virtual ~idset() {}
-};
+    
+
+std::string readData(const std::string& data, size_t& pos);
+
+//double toDouble(uint64 uv);
+
+PbfTag readPbfTag(const std::string& data, size_t& pos);
+
+std::list<PbfTag> readAllPbfTags(const std::string& data);
+
+
+size_t writePbfValue(std::string& data, size_t pos, uint64 t, uint64 v);
+size_t writePbfData(std::string& data, size_t pos, uint64 t, const std::string& v);
+
+size_t writePbfDataHeader(std::string& data, size_t pos, uint64 t, size_t ln);
+
+size_t pbfValueLength(uint64 t, uint64 val);
+size_t pbfDataLength(uint64 t, size_t len);
+
+
+void sortPbfTags(std::list<PbfTag>& msgs);
+
+std::string packPbfTags(const std::list<PbfTag>& msgs, bool forceData=false);
+
+    
 }
 
-#endif //IDSET_HPP
+#endif //READPBF_PROTOBUF_HPP

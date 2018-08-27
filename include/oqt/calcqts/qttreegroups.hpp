@@ -20,19 +20,15 @@
  *
  *****************************************************************************/
 
-#ifndef IDSET_HPP
-#define IDSET_HPP
+#ifndef CALCQTS_QTTREEGROUPS_HPP
+#define CALCQTS_QTTREEGROUPS_HPP
 
-
-#include "oqt/elements/rawelement.hpp"
-
+#include "oqt/calcqts/qttree.hpp"
 
 namespace oqt {
-class idset {
-    public:
-        virtual bool contains(elementtype ty, int64 id) const=0;
-        virtual ~idset() {}
-};
-}
+std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 target, int64 minsize);
+void tree_rollup(std::shared_ptr<qttree> tree, int64 minsize);
+std::shared_ptr<qttree> tree_round_copy(std::shared_ptr<qttree> tree, int64 maxlevel);
 
-#endif //IDSET_HPP
+}
+#endif

@@ -1,0 +1,11 @@
+html/
+latex/
+old/
+oqt-*.zip
+oqt/*.o
+oqt/oqt
+python/oqt.egg-info
+python/build
+python/dist
+oqt/liboqt.so.0.0
+oqt/geometry

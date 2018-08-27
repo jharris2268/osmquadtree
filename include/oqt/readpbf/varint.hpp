@@ -20,19 +20,20 @@
  *
  *****************************************************************************/
 
-#ifndef IDSET_HPP
-#define IDSET_HPP
+#ifndef READPBF_VARINT_HPP
+#define READPBF_VARINT_HPP
 
-
-#include "oqt/elements/rawelement.hpp"
-
+#include "oqt/common.hpp"
 
 namespace oqt {
-class idset {
-    public:
-        virtual bool contains(elementtype ty, int64 id) const=0;
-        virtual ~idset() {}
-};
+    
+uint64 readUVarint(const std::string& data, size_t& pos);
+int64 unZigZag(uint64 uv);
+int64 readVarint(const std::string& data, size_t& pos);
+size_t writeVarint(std::string& data, size_t pos, int64 v);
+size_t writeUVarint(std::string& data, size_t pos, uint64 uv);
+uint64 zigZag(int64 v);
+    
 }
 
-#endif //IDSET_HPP
+#endif //READPBF_VARINT_HPP
