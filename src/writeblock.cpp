@@ -25,7 +25,10 @@
 #include <map>
 #include <algorithm>
 #include <iterator>
-
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+#include "oqt/elements/geometry.hpp"
 
 #include "oqt/writefile.hpp"
 namespace oqt {

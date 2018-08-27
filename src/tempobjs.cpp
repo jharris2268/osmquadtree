@@ -28,7 +28,7 @@
 #include "oqt/utils.hpp"
 #include "oqt/picojson.h"
 #include "oqt/sortfile.hpp"
-#include "oqt/tempobjs.hpp"
+#include "oqt/sorting/tempobjs.hpp"
 #include <iterator>
 namespace oqt {
 

@@ -22,7 +22,12 @@
 
 #include "oqt/quadtreegroups.hpp"
 #include <numeric>
-
+#include "oqt/simplepbf.hpp"
+#include "oqt/packedblock.hpp"
+#include "oqt/minimalblock.hpp"
+#include "oqt/readfile.hpp"
+#include "oqt/quadtree.hpp"
+#include "oqt/writeblock.hpp"
 #include <iomanip>
 #include <algorithm>
 #include <set>
@@ -230,12 +235,12 @@ std::shared_ptr<qttree> make_tree_empty() {
     return std::make_shared<qttree_impl>();
 }
 
-class AddCountMapTree : public CallFinish<count_map,void> {
+class AddCountMapTree {
     public:
         AddCountMapTree(std::shared_ptr<qttree> tree_, size_t maxlevel_) : 
             tree(tree_), maxlevel(maxlevel_), tb(0) {}
         
-        virtual void call(std::shared_ptr<count_map> fb) {
+        void call(std::shared_ptr<count_map> fb) {
             tb+=std::accumulate(fb->begin(),fb->end(),0,
             [](int64 l, const std::pair<int64,int64>& r){return l+r.second;});
             logger_progress(50) << "add " << fb->size() << " qts ["
@@ -259,8 +264,19 @@ class AddCountMapTree : public CallFinish<count_map,void> {
 };
 
 
-std::shared_ptr<CallFinish<count_map,void>> make_addcountmaptree(std::shared_ptr<qttree> tree, size_t maxlevel) {
-    return std::make_shared<AddCountMapTree>(tree, maxlevel);
+std::function<void(std::shared_ptr<count_map>)> make_addcountmaptree(std::shared_ptr<qttree> tree, size_t maxlevel) {
+    
+    auto acmt = std::make_shared<AddCountMapTree>(tree, maxlevel);
+    
+    return [acmt](std::shared_ptr<count_map> cm) {
+        if (!cm) {
+            acmt->finish();
+            return;
+        }
+        
+        acmt->call(cm);
+    };
+    
 }
     
 

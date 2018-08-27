@@ -27,6 +27,11 @@
 #include "oqt/writepbffile.hpp"
 #include "oqt/gzstream.hpp"
 #include "oqt/sortfile.hpp"
+
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+#include "oqt/readpbf/readblock.hpp"
 #include <algorithm>
 
 namespace oqt {

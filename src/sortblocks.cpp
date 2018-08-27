@@ -32,7 +32,7 @@
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
 #include "oqt/sortfile.hpp"
-#include "oqt/tempobjs.hpp"
+#include "oqt/sorting/tempobjs.hpp"
 namespace oqt {
 class CollectQts { 
     public:
@@ -78,7 +78,11 @@ std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
     //
     
     auto tree = make_tree_empty();
-    auto acmt = make_addcountmaptree(tree, maxlevel);
+    
+    auto add_qts = threaded_callback<count_map>::make(make_addcountmaptree(tree, maxlevel),numchan);
+    
+    
+    /*auto acmt = make_addcountmaptree(tree, maxlevel);
     
     auto add_qts = threaded_callback<count_map>::make([acmt](std::shared_ptr<count_map> cc) {
         if (!cc) {
@@ -87,7 +91,7 @@ std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
             return;
         }
         acmt->call(cc);
-    }, numchan);
+    }, numchan);*/
     
     std::vector<std::function<void(std::shared_ptr<qtvec>)>> make_addcounts;
     for (size_t i=0; i < numchan; i++) {

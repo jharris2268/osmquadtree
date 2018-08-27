@@ -21,6 +21,13 @@
  *****************************************************************************/
 
 #include "oqt/simplepbf.hpp"
+
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+#include "oqt/elements/geometry.hpp"
+
+
 #include <iostream>
 
 namespace oqt {

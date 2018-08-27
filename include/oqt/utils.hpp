@@ -178,14 +178,14 @@ class timing {
         size_t size() { return msgs.size(); }
 };
 
-
+/*
 template <class ArgType, class FinishReturnType>
 class CallFinish {
     public:
         virtual void call(std::shared_ptr<ArgType>)=0;
         virtual FinishReturnType finish()=0;
         virtual ~CallFinish() {}
-};
+};*/
 
         
 int64 file_size(const std::string& fn);

@@ -3,7 +3,7 @@ CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I/home/james/build/x
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
 OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writeblock.o writefile.o writepbffile.o xmlchange.o applychange.o
-HEADERS = ../include/oqt/combineblocks.hpp ../include/oqt/gzstream.hpp ../include/oqt/packedblock.hpp ../include/oqt/quadtree.hpp ../include/oqt/readpbffile.hpp ../include/oqt/store.hpp ../include/oqt/utils.hpp ../include/oqt/writeblock.hpp ../include/oqt/writepbffile.hpp ../include/oqt/count.hpp ../include/oqt/minimalblock.hpp ../include/oqt/quadtreegroups.hpp ../include/oqt/readfile.hpp ../include/oqt/simplepbf.hpp ../include/oqt/update.hpp ../include/oqt/waynodes.hpp ../include/oqt/writefile.hpp ../include/oqt/xmlchange.hpp ../include/oqt/sortfile.hpp ../include/oqt/tempobjs.hpp
+HEADERS = 
 
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 

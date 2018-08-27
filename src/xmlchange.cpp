@@ -23,6 +23,10 @@
 #include "XmlInspector.hpp"
 #include "oqt/utils.hpp"
 #include "oqt/xmlchange.hpp"
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+
 
 namespace oqt {
 namespace xmlchangedetail {

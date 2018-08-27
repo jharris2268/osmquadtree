@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <thread>
 
+
+#include "oqt/writeblock.hpp"
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
 

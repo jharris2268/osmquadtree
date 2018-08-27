@@ -27,6 +27,17 @@
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
 #include "oqt/minimalblock.hpp"
+
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+#include "oqt/readpbf/objsidset.hpp"
+
+
+#include "oqt/writeblock.hpp"
+
+
+
 namespace oqt {
 int64 make_internalid(elementtype ty, int64 rf) {
     if (ty==Node) { return rf; }

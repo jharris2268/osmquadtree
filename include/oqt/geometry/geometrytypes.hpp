@@ -24,6 +24,9 @@
 #define GEOMETRYTYPES_HPP
 
 #include "oqt/geometry/addwaynodes.hpp"
+
+
+
 #include "oqt/elements/geometry.hpp"
 #include <set>
 

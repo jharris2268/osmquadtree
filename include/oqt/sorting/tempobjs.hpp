@@ -20,10 +20,10 @@
  *
  *****************************************************************************/
 
-#ifndef TEMPOBJS_HPP
-#define TEMPOBJS_HPP
+#ifndef SORTING_TEMPOBJS_HPP
+#define SORTING_TEMPOBJS_HPP
 
-#include "oqt/sortfile.hpp"
+#include "oqt/sorting/common.hpp"
 
 namespace oqt {
 class TempObjs {
@@ -50,4 +50,4 @@ std::shared_ptr<BlobStore> make_blobstore_filesplit(std::string tempfn, int64 sp
 std::shared_ptr<TempObjs> make_tempobjs(std::shared_ptr<BlobStore> blobstore, size_t numchan);
 
 }
-#endif //TEMPOBJS_HPP
+#endif //SORTING_TEMPOBJS_HPP

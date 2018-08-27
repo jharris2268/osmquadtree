@@ -26,6 +26,9 @@
 #include "oqt/simplepbf.hpp"
 #include "oqt/utils.hpp"
 
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
 
 namespace oqt {
 namespace geometry {

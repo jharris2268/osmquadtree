@@ -26,10 +26,10 @@
 
 
 
-#include "oqt/sortfile/sortgroup.hpp"
-#include "oqt/sortfile/resortobjects.hpp"
-#include "oqt/sortfile/sortbyid.hpp"
-#include "oqt/sortfile/final.hpp"
+#include "oqt/sorting/sortgroup.hpp"
+#include "oqt/sorting/resortobjects.hpp"
+#include "oqt/sorting/sortbyid.hpp"
+#include "oqt/sorting/final.hpp"
 
 
 

@@ -28,6 +28,14 @@
 #include <string>
 #include <locale>
 #include <codecvt>
+
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+#include "oqt/elements/packedobj.hpp"
+#include "oqt/elements/geometry.hpp"
+
+
 namespace oqt {
 std::string packedobj::pack() const {
     std::string out(30+data.size(),0);
@@ -621,3 +629,4 @@ bool isGeometryType(elementtype ty) {
     return false;
 }
 }
+
