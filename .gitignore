@@ -9,3 +9,5 @@ python/build
 python/dist
 oqt/liboqt.so.0.0
 oqt/geometry
+oqt/pbfformat
+build/

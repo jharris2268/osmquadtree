@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef READPBF_PACKEDINT_HPP
-#define READPBF_PACKEDINT_HPP
+#ifndef PBFFORMAT_PACKEDINT_HPP
+#define PBFFORMAT_PACKEDINT_HPP
 
 #include "oqt/common.hpp"
 
@@ -77,4 +77,4 @@ std::string writePackedIntFunc(const std::vector<T>& vals, std::function<uint64(
     
 }
 
-#endif //READPBF_PACKEDINT_HPP
+#endif //PBFFORMAT_PACKEDINT_HPP

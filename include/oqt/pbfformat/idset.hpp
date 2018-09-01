@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef IDSET_HPP
-#define IDSET_HPP
+#ifndef PBFFORMAT_IDSET_HPP
+#define PBFFORMAT_IDSET_HPP
 
 
 #include "oqt/elements/rawelement.hpp"
@@ -33,6 +33,8 @@ class idset {
         virtual bool contains(elementtype ty, int64 id) const=0;
         virtual ~idset() {}
 };
+
+
 }
 
-#endif //IDSET_HPP
+#endif //PBFFORMAT_IDSET_HPP

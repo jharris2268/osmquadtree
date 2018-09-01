@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef READPBF_VARINT_HPP
-#define READPBF_VARINT_HPP
+#ifndef PBFFORMAT_VARINT_HPP
+#define PBFFORMAT_VARINT_HPP
 
 #include "oqt/common.hpp"
 
@@ -36,4 +36,4 @@ uint64 zigZag(int64 v);
     
 }
 
-#endif //READPBF_VARINT_HPP
+#endif //PBFFORMAT_VARINT_HPP

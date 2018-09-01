@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 
-#include "oqt/pbfformat/idset.hpp"
+#include "oqt/pbfformat/objsidset.hpp"
 
 
 namespace oqt {

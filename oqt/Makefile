@@ -4,7 +4,7 @@ LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
 OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writeblock.o writefile.o writepbffile.o xmlchange.o applychange.o
 HEADERS = 
-
+PBFFORMAT_OBJS = pbfformat/objsidset.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
 
@@ -12,8 +12,8 @@ default: oqt liboqt.so.0.0
 oqt: oqt_main.o liboqt.so.0.0
 	$(CC) $(CFLAGS) -o oqt oqt_main.o $(LIBS) -L/usr/local/lib -loqt #-ltcmalloc
 
-liboqt.so.0.0: $(OBJS) $(GEOM_OBJS)
-	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(GEOM_OBJS) $(LIBS)
+liboqt.so.0.0: $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS)
+	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(LIBS)
  
 count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
@@ -122,7 +122,9 @@ geometry/addwaynodes.o: ../src/geometry/addwaynodes.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/addwaynodes.cpp -o geometry/addwaynodes.o
 geometry/postgiswriter.o: ../src/geometry/postgiswriter.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/postgiswriter.cpp -o geometry/postgiswriter.o
-	
+
+pbfformat/objsidset.o: ../src/pbfformat/objsidset.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/objsidset.cpp -o pbfformat/objsidset.o
 	
 clean:
 	$(RM) oqt *.o liboqt.so* geometry/*.o *~

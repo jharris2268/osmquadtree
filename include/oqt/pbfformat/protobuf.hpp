@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef READPBF_PROTOBUF_HPP
-#define READPBF_PROTOBUF_HPP
+#ifndef PBFFORMAT_PROTOBUF_HPP
+#define PBFFORMAT_PROTOBUF_HPP
 
 #include "oqt/common.hpp"
 
@@ -53,4 +53,4 @@ std::string packPbfTags(const std::list<PbfTag>& msgs, bool forceData=false);
     
 }
 
-#endif //READPBF_PROTOBUF_HPP
+#endif //PBFFORMAT_PROTOBUF_HPP

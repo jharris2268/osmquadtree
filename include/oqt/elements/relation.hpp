@@ -24,7 +24,7 @@
 #define ELEMENTS_RELATION_HPP
 
 #include "oqt/elements/element.hpp"
-#include "oqt/readpbf/idset.hpp"
+#include "oqt/pbfformat/idset.hpp"
 #include "oqt/elements/member.hpp"
 namespace oqt {
 class relation : public element {

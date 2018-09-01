@@ -24,10 +24,10 @@
 #define SIMPLEPBF_HPP
 
 
-#include "oqt/readpbf/readblock.hpp"
-#include "oqt/readpbf/varint.hpp"
-#include "oqt/readpbf/packedint.hpp"
-#include "oqt/readpbf/protobuf.hpp"
+#include "oqt/pbfformat/readblock.hpp"
+#include "oqt/pbfformat/varint.hpp"
+#include "oqt/pbfformat/packedint.hpp"
+#include "oqt/pbfformat/protobuf.hpp"
 
 
 #endif

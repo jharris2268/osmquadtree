@@ -20,11 +20,11 @@
  *
  *****************************************************************************/
 
-#ifndef READPBF_READBLOCK_HPP
-#define READPBF_READBLOCK_HPP
+#ifndef PBFFORMAT_READBLOCK_HPP
+#define PBFFORMAT_READBLOCK_HPP
 
 #include "oqt/common.hpp"
-#include "oqt/readpbf/idset.hpp"
+#include "oqt/pbfformat/idset.hpp"
 #include "oqt/elements/block.hpp"
 #include "oqt/elements/header.hpp"
 #include "oqt/quadtree.hpp"
@@ -51,4 +51,4 @@ std::string fix_str(const std::string& s);
 
     
 }
-#endif //READPBF_READBLOCK_HPP
+#endif //PBFFORMAT_READBLOCK_HPP

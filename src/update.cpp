@@ -31,7 +31,7 @@
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
-#include "oqt/readpbf/objsidset.hpp"
+#include "oqt/pbfformat/objsidset.hpp"
 
 
 #include "oqt/writeblock.hpp"

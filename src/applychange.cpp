@@ -31,7 +31,7 @@
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
-#include "oqt/readpbf/readblock.hpp"
+#include "oqt/pbfformat/readblock.hpp"
 #include <algorithm>
 
 namespace oqt {
