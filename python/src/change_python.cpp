@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
-
+#include "oqt/pbfformat/objsidset.hpp"
 using namespace oqt;
 struct element_map {
     typeid_element_map_ptr u;

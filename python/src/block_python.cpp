@@ -22,6 +22,7 @@
 
 #include "oqt_python.hpp"
 #include "oqt/sortfile.hpp"
+#include "oqt/pbfformat/objsidset.hpp"
 
 using namespace oqt;
 
@@ -297,9 +298,9 @@ void block_defs(py::module& m) {
     
     py::class_<objs_idset, idset, std::shared_ptr<objs_idset>>(m, "objs_idset")
         .def(py::init<>())
-        .def_readwrite("nodes", &objs_idset::nodes)
-        .def_readwrite("ways", &objs_idset::ways)
-        .def_readwrite("relations", &objs_idset::relations)
+        .def_property_readonly("nodes", &objs_idset::nodes)
+        .def_property_readonly("ways", &objs_idset::ways)
+        .def_property_readonly("relations", &objs_idset::relations)
         .def("add_node", &objs_idset::add_node)
         .def("add_way", &objs_idset::add_way)
         .def("add_relation", &objs_idset::add_relation)
@@ -453,10 +454,10 @@ void block_defs(py::module& m) {
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);
-    m.def("read_blocks_packed", &read_blocks_py<packedblock>,
+    /*m.def("read_blocks_packed", &read_blocks_py<packedblock>,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);
+        py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);*/
     m.def("read_blocks_minimal", &read_blocks_py<minimalblock>,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
@@ -472,10 +473,10 @@ void block_defs(py::module& m) {
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
     
-   m.def("read_blocks_merge_packed", &read_blocks_merge_py<packedblock>,
+   /*m.def("read_blocks_merge_packed", &read_blocks_merge_py<packedblock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
-   
+   */
    m.def("read_blocks_tempobjs", &read_blocks_tempobjs);
 }

@@ -63,7 +63,7 @@ namespace readpbffile_detail {
         r->file_position = bl->file_position;
         return r;
     }
-
+/*
     template <>
     inline std::shared_ptr<packedblock> process_fileblock<packedblock>(
         std::shared_ptr<FileBlock> bl,
@@ -83,7 +83,7 @@ namespace readpbffile_detail {
         r->file_position = bl->file_position;
         return r;
     }
-
+*/
     template <>
     inline std::shared_ptr<minimalblock> process_fileblock<minimalblock>(
         std::shared_ptr<FileBlock> bl,
@@ -150,7 +150,7 @@ namespace readpbffile_detail {
         comb->index = bl->idx;
         return comb;
     }
-
+/*
     template <>
     inline std::shared_ptr<packedblock> merge_keyedblob<packedblock>(
         std::shared_ptr<keyedblob> bl,
@@ -173,7 +173,7 @@ namespace readpbffile_detail {
         auto comb =  combine_packedblock_many(main,changes);
         comb->file_progress = bl->file_progress;
         return comb;
-    }
+    }*/
     template <>
     inline std::shared_ptr<minimalblock> merge_keyedblob<minimalblock>(
         std::shared_ptr<keyedblob> bl,
@@ -207,6 +207,66 @@ namespace readpbffile_detail {
 
 
 
+
+
+
+template <class BlockType>
+std::vector<std::function<void(std::shared_ptr<FileBlock>)>> make_readpbf_callbacks(
+    std::vector<std::function<void(std::shared_ptr<BlockType>)>> callbacks,
+    std::function<std::shared_ptr<BlockType>(std::shared_ptr<FileBlock>)> convfunc) {
+    
+    
+    size_t numchan = callbacks.size();
+    std::vector<std::function<void(std::shared_ptr<FileBlock>)>> convblocks;
+    for (size_t i=0; i < numchan; i++) {
+        auto collect=callbacks[i];
+        convblocks.push_back(threaded_callback<FileBlock>::make(
+            [collect,convfunc](std::shared_ptr<FileBlock> fb) {
+                
+                if (fb) {
+                    collect(convfunc(fb));
+                } else {
+                    collect(std::shared_ptr<BlockType>());
+                }
+                
+            }
+        ));
+    }
+    return convblocks;
+}
+
+
+
+inline void read_block_split_internal(const std::string& filename,
+    std::vector<std::function<void(std::shared_ptr<FileBlock>)>> convblocks,
+    std::vector<int64> locs, bool inmem) {
+    
+    
+    std::ifstream file(filename, std::ios::binary | std::ios::in);
+    if (!file.good()) {
+        for (auto c: convblocks) { c(nullptr); }
+        throw std::domain_error("can't open"+filename);
+    }
+
+    
+    
+    if (locs.empty()) {
+        int64 fs = file_size(filename);
+        read_some_split_callback(file, convblocks, 0, 0, fs);
+    } else {
+        if (inmem) {
+            read_some_split_locs_buffered_callback(file,convblocks,0,locs,0);
+        } else {
+            read_some_split_locs_callback(file, convblocks, 0, locs, 0);
+        }
+    }
+    
+}
+        
+    
+
+
+
 template <class BlockType>
 void read_blocks(
     const std::string& filename,
@@ -219,7 +279,7 @@ void read_blocks(
     return read_blocks_split(filename, cbs, locs, filter, ischange,objflags,inmem);
 }
 
-
+/*
 template <class BlockType>
 void read_blocks_split(
     const std::string& filename,
@@ -263,7 +323,9 @@ void read_blocks_split(
         }
     }
     
-}
+}*/
+
+
 
 
 template <class BlockType>
@@ -286,6 +348,7 @@ void read_blocks_split_convfunc(
     std::vector<std::function<void(std::shared_ptr<BlockType>)>> callbacks,
     std::vector<int64> locs, std::function<std::shared_ptr<BlockType>(std::shared_ptr<FileBlock>)> conv_func) {
     
+    /*
     std::ifstream file(filename, std::ios::binary | std::ios::in);
     if (!file.good()) {
         //logger_message() << "failed to open file " << filename;
@@ -310,8 +373,31 @@ void read_blocks_split_convfunc(
         read_some_split_callback(file, convblocks, 0, 0, fs);
     } else {
         read_some_split_locs_callback(file, convblocks, 0, locs, 0);
-    }
+    }*/
     
+    return read_block_split_internal(filename, 
+        make_readpbf_callbacks(callbacks, conv_func),
+        locs, false);
+    
+}
+
+template <class BlockType>
+void read_blocks_split(
+    const std::string& filename,
+    std::vector<std::function<void(std::shared_ptr<BlockType>)>> callbacks,
+    std::vector<int64> locs,
+    std::shared_ptr<idset> filter, bool ischange, size_t objflags, bool inmem) {
+        
+    
+    std::function<std::shared_ptr<BlockType>(std::shared_ptr<FileBlock>)> convfunc = 
+        [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
+            return readpbffile_detail::process_fileblock<BlockType>(fb,filter,ischange,objflags);
+    };
+    
+    return read_block_split_internal(filename, 
+        make_readpbf_callbacks(callbacks, convfunc),
+        locs, inmem);
+        
 }
 
 
@@ -427,7 +513,7 @@ void read_blocks_merge_nothread(
     read_some_split_locs_parallel_callback(files, {cb}, locs);
     
 }
-        
+/*        
 template <class BlockType>
 class ReadBlocksNoThread {
     public:
@@ -506,6 +592,7 @@ class ReadBlocksNoThreadConvFunc {
         conv_function  convfunc;
         std::shared_ptr<ReadFile> readfile;
 };
+*/
 }
     
 #endif

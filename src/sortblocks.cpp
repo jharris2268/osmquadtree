@@ -110,7 +110,7 @@ std::shared_ptr<qttree> make_qts_tree(const std::string& qtsfn, size_t numchan) 
 
     
 
-template <class BlockType>
+
 class AddQuadtrees {
     public:
         
@@ -127,7 +127,7 @@ class AddQuadtrees {
             }
             
         
-        size_t call(std::shared_ptr<BlockType> bl) {
+        size_t call(primitiveblock_ptr bl) {
             
             if (msgs && ((count % 1000)==0)) {
                 
@@ -183,14 +183,47 @@ class AddQuadtrees {
         time_single ts;
 };          
 
+class ReadQtsVec {
+    public:
+        ReadQtsVec(const std::string& qtsfn) : file(qtsfn, std::ios::in|std::ios::binary) {
+            if (!file.good()) {
+                throw std::domain_error("can't open "+qtsfn);
+            }
+            auto fs = file_size(qtsfn);
+            readfile = make_readfile(file,{},0, 128*1024*1024, fs);
+        }
+        
+        std::shared_ptr<qtvec> next() {
+            auto bl = readfile->next();
+            if (!bl) { return nullptr; }
+            if (bl->blocktype != "OSMData") { return std::make_shared<qtvec>(); }
+            return readQtVecBlock(bl->get_data(), 7);
+        }
+        
+        static std::function<std::shared_ptr<qtvec>()> make(const std::string& qtsfn) {
+            auto readqtsvec = std::make_shared<ReadQtsVec>(qtsfn);
+    
+            return [readqtsvec]() -> std::shared_ptr<qtvec> {
+                return readqtsvec->next();
+            };
+        }
+    
+    private:
+        std::ifstream file;
+        std::shared_ptr<ReadFile> readfile;
+};
+
+
 primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_callback> callbacks, const std::string& qtsfn) {
     
     
-    auto nqb = ReadBlocksNoThread<qtvec>::make(qtsfn,{}, nullptr,false,7);
+    auto nqb = ReadQtsVec::make(qtsfn);
+    
+    //auto nqb = ReadBlocksNoThread<qtvec>::make(qtsfn,{}, nullptr,false,7);
     //auto nqb = inverted_callback<qtvec>::make([&qtsfn](std::function<void(std::shared_ptr<qtvec>)> qtc) { read_blocks<qtvec>(qtsfn,qtc,{},4,nullptr,false,7,false); });
     
-    auto aq = std::make_shared<AddQuadtrees<primitiveblock>>(nqb,false);
-    return [aq,callbacks](std::shared_ptr<primitiveblock> bl) {
+    auto aq = std::make_shared<AddQuadtrees>(nqb,false);
+    return [aq,callbacks](primitiveblock_ptr bl) {
         if (!bl) {
             logger_message() << "finished add_quadtrees";
             for (auto cb: callbacks) {

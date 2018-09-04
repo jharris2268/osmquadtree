@@ -328,7 +328,7 @@ class obj_iter {
             
         
             
-
+/*
 int find_difference(const std::string& left_fn, const std::string& right_fn, size_t numchan, std::function<bool(std::vector<objdiff>)> callback) {
     py::gil_scoped_release rel;
     
@@ -393,7 +393,7 @@ int find_difference(const std::string& left_fn, const std::string& right_fn, siz
     }
     return tot;
 };
-
+*/
 
 class obj_iter2 {
     public:
@@ -666,7 +666,7 @@ void core_defs(py::module& m) {
         .def_readonly("right_idx", &objdiff::right_idx)
         .def_readonly("right", &objdiff::right)
     ;
-    m.def("find_difference", &find_difference);
+    //m.def("find_difference", &find_difference);
     m.def("find_difference2", &find_difference2);
     m.def("fix_str", [](const std::string& s) { return py::bytes(fix_str(s)); });
     
