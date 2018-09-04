@@ -185,12 +185,10 @@ class AddQuadtrees {
 
 class ReadQtsVec {
     public:
-        ReadQtsVec(const std::string& qtsfn) : file(qtsfn, std::ios::in|std::ios::binary) {
-            if (!file.good()) {
-                throw std::domain_error("can't open "+qtsfn);
-            }
+        ReadQtsVec(const std::string& qtsfn) {
+            
             auto fs = file_size(qtsfn);
-            readfile = make_readfile(file,{},0, 128*1024*1024, fs);
+            readfile = make_readfile(qtsfn,{},0, 128*1024*1024, fs);
         }
         
         std::shared_ptr<qtvec> next() {
@@ -209,7 +207,7 @@ class ReadQtsVec {
         }
     
     private:
-        std::ifstream file;
+        
         std::shared_ptr<ReadFile> readfile;
 };
 

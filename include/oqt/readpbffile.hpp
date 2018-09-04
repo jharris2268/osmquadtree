@@ -240,24 +240,24 @@ std::vector<std::function<void(std::shared_ptr<FileBlock>)>> make_readpbf_callba
 inline void read_block_split_internal(const std::string& filename,
     std::vector<std::function<void(std::shared_ptr<FileBlock>)>> convblocks,
     std::vector<int64> locs, bool inmem) {
-    
+    /*
     
     std::ifstream file(filename, std::ios::binary | std::ios::in);
     if (!file.good()) {
         for (auto c: convblocks) { c(nullptr); }
         throw std::domain_error("can't open"+filename);
     }
-
+    */
     
     
     if (locs.empty()) {
         int64 fs = file_size(filename);
-        read_some_split_callback(file, convblocks, 0, 0, fs);
+        read_some_split_callback(filename, convblocks, 0, 0, fs);
     } else {
         if (inmem) {
-            read_some_split_locs_buffered_callback(file,convblocks,0,locs,0);
+            read_some_split_locs_buffered_callback(filename,convblocks,0,locs,0);
         } else {
-            read_some_split_locs_callback(file, convblocks, 0, locs, 0);
+            read_some_split_locs_callback(filename, convblocks, 0, locs, 0);
         }
     }
     
@@ -374,10 +374,15 @@ void read_blocks_split_convfunc(
     } else {
         read_some_split_locs_callback(file, convblocks, 0, locs, 0);
     }*/
-    
-    return read_block_split_internal(filename, 
-        make_readpbf_callbacks(callbacks, conv_func),
-        locs, false);
+    try {
+        return read_block_split_internal(filename, 
+            make_readpbf_callbacks(callbacks, conv_func),
+            locs, false);
+    } catch (std::exception& ex) {
+        for (auto c: callbacks) { c(nullptr); }
+        throw ex;
+    }
+        
     
 }
 
@@ -408,10 +413,10 @@ void read_blocks_nothread(
     std::vector<int64> locs, 
     std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
     
-    std::ifstream file(filename, std::ios::binary | std::ios::in);
+    /*std::ifstream file(filename, std::ios::binary | std::ios::in);
     if (!file.good()) {
         throw std::domain_error("can't open"+filename);
-    }
+    }*/
     auto conv = [callback,filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
         if (fb) {
             callback(readpbffile_detail::process_fileblock<BlockType>(fb,filter,ischange,objflags));
@@ -420,11 +425,19 @@ void read_blocks_nothread(
             callback(nullptr);
         }
     };
-    if (locs.empty()) {
-        int64 fs = file_size(filename);
-        read_some_split_callback(file, {conv}, 0, 0, fs);
-    } else {
-        read_some_split_locs_callback(file, {conv}, 0, locs, 0);
+    
+    try {
+    
+        if (locs.empty()) {
+            int64 fs = file_size(filename);
+            
+            read_some_split_callback(filename, {conv}, 0, 0, fs);
+        } else {
+            read_some_split_locs_callback(filename, {conv}, 0, locs, 0);
+        }
+    } catch (std::exception& ex) {
+        conv(nullptr);
+        throw ex;
     }
    
 }

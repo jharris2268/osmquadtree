@@ -50,7 +50,7 @@ class ReadFile {
         virtual std::shared_ptr<FileBlock> next()=0;
         virtual ~ReadFile() {}
 };
-std::shared_ptr<ReadFile> make_readfile(std::ifstream& file, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size);
+std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size);
     
 
 struct keyedblob {
@@ -62,12 +62,12 @@ struct keyedblob {
 
 typedef std::map<int64,std::vector<std::pair<size_t,int64>>> src_locs_map;
 
-void read_some_split_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size);
-void read_some_split_locs_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
+void read_some_split_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size);
+void read_some_split_locs_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
 
 void read_some_split_locs_parallel_callback(std::vector<std::unique_ptr<std::ifstream>>& files, std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks, const src_locs_map& src_locs);
 
-void read_some_split_locs_buffered_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
+void read_some_split_locs_buffered_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
 
 size_t read_some_split_buffered_keyed_callback(std::vector<std::unique_ptr<std::ifstream>>& files, std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks, size_t index_offset, const src_locs_map& locs, bool finish_callbacks);
 

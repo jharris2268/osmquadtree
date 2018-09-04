@@ -135,8 +135,67 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
 
 class ReadFileImpl : public ReadFile {
     public:
-        ReadFileImpl(std::ifstream& infile_, size_t index_offset_, int64 file_size_) : infile(infile_), index_offset(index_offset_), file_size(file_size_), index(0) {
+        ReadFileImpl(const std::string& filename, size_t index_offset_, int64 file_size_) : infile(filename, std::ios::in | std::ios::binary), index_offset(index_offset_), file_size(file_size_), index(0) {
+            if (!infile.good()) {
+                throw std::domain_error("can't open "+filename);
+            }
             
+        }
+        
+        virtual std::shared_ptr<FileBlock> next() {
+            if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
+                size_t ii = index_offset+index;
+                ++index;
+                auto fb = readFileBlock(ii, infile);
+                fb->file_progress = 100.0*fb->file_position / file_size;
+                return fb;
+            }
+            return std::shared_ptr<FileBlock>();
+        }
+    private:
+        std::ifstream infile;
+        size_t index_offset;
+        int64 file_size;
+        size_t index;
+            
+};
+
+class ReadFileLocs : public ReadFile {
+    public:
+        ReadFileLocs(const std::string& filename, std::vector<int64> locs_, size_t index_offset_) : infile(filename, std::ios::in | std::ios::binary), locs(locs_), index_offset(index_offset_), index(0) {
+            if (!infile.good()) {
+                throw std::domain_error("can't open "+filename);
+            }
+        }
+        
+        virtual std::shared_ptr<FileBlock> next() {
+            if (index < locs.size()) {
+                infile.seekg(locs.at(index));
+                if (!(infile.good() && (infile.peek()!=std::istream::traits_type::eof()))) {
+                    throw std::domain_error("can't read at loc "+std::to_string(index)+" "+std::to_string(locs.at(index)));
+                }
+                size_t ii = index_offset+index;
+                ++index;
+                auto fb = readFileBlock(ii,infile);
+                fb->file_progress = (100.0*index) / locs.size();
+                return fb;
+                
+            }
+            return std::shared_ptr<FileBlock>();
+        }
+    private:
+        std::ifstream infile;
+        std::vector<int64> locs;
+        size_t index_offset;
+        size_t index;
+            
+};
+
+
+class ReadFileImplXX : public ReadFile {
+    public:
+        ReadFileImplXX(std::ifstream& infile_, size_t index_offset_, int64 file_size_) : infile(infile_), index_offset(index_offset_), file_size(file_size_), index(0) {
+           
         }
         
         virtual std::shared_ptr<FileBlock> next() {
@@ -157,9 +216,9 @@ class ReadFileImpl : public ReadFile {
             
 };
 
-class ReadFileLocs : public ReadFile {
+class ReadFileLocsXX : public ReadFile {
     public:
-        ReadFileLocs(std::ifstream& infile_, std::vector<int64> locs_, size_t index_offset_) : infile(infile_), locs(locs_), index_offset(index_offset_), index(0) {
+        ReadFileLocsXX(std::ifstream& infile_, std::vector<int64> locs_, size_t index_offset_) : infile(infile_), locs(locs_), index_offset(index_offset_), index(0) {
             
         }
         
@@ -185,6 +244,7 @@ class ReadFileLocs : public ReadFile {
         size_t index;
             
 };
+
 
 class ReadFileBuffered : public ReadFile {
     public:
@@ -223,14 +283,14 @@ class ReadFileBuffered : public ReadFile {
         
 };
 
-std::shared_ptr<ReadFile> make_readfile(std::ifstream& file, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size) {
+std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size) {
     
     std::shared_ptr<ReadFile> res;
     
     if (locs.empty()) {
-        res = std::make_shared<ReadFileImpl>(std::ref(file),index_offset,file_size);
+        res = std::make_shared<ReadFileImpl>(filename,index_offset,file_size);
     } else {
-        res = std::make_shared<ReadFileLocs>(std::ref(file),locs,index_offset);
+        res = std::make_shared<ReadFileLocs>(filename,locs,index_offset);
     }
     if (buffer==0) {
         return res;
@@ -238,11 +298,24 @@ std::shared_ptr<ReadFile> make_readfile(std::ifstream& file, std::vector<int64> 
     return std::make_shared<ReadFileBuffered>(res, buffer);
 }
 
-
-
-void read_some_split_locs_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
+std::shared_ptr<ReadFile> make_readfile_xx(std::ifstream& file, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size) {
     
-    auto rp = make_readfile(infile,locs,index_offset,buffer,0);
+    std::shared_ptr<ReadFile> res;
+    
+    if (locs.empty()) {
+        res = std::make_shared<ReadFileImplXX>(file,index_offset,file_size);
+    } else {
+        res = std::make_shared<ReadFileLocsXX>(file,locs,index_offset);
+    }
+    if (buffer==0) {
+        return res;
+    }
+    return std::make_shared<ReadFileBuffered>(res, buffer);
+}
+
+void read_some_split_locs_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
+    
+    auto rp = make_readfile(filename,locs,index_offset,buffer,0);
     
     size_t idx=0;
     auto bl = rp->next();
@@ -257,16 +330,40 @@ void read_some_split_locs_callback(std::ifstream& infile, std::vector<std::funct
         c(std::shared_ptr<FileBlock>());
     }
 }
-void read_some_split_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size) {
 
-   
+
+void read_some_split_locs_callbackxx(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
+    
+    auto rp = make_readfile_xx(infile,locs,index_offset,buffer,0);
+    
+    size_t idx=0;
+    auto bl = rp->next();
+    while (bl) {
+        callbacks[idx%callbacks.size()](bl);
+        idx++;
+        bl = rp->next();
+    }
+    
+    
+    for (auto& c: callbacks) {
+        c(std::shared_ptr<FileBlock>());
+    }
+}
+
+
+void read_some_split_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size) {
+
+    auto rp = make_readfile(filename,{},index_offset,buffer,file_size);
         
-    for(size_t index=0; (infile.good() && (infile.peek()!=std::istream::traits_type::eof())); index++) {
-        auto bl = readFileBlock(index+index_offset,infile);
+    size_t index=0;
+    auto bl = rp->next();
+    while (bl) {
         if (file_size>0) {
             bl->file_progress = (100.0*bl->file_position) / file_size;
         }
         callbacks[index%callbacks.size()](bl);
+        index++;
+        bl = rp->next();
     }
     for (auto& c: callbacks) {
         c(std::shared_ptr<FileBlock>());
@@ -312,7 +409,7 @@ void read_some_split_locs_parallel_callback(
     return;
 }
 
-void read_some_split_locs_buffered_callback(std::ifstream& infile, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
+void read_some_split_locs_buffered_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
     std::map<int64,std::shared_ptr<FileBlock>> data;
     std::vector<int64> locs_sorted = locs;
     std::sort(locs_sorted.begin(), locs_sorted.end());
@@ -323,7 +420,7 @@ void read_some_split_locs_buffered_callback(std::ifstream& infile, std::vector<s
         }
     };
     
-    read_some_split_locs_callback(infile, {cb}, 0, locs_sorted, 0);
+    read_some_split_locs_callback(filename, {cb}, 0, locs_sorted, 0);
     
 
     for (size_t i=0; i < locs.size(); i++) {
@@ -386,7 +483,7 @@ void read_some_split_buffered_keyed_int(
                 }
             };
     
-            read_some_split_locs_callback(*files.at(i), {cb}, 0, ll, 0);
+            read_some_split_locs_callbackxx(*files.at(i), {cb}, 0, ll, 0);
         }
     }
     
