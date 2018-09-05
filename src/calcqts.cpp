@@ -343,7 +343,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
         }
     };
     
-    read_blocks<minimalblock>(origfn, read_objs, {},  numchan, nullptr, false, 7, false);
+    read_blocks_minimalblock(origfn, read_objs, {},  numchan, 7);
     lg->time("read data");    
     
     
@@ -694,7 +694,7 @@ class WayNodeLocs {
                 
                 
             read_node = std::make_shared<next_node>(inverted_callback<minimalblock>::make([source_filename,numchan,&source_locs](std::function<void(std::shared_ptr<minimalblock>)> cb) {
-                read_blocks<minimalblock>(source_filename, cb, source_locs, numchan, nullptr, false, 49, false);
+                read_blocks_minimalblock(source_filename, cb, source_locs, numchan, 49);
             }));
                 
             curr=read_node->next();
@@ -1004,7 +1004,7 @@ void find_way_quadtrees(
     
     
     auto wnla = std::make_shared<WayNodeLocsAlt>(wns, expand_all, minway, maxway);
-    read_blocks<minimalblock>(source_filename, [wnla](std::shared_ptr<minimalblock> mb) { wnla->call(mb); }, source_locs, numchan, nullptr, false, 1 | 48, false);
+    read_blocks_minimalblock(source_filename, [wnla](std::shared_ptr<minimalblock> mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
     
     
     get_logger()->time("expand way bboxes");
@@ -1094,7 +1094,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
         }
         calc_node_qts(nds);
     };
-    read_blocks<minimalblock>(nodes_fn, add_nodeway_qts, node_locs, 4, nullptr, false, 1 | 48, false);
+    read_blocks_minimalblock(nodes_fn, add_nodeway_qts, node_locs, 4, 1 | 48);
     
     
     auto lg=get_logger();

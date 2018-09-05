@@ -476,9 +476,11 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
     
     auto callback_wrapped = wrap_callback(callback);
     
+    size_t numchan_half = numchan/2;
+    if (numchan_half==0) { numchan_half=1; }
             
-    auto left_reader = std::make_shared<inverted_callback<primitiveblock>>([left_fn,numchan](primitiveblock_callback cb) { read_blocks<primitiveblock>(left_fn, cb, {}, numchan/2, nullptr, false, 7, false); });
-    auto right_reader = std::make_shared<inverted_callback<primitiveblock>>([right_fn,numchan](primitiveblock_callback cb) { read_blocks<primitiveblock>(right_fn, cb, {}, numchan/2, nullptr, false, 7, false); });
+    auto left_reader  = std::make_shared<inverted_callback<primitiveblock>>([left_fn, numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(left_fn,  cb, {}, numchan_half, nullptr, false, 7); });
+    auto right_reader = std::make_shared<inverted_callback<primitiveblock>>([right_fn,numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(right_fn, cb, {}, numchan_half, nullptr, false, 7); });
     
     std::vector<objdiff> curr;
     curr.reserve(10000);

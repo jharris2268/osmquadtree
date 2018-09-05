@@ -834,11 +834,11 @@ std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<calculate_relations>,st
         
     auto pack_waynodes= waynodes->make_writewaynodes(rels, sortinmem, numchan);
         
-    //read_blocks_split<minimalblock>(orig_fn, pack_waynodes, {}, nullptr, false, 7, false);
+    
     if (numchan!=0) {
-        read_blocks<minimalblock>(orig_fn, pack_waynodes, {}, 4, nullptr, false, 6 | 48, false);
+        read_blocks_minimalblock(orig_fn, pack_waynodes, {}, 4, 6 | 48);
     } else {
-        read_blocks_nothread<minimalblock>(orig_fn, pack_waynodes, {}, nullptr, false, 6 | 48);
+        read_blocks_nothread_minimalblock(orig_fn, pack_waynodes, {}, 6 | 48);
     }
         
     

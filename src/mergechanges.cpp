@@ -141,15 +141,13 @@ class ReadBlocksSingle : public ReadBlocksCaller {
             }
         }
         void read_primitive(std::vector<primitiveblock_callback> cbs, std::shared_ptr<idset> filter) {
-            read_blocks_split<primitiveblock>(fn, cbs, locs, filter, false, 15, false);
+            read_blocks_split_primitiveblock(fn, cbs, locs, filter, false, 15);
         }
         
         void read_minimal(std::vector<minimalblock_callback> cbs, std::shared_ptr<idset> filter)  {
-            read_blocks_split<minimalblock>(fn, cbs, locs, filter, false, 15, false);
+            read_blocks_split_minimalblock(fn, cbs, locs, 15);
         }
-        /*void read_packed(std::vector<packedblock_callback> cbs, std::shared_ptr<idset> filter)  {
-            read_blocks_split<packedblock>(fn, cbs, locs, filter, false, 15, false); 
-        }*/
+        
         size_t num_tiles() { return locs.size(); }
     private:
         std::string fn;

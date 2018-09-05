@@ -172,7 +172,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     
     
     //[applychange](primitiveblock_ptr bl) { applychange->apply(bl); }
-    read_blocks_convfunc<primitiveblock>(origfn, fixtags, {}, numchan, cvf);
+    read_blocks_convfunc_primitiveblock(origfn, fixtags, {}, numchan, cvf);
     lg->time("applied change");
     
     logger_message() << nc << " objects with '\xef' character fixed";

@@ -188,7 +188,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
     
     
     
-    read_blocks_split<primitiveblock>(fn, converts, locs, nullptr, false, 7, false);
+    read_blocks_split_primitiveblock(fn, converts, locs, nullptr, false, 7);
     
     auto ii = out_obj->finish();
     
@@ -277,7 +277,7 @@ std::vector<std::shared_ptr<primitiveblock>> read_file_blocks(
         }
     };
     
-    read_blocks<primitiveblock>(fn, cb, locs, numchan, ids, change, objflags, false);
+    read_blocks_primitiveblock(fn, cb, locs, numchan, ids, change, objflags);
     return res;
 }
 

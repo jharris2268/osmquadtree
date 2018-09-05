@@ -61,14 +61,14 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
 
     if (numchan==0) {
 
-        read_blocks_nothread<minimalblock>(fn, cb, {}, nullptr, change, objflags);
+        read_blocks_nothread_minimalblock(fn, cb, {}, objflags);
         lg->time("count");
         return result;
 
     }
 
     
-    read_blocks<minimalblock>(fn, cb, {}, numchan, nullptr, change, objflags, false);
+    read_blocks_minimalblock(fn, cb, {}, numchan, objflags);
     
     lg->time("count");
     return result;

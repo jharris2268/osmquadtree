@@ -1274,7 +1274,7 @@ size_t read_blocks_geometry_py(
     auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
     std::function<void(std::shared_ptr<primitiveblock>)> cbf = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
     
-    read_blocks_convfunc<primitiveblock>(filename, cbf, locs, numchan, make_read_blocks_geometry_convfunc_filter(filt));
+    read_blocks_convfunc_primitiveblock(filename, cbf, locs, numchan, make_read_blocks_geometry_convfunc_filter(filt));
     return cb->total();
 }
     

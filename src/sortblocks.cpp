@@ -98,7 +98,7 @@ std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
         make_addcounts.push_back(CollectQts::make(add_qts));
     }
     
-    read_blocks_split<qtvec>(qtsfn, make_addcounts, {}, nullptr, false, 15, false);
+    read_blocks_split_qtvec(qtsfn, make_addcounts, {}, 15);
     
     return tree;
 };
@@ -269,11 +269,11 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     };
     
     if (qtsfn == "NONE") {
-        read_blocks<primitiveblock>(origfn, resort, {}, numchan, nullptr, false, 7, false);
+        read_blocks_primitiveblock(origfn, resort, {}, numchan, nullptr, false, 7);
     } else {
         
         auto add_quadtrees = add_quadtreesup_callback({resort}, qtsfn);
-        read_blocks<primitiveblock>(origfn, add_quadtrees, {}, numchan, nullptr, false,7, false);
+        read_blocks_primitiveblock(origfn, add_quadtrees, {}, numchan, nullptr, false,7);
     }
     logger_message() << "finished";
     
@@ -398,10 +398,10 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     
     auto sgg = sb->make_addblocks_cb(qtsfn!="NONE");
     if (qtsfn == "NONE") {
-        read_blocks_split_convfunc<primitiveblock>(origfn, sgg, {}, convert_primblock);
+        read_blocks_split_convfunc_primitiveblock(origfn, sgg, {}, convert_primblock);
     } else { 
         auto add_quadtrees = add_quadtreesup_callback(sgg, qtsfn);
-        read_blocks_convfunc<primitiveblock>(origfn, add_quadtrees, {}, numchan, convert_primblock);
+        read_blocks_convfunc_primitiveblock(origfn, add_quadtrees, {}, numchan, convert_primblock);
     }
     
     sb->finish();

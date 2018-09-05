@@ -42,22 +42,37 @@ size_t read_blocks_merge_py(
     return cb->total();
 }
 
-template <class BlockType>
-size_t read_blocks_py(
+
+
+
+size_t read_blocks_primitiveblock_py(
     const std::string& filename,
-    std::function<bool(std::vector<std::shared_ptr<BlockType>>)> callback,
+    std::function<bool(std::vector<primitiveblock_ptr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
     std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
 
 
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<BlockType>>(wrap_callback(callback),numblocks);
-    std::function<void(std::shared_ptr<BlockType>)> cbf = [cb](std::shared_ptr<BlockType> bl) { cb->call(bl); };
-    read_blocks(filename, cbf, locs, numchan, filter, ischange, objflags,false);
+    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    primitiveblock_callback cbf = [cb](primitiveblock_ptr bl) { cb->call(bl); };
+    read_blocks_primitiveblock(filename, cbf, locs, numchan, filter, ischange, objflags);
     return cb->total();
 }
 
 
+size_t read_blocks_minimalblock_py(
+    const std::string& filename,
+    std::function<bool(std::vector<minimalblock_ptr>)> callback,
+    std::vector<int64> locs, size_t numchan, size_t numblocks,
+    size_t objflags) {
+
+
+    py::gil_scoped_release r;
+    auto cb = std::make_shared<collect_blocks<minimalblock>>(wrap_callback(callback),numblocks);
+    minimalblock_callback cbf = [cb](minimalblock_ptr bl) { cb->call(bl); };
+    read_blocks_minimalblock(filename, cbf, locs, numchan, objflags);
+    return cb->total();
+}
 
 
 
@@ -450,18 +465,15 @@ void block_defs(py::module& m) {
     ;
 
 
-    m.def("read_blocks_primitive", &read_blocks_py<primitiveblock>,
+    m.def("read_blocks_primitive", &read_blocks_primitiveblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);
-    /*m.def("read_blocks_packed", &read_blocks_py<packedblock>,
+    
+    m.def("read_blocks_minimal", &read_blocks_minimalblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);*/
-    m.def("read_blocks_minimal", &read_blocks_py<minimalblock>,
-        py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
-        py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);
+        py::arg("objflags")=7);
    
    m.def("read_blocks_merge_primitive", &read_blocks_merge_py<primitiveblock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),

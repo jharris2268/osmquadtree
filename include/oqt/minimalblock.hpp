@@ -90,6 +90,9 @@ struct minimalblock {
     
 };
 
+typedef std::shared_ptr<minimalblock> minimalblock_ptr;
+typedef std::function<void(minimalblock_ptr)> minimalblock_callback;
+
 
 std::shared_ptr<minimalblock> readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
 

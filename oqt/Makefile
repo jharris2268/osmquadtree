@@ -4,7 +4,7 @@ LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
 OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writeblock.o writefile.o writepbffile.o xmlchange.o applychange.o
 HEADERS = 
-PBFFORMAT_OBJS = pbfformat/objsidset.o
+PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
 
@@ -125,7 +125,11 @@ geometry/postgiswriter.o: ../src/geometry/postgiswriter.cpp $(HEADERS)
 
 pbfformat/objsidset.o: ../src/pbfformat/objsidset.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/objsidset.cpp -o pbfformat/objsidset.o
+
+pbfformat/readfileblocks.o: ../src/pbfformat/readfileblocks.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readfileblocks.cpp -o pbfformat/readfileblocks.o
+
 	
 clean:
-	$(RM) oqt *.o liboqt.so* geometry/*.o *~
+	$(RM) oqt *.o liboqt.so* geometry/*.o pbfformat/*.o
 
