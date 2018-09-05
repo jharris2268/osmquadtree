@@ -464,7 +464,7 @@ void read_blocks_split_merge(
             }
         ));
     }
-    
+    /*
     std::vector<std::unique_ptr<std::ifstream>> files;
     for (auto fn: filenames) {
         files.push_back(std::make_unique<std::ifstream>(fn, std::ios::binary | std::ios::in));
@@ -472,11 +472,11 @@ void read_blocks_split_merge(
             throw std::domain_error("can't open "+fn);
         }
     }
-
+    */
     if (buffer==0) {
-        read_some_split_locs_parallel_callback(files, convblocks, locs);
+        read_some_split_locs_parallel_callback(filenames, convblocks, locs);
     } else {
-        read_some_split_buffered_keyed_callback_all(files,convblocks,locs, buffer);
+        read_some_split_buffered_keyed_callback_all(filenames,convblocks,locs, buffer);
     }
 
 }
@@ -514,16 +514,16 @@ void read_blocks_merge_nothread(
             callback(std::shared_ptr<BlockType>());
         }
     };
-    
+    /*
     std::vector<std::unique_ptr<std::ifstream>> files;
     for (auto fn: filenames) {
         files.push_back(std::make_unique<std::ifstream>(fn, std::ios::binary | std::ios::in));
         if (!files.back()->good()) {
             throw std::domain_error("can't open "+fn);
         }
-    }
+    }*/
     
-    read_some_split_locs_parallel_callback(files, {cb}, locs);
+    read_some_split_locs_parallel_callback(filenames, {cb}, locs);
     
 }
 /*        

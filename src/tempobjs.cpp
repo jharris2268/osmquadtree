@@ -58,12 +58,13 @@ class BlobStoreFile : public BlobStore {
             }
             
                        
-            std::vector<std::unique_ptr<std::ifstream>> files;
+            /*std::vector<std::unique_ptr<std::ifstream>> files;
             files.push_back(std::make_unique<std::ifstream>(tempfn, std::ios::binary | std::ios::in));
             if (!files.back()->good()) {
                 throw std::domain_error("can't open "+tempfn);
-            }
-            read_some_split_locs_parallel_callback(files, outs, mm);
+            }*/
+            //read_some_split_locs_parallel_callback(files, outs, mm);
+            read_some_split_locs_parallel_callback({tempfn}, outs, mm);
             std::remove(tempfn.c_str());
         }
     private:
@@ -143,9 +144,9 @@ class BlobStoreFileSplit : public BlobStore {
             for (auto&x : writers) {
                 
                 auto fn = std::get<0>(x.second);
-                std::vector<std::unique_ptr<std::ifstream>> files;
-                files.push_back(std::make_unique<std::ifstream>(fn, std::ios::binary | std::ios::in));
-                if (!files.back()->good()) { throw std::domain_error("couldn't open "+fn); }
+                //std::vector<std::unique_ptr<std::ifstream>> files;
+                //files.push_back(std::make_unique<std::ifstream>(fn, std::ios::binary | std::ios::in));
+                //if (!files.back()->good()) { throw std::domain_error("couldn't open "+fn); }
                 const auto& bi = std::get<1>(x.second);
                 
                 src_locs_map ll;
@@ -164,7 +165,7 @@ class BlobStoreFileSplit : public BlobStore {
                         t += tot.at(it->first);
                         it++;
                     }
-                    ii = read_some_split_buffered_keyed_callback(files, convs, ii, ll2, false);
+                    ii = read_some_split_buffered_keyed_callback({fn}, convs, ii, ll2, false);
                 }
                
                 std::remove(fn.c_str());

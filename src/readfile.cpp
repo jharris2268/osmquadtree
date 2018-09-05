@@ -371,11 +371,15 @@ void read_some_split_callback(const std::string& filename, std::vector<std::func
 }
 
 void read_some_split_locs_parallel_callback(
-    std::vector<std::unique_ptr<std::ifstream>>& files,
+    const std::vector<std::string>& filenames,
     std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
     const src_locs_map& src_locs) {
     
     size_t index=0;
+    
+    
+    std::map<size_t,std::ifstream> files;
+    
     
     for (auto& src : src_locs) {
         
@@ -386,7 +390,15 @@ void read_some_split_locs_parallel_callback(
             res->idx = index;
             res->key=src.first;
             for (auto& lc : src.second) {
-                auto& infile = *(files.at(lc.first));
+                //auto& infile = *(files.at(lc.first));
+                if (!files.count(lc.first)) {
+                    files[lc.first] = std::ifstream(filenames.at(lc.first),std::ios::in | std::ios::binary);
+                }
+                auto& infile = files.at(lc.first);
+                if (!infile.good()) {
+                    std::cout << "file " << filenames.at(lc.first) << " not open?" << std::endl;
+                    throw std::domain_error("can't open "+filenames.at(lc.first));
+                }
                 infile.seekg(lc.second);
                 auto fb=readFileBlock(index,infile);
                 res->blobs.push_back(std::make_pair(fb->data, fb->uncompressed_size));
@@ -454,7 +466,7 @@ typedef std::shared_ptr<keyedblob_vec> keyedblob_vec_ptr;
 typedef std::function<void(keyedblob_vec_ptr)> keyedblob_vec_callback;
 
 void read_some_split_buffered_keyed_int(
-    std::vector<std::unique_ptr<std::ifstream>>& files,
+    const std::vector<std::string>& filenames,
     const src_locs_map& locs,
     keyedblob_vec& blobs,
     bool skipfirst) {
@@ -462,7 +474,7 @@ void read_some_split_buffered_keyed_int(
     using ttt = std::tuple<size_t,int64,std::shared_ptr<FileBlock>>;
     std::vector<ttt> data;
     size_t ns=0;
-    std::vector<std::vector<int64>> locs_sorted(files.size());
+    std::vector<std::vector<int64>> locs_sorted(filenames.size());
     for (const auto& xx: locs) {
         for (const auto& x: xx.second) {
             
@@ -472,7 +484,7 @@ void read_some_split_buffered_keyed_int(
     }
     data.reserve(ns);
     
-    for (size_t i=(skipfirst ? 1 : 0); i < files.size(); i++) {
+    for (size_t i=(skipfirst ? 1 : 0); i < filenames.size(); i++) {
         if (!locs_sorted.at(i).empty()) {
             auto& ll = locs_sorted.at(i);
             std::sort(ll.begin(), ll.end());
@@ -483,7 +495,8 @@ void read_some_split_buffered_keyed_int(
                 }
             };
     
-            read_some_split_locs_callbackxx(*files.at(i), {cb}, 0, ll, 0);
+            //read_some_split_locs_callbackxx(*files.at(i), {cb}, 0, ll, 0);
+            read_some_split_locs_callback(filenames.at(i), {cb}, 0, ll, 0);
         }
     }
     
@@ -513,14 +526,14 @@ void read_some_split_buffered_keyed_int(
 }
     
 size_t read_some_split_buffered_keyed_callback(
-        std::vector<std::unique_ptr<std::ifstream>>& files,
+        const std::vector<std::string>& filenames,
         std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
         size_t index_offset, const src_locs_map& locs, bool finish_callbacks) {
     
     //std::map<std::pair<int64,int64>,std::shared_ptr<FileBlock>> data;
     
     keyedblob_vec blobs;
-    read_some_split_buffered_keyed_int(files,locs,std::ref(blobs),false);
+    read_some_split_buffered_keyed_int(filenames,locs,std::ref(blobs),false);
     
     size_t ii=index_offset;
     for (auto kk: blobs) {
@@ -537,7 +550,7 @@ size_t read_some_split_buffered_keyed_callback(
 
 
 
-void rssbkca_call(std::vector<std::unique_ptr<std::ifstream>>& files,
+void rssbkca_call(const std::vector<std::string>& filenames,
     keyedblob_vec_callback callcbs,
     const src_locs_map& locs, size_t numblocks, bool skipfirst) {
     
@@ -549,13 +562,14 @@ void rssbkca_call(std::vector<std::unique_ptr<std::ifstream>>& files,
         if (locs_temp.size() == numblocks) {
             
             auto blbs = std::make_shared<keyedblob_vec>();
-            read_some_split_buffered_keyed_int(files,locs_temp,*blbs,skipfirst);
+            read_some_split_buffered_keyed_int(filenames,locs_temp,*blbs,skipfirst);
             size_t ts=0;
             for (auto& s: *blbs) {
                 for (auto& x: s->blobs) {
                     ts+=x.first.size();
                 }
             }
+            logger_message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
             callcbs(blbs);
             locs_temp.clear();
             aa=0;
@@ -564,7 +578,7 @@ void rssbkca_call(std::vector<std::unique_ptr<std::ifstream>>& files,
     if (!locs_temp.empty()) {
         auto blbs = std::make_shared<keyedblob_vec>();
         
-        read_some_split_buffered_keyed_int(files,locs_temp,*blbs,skipfirst);
+        read_some_split_buffered_keyed_int(filenames,locs_temp,*blbs,skipfirst);
         size_t ts=0;
         for (auto& s: *blbs) {
             for (auto& x: s->blobs) {
@@ -580,7 +594,7 @@ void rssbkca_call(std::vector<std::unique_ptr<std::ifstream>>& files,
     
 }
         
-void read_some_split_buffered_keyed_callback_all_pp(std::vector<std::unique_ptr<std::ifstream>>& files,
+void read_some_split_buffered_keyed_callback_all_pp(const std::vector<std::string>& filenames,
         std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
         const src_locs_map& locs, size_t numblocks) {
     
@@ -594,26 +608,33 @@ void read_some_split_buffered_keyed_callback_all_pp(std::vector<std::unique_ptr<
         }
     };
     auto callcbs = threaded_callback<std::vector<std::shared_ptr<keyedblob>>>::make(callcbs_ff);
-    rssbkca_call(files,callcbs,locs,numblocks,false);
+    rssbkca_call(filenames,callcbs,locs,numblocks,false);
     for (auto& cb: callbacks) { cb(nullptr); }
 }    
 
 
-void read_some_split_buffered_keyed_callback_all(std::vector<std::unique_ptr<std::ifstream>>& files,
+void read_some_split_buffered_keyed_callback_all(const std::vector<std::string>& filenames,
         std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
         const src_locs_map& locs, size_t numblocks) {
 
     
     
     auto fetch_others = inverted_callback<keyedblob_vec>::make(
-        [&files, &locs, numblocks](keyedblob_vec_callback cb) {
-            rssbkca_call(files,cb,locs,numblocks,true);
+        [&filenames, &locs, numblocks](keyedblob_vec_callback cb) {
+            rssbkca_call(filenames,cb,locs,numblocks,true);
         }
     );
     
     size_t idx=0;
     size_t i=0;
     auto others = fetch_others();
+    
+    
+    std::ifstream firstfile(filenames.at(0), std::ios::in | std::ios::binary);
+    if (!firstfile.good()) {
+        std::cout << "can't open "+filenames.at(0) << std::endl;
+        throw std::domain_error("can't open "+filenames.at(0));
+    }
     
     for (const auto& ll: locs) {
         while (others && (i==others->size())) {
@@ -629,8 +650,10 @@ void read_some_split_buffered_keyed_callback_all(std::vector<std::unique_ptr<std
         
         auto f = ll.second.front();
         if (f.first == 0) {
-            files.at(0)->seekg(f.second);
-            auto fb = readFileBlock(idx, *files.at(0));
+            
+            //files.at(0)->seekg(f.second);
+            firstfile.seekg(f.second);
+            auto fb = readFileBlock(idx, firstfile);//*files.at(0));
             oo->blobs.at(0).first = fb->data;
             oo->blobs.at(0).second = fb->uncompressed_size;
         }
