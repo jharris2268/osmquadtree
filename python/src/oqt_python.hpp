@@ -29,7 +29,7 @@
 #include "oqt/count.hpp"
 #include "oqt/quadtreegroups.hpp"
 #include "oqt/combineblocks.hpp"
-#include "oqt/writefile.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/store.hpp"
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
@@ -39,7 +39,7 @@
 #include "oqt/update.hpp"
 
 #include "oqt/operations.hpp"
-#include "oqt/writeblock.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/geometry/makegeometries.hpp"
 #include "oqt/geometry/addparenttags.hpp"

@@ -34,7 +34,7 @@
 #include "oqt/pbfformat/objsidset.hpp"
 
 
-#include "oqt/writeblock.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
 
 
 

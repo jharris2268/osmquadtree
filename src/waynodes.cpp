@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/waynodes.hpp"
-#include "oqt/writefile.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/quadtree.hpp"
 #include <algorithm>
 #include <exception>

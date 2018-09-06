@@ -22,8 +22,8 @@
 
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
-#include "oqt/writefile.hpp"
-#include "oqt/writeblock.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/simplepbf.hpp"
 #include "oqt/utils.hpp"
 #include "oqt/picojson.h"

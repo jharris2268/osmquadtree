@@ -21,11 +21,13 @@
  *****************************************************************************/
 
 #include "oqt/writepbffile.hpp"
-#include "oqt/writeblock.hpp"
-#include "oqt/writefile.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <map>
+
 namespace oqt {
 template<size_t N, size_t U>
 bool cmp_idx_item(const std::tuple<int64,int64,int64>& l,const std::tuple<int64,int64,int64>& r) {

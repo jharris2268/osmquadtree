@@ -29,7 +29,7 @@
 #include <list>
 #include <set>
 #include <functional>
-
+#include "oqt/pbfformat/varint.hpp"
 
 
 namespace oqt {

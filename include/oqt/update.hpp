@@ -26,8 +26,7 @@
 #include "oqt/count.hpp"
 #include "oqt/xmlchange.hpp"
 #include "oqt/combineblocks.hpp"
-#include "oqt/writefile.hpp"
-#include "oqt/store.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/store.hpp"
 #include <set>
 namespace oqt {

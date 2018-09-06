@@ -2,9 +2,9 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I/home/james/build/xml-inspector/ -I../include/oqt/postgresql
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writeblock.o writefile.o writepbffile.o xmlchange.o applychange.o
+OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writepbffile.o xmlchange.o applychange.o
 HEADERS = 
-PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o
+PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
 
@@ -65,9 +65,6 @@ sortfile.o: ../src/sortfile.cpp $(HEADERS)
 sortfile_packed.o: ../src/sortfile_packed.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/sortfile_packed.cpp
 
-writeblock.o: ../src/writeblock.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/writeblock.cpp
-
 store.o: ../src/store.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/store.cpp
 
@@ -82,9 +79,6 @@ combineblocks.o: ../src/combineblocks.cpp $(HEADERS)
 
 utils.o: ../src/utils.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils.cpp
-
-writefile.o: ../src/writefile.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/writefile.cpp
 
 mergechanges.o: ../src/mergechanges.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/mergechanges.cpp
@@ -128,6 +122,12 @@ pbfformat/objsidset.o: ../src/pbfformat/objsidset.cpp $(HEADERS)
 
 pbfformat/readfileblocks.o: ../src/pbfformat/readfileblocks.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/readfileblocks.cpp -o pbfformat/readfileblocks.o
+
+pbfformat/writeblock.o: ../src/pbfformat/writeblock.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/writeblock.cpp -o pbfformat/writeblock.o
+
+pbfformat/fileblock.o: ../src/pbfformat/fileblock.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/fileblock.cpp -o pbfformat/fileblock.o
 
 	
 clean:

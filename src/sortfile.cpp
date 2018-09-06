@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/sortfile.hpp"
-#include "oqt/writefile.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/quadtreegroups.hpp"
 #include <map>
 #include <set>
@@ -30,7 +30,7 @@
 #include <thread>
 
 
-#include "oqt/writeblock.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/readpbffile.hpp"
 #include "oqt/writepbffile.hpp"
 

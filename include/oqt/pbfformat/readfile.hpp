@@ -20,15 +20,26 @@
  *
  *****************************************************************************/
 
-#ifndef READFILE_H
-#define READFILE_H
+#ifndef PBFFORMAT_READFILE_HPP
+#define PBFFORMAT_READFILE_HPP
+
+
 
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/pbfformat/readfile.hpp"
-#include "oqt/pbfformat/readfileparallel.hpp"
+namespace oqt {
+
+class ReadFile {
+    public:
+        virtual std::shared_ptr<FileBlock> next()=0;
+        virtual ~ReadFile() {}
+};
+std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size);
 
 
+void read_some_split_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size);
+void read_some_split_locs_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
+void read_some_split_locs_buffered_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
+}
 
 
-
-#endif
+#endif //PBFFORMAT_READFILE_HPP

@@ -20,14 +20,12 @@
  *
  *****************************************************************************/
 
-#ifndef WRITEBLOCK_H
-#define WRITEBLOCK_H
+#ifndef PBFFORMAT_WRITEBLOCK_H
+#define PBFFORMAT_WRITEBLOCK_H
 
-#include "oqt/simplepbf.hpp"
-#include "oqt/packedblock.hpp"
-#include "oqt/readfile.hpp"
-#include <deque>
-#include <map>
+#include "oqt/elements/block.hpp"
+
+#include "oqt/elements/header.hpp"
 
 namespace oqt {
 std::string writePbfBlock(std::shared_ptr<primitiveblock> block, bool includeQts, bool change, bool includeInfo, bool includeRefs);

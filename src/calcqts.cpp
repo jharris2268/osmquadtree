@@ -24,7 +24,7 @@
 #include "oqt/simplepbf.hpp"
 #include "oqt/minimalblock.hpp"
 #include "oqt/writepbffile.hpp"
-#include "oqt/writefile.hpp"
+#include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/waynodes.hpp"
 #include <algorithm>
 #include <chrono>

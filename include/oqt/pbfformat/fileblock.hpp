@@ -20,16 +20,34 @@
  *
  *****************************************************************************/
 
-#ifndef WRITEFILE_HPP
-#define WRITEFILE_HPP
+#ifndef PBFFORMAT_FILEBLOCK_HPP
+#define PBFFORMAT_FILEBLOCK_HPP
 
 #include "oqt/utils.hpp"
-#include "oqt/readfile.hpp"
-#include "oqt/packedblock.hpp"
 
 namespace oqt {
 
-std::string prepareFileBlock(const std::string& head, const std::string& data, int compress_level=-1);
+struct FileBlock {
+    int64 idx;
+    std::string blocktype;
+    std::string data;
+    size_t uncompressed_size;
+    bool compressed;
+    int64 file_position;
+    double file_progress;
+    FileBlock(int64 idx_, std::string bt_, std::string d_, size_t ucs_, bool c_) : idx(idx_), blocktype(bt_), data(d_), uncompressed_size(ucs_), compressed(c_), file_position(0), file_progress(0) {};
+    std::string get_data();
+};
+
+std::pair<std::string, bool> readBytes(std::istream& infile, int64 bytes);
+std::pair<size_t, bool> readBytesInto(std::istream& infile, std::string& dest, size_t place, int64 bytes);
+
+
+std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile);
+
+
+std::string prepareFileBlock(const std::string& blocktype, const std::string& data, int compress_level=-1);
+
 }
 
-#endif //WRITEFILE_HPP
+#endif //PBFFORMAT_FILEBLOCK_HPP

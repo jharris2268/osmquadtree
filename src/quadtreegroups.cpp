@@ -27,7 +27,7 @@
 #include "oqt/minimalblock.hpp"
 #include "oqt/readfile.hpp"
 #include "oqt/quadtree.hpp"
-#include "oqt/writeblock.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
 #include <iomanip>
 #include <algorithm>
 #include <set>
