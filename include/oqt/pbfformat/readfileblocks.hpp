@@ -28,7 +28,7 @@
 
 #include "oqt/utils.hpp"
 #include "oqt/simplepbf.hpp"
-#include "oqt/minimalblock.hpp"
+#include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/packedblock.hpp"
 #include "oqt/readfile.hpp"
 #include "oqt/combineblocks.hpp"

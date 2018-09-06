@@ -24,7 +24,7 @@
 #include <numeric>
 #include "oqt/simplepbf.hpp"
 #include "oqt/packedblock.hpp"
-#include "oqt/minimalblock.hpp"
+#include "oqt/elements/minimalblock.hpp"
 #include "oqt/readfile.hpp"
 #include "oqt/quadtree.hpp"
 #include "oqt/pbfformat/writeblock.hpp"

@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/minimalblock.hpp"
+#include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/utils.hpp"
 #include <iostream>
 #include <iterator>

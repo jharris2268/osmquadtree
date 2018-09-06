@@ -32,7 +32,7 @@
 
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/readpbffile.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 
 
 namespace oqt {

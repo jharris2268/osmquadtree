@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef MINIMALBLOCK
-#define MINIMALBLOCK
+#ifndef ELEMENTS_MINIMALBLOCK_HPP
+#define ELEMENTS_MINIMALBLOCK_HPP
 
 #include "oqt/simplepbf.hpp"
 #include <deque>
@@ -89,14 +89,7 @@ struct minimalblock {
     double file_progress;
     
 };
-
 typedef std::shared_ptr<minimalblock> minimalblock_ptr;
 typedef std::function<void(minimalblock_ptr)> minimalblock_callback;
-
-
-std::shared_ptr<minimalblock> readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
-
-typedef std::vector<std::pair<uint64,int64> > qtvec;
-std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags=7);
 }
 #endif

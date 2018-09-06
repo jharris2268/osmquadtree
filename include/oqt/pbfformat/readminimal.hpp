@@ -20,40 +20,24 @@
  *
  *****************************************************************************/
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef PBFFORMAT_READMINIMAL_HPP
+#define PBFFORMAT_READMINIMAL_HPP
 
-
-
-
-#include "oqt/simplepbf.hpp"
-
-
-#include "oqt/utils/logger.hpp"
-
-#include "oqt/utils/compress.hpp"
-#include "oqt/utils/date.hpp"
-
-#include "oqt/utils/singlequeue.hpp"
-
-#include "oqt/utils/threadedcallback.hpp"
-#include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/splitcallback.hpp"
-#include "oqt/utils/invertedcallback.hpp"
-
-#include "oqt/utils/geometry.hpp"
-#include "oqt/utils/operatingsystem.hpp"
+#include "oqt/common.hpp"
+#include "oqt/elements/minimalblock.hpp"
+#include "oqt/quadtree.hpp"
 
 namespace oqt {
-inline bool EndsWith(const std::string& a, const std::string& b) {
-    if (b.size() > a.size()) return false;
-    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+
+
+
+
+
+std::shared_ptr<minimalblock> readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
+
+typedef std::vector<std::pair<uint64,int64> > qtvec;
+std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags=7);
+
 }
 
-    
-
-
-
-
-}
-#endif //UTILS_HPP
+#endif //PBFFORMAT_READMINIMAL_HPP

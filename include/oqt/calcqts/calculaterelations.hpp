@@ -24,7 +24,7 @@
 #define CALCQTS_CALCULATERELATIONS_HPP
 
 #include "oqt/common.hpp"
-#include "oqt/minimalblock.hpp"
+#include "oqt/elements/minimalblock.hpp"
 #include "oqt/calcqts/qtstore.hpp"
 #include "oqt/calcqts/waynodes.hpp"
 namespace oqt {

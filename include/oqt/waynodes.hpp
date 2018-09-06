@@ -24,9 +24,9 @@
 #define WAYNODES_HPP
 
 #include "oqt/readfile.hpp"
-#include "oqt/minimalblock.hpp"
+#include "oqt/elements/minimalblock.hpp"
 #include "oqt/store.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 
 #include "oqt/calcqts/waynodes.hpp"
 #include "oqt/calcqts/waynodesfile.hpp"

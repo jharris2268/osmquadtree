@@ -30,7 +30,7 @@
 
 #include "oqt/operations.hpp"
 #include "oqt/readpbffile.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/sortfile.hpp"
 #include "oqt/sorting/tempobjs.hpp"
 namespace oqt {

@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef WRITEPBFFILE_HPP
-#define WRITEPBFFILE_HPP
+#ifndef PBFFORMAT_WRITEPBFFILE_HPP
+#define PBFFORMAT_WRITEPBFFILE_HPP
 
 #include "oqt/simplepbf.hpp"
 namespace oqt {
@@ -53,4 +53,4 @@ std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string
 
 std::shared_ptr<header> getHeaderBlock(const std::string& fn);
 }
-#endif
+#endif //PBFFORMAT_WRITEPBFFILE_HPP

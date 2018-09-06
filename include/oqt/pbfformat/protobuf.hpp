@@ -26,7 +26,14 @@
 #include "oqt/common.hpp"
 
 namespace oqt {
-    
+
+
+size_t write_uint32(std::string& data, size_t pos, uint32_t i);
+size_t write_uint32_le(std::string& data, size_t pos, uint32_t i);
+size_t write_double(std::string& data, size_t pos, double d);
+size_t write_double_le(std::string& data, size_t pos, double d);
+
+uint32_t read_uint32_le(std::string& data, size_t pos);
 
 std::string readData(const std::string& data, size_t& pos);
 

@@ -27,7 +27,7 @@
 #include "oqt/simplepbf.hpp"
 
 #include <malloc.h>
-
+#include <zlib.h>
 namespace oqt {
     
 

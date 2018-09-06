@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/readpbffile.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/simplepbf.hpp"

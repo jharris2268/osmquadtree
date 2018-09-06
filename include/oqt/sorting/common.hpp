@@ -25,7 +25,7 @@
 
 
 #include "oqt/simplepbf.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/utils.hpp"
 #include "oqt/quadtreegroups.hpp"
 #include "oqt/packedblock.hpp"

@@ -32,7 +32,7 @@
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/store.hpp"
 #include "oqt/readpbffile.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 
 #include "oqt/xmlchange.hpp"
 #include "oqt/gzstream.hpp"

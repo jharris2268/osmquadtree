@@ -602,15 +602,7 @@ void core_defs(py::module& m) {
         py::arg("blocksplit")=500
     );
 
-    /*m.def("findgroups", &run_findgroups_py, "sort into quadtree blocks",
-        py::arg("qtsfn"),
-        py::arg("numchan")=4,
-        py::arg("rollup") = false,
-        py::arg("targetsize") = 8000,
-        py::arg("minsize") = 4000,
-        py::arg("logger") = make_default_logger()
-    );*/
-  
+    
 
     m.def("mergechanges", &run_mergechanges_py, "merge changes files, optionally filter and sort",
         py::arg("origfn"),

@@ -20,40 +20,18 @@
  *
  *****************************************************************************/
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef UTILS_OPERATINGSYSTEM_HPP
+#define UTILS_OPERATINGSYSTEM_HPP
 
-
-
-
-#include "oqt/simplepbf.hpp"
-
-
-#include "oqt/utils/logger.hpp"
-
-#include "oqt/utils/compress.hpp"
-#include "oqt/utils/date.hpp"
-
-#include "oqt/utils/singlequeue.hpp"
-
-#include "oqt/utils/threadedcallback.hpp"
-#include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/splitcallback.hpp"
-#include "oqt/utils/invertedcallback.hpp"
-
-#include "oqt/utils/geometry.hpp"
-#include "oqt/utils/operatingsystem.hpp"
+#include "oqt/common.hpp"
 
 namespace oqt {
-inline bool EndsWith(const std::string& a, const std::string& b) {
-    if (b.size() > a.size()) return false;
-    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+
+int64 file_size(const std::string& fn);
+void checkstats();
+int64 getmemval(size_t pid);
+std::string getmem(size_t pid);
+bool trim_memory();
+size_t getpid();
 }
-
-    
-
-
-
-
-}
-#endif //UTILS_HPP
+#endif

@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/minimalblock.hpp"
+#include "oqt/elements/minimalblock.hpp"
 #include "oqt/readpbffile.hpp"
 
 #include "oqt/count.hpp"

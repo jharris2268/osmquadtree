@@ -220,9 +220,7 @@ void change_defs(py::module& m) {
         py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
 */
 
-    m.def("combine_packedblock_two", &combine_packedblock_two);
     m.def("combine_primitiveblock_two", &combine_primitiveblock_two);
-    m.def("combine_packedblock_many", &combine_packedblock_many);
     m.def("combine_primitiveblock_many", &combine_primitiveblock_many);
 
 

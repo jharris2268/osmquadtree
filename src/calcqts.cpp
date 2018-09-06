@@ -22,8 +22,8 @@
 
 #include "oqt/readpbffile.hpp"
 #include "oqt/simplepbf.hpp"
-#include "oqt/minimalblock.hpp"
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/readminimal.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/waynodes.hpp"
 #include <algorithm>

@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/writepbffile.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include <algorithm>

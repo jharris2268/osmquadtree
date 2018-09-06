@@ -23,7 +23,7 @@
 #ifndef COUNT_HPP
 #define COUNT_HPP
 
-#include "oqt/minimalblock.hpp"
+#include "oqt/elements/minimalblock.hpp"
 #include "oqt/utils.hpp"
 namespace oqt {
 class count_objs {

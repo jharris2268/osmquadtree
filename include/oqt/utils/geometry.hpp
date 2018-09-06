@@ -20,40 +20,25 @@
  *
  *****************************************************************************/
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef UTILS_GEOMETRY_HPP
+#define UTILS_GEOMETRY_HPP
 
-
-
-
-#include "oqt/simplepbf.hpp"
-
-
-#include "oqt/utils/logger.hpp"
-
-#include "oqt/utils/compress.hpp"
-#include "oqt/utils/date.hpp"
-
-#include "oqt/utils/singlequeue.hpp"
-
-#include "oqt/utils/threadedcallback.hpp"
-#include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/splitcallback.hpp"
-#include "oqt/utils/invertedcallback.hpp"
-
-#include "oqt/utils/geometry.hpp"
-#include "oqt/utils/operatingsystem.hpp"
+#include "oqt/common.hpp"
 
 namespace oqt {
-inline bool EndsWith(const std::string& a, const std::string& b) {
-    if (b.size() > a.size()) return false;
-    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+
+struct lonlat {
+    lonlat() : lon(0), lat(0) {}
+    lonlat(int64 lon_,int64 lat_) : lon(lon_), lat(lat_) {}
+    int64 lon, lat;
+};
+typedef std::vector<lonlat> lonlatvec;
+
+bool point_in_poly(const lonlatvec& poly, const lonlat& test);
+
+bool segment_intersects(const lonlat& p1, const lonlat& p2, const lonlat& q1, const lonlat& q2);
+bool line_intersects(const lonlatvec& line1, const lonlatvec& line2);
+bool line_box_intersects(const lonlatvec& line, const bbox& box);
+bool polygon_box_intersects(const lonlatvec& line, const bbox& box);
 }
-
-    
-
-
-
-
-}
-#endif //UTILS_HPP
+#endif

@@ -25,8 +25,8 @@
 #include "oqt/gzstream.hpp"
 
 #include "oqt/readpbffile.hpp"
-#include "oqt/writepbffile.hpp"
-#include "oqt/minimalblock.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/elements/minimalblock.hpp"
 
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"

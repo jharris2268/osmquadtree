@@ -2,9 +2,9 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I/home/james/build/xml-inspector/ -I../include/oqt/postgresql
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-OBJS = calcqts.o combineblocks.o count.o mergechanges.o minimalblock.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o writepbffile.o xmlchange.o applychange.o
+OBJS = calcqts.o combineblocks.o count.o mergechanges.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o xmlchange.o applychange.o
 HEADERS = 
-PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o
+PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o 
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
 
@@ -45,8 +45,7 @@ primitivegroup.o: ../src/primitivegroup.cpp $(HEADERS)
 readblock.o: ../src/readblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readblock.cpp
 
-minimalblock.o: ../src/minimalblock.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/minimalblock.cpp
+
 
 quadtree.o: ../src/quadtree.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/quadtree.cpp
@@ -82,9 +81,6 @@ utils.o: ../src/utils.cpp $(HEADERS)
 
 mergechanges.o: ../src/mergechanges.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/mergechanges.cpp
-
-writepbffile.o: ../src/writepbffile.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/writepbffile.cpp
 	
 tempobjs.o: ../src/tempobjs.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/tempobjs.cpp
@@ -129,7 +125,12 @@ pbfformat/writeblock.o: ../src/pbfformat/writeblock.cpp $(HEADERS)
 pbfformat/fileblock.o: ../src/pbfformat/fileblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/fileblock.cpp -o pbfformat/fileblock.o
 
-	
+pbfformat/readminimal.o: ../src/pbfformat/readminimal.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readminimal.cpp -o pbfformat/readminimal.o
+
+pbfformat/writepbffile.o: ../src/pbfformat/writepbffile.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/writepbffile.cpp -o pbfformat/writepbffile.o
+		
 clean:
 	$(RM) oqt *.o liboqt.so* geometry/*.o pbfformat/*.o
 
