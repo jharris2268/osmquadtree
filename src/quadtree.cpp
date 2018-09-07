@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>

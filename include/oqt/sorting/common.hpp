@@ -27,20 +27,11 @@
 #include "oqt/simplepbf.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/utils.hpp"
-#include "oqt/quadtreegroups.hpp"
-#include "oqt/packedblock.hpp"
+#include "oqt/calcqts/qttreegroups.hpp"
+
+
 
 namespace oqt {
-
-
-//packedblock_ptr make_outpb_ptr(size_t idx, size_t sz, int64 qt);
-
-
-//typedef std::function<void(packedblock_ptr)> packedblock_callback;
-
-//typedef std::function<void(std::shared_ptr<packedblock>)> packedblock_callback;
-typedef std::function<void(std::shared_ptr<primitiveblock>)> primitiveblock_callback;
-
 
 typedef std::pair<int64,std::string> keystring;
 typedef std::vector<keystring> keystring_vec;

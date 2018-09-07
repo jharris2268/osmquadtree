@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef PACKEDBLOCK_HPP
-#define PACKEDBLOCK_HPP
+#ifndef PBFFORMAT_PACKEDBLOCK_HPP
+#define PBFFORMAT_PACKEDBLOCK_HPP
 
 #include "oqt/simplepbf.hpp"
 #include "oqt/utils.hpp"

@@ -25,7 +25,7 @@
 #include "oqt/pbfformat/packedint.hpp"
 
 
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 #include <map>
 #include <algorithm>
 #include <iterator>

@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
  
-#ifndef QUADTREE_HPP
-#define QUADTREE_HPP
+#ifndef ELEMENTS_QUADTREE_HPP
+#define ELEMENTS_QUADTREE_HPP
 
 
 #include <tuple>

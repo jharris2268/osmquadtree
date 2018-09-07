@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 #include <map>
 #include <unordered_map>
 #include <algorithm>

@@ -24,6 +24,7 @@
 #define SORTING_TEMPOBJS_HPP
 
 #include "oqt/sorting/common.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
 
 namespace oqt {
 class TempObjs {

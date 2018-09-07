@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/combineblocks.hpp"
+#include "oqt/elements/combineblocks.hpp"
 #include <map>
 namespace oqt {
 bool check_changetype(changetype ct) {

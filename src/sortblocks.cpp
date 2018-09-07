@@ -28,7 +28,8 @@
 #include <algorithm>
 #include <iomanip>
 
-#include "oqt/operations.hpp"
+#include "oqt/sorting/sortblocks.hpp"
+#include "oqt/sorting/mergechanges.hpp"
 #include "oqt/readpbffile.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/sortfile.hpp"

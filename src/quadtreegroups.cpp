@@ -20,13 +20,13 @@
  *
  *****************************************************************************/
 
-#include "oqt/quadtreegroups.hpp"
+#include "oqt/calcqts/qttreegroups.hpp"
 #include <numeric>
 #include "oqt/simplepbf.hpp"
-#include "oqt/packedblock.hpp"
+#include "oqt/pbfformat/packedblock.hpp"
 #include "oqt/elements/minimalblock.hpp"
 #include "oqt/readfile.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
 #include <iomanip>
 #include <algorithm>

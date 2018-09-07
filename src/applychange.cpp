@@ -20,9 +20,9 @@
  *
  *****************************************************************************/
 
-#include "oqt/operations.hpp"
+#include "oqt/update/applychange.hpp"
 #include "oqt/readpbffile.hpp"
-#include "oqt/xmlchange.hpp"
+#include "oqt/update/xmlchange.hpp"
 
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/gzstream.hpp"

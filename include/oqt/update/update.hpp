@@ -20,14 +20,14 @@
  *
  *****************************************************************************/
 
-#ifndef UPDATE_HPP
-#define UPDATE_HPP
-#include "oqt/quadtreegroups.hpp"
-#include "oqt/count.hpp"
-#include "oqt/xmlchange.hpp"
-#include "oqt/combineblocks.hpp"
+#ifndef UPDATE_UPDATE_HPP
+#define UPDATE_UPDATE_HPP
+#include "oqt/calcqts/qtstore.hpp"
+
+#include "oqt/update/xmlchange.hpp"
+#include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/store.hpp"
+#include "oqt/sorting/tempobjs.hpp"
 #include <set>
 namespace oqt {
 std::shared_ptr<header> getHeaderBlock(const std::string& fn);

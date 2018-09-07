@@ -24,7 +24,7 @@
 #define ELEMENTS_GEOMETRY_HPP
 
 #include "oqt/elements/element.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 namespace oqt {
 bool isGeometryType(elementtype ty);
 

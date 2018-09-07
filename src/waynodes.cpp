@@ -22,7 +22,7 @@
 
 #include "oqt/waynodes.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 #include <algorithm>
 #include <exception>
 #include <sstream>

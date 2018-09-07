@@ -20,7 +20,8 @@
  *
  *****************************************************************************/
 
-#include "oqt/store.hpp"
+#include "oqt/calcqts/qtstore.hpp"
+#include "oqt/calcqts/qtstoresplit.hpp"
 
 #include <algorithm>
 #include "oqt/utils.hpp"

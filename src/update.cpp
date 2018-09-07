@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/update.hpp"
+#include "oqt/update/update.hpp"
 
 #include "oqt/gzstream.hpp"
 

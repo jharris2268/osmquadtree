@@ -25,7 +25,7 @@
 
 #include "oqt/common.hpp"
 #include "oqt/elements/minimalblock.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 
 namespace oqt {
 

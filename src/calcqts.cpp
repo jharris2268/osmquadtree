@@ -20,12 +20,21 @@
  *
  *****************************************************************************/
 
-#include "oqt/readpbffile.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/simplepbf.hpp"
 #include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
+
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/waynodes.hpp"
+#include "oqt/calcqts/waynodes.hpp"
+#include "oqt/calcqts/qtstore.hpp"
+#include "oqt/calcqts/qtstoresplit.hpp"
+
+#include "oqt/calcqts/calculaterelations.hpp"
+#include "oqt/calcqts/waynodes.hpp"
+#include "oqt/calcqts/waynodesfile.hpp"
+
 #include <algorithm>
 #include <chrono>
 namespace oqt {

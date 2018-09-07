@@ -27,7 +27,7 @@
 #include "oqt/pbfformat/idset.hpp"
 #include "oqt/elements/block.hpp"
 #include "oqt/elements/header.hpp"
-#include "oqt/quadtree.hpp"
+#include "oqt/elements/quadtree.hpp"
 
 namespace oqt {
     

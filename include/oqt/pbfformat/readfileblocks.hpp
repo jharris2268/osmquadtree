@@ -29,9 +29,10 @@
 #include "oqt/utils.hpp"
 #include "oqt/simplepbf.hpp"
 #include "oqt/pbfformat/readminimal.hpp"
-#include "oqt/packedblock.hpp"
-#include "oqt/readfile.hpp"
-#include "oqt/combineblocks.hpp"
+#include "oqt/pbfformat/packedblock.hpp"
+#include "oqt/pbfformat/readfile.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
+#include "oqt/elements/combineblocks.hpp"
 
 
 #include <vector>

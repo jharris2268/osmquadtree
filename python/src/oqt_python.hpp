@@ -27,18 +27,21 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include "oqt/count.hpp"
-#include "oqt/quadtreegroups.hpp"
-#include "oqt/combineblocks.hpp"
+#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/store.hpp"
 #include "oqt/readpbffile.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 
-#include "oqt/xmlchange.hpp"
+#include "oqt/update/xmlchange.hpp"
 #include "oqt/gzstream.hpp"
-#include "oqt/update.hpp"
+#include "oqt/update/update.hpp"
 
-#include "oqt/operations.hpp"
+#include "oqt/calcqts/calcqts.hpp"
+#include "oqt/sorting/mergechanges.hpp"
+#include "oqt/sorting/sortblocks.hpp"
+
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/geometry/makegeometries.hpp"

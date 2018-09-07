@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/packedblock.hpp"
+#include "oqt/pbfformat/packedblock.hpp"
 #include <list>
 #include <iostream>
 #include <deque>

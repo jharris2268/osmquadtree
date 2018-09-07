@@ -24,7 +24,8 @@
 #define COMBINEBLOCKS_HPP
 
 #include "oqt/simplepbf.hpp"
-#include "oqt/packedblock.hpp"
+
+#include "oqt/elements/block.hpp"
 #include "oqt/elements/minimalblock.hpp"
 
 namespace oqt {
@@ -49,17 +50,7 @@ std::shared_ptr<minimalblock> combine_minimalblock_two(
 std::shared_ptr<minimalblock> combine_minimalblock_many(
     std::shared_ptr<minimalblock> main,
     const std::vector<std::shared_ptr<minimalblock>>& changes);
-/*
-std::shared_ptr<packedblock> combine_packedblock_two(
-    size_t idx,
-    std::shared_ptr<packedblock> left,
-    std::shared_ptr<packedblock> right,
-    bool apply_change);
 
-std::shared_ptr<packedblock> combine_packedblock_many(
-    std::shared_ptr<packedblock> main,
-    const std::vector<std::shared_ptr<packedblock>>& changes);
-*/
 }
 #endif //COMBINEBLOCKS_HPP
 

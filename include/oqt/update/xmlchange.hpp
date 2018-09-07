@@ -20,10 +20,10 @@
  *
  *****************************************************************************/
 
-#ifndef XMLCHANGE_HPP
-#define XMLCHANGE_HPP
+#ifndef UPDATE_XMLCHANGE_HPP
+#define UPDATE_XMLCHANGE_HPP
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/elements/block.hpp"
 #include <map>
 
 namespace oqt {

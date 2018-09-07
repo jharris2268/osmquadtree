@@ -27,7 +27,15 @@
 
 #include <fstream>
 
-#include "oqt/operations.hpp"
+#include "oqt/calcqts/calcqts.hpp"
+#include "oqt/update/applychange.hpp"
+#include "oqt/sorting/mergechanges.hpp"
+#include "oqt/sorting/sortblocks.hpp"
+
+#include "oqt/pbfformat/readfileblocks.hpp"
+
+
+
 using namespace oqt;
 bbox read_bbox(const std::string& str) {
     try {
