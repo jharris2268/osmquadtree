@@ -19,20 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-
-#ifndef UTILS_OPERATINGSYSTEM_HPP
-#define UTILS_OPERATINGSYSTEM_HPP
+ 
+#ifndef UPDATE_APPLYCHANGE_HPP
+#define UPDATE_APPLYCHANGE_HPP
 
 #include "oqt/common.hpp"
-#include <unistd.h>
 
 namespace oqt {
 
-int64 file_size(const std::string& fn);
-void checkstats();
-int64 getmemval(size_t pid);
-std::string getmem(size_t pid);
-bool trim_memory();
 
+void run_applychange(const std::string& origfn, const std::string& outfn, size_t numchan, const std::vector<std::string>& changes);
 }
 #endif

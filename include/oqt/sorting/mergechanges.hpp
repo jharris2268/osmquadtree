@@ -1,3 +1,4 @@
+
 /*****************************************************************************
  *
  * This file is part of osmquadtree
@@ -19,20 +20,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
+ 
+#ifndef SORTING_MERGECHANGES_HPP
+#define SORTING_MERGECHANGES_HPP
 
-#ifndef UTILS_OPERATINGSYSTEM_HPP
-#define UTILS_OPERATINGSYSTEM_HPP
-
-#include "oqt/common.hpp"
-#include <unistd.h>
+#include "oqt/utils/geometry.hpp"
 
 namespace oqt {
 
-int64 file_size(const std::string& fn);
-void checkstats();
-int64 getmemval(size_t pid);
-std::string getmem(size_t pid);
-bool trim_memory();
+
+
+void run_mergechanges(
+    const std::string& infile_name,
+    const std::string& outfn,
+    size_t numchan, bool sort_objs, bool filter_objs,
+    bbox filter_box, const lonlatvec& poly, int64 enddate,
+    const std::string& tempfn, size_t blocksize, bool sortfile, bool inmem);
 
 }
 #endif
