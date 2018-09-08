@@ -20,10 +20,10 @@
  *
  *****************************************************************************/
  
-#ifndef COMBINEBLOCKS_HPP
-#define COMBINEBLOCKS_HPP
+#ifndef ELEMENTS_COMBINEBLOCKS_HPP
+#define ELEMENTS_COMBINEBLOCKS_HPP
 
-#include "oqt/simplepbf.hpp"
+
 
 #include "oqt/elements/block.hpp"
 #include "oqt/elements/minimalblock.hpp"
@@ -52,5 +52,5 @@ std::shared_ptr<minimalblock> combine_minimalblock_many(
     const std::vector<std::shared_ptr<minimalblock>>& changes);
 
 }
-#endif //COMBINEBLOCKS_HPP
+#endif //ELEMENTS_COMBINEBLOCKS_HPP
 

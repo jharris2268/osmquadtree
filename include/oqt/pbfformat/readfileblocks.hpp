@@ -26,15 +26,18 @@
 
 
 
-#include "oqt/utils.hpp"
-#include "oqt/simplepbf.hpp"
+
+#include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/pbfformat/readminimal.hpp"
-#include "oqt/pbfformat/packedblock.hpp"
+#include "oqt/pbfformat/readblock.hpp"
 #include "oqt/pbfformat/readfile.hpp"
 #include "oqt/pbfformat/readfileparallel.hpp"
 #include "oqt/elements/combineblocks.hpp"
-
-
+#include "oqt/pbfformat/idset.hpp"
+#include "oqt/utils/multithreadedcallback.hpp"
+#include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/operatingsystem.hpp"
+#include "oqt/utils/compress.hpp"
 #include <vector>
 #include <fstream>
 namespace oqt {

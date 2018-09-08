@@ -23,7 +23,7 @@
 #ifndef ELEMENTS_MINIMALBLOCK_HPP
 #define ELEMENTS_MINIMALBLOCK_HPP
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/common.hpp"
 #include <deque>
 namespace oqt {
 struct minimalnode {

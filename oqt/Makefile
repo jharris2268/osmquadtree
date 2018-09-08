@@ -1,10 +1,12 @@
 CC = g++
-CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I/home/james/build/xml-inspector/ -I../include/oqt/postgresql
+CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-OBJS = calcqts.o combineblocks.o count.o mergechanges.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o simplepbf.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o xmlchange.o applychange.o
+OBJS = calcqts.o count.o mergechanges.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o xmlchange.o applychange.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o 
+ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o
+UTILS_OBJS = utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
 
@@ -12,8 +14,8 @@ default: oqt liboqt.so.0.0
 oqt: oqt_main.o liboqt.so.0.0
 	$(CC) $(CFLAGS) -o oqt oqt_main.o $(LIBS) -L/usr/local/lib -loqt #-ltcmalloc
 
-liboqt.so.0.0: $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS)
-	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(LIBS)
+liboqt.so.0.0: $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS)
+	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(LIBS)
  
 count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
@@ -36,8 +38,6 @@ calcqts_old.o:  ../src/calcqts_old.cpp $(HEADERS)
 readfile.o: ../src/readfile.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readfile.cpp
 
-simplepbf.o: ../src/simplepbf.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/simplepbf.cpp
 
 primitivegroup.o: ../src/primitivegroup.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/primitivegroup.cpp
@@ -73,8 +73,6 @@ waynodes.o: ../src/waynodes.cpp $(HEADERS)
 quadtreegroups.o: ../src/quadtreegroups.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/quadtreegroups.cpp
 
-combineblocks.o: ../src/combineblocks.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/combineblocks.cpp
 
 utils.o: ../src/utils.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils.cpp
@@ -130,7 +128,35 @@ pbfformat/readminimal.o: ../src/pbfformat/readminimal.cpp $(HEADERS)
 
 pbfformat/writepbffile.o: ../src/pbfformat/writepbffile.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/writepbffile.cpp -o pbfformat/writepbffile.o
-		
+
+
+elements/element.o: ../src/elements/element.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/element.cpp -o elements/element.o
+
+elements/node.o: ../src/elements/node.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/node.cpp -o elements/node.o
+	
+elements/way.o: ../src/elements/way.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/way.cpp -o elements/way.o
+
+elements/relation.o: ../src/elements/relation.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/relation.cpp -o elements/relation.o
+
+elements/geometry.o: ../src/elements/geometry.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/geometry.cpp -o elements/geometry.o
+
+elements/combineblocks.o: ../src/elements/combineblocks.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/combineblocks.cpp -o elements/combineblocks.o	
+	
+utils/pbf/packedint.o: ../src/utils/pbf/packedint.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/pbf/packedint.cpp -o utils/pbf/packedint.o
+
+utils/pbf/varint.o: ../src/utils/pbf/varint.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/pbf/varint.cpp -o utils/pbf/varint.o
+	
+utils/pbf/protobuf.o: ../src/utils/pbf/protobuf.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/pbf/protobuf.cpp -o utils/pbf/protobuf.o
+
 clean:
 	$(RM) oqt *.o liboqt.so* geometry/*.o pbfformat/*.o
 

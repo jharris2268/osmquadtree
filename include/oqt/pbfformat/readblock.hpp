@@ -28,7 +28,7 @@
 #include "oqt/elements/block.hpp"
 #include "oqt/elements/header.hpp"
 #include "oqt/elements/quadtree.hpp"
-
+#include "oqt/utils/pbf/protobuf.hpp"
 namespace oqt {
     
 

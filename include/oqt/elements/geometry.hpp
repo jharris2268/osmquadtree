@@ -25,6 +25,9 @@
 
 #include "oqt/elements/element.hpp"
 #include "oqt/elements/quadtree.hpp"
+
+#include "oqt/utils/pbf/protobuf.hpp"
+
 namespace oqt {
 bool isGeometryType(elementtype ty);
 
@@ -54,32 +57,16 @@ class basegeometry : public element {
 
 class geometry_packed : public basegeometry {
     public:
-        geometry_packed(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_) :
-            basegeometry(t,c,i,q,inf,tags,minzoom_), geom_messages(geom_messages_), internalid(0) {
-            
-            internalid = (((uint64) t)<<61ull);
-            if (t==6) {
-                internalid |= ( ((uint64) i) << 16ull);
-                for (const auto& m: geom_messages) {
-                    if (m.tag==19) { internalid |= m.value/2; } //part (zigzag int64)
-                }
-            } else {
-                internalid |= i;
-            }
-                
-        }
-        virtual uint64 InternalId() const { return internalid; }
+        geometry_packed(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_);
+        virtual uint64 InternalId() const;
         
         
-        virtual elementtype OriginalType() const { return Unknown; }
-        virtual bbox Bounds() const { return bbox{1,1,0,0}; }
-        virtual std::string Wkb(bool transform, bool srid) const { throw std::domain_error("not implemented"); }
+        virtual elementtype OriginalType() const;
+        virtual bbox Bounds() const;
+        virtual std::string Wkb(bool transform, bool srid) const;
+        virtual std::list<PbfTag> pack_extras() const;
         
-        std::list<PbfTag> pack_extras() const { return geom_messages; }
-        
-        virtual element_ptr copy() {
-            return std::make_shared<geometry_packed>(Type(),ChangeType(),Id(),Quadtree(),Info(),Tags(),MinZoom(),geom_messages);
-        }
+        virtual element_ptr copy();
         
         virtual ~geometry_packed() {}
         

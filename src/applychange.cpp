@@ -21,17 +21,23 @@
  *****************************************************************************/
 
 #include "oqt/update/applychange.hpp"
-#include "oqt/readpbffile.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/update/xmlchange.hpp"
 
 #include "oqt/pbfformat/writepbffile.hpp"
-#include "oqt/gzstream.hpp"
-#include "oqt/sortfile.hpp"
+#include "gzstream.hpp"
+#include "oqt/update/applychange.hpp"
+#include "oqt/sorting/final.hpp"
+#include "oqt/sorting/sortbyid.hpp"
 
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
 #include "oqt/pbfformat/readblock.hpp"
+
+#include "oqt/utils/logger.hpp"
+
+
 #include <algorithm>
 
 namespace oqt {

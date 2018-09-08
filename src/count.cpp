@@ -21,10 +21,12 @@
  *****************************************************************************/
 
 #include "oqt/elements/minimalblock.hpp"
-#include "oqt/readpbffile.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
+#include "oqt/utils/date.hpp"
 
 #include "oqt/count.hpp"
 #include <algorithm>
+
 
 namespace oqt {
 count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {

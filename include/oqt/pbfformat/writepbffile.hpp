@@ -23,7 +23,8 @@
 #ifndef PBFFORMAT_WRITEPBFFILE_HPP
 #define PBFFORMAT_WRITEPBFFILE_HPP
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/common.hpp"
+#include "oqt/elements/header.hpp"
 namespace oqt {
 typedef std::pair<int64,std::string> keystring;
 typedef std::shared_ptr<keystring> keystring_ptr;

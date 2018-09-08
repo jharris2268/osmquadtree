@@ -21,7 +21,8 @@
  *****************************************************************************/
 
 #include "oqt/pbfformat/readminimal.hpp"
-#include "oqt/utils.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/logger.hpp"
 #include <iostream>
 #include <iterator>
 #include <iomanip>

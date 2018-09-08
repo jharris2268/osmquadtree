@@ -21,8 +21,8 @@
  *****************************************************************************/
 
 #include "oqt/pbfformat/writeblock.hpp"
-#include "oqt/pbfformat/protobuf.hpp"
-#include "oqt/pbfformat/packedint.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+
 
 
 #include "oqt/elements/quadtree.hpp"

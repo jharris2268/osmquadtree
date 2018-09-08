@@ -20,15 +20,28 @@
  *
  *****************************************************************************/
 
-#ifndef READFILE_H
-#define READFILE_H
-
-#include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/pbfformat/readfile.hpp"
-#include "oqt/pbfformat/readfileparallel.hpp"
 
 
+#include "oqt/elements/way.hpp"
+
+namespace oqt {
 
 
+way::way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs)
+    : element(elementtype::Way,c,i,q,inf,tags), refs_(refs) {}
 
-#endif
+
+const refvector& way::Refs() const { return refs_; }
+
+        
+
+/*
+std::list<PbfTag> way::pack_extras() const {
+    return {PbfTag{8,0,writePackedDelta(refs_)}};
+}
+  */      
+std::shared_ptr<element> way::copy() { return std::make_shared<way>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Refs()); }
+    
+}
+
+

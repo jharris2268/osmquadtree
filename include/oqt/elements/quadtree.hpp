@@ -27,30 +27,11 @@
 #include <tuple>
 #include <cmath>
 #include "oqt/common.hpp"
+
+#include "oqt/utils/bbox.hpp"
+
 namespace oqt {
-struct bbox {
-    int64 minx,miny,maxx,maxy;
 
-    bbox() : minx(1800000000),miny(1800000000),maxx(-1800000000),maxy(-1800000000) {}
-    bbox(int64 a, int64 b, int64 c, int64 d) : minx(a),miny(b),maxx(c),maxy(d) {}
-
-    void expand_point(int64 x, int64 y) {
-        if (x<minx) { minx=x; }
-        if (y<miny) { miny=y; }
-        if (x>maxx) { maxx=x; }
-        if (y>maxy) { maxy=y; }
-    }
-};
-bool box_empty(const bbox&);
-bool box_planet(const bbox&);
-
-std::ostream& operator<<(std::ostream&, const bbox&);
-bool contains_point(const bbox&, int64, int64);
-bool overlaps(const bbox&, const bbox&);
-bool overlaps_quadtree(const bbox&, int64);
-bool bbox_contains(const bbox&, const bbox&);
-
-void bbox_expand(bbox&, const bbox&);
 
 namespace quadtree {
 

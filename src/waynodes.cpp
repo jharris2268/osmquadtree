@@ -20,15 +20,23 @@
  *
  *****************************************************************************/
 
-#include "oqt/waynodes.hpp"
+
+#include "oqt/calcqts/qtstoresplit.hpp"
+#include "oqt/calcqts/calculaterelations.hpp"
+#include "oqt/calcqts/waynodes.hpp"
+#include "oqt/calcqts/waynodesfile.hpp"
+
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/elements/quadtree.hpp"
 #include <algorithm>
 #include <exception>
 #include <sstream>
 #include <iomanip>
+#include "oqt/pbfformat/writepbffile.hpp"
 
-#include "oqt/readpbffile.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
+#include "oqt/utils/logger.hpp"
+
 namespace oqt {
 typedef std::function<void(std::shared_ptr<minimalblock>)> minimalblock_callback;
 typedef std::function<void(std::shared_ptr<way_nodes>)> waynodes_callback;

@@ -27,6 +27,8 @@
 #include "oqt/calcqts/qtstore.hpp"
 #include "oqt/calcqts/qtstoresplit.hpp"
 
+#include "oqt/utils/invertedcallback.hpp"
+
 using namespace oqt;
 class logger_python : public logger {
     public:
@@ -280,12 +282,12 @@ py::object count_blocks_call(const std::string& fn, size_t numchan, size_t objfl
 
 struct objdiff {
     size_t left_idx;
-    packedobj_ptr left;
+    element_ptr left;
     
     size_t right_idx;
-    packedobj_ptr right;
+    element_ptr right;
 };
-
+/*
 
 typedef std::function<void(packedobj_ptr)> packedobj_callback;
 typedef std::function<void(packedblock_ptr)> packedblock_callback;
@@ -325,7 +327,7 @@ class obj_iter {
         packedblock_ptr curr;
 };
             
-            
+*/            
         
             
 /*
@@ -499,12 +501,12 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
     while (left.second || right.second) {
         
         if (!left.second || (right.second->InternalId() < left.second->InternalId())) {
-            curr.push_back(objdiff{0,nullptr,right.first,right.second->pack()});
+            curr.push_back(objdiff{0,nullptr,right.first,right.second});
             
             right=right_obj.next();
             tot[Object]++;
         } else if (!right.second || (left.second->InternalId() < right.second->InternalId())) {
-            curr.push_back(objdiff{left.first,left.second->pack(),0,nullptr});
+            curr.push_back(objdiff{left.first,left.second,0,nullptr});
             
             left=left_obj.next();
             tot[Object]++;
@@ -534,7 +536,7 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
             }
             
             if (same!=diffreason::Same) {
-                curr.push_back(objdiff{left.first,left.second->pack(),right.first,right.second->pack()});
+                curr.push_back(objdiff{left.first,left.second,right.first,right.second});
                 
             }
             tot[same]++;

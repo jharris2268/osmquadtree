@@ -25,7 +25,12 @@
 #include <iostream>
 #include <deque>
 namespace oqt {
-/*uint32_t*/void fetchInfo(std::list<PbfTag>& nl, const std::vector<std::string>& st, const std::string& data) {
+    
+/*    
+    
+    
+    
+void fetchInfo(std::list<PbfTag>& nl, const std::vector<std::string>& st, const std::string& data) {
     size_t pos=0;
     //uint32_t vs=0;
     for (auto tg = readPbfTag(data,pos); tg.tag>0; tg=readPbfTag(data,pos)) {
@@ -75,7 +80,7 @@ void readPackedObject(
             fetchStrings(nl,tg.tag,stringtable,tg.data);
         } else if (tg.tag==4) {
 
-            /*vs=*/fetchInfo(nl,stringtable,tg.data);
+            fetchInfo(nl,stringtable,tg.data);
         } else if (tg.tag==20) {
             quadtree = unZigZag(tg.value);
         } else if ( (tyoff==0) && ((tg.tag==8) || (tg.tag==9))) {
@@ -253,16 +258,12 @@ std::shared_ptr<packedblock> readPackedBlock(int64 index, const std::string& dat
     for (auto oo : objs) {
         readPackedGroup(res->objects, st, oo, objflags, change,ids);
     }
-    /*size_t sz=0;
-    for (auto& p : temp) {
-        sz+=p->Data().size();
-    }*/
+   
     //auto res = std::make_shared<packedblock>(index,quadtree,temp.size(),sz,startdate,enddate);
     
     
-    /*for (auto& p : temp) {
-        res->add(p);//std::move(p));
-    }*/
+    
     return res;
 }
+*/
 }

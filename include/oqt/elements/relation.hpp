@@ -29,15 +29,13 @@
 namespace oqt {
 class relation : public element {
     public:
-        relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems)
-            : element(elementtype::Relation,c,i,q,inf,tags), mems_(mems) {}
-        
+        relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems);
         virtual ~relation() {}
 
-        const memvector&  Members() const { return mems_; }
+        const memvector&  Members() const;
         //virtual packedobj_ptr pack();
-        virtual std::list<PbfTag> pack_extras() const;
-        virtual std::shared_ptr<element> copy() { return std::make_shared<relation>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Members()); }
+        //virtual std::list<PbfTag> pack_extras() const;
+        virtual std::shared_ptr<element> copy();
         
         bool filter_members(std::shared_ptr<idset> ids);
         friend bool fix_members(relation& rel);

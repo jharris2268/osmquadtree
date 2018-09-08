@@ -20,13 +20,25 @@
  *
  *****************************************************************************/
 
-#ifndef STORE_HPP
-#define STORE_HPP
+#ifndef UTILS_PBF_VARINT_HPP
+#define UTILS_PBF_VARINT_HPP
+
+#include "oqt/common.hpp"
+
+namespace oqt {
+
+uint64 zigZag(int64 v);
+int64 unZigZag(uint64 uv);
+
+    
+uint64 readUVarint(const std::string& data, size_t& pos);
+int64 readVarint(const std::string& data, size_t& pos);
+
+size_t UVarintLength(uint64 value);
+size_t writeUVarint(std::string& data, size_t pos, uint64 uv);
+size_t writeVarint(std::string& data, size_t pos, int64 v);
 
 
-#include "oqt/calcqts/qtstore.hpp"
+}
 
-#include "oqt/calcqts/qtstoresplit.hpp"
-
-
-#endif
+#endif //PBFFORMAT_VARINT_HPP

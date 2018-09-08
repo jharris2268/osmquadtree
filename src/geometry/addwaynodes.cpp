@@ -22,6 +22,9 @@
 
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/elements/quadtree.hpp"
+
+#include "oqt/utils/logger.hpp"
+
 #include <map>
 #include <unordered_map>
 #include <algorithm>
@@ -155,7 +158,7 @@ block_callback make_addwaynodes_cb(block_callback cb) {
     };
 }
 
-
+/*
 void add_waynodes_process(
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
@@ -181,7 +184,7 @@ void add_waynodes_process(
     }
 
 }
-
+*/
 
 xy forward_transform(int64 ln, int64 lt) {
     double x = toFloat(ln)*earth_width / 180; 

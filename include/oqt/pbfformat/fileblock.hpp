@@ -23,7 +23,7 @@
 #ifndef PBFFORMAT_FILEBLOCK_HPP
 #define PBFFORMAT_FILEBLOCK_HPP
 
-#include "oqt/utils.hpp"
+#include "oqt/common.hpp"
 
 namespace oqt {
 

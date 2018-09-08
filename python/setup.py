@@ -4,7 +4,7 @@ from distutils.sysconfig import customize_compiler
 
 import shutil, os.path
 
-xmlinspector_path = "/home/james/build/xml-inspector"
+xmlinspector_path = os.path.abspath("../thirdparty/xmlinspector")
 
 if not os.path.exists(os.path.join(xmlinspector_path, "XmlInspector.hpp")):
     raise Exception("specify path to xml-inspector headers")
@@ -57,6 +57,7 @@ ext_modules = [
         include_dirs=[
             '/usr/local/include',
             os.path.abspath('../include/'),
+            os.path.abspath('../thirdparty/'),
             xmlinspector_path,
             postgresql_path,
         ],

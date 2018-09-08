@@ -20,15 +20,19 @@
  *
  *****************************************************************************/
 
-#include "oqt/readpbffile.hpp"
+#include "oqt/pbfformat/readfile.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
-#include "oqt/simplepbf.hpp"
-#include "oqt/utils.hpp"
-#include "oqt/picojson.h"
-#include "oqt/sortfile.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/compress.hpp"
+#include "oqt/utils/threadedcallback.hpp"
+
+#include "oqt/pbfformat/readblock.hpp"
+#include "picojson.h"
 #include "oqt/sorting/tempobjs.hpp"
+#include "oqt/sorting/final.hpp"
 #include <iterator>
 namespace oqt {
 

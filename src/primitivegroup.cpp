@@ -20,14 +20,14 @@
  *
  *****************************************************************************/
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
 
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
 #include "oqt/elements/geometry.hpp"
 
-
+#include "oqt/pbfformat/readblock.hpp"
 #include <iostream>
 
 namespace oqt {

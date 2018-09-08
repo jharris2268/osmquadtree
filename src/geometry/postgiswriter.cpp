@@ -22,6 +22,10 @@
 
 #include "oqt/geometry/postgiswriter.hpp"
 #include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/utils/logger.hpp"
+
+#include "oqt/utils/pbf/protobuf.hpp"
+
 #include <sstream>
 #include <iostream>
 #include <map>

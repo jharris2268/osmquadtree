@@ -21,7 +21,6 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
-#include "oqt/sortfile.hpp"
 #include "oqt/pbfformat/objsidset.hpp"
 
 using namespace oqt;
@@ -249,9 +248,9 @@ void block_defs(py::module& m) {
         .def("SetTags", &element::SetTags)
         .def("RemoveTag", &element::RemoveTag)
         .def("AddTag", &element::AddTag)
-        .def("pack", &element::pack)
+        //.def("pack", &element::pack)
         .def("copy", &element::copy)
-        .def("pack_extras", &element::pack_extras)
+        //.def("pack_extras", &element::pack_extras)
     ;
 
     py::class_<info>(m, "info")
@@ -330,7 +329,7 @@ void block_defs(py::module& m) {
     
     m.def("readPrimitiveBlock", &readPrimitiveBlock_py, py::arg("index"), py::arg("data"), py::arg("change"));
 
-    py::class_<packedobj, packedobj_ptr>(m, "packedobj")
+    /*py::class_<packedobj, packedobj_ptr>(m, "packedobj")
         .def_property_readonly("InternalId", &packedobj::InternalId)
         .def_property_readonly("Type", &packedobj::Type)
         .def_property_readonly("Id", &packedobj::Id)
@@ -356,7 +355,7 @@ void block_defs(py::module& m) {
             }
         });
     ;
-    m.def("read_packedobj", &read_packedobj);
+    m.def("read_packedobj", &read_packedobj);*/
 
     py::class_<minimalblock, std::shared_ptr<minimalblock>>(m, "minimalblock")
         .def_readonly("index", &minimalblock::index)
@@ -420,7 +419,7 @@ void block_defs(py::module& m) {
 
     
     m.def("readMinimalBlock", &readMinimalBlock);
-
+/*
     py::class_<packedblock, std::shared_ptr<packedblock>>(m, "packedblock")
         .def(py::init<int64,size_t>())
         .def_readonly("index", &packedblock::index)
@@ -436,7 +435,7 @@ void block_defs(py::module& m) {
     
     
     m.def("readPackedBlock", &readPackedBlock, py::arg("idx"),py::arg("data"),py::arg("objs")=7,py::arg("change")=false,py::arg("ids")=std::shared_ptr<idset>());
-
+*/
     py::class_<PbfTag>(m,"PbfTag")
         .def_readonly("tag", &PbfTag::tag)
         .def_readonly("value", &PbfTag::value)

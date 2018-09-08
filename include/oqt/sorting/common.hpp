@@ -24,9 +24,7 @@
 #define SORTING_COMMON_HPP
 
 
-#include "oqt/simplepbf.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
-#include "oqt/utils.hpp"
 #include "oqt/calcqts/qttreegroups.hpp"
 
 

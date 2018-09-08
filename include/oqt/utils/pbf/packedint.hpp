@@ -20,16 +20,16 @@
  *
  *****************************************************************************/
 
-#ifndef PBFFORMAT_PACKEDINT_HPP
-#define PBFFORMAT_PACKEDINT_HPP
+#ifndef UTILS_PBF_PACKEDINT_HPP
+#define UTILS_PBF_PACKEDINT_HPP
 
-#include "oqt/common.hpp"
+
 
 #include <tuple>
 #include <list>
 #include <set>
 #include <functional>
-#include "oqt/pbfformat/varint.hpp"
+#include "oqt/utils/pbf/varint.hpp"
 
 
 namespace oqt {

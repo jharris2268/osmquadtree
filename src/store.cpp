@@ -22,9 +22,9 @@
 
 #include "oqt/calcqts/qtstore.hpp"
 #include "oqt/calcqts/qtstoresplit.hpp"
-
+#include "oqt/elements/quadtree.hpp"
 #include <algorithm>
-#include "oqt/utils.hpp"
+//#include "oqt/utils.hpp"
 #include <cmath>
 #include <map>
 namespace oqt {

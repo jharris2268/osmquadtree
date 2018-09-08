@@ -21,6 +21,11 @@
  *****************************************************************************/
 
 #include "oqt/geometry/geometrytypes.hpp"
+
+#include "oqt/pbfformat/readblock.hpp"
+
+#include "oqt/utils/logger.hpp"
+
 #include <algorithm>
 
 #include <picojson.h>
@@ -422,7 +427,7 @@ std::list<PbfTag> complicatedpolygon::pack_extras() const {
     }
     return extras;
 }
-
+/*
 void process_all(std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
     std::shared_ptr<BlockHandler> handler) {
@@ -446,6 +451,7 @@ void process_all(std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
         o->wait_and_finish();
     }
 }
+*/
 
 std::string get_tag(std::shared_ptr<element> e, const std::string& k) {
     for (const auto& t : e->Tags()) {
@@ -594,7 +600,7 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
     }
     return std::shared_ptr<element>();
 }
-
+/*
 std::shared_ptr<element> readGeometry(elementtype ty, const std::string& data, const std::vector<std::string>& st, uint64 ct) {
     int64 id, qt;
     info inf; tagvector tgs;
@@ -609,10 +615,18 @@ std::shared_ptr<element> unpack_geometry(elementtype ty, int64 id, int64 ct, int
     std::tie(inf,tv,mm) = unpack_packedobj_common(d);
     return readGeometry_int(ty, id, inf, tv, qt, mm, ct);
 }
-
-std::shared_ptr<element> unpack_geometry_element(std::shared_ptr<element> geom) {
+*/
+std::shared_ptr<element> unpack_geometry_element(std::shared_ptr<element> ele) {
+    
+    auto geom = std::dynamic_pointer_cast<basegeometry>(ele);
+    if (!geom) {
+        throw std::domain_error("not a geometry?");
+    }
+    
     return readGeometry_int(geom->Type(), geom->Id(), geom->Info(), geom->Tags(), geom->Quadtree(), geom->pack_extras(), geom->ChangeType());
 }
+
+
 
 size_t unpack_geometry_primitiveblock(primblock_ptr pb) {
     size_t cnt=0;

@@ -25,6 +25,9 @@
 
 
 #include "oqt/sorting/common.hpp"
+#include "oqt/elements/block.hpp"
+
+
 namespace oqt {
 
 std::function<void(keystring_ptr)> make_writepbf_callback(std::shared_ptr<PbfFileWriter> ww, int64 buffer);

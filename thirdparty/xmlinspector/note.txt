@@ -1,0 +1,1 @@
+from https://www.codeproject.com/Articles/587488/Streaming-XML-parser-in-Cplusplus

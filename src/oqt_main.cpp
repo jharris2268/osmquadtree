@@ -22,7 +22,7 @@
 
 
 #include "oqt/count.hpp"
-#include "oqt/quadtreegroups.hpp"
+#include "oqt/calcqts/qttreegroups.hpp"
 #include <regex>
 
 #include <fstream>
@@ -33,7 +33,8 @@
 #include "oqt/sorting/sortblocks.hpp"
 
 #include "oqt/pbfformat/readfileblocks.hpp"
-
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/date.hpp"
 
 
 using namespace oqt;

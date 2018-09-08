@@ -22,9 +22,11 @@
 
 #include "oqt/update/update.hpp"
 
-#include "oqt/gzstream.hpp"
+#include "gzstream.hpp"
 
-#include "oqt/readpbffile.hpp"
+
+#include "oqt/pbfformat/readfile.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/elements/minimalblock.hpp"
 
@@ -35,8 +37,10 @@
 
 
 #include "oqt/pbfformat/writeblock.hpp"
-
-
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/multithreadedcallback.hpp"
+#include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/logger.hpp"
 
 namespace oqt {
 int64 make_internalid(elementtype ty, int64 rf) {

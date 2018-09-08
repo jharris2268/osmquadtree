@@ -24,7 +24,9 @@
 #define COUNT_HPP
 
 #include "oqt/elements/minimalblock.hpp"
-#include "oqt/utils.hpp"
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/pbf/varint.hpp"
+#include "oqt/utils/date.hpp"
 namespace oqt {
 class count_objs {
 

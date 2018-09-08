@@ -21,7 +21,6 @@
  *****************************************************************************/
 
 #include "oqt/pbfformat/readfileblocks.hpp"
-#include "oqt/simplepbf.hpp"
 #include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
@@ -34,6 +33,10 @@
 #include "oqt/calcqts/calculaterelations.hpp"
 #include "oqt/calcqts/waynodes.hpp"
 #include "oqt/calcqts/waynodesfile.hpp"
+
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/pbf/packedint.hpp"
+#include "oqt/utils/invertedcallback.hpp"
 
 #include <algorithm>
 #include <chrono>

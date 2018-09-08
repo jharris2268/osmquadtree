@@ -23,12 +23,10 @@
 #ifndef PBFFORMAT_PACKEDBLOCK_HPP
 #define PBFFORMAT_PACKEDBLOCK_HPP
 
-#include "oqt/simplepbf.hpp"
-#include "oqt/utils.hpp"
 
 #include "oqt/elements/block.hpp"
 namespace oqt {
-std::shared_ptr<packedblock> readPackedBlock(int64 index, const std::string& data, size_t objflags=7, bool change=false, std::shared_ptr<idset> ids=std::shared_ptr<idset>());
+//std::shared_ptr<packedblock> readPackedBlock(int64 index, const std::string& data, size_t objflags=7, bool change=false, std::shared_ptr<idset> ids=std::shared_ptr<idset>());
 
 }
 #endif

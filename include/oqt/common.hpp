@@ -35,11 +35,13 @@ typedef int64_t int64;
 typedef uint64_t uint64;
 typedef int32_t int32;
 
-struct PbfTag {
-    uint64 tag;
-    uint64 value;
-    std::string data;
-};
+
+inline bool EndsWith(const std::string& a, const std::string& b) {
+    if (b.size() > a.size()) return false;
+    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+}
+
+std::string fix_str(const std::string&);
 
 }
 #endif

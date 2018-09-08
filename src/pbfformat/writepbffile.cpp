@@ -23,6 +23,10 @@
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
+#include "oqt/pbfformat/readblock.hpp"
+#include "oqt/utils/logger.hpp"
+
+
 #include <algorithm>
 #include <iostream>
 #include <fstream>

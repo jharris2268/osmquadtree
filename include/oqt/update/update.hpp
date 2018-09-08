@@ -23,7 +23,7 @@
 #ifndef UPDATE_UPDATE_HPP
 #define UPDATE_UPDATE_HPP
 #include "oqt/calcqts/qtstore.hpp"
-
+#include "oqt/pbfformat/idset.hpp"
 #include "oqt/update/xmlchange.hpp"
 #include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"

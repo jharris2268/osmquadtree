@@ -27,6 +27,7 @@
 #include "oqt/calcqts/qtstoresplit.hpp"
 #include "oqt/calcqts/waynodesfile.hpp"
 #include "oqt/calcqts/calculaterelations.hpp"
+#include "oqt/elements/block.hpp"
 
 namespace oqt {
 

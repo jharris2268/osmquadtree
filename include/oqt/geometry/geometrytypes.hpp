@@ -268,10 +268,12 @@ class BlockHandler  {
         virtual primblock_vec finish() {return {}; };
         virtual ~BlockHandler() {};
 };
+
+/*
 void process_all(std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
     std::shared_ptr<BlockHandler> handler);
-
+*/
 std::string get_tag(std::shared_ptr<element>, const std::string&);
 
 

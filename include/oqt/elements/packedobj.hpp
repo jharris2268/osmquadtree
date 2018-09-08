@@ -26,7 +26,7 @@
 #include "oqt/common.hpp"
 #include "oqt/elements/rawelement.hpp"
 namespace oqt {
-class packedobj : public rawelement {
+/*class packedobj : public rawelement {
     
     
     public:
@@ -73,6 +73,13 @@ inline bool packedobj_cmp(const packedobj_ptr& l, const packedobj_ptr& r) {
     if ((!l) || (!r)) { throw std::domain_error("packedobj_cmp nullptr!!");}
     return l->InternalId() < r->InternalId();
 }
+
+
+
+
+std::tuple<info,tagvector,std::list<PbfTag>> unpack_packedobj_common(const std::string& data);
+*/
+
 }
 
 #endif

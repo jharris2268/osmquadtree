@@ -29,7 +29,7 @@ namespace oqt {
 
 std::function<void(element_ptr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize);
 
-primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<qttree> groups, size_t blocksplit, size_t writeat);
+primitiveblock_callback make_splitbyid_callback(primitiveblock_callback packers, size_t blocksplit, size_t writeat, int64 split_at);
 
 
 }

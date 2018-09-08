@@ -27,18 +27,15 @@
 namespace oqt {
 class node : public element {
     public:
-        node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat)
-            : element(elementtype::Node,c,i,q,inf,tags), lon_(lon), lat_(lat) {}
-
-        //node(const node& n) : element(n), lon_(n.lon_), lat_(n.lat_) {}
+        node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat);
+        
         virtual ~node() {}
 
-        int64 Lon() const { return lon_; }
-        int64 Lat() const { return lat_; }
+        int64 Lon() const;
+        int64 Lat() const;
 
-        //virtual packedobj_ptr pack();
-        virtual std::list<PbfTag> pack_extras() const;
-        virtual std::shared_ptr<element> copy() { return std::make_shared<node>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Lon(),Lat()); }
+        //virtual std::list<PbfTag> pack_extras() const;
+        virtual std::shared_ptr<element> copy();
     private:
         int64 lon_,lat_;
 };

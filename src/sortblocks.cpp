@@ -22,17 +22,32 @@
 
 
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/quadtreegroups.hpp"
+#include "oqt/calcqts/qttreegroups.hpp"
 #include <map>
 #include <set>
 #include <algorithm>
 #include <iomanip>
 
+#include "oqt/elements/block.hpp"
+#include "oqt/utils/geometry.hpp"
+
+#include "oqt/utils/multithreadedcallback.hpp"
+#include "oqt/utils/threadedcallback.hpp"
+
+
+#include "oqt/elements/quadtree.hpp"
+#include "oqt/pbfformat/readminimal.hpp"
+
+
 #include "oqt/sorting/sortblocks.hpp"
 #include "oqt/sorting/mergechanges.hpp"
-#include "oqt/readpbffile.hpp"
+#include "oqt/sorting/final.hpp"
+#include "oqt/sorting/sortgroup.hpp"
+#include "oqt/sorting/resortobjects.hpp"
+#include "oqt/pbfformat/readfile.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
-#include "oqt/sortfile.hpp"
 #include "oqt/sorting/tempobjs.hpp"
 namespace oqt {
 class CollectQts { 

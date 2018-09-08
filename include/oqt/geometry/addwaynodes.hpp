@@ -23,9 +23,10 @@
 #ifndef ADDWAYNODES_HPP
 #define ADDWAYNODES_HPP
 
-#include "oqt/simplepbf.hpp"
-#include "oqt/utils.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/geometry.hpp"
 
+#include "oqt/elements/block.hpp"
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"

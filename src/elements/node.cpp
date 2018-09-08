@@ -20,40 +20,20 @@
  *
  *****************************************************************************/
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
-
-
-
-
-#include "oqt/simplepbf.hpp"
-
-
-#include "oqt/utils/logger.hpp"
-
-#include "oqt/utils/compress.hpp"
-#include "oqt/utils/date.hpp"
-
-#include "oqt/utils/singlequeue.hpp"
-
-#include "oqt/utils/threadedcallback.hpp"
-#include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/splitcallback.hpp"
-#include "oqt/utils/invertedcallback.hpp"
-
-#include "oqt/utils/geometry.hpp"
-#include "oqt/utils/operatingsystem.hpp"
-
+#include "oqt/elements/node.hpp"
 namespace oqt {
-inline bool EndsWith(const std::string& a, const std::string& b) {
-    if (b.size() > a.size()) return false;
-    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
-}
 
+node::node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat)
+    : element(elementtype::Node,c,i,q,inf,tags), lon_(lon), lat_(lat) {}
+
+
+int64 node::Lon() const { return lon_; }
+int64 node::Lat() const { return lat_; }
+/*
+std::list<PbfTag> node::pack_extras() const {
+    return {PbfTag{8,zigZag(lat_),""},PbfTag{9,zigZag(lon_),""}};
+}*/
+std::shared_ptr<element> node::copy() { return std::make_shared<node>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Lon(),Lat()); }
     
-
-
-
-
 }
-#endif //UTILS_HPP
+

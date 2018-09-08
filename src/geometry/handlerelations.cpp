@@ -23,6 +23,7 @@
 #include "oqt/geometry/handlerelations.hpp"
 #include "oqt/geometry/geometrytypes.hpp"
 #include "oqt/geometry/makegeometries.hpp"
+#include "oqt/utils/logger.hpp"
 #include <sstream>
 #include <map>
 namespace oqt {

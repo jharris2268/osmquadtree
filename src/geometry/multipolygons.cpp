@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/geometry/multipolygons.hpp"
+#include "oqt/utils/logger.hpp"
 #include <deque>
 namespace oqt {
 namespace geometry {

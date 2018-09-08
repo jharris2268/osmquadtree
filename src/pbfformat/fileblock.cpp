@@ -23,9 +23,10 @@
 #include "oqt/pbfformat/fileblock.hpp"
 
 #include <algorithm>
-#include "oqt/pbfformat/protobuf.hpp"
-#include "oqt/utils.hpp"
-
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/compress.hpp"
+#include "oqt/utils/logger.hpp"
+#include <fstream>
 namespace oqt {
     
     

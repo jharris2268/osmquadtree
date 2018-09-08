@@ -20,9 +20,20 @@
  *
  *****************************************************************************/
 
-#include "oqt/readfile.hpp"
+#include "oqt/common.hpp"
+#include "oqt/pbfformat/readfile.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
+#include "oqt/utils/logger.hpp"
+
+#include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/multithreadedcallback.hpp"
+#include "oqt/utils/invertedcallback.hpp"
+
 #include <algorithm>
+#include <iostream>
+
 #include <map>
+#include <deque>
 
 #include <fstream>
 

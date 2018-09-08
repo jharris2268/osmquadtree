@@ -20,10 +20,36 @@
  *
  *****************************************************************************/
 
-#ifndef QUADTREEGROUPS_HPP
-#define QUADTREEGROUPS_HPP
+#ifndef UTILS_BBOX_HPP
+#define UTILS_BBOX_HPP
 
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/common.hpp"
+#include <sstream>
+namespace oqt {
+    struct bbox {
+    int64 minx,miny,maxx,maxy;
 
+    bbox() : minx(1800000000),miny(1800000000),maxx(-1800000000),maxy(-1800000000) {}
+    bbox(int64 a, int64 b, int64 c, int64 d) : minx(a),miny(b),maxx(c),maxy(d) {}
 
-#endif //QUADTREEGROUPS_HPP
+    void expand_point(int64 x, int64 y) {
+        if (x<minx) { minx=x; }
+        if (y<miny) { miny=y; }
+        if (x>maxx) { maxx=x; }
+        if (y>maxy) { maxy=y; }
+    }
+};
+bool box_empty(const bbox&);
+bool box_planet(const bbox&);
+
+std::ostream& operator<<(std::ostream&, const bbox&);
+bool contains_point(const bbox&, int64, int64);
+bool overlaps(const bbox&, const bbox&);
+bool overlaps_quadtree(const bbox&, int64);
+bool bbox_contains(const bbox&, const bbox&);
+
+void bbox_expand(bbox&, const bbox&);
+
+}
+
+#endif

@@ -23,7 +23,7 @@
 #ifndef POSTGISWRITER_HPP
 #define POSTGISWRITER_HPP
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/elements/block.hpp"
 namespace oqt {
 namespace geometry {
 

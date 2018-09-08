@@ -29,16 +29,14 @@ namespace oqt {
 typedef std::vector<int64> refvector;
 class way : public element {
     public:
-        way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs)
-            : element(elementtype::Way,c,i,q,inf,tags), refs_(refs) {}
-
+        way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs);
         //way(const way& w) : element(w), refs_(w.refs_) {}
         virtual ~way() {}
 
-        const refvector& Refs() const { return refs_; }
+        const refvector& Refs() const;
         //virtual packedobj_ptr pack();
-        virtual std::list<PbfTag> pack_extras() const;
-        virtual std::shared_ptr<element> copy() { return std::make_shared<way>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Refs()); }
+        //virtual std::list<PbfTag> pack_extras() const;
+        virtual std::shared_ptr<element> copy();
     private:
         refvector refs_;
 };

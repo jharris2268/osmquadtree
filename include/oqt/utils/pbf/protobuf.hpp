@@ -20,13 +20,20 @@
  *
  *****************************************************************************/
 
-#ifndef PBFFORMAT_PROTOBUF_HPP
-#define PBFFORMAT_PROTOBUF_HPP
+#ifndef UTILS_PBF_PROTOBUF_HPP
+#define UTILS_PBF_PROTOBUF_HPP
 
-#include "oqt/common.hpp"
 
+#include "oqt/utils/pbf/packedint.hpp"
+
+
+#include <list>
 namespace oqt {
-
+struct PbfTag {
+    uint64 tag;
+    uint64 value;
+    std::string data;
+};
 
 size_t write_uint32(std::string& data, size_t pos, uint32_t i);
 size_t write_uint32_le(std::string& data, size_t pos, uint32_t i);

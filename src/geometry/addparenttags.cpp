@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/geometry/addparenttags.hpp"
-
+#include "oqt/utils/logger.hpp"
 namespace oqt {
 namespace geometry {
 

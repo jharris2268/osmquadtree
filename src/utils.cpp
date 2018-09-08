@@ -20,14 +20,17 @@
  *
  *****************************************************************************/
 
-#include "oqt/utils.hpp"
+//#include "oqt/utils.hpp"
 #include <experimental/filesystem>
 #include <fstream>
 #include <string>
-#include "oqt/simplepbf.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/geometry.hpp"
 
 #include <malloc.h>
 #include <zlib.h>
+#include <iostream>
 namespace oqt {
     
 
@@ -500,5 +503,17 @@ bool trim_memory() {
     return malloc_trim(0)==1;
 }
 
-
+std::string fix_str(const std::string& s) {
+    
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    std::u32string t = converter.from_bytes(s);
+    std::u32string u;
+    u.reserve(t.size());    
+    for (const auto& c: t) {
+        if (c!=127) {
+            u.push_back(c);
+        }
+    }
+    return converter.to_bytes(u);
+}
 }

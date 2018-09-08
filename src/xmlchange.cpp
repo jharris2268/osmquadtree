@@ -21,7 +21,8 @@
  *****************************************************************************/
 
 #include "XmlInspector.hpp"
-#include "oqt/utils.hpp"
+#include "oqt/utils/date.hpp"
+#include "oqt/utils/logger.hpp"
 #include "oqt/update/xmlchange.hpp"
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"

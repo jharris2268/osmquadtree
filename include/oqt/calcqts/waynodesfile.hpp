@@ -24,9 +24,10 @@
 #define CALCQTS_WAYNODESFILE_HPP
 
 #include "oqt/common.hpp"
-#include "oqt/utils.hpp"
 #include "oqt/calcqts/waynodes.hpp"
 #include "oqt/calcqts/calculaterelations.hpp"
+#include "oqt/utils/logger.hpp"
+
 namespace oqt {
 class WayNodesFile {
     public:

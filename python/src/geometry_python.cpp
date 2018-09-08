@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
-
+#include "oqt/utils/splitcallback.hpp"
 #include <cmath> 
 using namespace oqt;
 std::string join_strs(const std::vector<std::string>& strs, std::string jj) {

@@ -20,7 +20,13 @@
  *
  *****************************************************************************/
 
-#include "oqt/simplepbf.hpp"
+#include "oqt/utils/pbf/protobuf.hpp"
+
+#include "oqt/pbfformat/idset.hpp"
+#include "oqt/pbfformat/readblock.hpp"
+#include "oqt/elements/element.hpp"
+
+
 #include <iostream>
 
 namespace oqt {

@@ -24,7 +24,7 @@
 #define UTILS_GEOMETRY_HPP
 
 #include "oqt/common.hpp"
-
+#include "oqt/utils/bbox.hpp"
 namespace oqt {
 
 struct lonlat {

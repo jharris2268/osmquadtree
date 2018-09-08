@@ -30,12 +30,12 @@
 #include "oqt/calcqts/qttreegroups.hpp"
 #include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/store.hpp"
-#include "oqt/readpbffile.hpp"
+#include "oqt/sorting/tempobjs.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
 
 #include "oqt/update/xmlchange.hpp"
-#include "oqt/gzstream.hpp"
+#include "gzstream.hpp"
 #include "oqt/update/update.hpp"
 
 #include "oqt/calcqts/calcqts.hpp"
