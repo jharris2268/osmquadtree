@@ -2,20 +2,23 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-OBJS = calcqts.o count.o mergechanges.o packedblock.o primitivegroup.o quadtree.o quadtreegroups.o readblock.o readfile.o sortblocks.o sortfile.o store.o tempobjs.o update.o utils.o waynodes.o xmlchange.o applychange.o
+ROOT_OBJS = calcqts.o count.o mergechanges.o primitivegroup.o quadtreegroups.o readblock.o readfile.o sortblocks.o sortfile.o store.o tempobjs.o utils.o waynodes.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o 
-ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o
-UTILS_OBJS = utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
+ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.op
+UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
+UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 
+
+OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS)
 
 default: oqt liboqt.so.0.0
 oqt: oqt_main.o liboqt.so.0.0
 	$(CC) $(CFLAGS) -o oqt oqt_main.o $(LIBS) -L/usr/local/lib -loqt #-ltcmalloc
 
-liboqt.so.0.0: $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS)
-	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(LIBS)
+liboqt.so.0.0: $(OBJS)
+	$(CC) $(CFLAGS) -o liboqt.so.0.0 -shared $(OBJS) $(LIBS)
  
 count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
@@ -47,8 +50,7 @@ readblock.o: ../src/readblock.cpp $(HEADERS)
 
 
 
-quadtree.o: ../src/quadtree.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/quadtree.cpp
+
 
 packedblock.o: ../src/packedblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/packedblock.cpp
@@ -86,14 +88,7 @@ tempobjs.o: ../src/tempobjs.cpp $(HEADERS)
 oqt_main.o: ../src/oqt_main.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/oqt_main.cpp
 
-applychange.o: ../src/applychange.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/applychange.cpp
 
-xmlchange.o: ../src/xmlchange.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/xmlchange.cpp
-
-update.o: ../src/update.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/update.cpp
 
 geometry/addparenttags.o: ../src/geometry/addparenttags.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/addparenttags.cpp -o geometry/addparenttags.o
@@ -147,6 +142,14 @@ elements/geometry.o: ../src/elements/geometry.cpp $(HEADERS)
 
 elements/combineblocks.o: ../src/elements/combineblocks.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/elements/combineblocks.cpp -o elements/combineblocks.o	
+
+
+elements/quadtree.o: ../src/elements/quadtree.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/quadtree.cpp -o elements/quadtree.o
+	
+
+utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o
 	
 utils/pbf/packedint.o: ../src/utils/pbf/packedint.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/pbf/packedint.cpp -o utils/pbf/packedint.o
@@ -156,6 +159,16 @@ utils/pbf/varint.o: ../src/utils/pbf/varint.cpp $(HEADERS)
 	
 utils/pbf/protobuf.o: ../src/utils/pbf/protobuf.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/pbf/protobuf.cpp -o utils/pbf/protobuf.o
+
+
+update/applychange.o: ../src/update/applychange.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/update/applychange.cpp -o update/applychange.o
+
+update/xmlchange.o: ../src/update/xmlchange.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/update/xmlchange.cpp -o update/xmlchange.o
+	
+update/update.o: ../src/update/update.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/update/update.cpp -o update/update.o
 
 clean:
 	$(RM) oqt *.o liboqt.so* geometry/*.o pbfformat/*.o

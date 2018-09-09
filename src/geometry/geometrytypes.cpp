@@ -600,7 +600,7 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
     }
     return std::shared_ptr<element>();
 }
-/*
+
 std::shared_ptr<element> readGeometry(elementtype ty, const std::string& data, const std::vector<std::string>& st, uint64 ct) {
     int64 id, qt;
     info inf; tagvector tgs;
@@ -609,7 +609,7 @@ std::shared_ptr<element> readGeometry(elementtype ty, const std::string& data, c
     
     return readGeometry_int(ty,id,inf,tgs,qt,pbftags,ct);
 }
-
+/*
 std::shared_ptr<element> unpack_geometry(elementtype ty, int64 id, int64 ct, int64 qt, const std::string& d) {
     info inf; tagvector tv; std::list<PbfTag> mm;
     std::tie(inf,tv,mm) = unpack_packedobj_common(d);
