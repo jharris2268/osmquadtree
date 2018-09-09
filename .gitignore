@@ -3,6 +3,8 @@ latex/
 old/
 oqt-*.zip
 oqt/*.o
+oqt/*/*.o
+oqt/*/*/*.o
 oqt/oqt
 python/oqt.egg-info
 python/build

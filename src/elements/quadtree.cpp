@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/elements/quadtree.hpp"
+#include "oqt/utils/geometry.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -253,6 +254,9 @@ int64 from_string(const std::string& str) {
 
 }
 }
-
+bool overlaps_quadtree(const bbox& l, int64 qt) {
+    bbox r = quadtree::bbox(qt,0.05);
+    return overlaps(l,r);
+}
 
 }

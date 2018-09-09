@@ -62,10 +62,7 @@ bool overlaps(const bbox& l, const bbox& r) {
     return true;
 }
 
-bool overlaps_quadtree(const bbox& l, int64 qt) {
-    bbox r = quadtree::bbox(qt,0.05);
-    return overlaps(l,r);
-}
+
 
 bool box_empty(const bbox& b) {
     return (b.minx>b.maxx) || (b.miny>b.maxy);

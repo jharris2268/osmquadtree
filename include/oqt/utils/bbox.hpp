@@ -45,7 +45,7 @@ bool box_planet(const bbox&);
 std::ostream& operator<<(std::ostream&, const bbox&);
 bool contains_point(const bbox&, int64, int64);
 bool overlaps(const bbox&, const bbox&);
-bool overlaps_quadtree(const bbox&, int64);
+
 bool bbox_contains(const bbox&, const bbox&);
 
 void bbox_expand(bbox&, const bbox&);
