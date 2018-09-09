@@ -33,7 +33,7 @@
 #include "oqt/sorting/mergechanges.hpp"
 #include "oqt/sorting/tempobjs.hpp"
 #include "oqt/sorting/final.hpp"
-#include "oqt/sorting/sortbyid.hpp"
+#include "oqt/sorting/splitbyid.hpp"
 
 #include "oqt/elements/relation.hpp"
 

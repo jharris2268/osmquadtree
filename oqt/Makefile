@@ -9,9 +9,9 @@ ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elemen
 UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
+SORTING_OBJS = sorting/common.o sorting/splitbyid.o
 
-
-OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS)
+OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS)
 
 default: oqt liboqt.so.0.0
 oqt: oqt_main.o liboqt.so.0.0
@@ -147,6 +147,13 @@ elements/combineblocks.o: ../src/elements/combineblocks.cpp $(HEADERS)
 elements/quadtree.o: ../src/elements/quadtree.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/elements/quadtree.cpp -o elements/quadtree.o
 	
+
+sorting/common.o: ../src/sorting/common.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/common.cpp -o sorting/common.o
+
+sorting/splitbyid.o: ../src/sorting/splitbyid.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/splitbyid.cpp -o sorting/splitbyid.o
+
 
 utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o

@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef SORTING_SORTBYID_HPP
-#define SORTING_SORTBYID_HPP
+#ifndef SORTING_SPLITBYID_HPP
+#define SORTING_SPLITBYID_HPP
 #include "oqt/sorting/common.hpp"
 
 namespace oqt {

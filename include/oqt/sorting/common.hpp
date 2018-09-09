@@ -26,7 +26,7 @@
 
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/calcqts/qttreegroups.hpp"
-
+#include "oqt/elements/block.hpp"
 
 
 namespace oqt {
@@ -35,7 +35,30 @@ typedef std::pair<int64,std::string> keystring;
 typedef std::vector<keystring> keystring_vec;
 typedef std::function<void(std::shared_ptr<keystring_vec>)> writevec_callback;
 
-
+class SplitBlocksDetail;
+class SplitBlocks {
+    typedef std::vector<primitiveblock_ptr> tempsvec;
+    
+    
+    public:
+        SplitBlocks(primitiveblock_callback callback_, size_t blocksplit_, size_t writeat_, bool msgs_);
+        
+        virtual ~SplitBlocks();
+        
+        virtual size_t find_tile(element_ptr obj)=0;
+        virtual size_t max_tile()=0;
+        
+        
+        
+        void call(primitiveblock_ptr bl);
+    
+    private:
+        size_t blocksplit;
+        
+        std::shared_ptr<tempsvec> temps;
+        std::function<void(std::shared_ptr<tempsvec>)> call_writetemps;
+        std::unique_ptr<SplitBlocksDetail> detail;
+}; 
 }
 
 #endif //SORTING_COMMON_HPP
