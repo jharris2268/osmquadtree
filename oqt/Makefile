@@ -2,14 +2,14 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-ROOT_OBJS = calcqts.o count.o mergechanges.o primitivegroup.o quadtreegroups.o readblock.o readfile.o sortblocks.o sortfile.o store.o tempobjs.o utils.o waynodes.o
+ROOT_OBJS = calcqts.o count.o primitivegroup.o quadtreegroups.o readblock.o readfile.o store.o tempobjs.o utils.o waynodes.o
 HEADERS = 
-PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o 
+PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
-SORTING_OBJS = sorting/common.o sorting/splitbyid.o
+SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o
 
 OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS)
 
@@ -61,10 +61,6 @@ sortblocks.o: ../src/sortblocks.cpp $(HEADERS)
 sortblocks_old.o: ../src/sortblocks_old.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/sortblocks_old.cpp
 
-sortfile.o: ../src/sortfile.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/sortfile.cpp
-sortfile_packed.o: ../src/sortfile_packed.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/sortfile_packed.cpp
 
 store.o: ../src/store.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/store.cpp
@@ -121,6 +117,9 @@ pbfformat/fileblock.o: ../src/pbfformat/fileblock.cpp $(HEADERS)
 pbfformat/readminimal.o: ../src/pbfformat/readminimal.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/readminimal.cpp -o pbfformat/readminimal.o
 
+pbfformat/readblockscaller.o: ../src/pbfformat/readblockscaller.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readblockscaller.cpp -o pbfformat/readblockscaller.o
+
 pbfformat/writepbffile.o: ../src/pbfformat/writepbffile.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/writepbffile.cpp -o pbfformat/writepbffile.o
 
@@ -154,6 +153,20 @@ sorting/common.o: ../src/sorting/common.cpp $(HEADERS)
 sorting/splitbyid.o: ../src/sorting/splitbyid.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/sorting/splitbyid.cpp -o sorting/splitbyid.o
 
+sorting/final.o: ../src/sorting/final.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/final.cpp -o sorting/final.o
+
+sorting/sortblocks.o: ../src/sorting/sortblocks.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/sortblocks.cpp -o sorting/sortblocks.o
+
+sorting/sortgroup.o: ../src/sorting/sortgroup.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/sortgroup.cpp -o sorting/sortgroup.o
+	
+sorting/resortobjects.o: ../src/sorting/resortobjects.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/resortobjects.cpp -o sorting/resortobjects.o
+
+sorting/mergechanges.o: ../src/sorting/mergechanges.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/mergechanges.cpp -o sorting/mergechanges.o
 
 utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o

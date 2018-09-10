@@ -20,34 +20,32 @@
  *
  *****************************************************************************/
 
-#include "oqt/sorting/final.hpp"
-#include "oqt/sorting/tempobjs.hpp"
-#include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
-#include <map>
-#include <set>
-#include <algorithm>
-#include <iomanip>
-#include <thread>
+#ifndef PBFFORMAT_READBLOCKSCALLER_HPP
+#define PBFFORMAT_READBLOCKSCALLER_HPP
 
+#include "oqt/pbfformat/idset.hpp"
 
-#include "oqt/pbfformat/writeblock.hpp"
-#include "oqt/pbfformat/readfileparallel.hpp"
-#include "oqt/pbfformat/writepbffile.hpp"
-#include "oqt/utils/threadedcallback.hpp"
-#include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/timer.hpp"
-#include "oqt/utils/logger.hpp"
+#include "oqt/elements/block.hpp"
+#include "oqt/elements/minimalblock.hpp"
+#include "oqt/utils/bbox.hpp"
+#include "oqt/utils/geometry.hpp"
 
 
 namespace oqt {
-    
 
 
-    
-        
-        
+std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx, int64 enddate);
+class ReadBlocksCaller {
+    public:
+        virtual void read_primitive(std::vector<primitiveblock_callback> cbs, std::shared_ptr<idset> filter)=0;
+        virtual void read_minimal(std::vector<minimalblock_callback> cbs, std::shared_ptr<idset> filter)=0;
+        virtual size_t num_tiles()=0;
+};
 
+std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
+        const std::string& infile_name, 
+        bbox& filter_box, const lonlatvec& poly, int64& enddate);
 
- 
 }
+
+#endif

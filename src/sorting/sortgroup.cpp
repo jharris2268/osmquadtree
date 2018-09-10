@@ -20,17 +20,8 @@
  *
  *****************************************************************************/
 
-#include "oqt/sorting/final.hpp"
-#include "oqt/sorting/tempobjs.hpp"
-#include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
-#include <map>
-#include <set>
-#include <algorithm>
-#include <iomanip>
-#include <thread>
-
-
+#include "oqt/sorting/sortgroup.hpp"
+#include "oqt/elements/block.hpp"
 #include "oqt/pbfformat/writeblock.hpp"
 #include "oqt/pbfformat/readfileparallel.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
@@ -39,15 +30,36 @@
 #include "oqt/utils/timer.hpp"
 #include "oqt/utils/logger.hpp"
 
-
 namespace oqt {
     
 
-
+        
+class SortGroup : public SplitBlocks {
+    public:
+        SortGroup(primitiveblock_callback callback, 
+             std::shared_ptr<qttree> tree_, size_t blocksplit_, size_t writeat) :
+             SplitBlocks(callback,blocksplit_,writeat,true),
+             tree(tree_), blocksplit(blocksplit_) {
+            
+            mxt=tree->size()/blocksplit+1;
+                
+        }
+        virtual ~SortGroup() {}
+        virtual size_t find_tile(element_ptr obj) {
+            return tree->find_tile(obj->Quadtree()).idx / blocksplit;
+        }
+        virtual size_t max_tile() { return mxt; }
+    private:
+        std::shared_ptr<qttree> tree;
+        size_t blocksplit;
+        size_t mxt;
+};
+primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<qttree> groups, size_t blocksplit, size_t writeat) {
+    auto sg = std::make_shared<SortGroup>(packers,groups,blocksplit,writeat);
+    return [sg](primitiveblock_ptr bl) {
+        sg->call(bl);
+    };
+}    
     
-        
-        
-
-
- 
+    
 }

@@ -91,23 +91,10 @@ class CollectQts {
 
 
 std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t numchan, size_t maxlevel) {
-    //
     
     auto tree = make_tree_empty();
     
     auto add_qts = threaded_callback<count_map>::make(make_addcountmaptree(tree, maxlevel),numchan);
-    
-    
-    /*auto acmt = make_addcountmaptree(tree, maxlevel);
-    
-    auto add_qts = threaded_callback<count_map>::make([acmt](std::shared_ptr<count_map> cc) {
-        if (!cc) {
-            acmt->finish();
-            logger_message() << "add_qts finished";
-            return;
-        }
-        acmt->call(cc);
-    }, numchan);*/
     
     std::vector<std::function<void(std::shared_ptr<qtvec>)>> make_addcounts;
     for (size_t i=0; i < numchan; i++) {

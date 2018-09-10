@@ -22,6 +22,13 @@
 
 #include "oqt/sorting/splitbyid.hpp"
 #include "oqt/elements/block.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/multithreadedcallback.hpp"
+#include "oqt/utils/timer.hpp"
+#include "oqt/utils/logger.hpp"
 
 namespace oqt {
     
@@ -90,5 +97,43 @@ std::function<void(element_ptr)> make_collectobjs(std::vector<primitiveblock_cal
     };
 }
 
+        
+class SplitById : public SplitBlocks {
+    public:
+        SplitById(primitiveblock_callback callbacks, size_t blocksplit, size_t writeat, int64 node_split_at_, int64 way_split_at_, int64 offset_) :
+            SplitBlocks(callbacks,blocksplit,writeat,true), node_split_at(node_split_at_), way_split_at(way_split_at_), offset(offset_) {}
+        
+        virtual ~SplitById() {}
+        virtual size_t find_tile(element_ptr obj) {
+            int64 i = obj->Id();
+            elementtype t = obj->Type();
+            if (t==elementtype::Node) {
+                int64 x = i / node_split_at;
+                if (x>=offset) { x=offset-1; }
+                return x;
+            } else if (t==elementtype::Way) {
+                int64 x = i / way_split_at;
+                if (x>=offset) { x=offset-1; }
+                return offset+x;
+            } else if (t==elementtype::Relation) {
+                int64 x =  i / (way_split_at/10);
+                if (x>=offset) { x=offset-1; }
+                return 2*offset+x;
+            }
+            return -1;
+        }
+        virtual size_t max_tile() { return 3*offset; }
+        
+    private:
+        int64 node_split_at;
+        int64 way_split_at;
+        
+        int64 offset;
+};
+
+primitiveblock_callback make_splitbyid_callback(primitiveblock_callback packers, size_t blocksplit, size_t writeat, int64 split_at) {
+    auto sg = std::make_shared<SplitById>(packers,blocksplit,writeat,split_at, split_at / 8, ((1ll)<<34) / split_at);
+    return [sg](primitiveblock_ptr bl) { sg->call(bl); };
+}
 
 }
