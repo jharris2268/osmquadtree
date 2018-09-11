@@ -25,7 +25,7 @@
 
 #include "oqt/common.hpp"
 #include "oqt/elements/element.hpp"
-#include "oqt/elements/packedobj.hpp"
+
 namespace oqt {
 template<class T>
 struct primitiveobjectblock {
@@ -57,9 +57,5 @@ typedef primitiveobjectblock<element> primitiveblock;
 typedef std::shared_ptr<primitiveblock> primitiveblock_ptr;
 typedef std::function<void(primitiveblock_ptr)> primitiveblock_callback;
 
-/*
-typedef primitiveobjectblock<packedobj> packedblock;
-typedef std::shared_ptr<packedblock> packedblock_ptr;
-*/
 }
 #endif

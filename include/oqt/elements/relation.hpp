@@ -33,8 +33,7 @@ class relation : public element {
         virtual ~relation() {}
 
         const memvector&  Members() const;
-        //virtual packedobj_ptr pack();
-        //virtual std::list<PbfTag> pack_extras() const;
+        
         virtual std::shared_ptr<element> copy();
         
         bool filter_members(std::shared_ptr<idset> ids);

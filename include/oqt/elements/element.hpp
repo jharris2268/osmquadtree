@@ -28,11 +28,10 @@
 #include "oqt/elements/rawelement.hpp"
 #include "oqt/elements/info.hpp"
 #include "oqt/elements/tag.hpp"
-#include "oqt/elements/packedobj.hpp"
 
 #include <list>
 namespace oqt {
-//struct PbfTag;
+
 
 class element : public rawelement {
     public:
@@ -56,8 +55,6 @@ class element : public rawelement {
         virtual ~element() {}
         virtual std::shared_ptr<element> copy()=0;
 
-        //virtual packedobj_ptr pack();
-        //virtual std::list<PbfTag> pack_extras() const=0;
         
         friend bool fix_tags(element& ele);
 
@@ -76,15 +73,7 @@ inline bool element_cmp(const element_ptr& l, const element_ptr& r) {
     return l->InternalId()<r->InternalId();
 }
 
-
-
-
 bool fix_tags(element& ele);
-/*
-class PbfTag;
-element_ptr unpack_packedobj(packedobj_ptr p);
-std::shared_ptr<element> unpack_packedobj(int64 ty, int64 id, changetype ct, int64 qt, const std::string& d);
-*/
 
 }
 #endif

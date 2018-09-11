@@ -28,7 +28,7 @@
 #include "gzstream.hpp"
 #include "oqt/update/applychange.hpp"
 #include "oqt/sorting/final.hpp"
-#include "oqt/sorting/sortbyid.hpp"
+#include "oqt/sorting/splitbyid.hpp"
 
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"

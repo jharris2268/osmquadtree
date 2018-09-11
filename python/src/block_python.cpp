@@ -419,23 +419,7 @@ void block_defs(py::module& m) {
 
     
     m.def("readMinimalBlock", &readMinimalBlock);
-/*
-    py::class_<packedblock, std::shared_ptr<packedblock>>(m, "packedblock")
-        .def(py::init<int64,size_t>())
-        .def_readonly("index", &packedblock::index)
-        .def_readwrite("quadtree", &packedblock::quadtree)
-        .def_readwrite("startdate", &packedblock::startdate)
-        .def_readwrite("enddate", &packedblock::enddate)
-        .def("__len__", &packedblock::size)
-        .def("__getitem__", [](const packedblock& pb, int i) { if (i<0) { i+= pb.objects.size(); } return pb.at(i); })
-        .def("add", &packedblock::add)
-        .def_readonly("file_progress", &packedblock::file_progress)
-        .def_readonly("file_position", &packedblock::file_position)
-    ;
-    
-    
-    m.def("readPackedBlock", &readPackedBlock, py::arg("idx"),py::arg("data"),py::arg("objs")=7,py::arg("change")=false,py::arg("ids")=std::shared_ptr<idset>());
-*/
+
     py::class_<PbfTag>(m,"PbfTag")
         .def_readonly("tag", &PbfTag::tag)
         .def_readonly("value", &PbfTag::value)
@@ -484,10 +468,6 @@ void block_defs(py::module& m) {
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
     
-   /*m.def("read_blocks_merge_packed", &read_blocks_merge_py<packedblock>,
-        py::arg("filenames"), py::arg("callback"), py::arg("locs"),
-        py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
-   */
+   
    m.def("read_blocks_tempobjs", &read_blocks_tempobjs);
 }

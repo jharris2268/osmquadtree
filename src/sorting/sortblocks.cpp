@@ -362,7 +362,6 @@ class SortBlocksImpl : public SortBlocks {
         virtual void read_blocks(std::vector<primitiveblock_callback> packers, bool sortobjs) {
             std::vector<primitiveblock_callback> rss;
             for (auto p: packers) {
-                //rss.push_back(threaded_callback<packedblock>::make(make_resortobjects_callback({p},groups)));
                 rss.push_back(make_resortobjects_callback(p,groups, blocksplit, sortobjs));
             }
             tempobjs->read(rss);

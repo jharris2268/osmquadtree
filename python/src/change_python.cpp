@@ -214,11 +214,7 @@ void change_defs(py::module& m) {
         [](std::shared_ptr<primitiveblock> b, bool incQts, bool change, bool incInfo, bool incRefs) {
                 return py::bytes(writePbfBlock(b,incQts,change,incInfo,incRefs)); },
         py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
-        
-    /*m.def("writePbfBlock", [](std::shared_ptr<packedblock> b, bool incQts, bool change, bool incInfo, bool incRefs) {
-                return py::bytes(writePbfBlock(b,incQts,change,incInfo,incRefs)); },
-        py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
-*/
+    
 
     m.def("combine_primitiveblock_two", &combine_primitiveblock_two);
     m.def("combine_primitiveblock_many", &combine_primitiveblock_many);

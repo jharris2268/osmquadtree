@@ -2,14 +2,14 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-ROOT_OBJS = calcqts.o count.o primitivegroup.o quadtreegroups.o readblock.o readfile.o store.o tempobjs.o utils.o waynodes.o
+ROOT_OBJS = calcqts.o count.o primitivegroup.o quadtreegroups.o readblock.o readfile.o store.o utils.o waynodes.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
-SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o
+SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o
 
 OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS)
 
@@ -23,20 +23,10 @@ liboqt.so.0.0: $(OBJS)
 count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
 
-countun.o:  countun.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/countun.cpp
-
-countfull.o:  ../src/countfull.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/countfull.cpp
-
-countpacked.o:  ../src/countpacked.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/countpacked.cpp
 
 calcqts.o:  ../src/calcqts.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/calcqts.cpp
 
-calcqts_old.o:  ../src/calcqts_old.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/calcqts_old.cpp
 
 readfile.o: ../src/readfile.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readfile.cpp
@@ -48,18 +38,6 @@ primitivegroup.o: ../src/primitivegroup.cpp $(HEADERS)
 readblock.o: ../src/readblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readblock.cpp
 
-
-
-
-
-packedblock.o: ../src/packedblock.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/packedblock.cpp
-
-sortblocks.o: ../src/sortblocks.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/sortblocks.cpp
-
-sortblocks_old.o: ../src/sortblocks_old.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/sortblocks_old.cpp
 
 
 store.o: ../src/store.cpp $(HEADERS)
@@ -74,12 +52,6 @@ quadtreegroups.o: ../src/quadtreegroups.cpp $(HEADERS)
 
 utils.o: ../src/utils.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils.cpp
-
-mergechanges.o: ../src/mergechanges.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/mergechanges.cpp
-	
-tempobjs.o: ../src/tempobjs.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/tempobjs.cpp
 
 oqt_main.o: ../src/oqt_main.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/oqt_main.cpp
@@ -168,6 +140,10 @@ sorting/resortobjects.o: ../src/sorting/resortobjects.cpp $(HEADERS)
 sorting/mergechanges.o: ../src/sorting/mergechanges.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/sorting/mergechanges.cpp -o sorting/mergechanges.o
 
+sorting/tempobjs.o: ../src/sorting/tempobjs.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/tempobjs.cpp -o sorting/tempobjs.o
+
+
 utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o
 	
@@ -191,5 +167,5 @@ update/update.o: ../src/update/update.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/update/update.cpp -o update/update.o
 
 clean:
-	$(RM) oqt *.o liboqt.so* geometry/*.o pbfformat/*.o
+	$(RM) liboqt.so.0.0 oqt *.o update/*.o utils/*.o utils/pbf/*.o sorting/*.o pbfformat/*.o calcqts/*.o elements/*.o geometry/*.o
 

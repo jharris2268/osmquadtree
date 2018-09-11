@@ -73,33 +73,6 @@ void element::SetTags(const tagvector& new_tags) {
     tags_ = new_tags;
 }
 
-/*
-packedobj_ptr element::pack() {
-
-    std::list<PbfTag> mm;
-    for (auto tg: tags_) {
-        mm.push_back(PbfTag{2,0,tg.key});
-    }
-    for (auto tg: tags_) {
-        mm.push_back(PbfTag{3,0,tg.val});
-    }
-    mm.push_back(PbfTag{41,uint64(info_.version),""});
-    mm.push_back(PbfTag{42,uint64(info_.timestamp),""});
-    mm.push_back(PbfTag{43,uint64(info_.changeset),""});
-    mm.push_back(PbfTag{44,uint64(info_.user_id),""});
-    mm.push_back(PbfTag{45,0, info_.user});
-    if (!info_.visible) {
-        mm.push_back(PbfTag{46,0,""});
-    }
-    mm.splice(mm.end(),pack_extras());
-    std::string out=packPbfTags(mm);
-    
-    return make_packedobj_ptr(InternalId(), quadtree_, out, changetype_);
-}
-
-*/
-
-
         
 bool fix_tags(element& ele) {
     if (ele.tags_.empty()) { return false; }

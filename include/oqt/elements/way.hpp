@@ -30,12 +30,9 @@ typedef std::vector<int64> refvector;
 class way : public element {
     public:
         way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs);
-        //way(const way& w) : element(w), refs_(w.refs_) {}
         virtual ~way() {}
 
         const refvector& Refs() const;
-        //virtual packedobj_ptr pack();
-        //virtual std::list<PbfTag> pack_extras() const;
         virtual std::shared_ptr<element> copy();
     private:
         refvector refs_;

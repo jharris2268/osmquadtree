@@ -34,7 +34,7 @@ class node : public element {
         int64 Lon() const;
         int64 Lat() const;
 
-        //virtual std::list<PbfTag> pack_extras() const;
+        
         virtual std::shared_ptr<element> copy();
     private:
         int64 lon_,lat_;
