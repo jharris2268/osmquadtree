@@ -97,5 +97,18 @@ bool fix_tags(element& ele) {
     return r;
 }
 
+std::string fix_str(const std::string& s) {
+    
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    std::u32string t = converter.from_bytes(s);
+    std::u32string u;
+    u.reserve(t.size());    
+    for (const auto& c: t) {
+        if (c!=127) {
+            u.push_back(c);
+        }
+    }
+    return converter.to_bytes(u);
+}
 }
 

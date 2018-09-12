@@ -47,7 +47,6 @@ int64 readQuadTree(const std::string& data);
 
 std::shared_ptr<header> readPbfHeader(const std::string& data, int64 fl);
 
-std::string fix_str(const std::string& s);
 
     
 }

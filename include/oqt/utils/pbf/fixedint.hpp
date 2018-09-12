@@ -20,27 +20,22 @@
  *
  *****************************************************************************/
 
+#ifndef UTILS_PBF_FIXEDINT_HPP
+#define UTILS_PBF_FIXEDINT_HPP
 
-#ifndef COMMON_HPP
-#define COMMON_HPP
 
-#include <cstdint>
-#include <memory>
 #include <string>
-#include <vector>
-#include <functional>
 
 namespace oqt {
-typedef int64_t int64;
-typedef uint64_t uint64;
-typedef int32_t int32;
 
 
-inline bool EndsWith(const std::string& a, const std::string& b) {
-    if (b.size() > a.size()) return false;
-    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
-}
+size_t write_uint32(std::string& data, size_t pos, uint32_t i);
+size_t write_uint32_le(std::string& data, size_t pos, uint32_t i);
+size_t write_double(std::string& data, size_t pos, double d);
+size_t write_double_le(std::string& data, size_t pos, double d);
 
+uint32_t read_uint32_le(const std::string& data, size_t pos);
 
 }
+
 #endif

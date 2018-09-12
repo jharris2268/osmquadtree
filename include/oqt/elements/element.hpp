@@ -74,6 +74,6 @@ inline bool element_cmp(const element_ptr& l, const element_ptr& r) {
 }
 
 bool fix_tags(element& ele);
-
+std::string fix_str(const std::string& str);
 }
 #endif

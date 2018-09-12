@@ -22,6 +22,7 @@
 
 #include "oqt_python.hpp"
 #include "oqt/calcqts/waynodes.hpp"
+#include "oqt/calcqts/writewaynodes.hpp"
 #include "oqt/calcqts/waynodesfile.hpp"
 #include "oqt/calcqts/calculaterelations.hpp"
 #include "oqt/calcqts/qtstore.hpp"

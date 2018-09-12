@@ -20,23 +20,55 @@
  *
  *****************************************************************************/
 
-//#include "oqt/utils.hpp"
+#include "oqt/utils/operatingsystem.hpp"
 #include <experimental/filesystem>
-#include <fstream>
-#include <string>
-#include "oqt/utils/pbf/protobuf.hpp"
-#include "oqt/utils/logger.hpp"
-#include "oqt/utils/geometry.hpp"
-
 #include <malloc.h>
-#include <zlib.h>
+#include <fstream>
 #include <iostream>
 namespace oqt {
+
+
+
+int64 file_size(const std::string& fn) {
+    namespace fs = std::experimental::filesystem;
+    fs::path p{fn};
+    p = fs::canonical(p);
+    return fs::file_size(p);
     
+}
 
 
 
+std::string getmem(size_t pid) {
+    
+    
+    std::ifstream status("/proc/"+std::to_string(pid)+"/status", std::ios::in);
+    std::string ln;
+    while (status.good()) {
+        std::getline(status, ln);
+        if (ln.find("VmRSS") != std::string::npos) {
+            return ln;
+        }
+    }
+    return "??";
+}
 
+int64 getmemval(size_t pid) {
+    std::ifstream statm("/proc/"+std::to_string(pid)+"/statm", std::ios::in);
+    std::string str{std::istreambuf_iterator<char>(statm), std::istreambuf_iterator<char>()};
+    size_t a = str.find(' ',0);
+    size_t b = str.find(' ',a+1);
+    
+    return std::stoll(str.substr(a,b-a))*4096;
+}
 
+void checkstats() {
+    size_t pid=getpid();
+    std::cout << "pid = " << pid << " " << getmem(pid) << std::endl;
+}
 
+bool trim_memory() {
+    return malloc_trim(0)==1;
+}
+    
 }

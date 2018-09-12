@@ -2,11 +2,11 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-ROOT_OBJS = count.o utils.o
+ROOT_OBJS = count.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o pbfformat/readfile.o pbfformat/readfileparallel.o pbfformat/readblock.o
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
-UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
+UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o
@@ -141,7 +141,23 @@ sorting/tempobjs.o: ../src/sorting/tempobjs.cpp $(HEADERS)
 
 utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o
-	
+
+utils/compress.o: ../src/utils/compress.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/compress.cpp -o utils/compress.o
+
+utils/date.o: ../src/utils/date.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/date.cpp -o utils/date.o
+
+utils/geometry.o: ../src/utils/geometry.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/geometry.cpp -o utils/geometry.o
+
+utils/logger.o: ../src/utils/logger.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/logger.cpp -o utils/logger.o
+
+utils/operatingsystem.o: ../src/utils/operatingsystem.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/operatingsystem.cpp -o utils/operatingsystem.o
+
+
 utils/pbf/packedint.o: ../src/utils/pbf/packedint.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/pbf/packedint.cpp -o utils/pbf/packedint.o
 
@@ -151,6 +167,8 @@ utils/pbf/varint.o: ../src/utils/pbf/varint.cpp $(HEADERS)
 utils/pbf/protobuf.o: ../src/utils/pbf/protobuf.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/pbf/protobuf.cpp -o utils/pbf/protobuf.o
 
+utils/pbf/fixedint.o: ../src/utils/pbf/fixedint.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/pbf/fixedint.cpp -o utils/pbf/fixedint.o
 
 update/applychange.o: ../src/update/applychange.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/update/applychange.cpp -o update/applychange.o

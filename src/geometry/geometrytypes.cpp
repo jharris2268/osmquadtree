@@ -25,6 +25,7 @@
 #include "oqt/pbfformat/readblock.hpp"
 
 #include "oqt/utils/logger.hpp"
+#include "oqt/utils/pbf/fixedint.hpp"
 
 #include <algorithm>
 
