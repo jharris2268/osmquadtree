@@ -2,16 +2,16 @@ CC = g++
 CFLAGS = -pthread -std=c++14 -O3 -Wall -fPIC -I../include/ -I../thirdparty/ -I../thirdparty/xmlinspector/
 LIBS = -lz -lstdc++fs -lpq
 #LIBS = -lz
-ROOT_OBJS = calcqts.o count.o primitivegroup.o quadtreegroups.o readblock.o readfile.o store.o utils.o waynodes.o
+ROOT_OBJS = count.o utils.o
 HEADERS = 
-PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o
+PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o pbfformat/readfile.o pbfformat/readfileparallel.o pbfformat/readblock.o
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
 SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o
-
-OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS)
+CALCQTS_OBJS = calcqts/qtstore.o calcqts/qtstoresplit.o calcqts/calculaterelations.o calcqts/waynodes.o calcqts/waynodesfile.o calcqts/writewaynodes.o calcqts/qttree.o calcqts/qttreegroups.o calcqts/writeqts.o calcqts/calcqtsinmem.o calcqts/calcqts.o calcqts/wayqts.o
+OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS) $(CALCQTS_OBJS)
 
 default: oqt liboqt.so.0.0
 oqt: oqt_main.o liboqt.so.0.0
@@ -24,9 +24,6 @@ count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
 
 
-calcqts.o:  ../src/calcqts.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/calcqts.cpp
-
 
 readfile.o: ../src/readfile.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readfile.cpp
@@ -37,17 +34,6 @@ primitivegroup.o: ../src/primitivegroup.cpp $(HEADERS)
 
 readblock.o: ../src/readblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/readblock.cpp
-
-
-
-store.o: ../src/store.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/store.cpp
-
-waynodes.o: ../src/waynodes.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/waynodes.cpp
-
-quadtreegroups.o: ../src/quadtreegroups.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/quadtreegroups.cpp
 
 
 utils.o: ../src/utils.cpp $(HEADERS)
@@ -80,11 +66,20 @@ pbfformat/objsidset.o: ../src/pbfformat/objsidset.cpp $(HEADERS)
 pbfformat/readfileblocks.o: ../src/pbfformat/readfileblocks.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/readfileblocks.cpp -o pbfformat/readfileblocks.o
 
+pbfformat/readfile.o: ../src/pbfformat/readfile.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readfile.cpp -o pbfformat/readfile.o
+
+pbfformat/readfileparallel.o: ../src/pbfformat/readfileparallel.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readfileparallel.cpp -o pbfformat/readfileparallel.o
+		
 pbfformat/writeblock.o: ../src/pbfformat/writeblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/writeblock.cpp -o pbfformat/writeblock.o
 
 pbfformat/fileblock.o: ../src/pbfformat/fileblock.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/fileblock.cpp -o pbfformat/fileblock.o
+
+pbfformat/readblock.o: ../src/pbfformat/readblock.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/pbfformat/readblock.cpp -o pbfformat/readblock.o
 
 pbfformat/readminimal.o: ../src/pbfformat/readminimal.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/readminimal.cpp -o pbfformat/readminimal.o
@@ -165,6 +160,43 @@ update/xmlchange.o: ../src/update/xmlchange.cpp $(HEADERS)
 	
 update/update.o: ../src/update/update.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/update/update.cpp -o update/update.o
+
+calcqts/qtstore.o: ../src/calcqts/qtstore.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/qtstore.cpp -o calcqts/qtstore.o
+
+calcqts/qtstoresplit.o: ../src/calcqts/qtstoresplit.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/qtstoresplit.cpp -o calcqts/qtstoresplit.o
+
+calcqts/calculaterelations.o: ../src/calcqts/calculaterelations.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/calculaterelations.cpp -o calcqts/calculaterelations.o
+
+calcqts/waynodes.o: ../src/calcqts/waynodes.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/waynodes.cpp -o calcqts/waynodes.o
+	
+calcqts/waynodesfile.o: ../src/calcqts/waynodesfile.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/waynodesfile.cpp -o calcqts/waynodesfile.o
+
+calcqts/writewaynodes.o: ../src/calcqts/writewaynodes.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/writewaynodes.cpp -o calcqts/writewaynodes.o
+
+calcqts/writeqts.o: ../src/calcqts/writeqts.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/writeqts.cpp -o calcqts/writeqts.o
+
+calcqts/calcqts.o: ../src/calcqts/calcqts.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/calcqts.cpp -o calcqts/calcqts.o
+	
+calcqts/wayqts.o: ../src/calcqts/wayqts.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/wayqts.cpp -o calcqts/wayqts.o
+	
+calcqts/calcqtsinmem.o: ../src/calcqts/calcqtsinmem.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/calcqtsinmem.cpp -o calcqts/calcqtsinmem.o
+
+
+calcqts/qttree.o: ../src/calcqts/qttree.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/qttree.cpp -o calcqts/qttree.o
+
+calcqts/qttreegroups.o: ../src/calcqts/qttreegroups.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/calcqts/qttreegroups.cpp -o calcqts/qttreegroups.o
 
 clean:
 	$(RM) liboqt.so.0.0 oqt *.o update/*.o utils/*.o utils/pbf/*.o sorting/*.o pbfformat/*.o calcqts/*.o elements/*.o geometry/*.o

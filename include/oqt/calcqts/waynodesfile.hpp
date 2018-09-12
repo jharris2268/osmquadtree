@@ -36,7 +36,8 @@ class WayNodesFile {
         virtual ~WayNodesFile() {}
 };
 
-std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<calculate_relations>,std::string,std::vector<int64>>
-    write_waynodes(const std::string& orig_fn, const std::string& waynodes_fn, size_t numchan, bool sortinmem, std::shared_ptr<logger> lg);
+std::shared_ptr<WayNodesFile> make_waynodesfile(const std::string& fn, const std::vector<int64>& ll);
+
+
 }
 #endif

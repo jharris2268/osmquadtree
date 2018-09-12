@@ -20,38 +20,23 @@
  *
  *****************************************************************************/
 
-#ifndef CALCQTS_WAYNODES_HPP
-#define CALCQTS_WAYNODES_HPP
+#ifndef CALCQTS_WRITEWAYNODES_HPP
+#define CALCQTS_WRITEWAYNODES_HPP
 
 
 #include "oqt/common.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/calcqts/waynodesfile.hpp"
+
+
+
 
 
 namespace oqt {
-class way_nodes {
-    public:
-        virtual size_t size() const =0;
-        virtual int64 node_at(size_t i) const=0;
-        virtual int64 way_at(size_t i) const=0;
-        virtual int64 key() const=0;
-        virtual ~way_nodes() {}
-};
-
-class way_nodes_write : public way_nodes {
-    public:
-        virtual bool add(int64 n, int64 w, bool resize)=0;
-        virtual void reset(bool)=0;
-        virtual void reserve(size_t cap)=0;
-        virtual void sort_node()=0;
-        virtual void sort_way()=0;
-        virtual std::string str() const=0;
-};
-
-std::shared_ptr<way_nodes> make_way_nodes(size_t cap, int64 key);
-std::shared_ptr<way_nodes_write> make_way_nodes_write(size_t cap, int64 key);
-
-keystring_ptr pack_waynodes_block(std::shared_ptr<way_nodes> wns);
-std::shared_ptr<way_nodes> read_waynodes_block(const std::string& data, int64 minway, int64 maxway);
+            
+std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<calculate_relations>,std::string,std::vector<int64>>
+    write_waynodes(const std::string& orig_fn, const std::string& waynodes_fn, size_t numchan, bool sortinmem, std::shared_ptr<logger> lg);
+            
 }
+
 #endif
