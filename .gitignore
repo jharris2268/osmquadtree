@@ -14,3 +14,6 @@ oqt/geometry
 oqt/pbfformat
 build/
 xx.out
+xml/
+doc/
+docs/

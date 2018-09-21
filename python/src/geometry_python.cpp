@@ -1035,96 +1035,107 @@ class geom_progress {
         time_single ts;
 };
 
+struct geometry_parameters {
+    geometry_parameters() 
+        : numchan(1), numblocks(512), box(), add_rels(false),
+            add_mps(false), recalcqts(false), outfn(""), indexed(false),
+            connstring(""), tableprfx("") {}
+    
+    std::vector<std::string> filenames;
+    external_callback callback;
+    src_locs_map locs;
+    size_t numchan;
+    size_t numblocks;
+    geometry::style_info_map style;
+    bbox box;
+    geometry::parenttag_spec_map apt_spec;
+    bool add_rels;
+    bool add_mps;
+    bool recalcqts;
+    std::shared_ptr<geometry::findminzoom> findmz;
+    std::string outfn;
+    bool indexed;
+    std::string connstring;
+    std::string tableprfx;
+    geometry::pack_csvblocks::tagspec coltags;
+    std::shared_ptr<qttree> groups;
+    std::function<void(std::shared_ptr<geometry::csv_block>)> csvblock_callback;
+};
+    
+    
 
 
-
-std::pair<size_t,geometry::mperrorvec> process_geometry(
-    std::vector<std::string> filenames,
-    external_callback callback,
-    src_locs_map locs, size_t numchan, size_t numblocks,
-    const geometry::style_info_map& style, bbox box,
-    const geometry::parenttag_spec_map& apt_spec, bool add_rels, bool add_mps, bool recalcqts,
-    std::shared_ptr<geometry::findminzoom> findmz,
-    std::string outfn, bool indexed, 
-    std::string connstring, std::string tableprfx, geometry::pack_csvblocks::tagspec coltags) {
-
+std::pair<size_t,geometry::mperrorvec> process_geometry(const geometry_parameters& params) {
 
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
     block_callback wrapped;
-    if (callback) {
-        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    if (params.callback) {
+        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
         wrapped = [collect](primitiveblock_ptr bl) { collect->call(bl); };
     } else {
-        auto pp = std::make_shared<geom_progress>(locs);
+        auto pp = std::make_shared<geom_progress>(params.locs);
         wrapped = [pp](primitiveblock_ptr bl) { pp->call(bl); };
     }
-    std::vector<block_callback> writer = multi_threaded_callback<primitiveblock>::make(wrapped,numchan);
+    std::vector<block_callback> writer = multi_threaded_callback<primitiveblock>::make(wrapped,params.numchan);
     
         
-    if (outfn!="") {
-        writer = pack_and_write_callback(writer, outfn, indexed, box, numchan, true, true, true);
+    if (params.outfn!="") {
+        writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
         
     }
     
-    if (connstring != "") {
-        writer = write_to_postgis_callback(writer, numchan, connstring, tableprfx, coltags, true);
+    if (params.connstring != "") {
+        writer = write_to_postgis_callback(writer, params.numchan, params.connstring, params.tableprfx, params.coltags, true);
     }
     
     auto addwns = process_geometry_blocks(
-            writer, style, box, apt_spec, add_rels,
-            add_mps, recalcqts, findmz,
+            writer, params.style, params.box, params.apt_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge(filenames, addwns, locs, numchan, std::shared_ptr<idset>(), 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, std::shared_ptr<idset>(), 7, 1<<14);
       
     
     return std::make_pair(0,errors_res);
 
 }
-std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks(
-    std::vector<std::string> filenames,
-    external_callback callback,
-    src_locs_map locs, size_t numchan, size_t numblocks,
-    const geometry::style_info_map& style, bbox box,
-    const geometry::parenttag_spec_map& apt_spec, bool add_rels, bool add_mps, bool recalcqts,
-    std::shared_ptr<geometry::findminzoom> findmz,
-    std::string outfn, bool indexed, std::shared_ptr<qttree> groups) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks(const geometry_parameters& params) {
 
 
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
     
-    auto sb = make_sortblocks(20000, groups, outfn+"-interim",200, numchan);
+    auto sb = make_sortblocks(20000, params.groups, params.outfn+"-interim",200, params.numchan);
     auto sb_callbacks = sb->make_addblocks_cb(false);
     
     auto addwns = process_geometry_blocks(
-            sb_callbacks, style, box, apt_spec, add_rels,
-            add_mps, recalcqts, findmz,
+            sb_callbacks, params.style, params.box, params.apt_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge(filenames, addwns, locs, numchan, std::shared_ptr<idset>(), 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, std::shared_ptr<idset>(), 7, 1<<14);
     
     
     sb->finish();
     block_callback wrapped;
-    if (callback) {
-        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    if (params.callback) {
+        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
         wrapped = [collect](primitiveblock_ptr bl) { collect->call(bl); };
     }
     
     std::vector<block_callback> writer;
-    if (callback) {
-        writer = multi_threaded_callback<primitiveblock>::make(wrapped,numchan);
+    if (params.callback) {
+        writer = multi_threaded_callback<primitiveblock>::make(wrapped,params.numchan);
     }
     
         
-    if (outfn!="") {
-        writer = pack_and_write_callback(writer, outfn, indexed, box, numchan, true, true, true);
+    if (params.outfn!="") {
+        writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
         
     }
     sb->read_blocks(writer, true);
@@ -1134,67 +1145,52 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks(
 
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_nothread(
-    std::vector<std::string> filenames,
-    external_callback callback,
-    src_locs_map locs, size_t numblocks,
-    const geometry::style_info_map& style, bbox box,
-    const geometry::parenttag_spec_map& apt_spec, bool add_rels, bool add_mps, bool recalcqts,
-    std::shared_ptr<geometry::findminzoom> findmz,
-    std::string outfn, bool indexed,
-    std::string connstring, std::string tableprfx, geometry::pack_csvblocks::tagspec coltags) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_nothread(const geometry_parameters& params) {
 
 
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
     block_callback cbc = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
     block_callback writer=cbc;
-    if (outfn!="") {
-        writer = pack_and_write_callback_nothread(cbc, outfn, indexed, box, true, true, true);
+    if (params.outfn!="") {
+        writer = pack_and_write_callback_nothread(cbc, params.outfn, params.indexed, params.box, true, true, true);
     }
     block_callback postgis=writer;
-    if (connstring != "") {
-        postgis = write_to_postgis_callback_nothread(writer, connstring, tableprfx, coltags, true);
+    if (params.connstring != "") {
+        postgis = write_to_postgis_callback_nothread(writer, params.connstring, params.tableprfx, params.coltags, true);
     }
     
     block_callback addwns = process_geometry_blocks_nothread(
-            postgis, style, box, apt_spec, add_rels,
-            add_mps, recalcqts, findmz,
+            postgis, params.style, params.box, params.apt_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(filenames, addwns, locs, std::shared_ptr<idset>(), 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, std::shared_ptr<idset>(), 7);
       
     
     return std::make_pair(cb->total(),errors_res);
 
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread(
-    std::vector<std::string> filenames,
-    external_callback callback,
-    std::function<void(std::shared_ptr<geometry::csv_block>)> csvblock_callback,
-    src_locs_map locs, size_t numblocks,
-    const geometry::style_info_map& style, bbox box,
-    const geometry::parenttag_spec_map& apt_spec, bool add_rels, bool add_mps, bool recalcqts,
-    std::shared_ptr<geometry::findminzoom> findmz, geometry::pack_csvblocks::tagspec coltags) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread(const geometry_parameters& params) {
         
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
     block_callback cbc = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
-    block_callback csvcallback = make_pack_csvblocks_callback(cbc,wrap_callback(csvblock_callback),coltags, true);
+    block_callback csvcallback = make_pack_csvblocks_callback(cbc,wrap_callback(params.csvblock_callback),params.coltags, true);
     
     block_callback addwns = process_geometry_blocks_nothread(
-            csvcallback, style, box, apt_spec, add_rels,
-            add_mps, recalcqts, findmz,
+            csvcallback, params.style, params.box, params.apt_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(filenames, addwns, locs, std::shared_ptr<idset>(), 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, std::shared_ptr<idset>(), 7);
       
     
     return std::make_pair(cb->total(),errors_res);
@@ -1434,39 +1430,64 @@ void geometry_defs(py::module& m) {
     });
     m.def("convert_packed_tags_to_json", &geometry::convert_packed_tags_to_json);
 
-    m.def("process_geometry", &process_geometry,
+
+    py::class_<geometry_parameters>(m, "geometry_parameters")
+        .def(py::init<>())
+        .def_readwrite("filenames", &geometry_parameters::filenames)
+        .def_readwrite("callback", &geometry_parameters::callback)
+        .def_readwrite("locs", &geometry_parameters::locs)
+        .def_readwrite("numchan", &geometry_parameters::numchan)
+        .def_readwrite("numblocks", &geometry_parameters::numblocks)
+        .def_readwrite("style", &geometry_parameters::style)
+        .def_readwrite("box", &geometry_parameters::box)
+        .def_readwrite("apt_spec", &geometry_parameters::apt_spec)
+        .def_readwrite("add_rels", &geometry_parameters::add_rels)
+        .def_readwrite("add_mps", &geometry_parameters::add_mps)
+        .def_readwrite("recalcqts", &geometry_parameters::recalcqts)
+        .def_readwrite("findmz", &geometry_parameters::findmz)
+        .def_readwrite("outfn", &geometry_parameters::outfn)
+        .def_readwrite("indexed", &geometry_parameters::indexed)
+        .def_readwrite("connstring", &geometry_parameters::connstring)
+        .def_readwrite("tableprfx", &geometry_parameters::tableprfx)
+        .def_readwrite("coltags", &geometry_parameters::coltags)
+        .def_readwrite("groups", &geometry_parameters::groups)
+        .def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
+    ;
+
+
+    m.def("process_geometry", &process_geometry/* ,
+       py::arg("filenames"), py::arg("callback"),
+        py::arg("locs"), py::arg("numchan"), py::arg("numblocks"),
+        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
+        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
+        py::arg("findmz"),py::arg("outfn"), py::arg("indexed"),
+        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")*/
+    );
+    
+    m.def("process_geometry_sortblocks", &process_geometry_sortblocks/*, 
         py::arg("filenames"), py::arg("callback"),
         py::arg("locs"), py::arg("numchan"), py::arg("numblocks"),
         py::arg("style"), py::arg("box"), py::arg("apt_spec"),
         py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
         py::arg("findmz"),py::arg("outfn"), py::arg("indexed"),
-        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")
+        py::arg("groups")*/
     );
     
-    m.def("process_geometry_sortblocks", &process_geometry_sortblocks, 
-        py::arg("filenames"), py::arg("callback"),
-        py::arg("locs"), py::arg("numchan"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"),py::arg("outfn"), py::arg("indexed"),
-        py::arg("groups")
-    );
-    
-    m.def("process_geometry_nothread", &process_geometry_nothread,
+    m.def("process_geometry_nothread", &process_geometry_nothread/*,
         py::arg("filenames"), py::arg("callback"),
         py::arg("locs"), py::arg("numblocks"),
         py::arg("style"), py::arg("box"), py::arg("apt_spec"),
         py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
         py::arg("findmz"), py::arg("outfn"), py::arg("indexed"),
-        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")
+        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")*/
     );
     
-    m.def("process_geometry_csvcallback_nothread", &process_geometry_csvcallback_nothread,
+    m.def("process_geometry_csvcallback_nothread", &process_geometry_csvcallback_nothread/*,
         py::arg("filenames"), py::arg("callback"),py::arg("csvblock_callback"),
         py::arg("locs"), py::arg("numblocks"),
         py::arg("style"), py::arg("box"), py::arg("apt_spec"),
         py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"), py::arg("coltags")
+        py::arg("findmz"), py::arg("coltags")*/
     );
     
     m.def("process_geometry_from_vec", &process_geometry_from_vec,

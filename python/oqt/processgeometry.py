@@ -229,7 +229,20 @@ read_minzoom = lambda minzoomfn: [(int(a),b,c,int(d)) for a,b,c,d,e in (r[:5] fo
 def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoomfn=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
     tiles={} if mergetiles else []
     
+    params = oq.geometry_parameters()
+        
+    params.numchan=numchan
+    params.apt_spec = add_highway
+    params.add_rels=True
+    params.add_mps=True
+    params.recalcqts=True
     
+    if not groups is None:
+        params.groups=groups
+    
+    if outfn:
+        params.outfn=outfn
+    params.indexed=indexed
     
     if box_in is None:
         
@@ -237,33 +250,33 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     
     
     
-    fns,locs,box = get_locs(prfx,box_in,lastdate)
-    print("%d fns, %d qts, %d blocks" % (len(fns),len(locs),sum(len(v) for k,v in locs.items())))
+    params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
+    print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
     if mergetiles and collect:
         for l in locs:
             tiles[l]=oq.primitiveblock(0,0)
             tiles[l].quadtree=l
     
-    style = read_style(stylefn)
+    params.style = read_style(stylefn)
     print("%d styles" % len(style))
-    findmz=None
+    
     if 'minzoom' in style and minzoomfn is not None:
-        findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen=minlen,minarea=minarea)
-        print ('findmz', findmz)
+        params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen=minlen,minarea=minarea)
+        print ('findmz', params.findmz)
     cnt,errs=None,None
     
     
     
     if len(locs) > 2500 and outfn is not None:
         collect=False
-    result = (addto_merge(tiles, minzoomfn!=None) if mergetiles else addto(tiles)) if collect else None
+    params.result = Prog((addto_merge(tiles, minzoomfn!=None) if mergetiles else addto(tiles)), locs) if collect else None
     
     if nothread:
-        cnt, errs = oq.process_geometry_nothread(fns, Prog(result,locs) if result else None, locs, 128, style, box, add_highway, True, True, True, findmz, outfn if outfn else "", indexed, "", "", [])
+        cnt, errs = oq.process_geometry_nothread(params)
     elif groups is not None:
-        cnt, errs = oq.process_geometry_sortblocks(fns, Prog(result,locs) if result else None, locs, numchan, 512, style, box, add_highway, True, True, True, findmz, outfn if outfn else "", True, groups)
+        cnt, errs = oq.process_geometry_sortblocks(params)
     else:
-        cnt, errs = oq.process_geometry(fns, Prog(result,locs) if result else None, locs, numchan, 512, style, box, add_highway, True, True, True, findmz, outfn if outfn else "", indexed, "", "", [])
+        cnt, errs = oq.process_geometry(params)
     
     if collect:
         if mergetiles:
