@@ -74,6 +74,40 @@ size_t read_blocks_minimalblock_py(
 }
 
 
+size_t read_blocks_caller_read_primitive(
+    std::shared_ptr<ReadBlocksCaller> rbc,
+    std::function<bool(std::vector<primitiveblock_ptr>)> callback,
+    size_t numchan,
+    size_t numblocks,
+    std::shared_ptr<idset> filter) {
+        
+    
+    py::gil_scoped_release r;
+    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    auto cbf = multi_threaded_callback<primitiveblock>::make([cb](primitiveblock_ptr bl) { cb->call(bl); },numchan);
+    rbc->read_primitive(cbf, filter);
+    return cb->total();
+    
+    
+}
+
+size_t read_blocks_caller_read_minimal(
+    std::shared_ptr<ReadBlocksCaller> rbc,
+    std::function<bool(std::vector<minimalblock_ptr>)> callback,
+    size_t numchan,
+    size_t numblocks,
+    std::shared_ptr<idset> filter) {
+        
+    
+    py::gil_scoped_release r;
+    auto cb = std::make_shared<collect_blocks<minimalblock>>(wrap_callback(callback),numblocks);
+    auto cbf = multi_threaded_callback<minimalblock>::make([cb](minimalblock_ptr bl) { cb->call(bl); },numchan);
+    
+    rbc->read_minimal(cbf, filter);
+    return cb->total();
+    
+    
+}
 
 
 std::shared_ptr<element> make_node(int64 id, info inf, tagvector tags, int64 lon, int64 lat, int64 qt, changetype ct) {
@@ -446,6 +480,20 @@ void block_defs(py::module& m) {
         .def_readonly("box", &header::box)
         .def_readonly("index", &header::index)
     ;
+    
+    
+    py::class_<ReadBlocksCaller, std::shared_ptr<ReadBlocksCaller>>(m, "ReadBlocksCaller")
+        .def("num_tiles", &ReadBlocksCaller::num_tiles)
+    ;
+    
+    m.def("read_blocks_caller_read_primitive", &read_blocks_caller_read_primitive);
+    m.def("read_blocks_caller_read_minimal", &read_blocks_caller_read_minimal);
+    m.def("make_read_blocks_caller", &make_read_blocks_caller);
+
+    m.def("calc_idset_filter", [](std::shared_ptr<ReadBlocksCaller> rbc, bbox bx, lonlatvec llv, size_t nc) {
+        py::gil_scoped_release r;
+        return calc_idset_filter(rbc,bx,llv,nc);
+    });
 
 
     m.def("read_blocks_primitive", &read_blocks_primitiveblock_py,

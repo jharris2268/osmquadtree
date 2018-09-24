@@ -194,7 +194,7 @@ class CalculateFilterIdset {
                 auto qbx = quadtree::bbox(mb->quadtree,0.05);
                 box_contains = bbox_contains(box, qbx);
                 
-                if (box_contains && (!poly.empty())) {
+               if (check_full && box_contains && (!poly.empty())) {
                     box_contains  =
                         point_in_poly(poly, lonlat{qbx.minx,qbx.miny}) &&
                         point_in_poly(poly, lonlat{qbx.minx,qbx.maxy}) &&
@@ -408,6 +408,26 @@ primitiveblock_callback log_progress(primitiveblock_callback cb) {
     
     return [pg](primitiveblock_ptr bl) { pg->call(bl); };
 }
+
+
+std::shared_ptr<idset> calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan) {
+    double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
+    logger_message() << "filter_box=" << filter_box << ", area=" << boxarea;
+    
+    std::shared_ptr<idset_calc> filter_impl;
+    if (boxarea > 5) {
+        filter_impl = std::make_shared<filter_idset_vec>(1ll<<34, 1ll<<24, 1ll<<18);
+    } else {
+        filter_impl = std::make_shared<filter_idset>();
+    }
+    auto cfi = std::make_shared<CalculateFilterIdset>(filter_impl, filter_box, poly.empty(), poly);
+    auto rc = multi_threaded_callback<minimalblock>::make([cfi](std::shared_ptr<minimalblock> mb) { cfi->call(mb); }, numchan);
+    read_blocks_caller->read_minimal(rc, nullptr);
+    
+    logger_message() << filter_impl->str();
+    
+    return filter_impl;
+}
         
 
 void run_mergechanges(
@@ -425,21 +445,9 @@ void run_mergechanges(
     
     std::shared_ptr<idset> filter;
     
-    double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
-    logger_message() << "filter_box=" << filter_box << ", area=" << boxarea;
+    
     if (filter_objs) {
-        //throw std::domain_error("not impl");
-        std::shared_ptr<idset_calc> filter_impl;
-        if (boxarea > 5) {
-            filter_impl = std::make_shared<filter_idset_vec>(1ll<<34, 1ll<<24, 1ll<<18);
-        } else {
-            filter_impl = std::make_shared<filter_idset>();
-        }
-        auto cfi = std::make_shared<CalculateFilterIdset>(filter_impl, filter_box, poly.empty(), poly);
-        auto rc = multi_threaded_callback<minimalblock>::make([cfi](std::shared_ptr<minimalblock> mb) { cfi->call(mb); }, numchan);
-        read_blocks_caller->read_minimal(rc, nullptr);
-        filter = filter_impl;
-        logger_message() << filter_impl->str();
+        filter=calc_idset_filter(read_blocks_caller, filter_box, poly, numchan);
         lg->time("find ids filter");
     }
     

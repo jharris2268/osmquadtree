@@ -1,8 +1,8 @@
 from __future__ import print_function
 from . import _oqt
 from .processgeometry import process_geometry, write_to_postgis, read_blocks
-import sys, time
-from .utils import intm
+import sys, time, numbers
+from .utils import intm, read_poly_file, Poly
 from .xmlchange import read_timestamp
 time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))
 
@@ -200,6 +200,57 @@ _oqt.minimalblock.ways = property(lambda mb: minimalblock_ways(mb))
 _oqt.minimalblock.relations = property(lambda mb: minimalblock_relations(mb))
 _oqt.minimalblock.geometries = property(lambda mb: minimalblock_geometries(mb))
 
+
+_oqt._ReadBlocksCaller = _oqt.ReadBlocksCaller
+
+def prep_poly(poly):
+    if poly is None:
+        return []
+    
+    if not poly:
+        return []
+    
+    if isinstance(poly[0], _oqt.lonlat):
+        return poly
+    
+    if type(poly)==str:
+        poly=read_poly_file(poly)
+    
+    
+    return [oqt._oqt.lonlat(x,y) for x,y in poly]
+
+class ReadBlocksCaller:
+    def __init__(self, prfx, bbox, poly=None, lastdate=None):
+        if not lastdate is None:
+            if not isinstance(lastdate, numbers.Integral):
+                lastdate = _oqt.read_date(lastdate)
+        else:
+            lastdate=0
+        
+        self.bbox=bbox
+        self.poly=prep_poly(poly)
+        
+        self.rbc = _oqt.make_read_blocks_caller(prfx, self.bbox, self.poly, lastdate)
+    
+    def read_primitive(self, cb, numblocks=512, numchan=4, filter=None):
+        return _oqt.read_blocks_caller_read_primitive(self.rbc, cb, numblocks, numchan, filter)
+                    
+    def read_minimal(self, cb, numblocks=512, numchan=4, filter=None):
+        return _oqt.read_blocks_caller_read_minimal(self.rbc, cb, numblocks, numchan, filter)            
+
+    def num_blocks(self):
+        return self.rbc.num_blocks()
+        
+    def calc_idset(self, bbox=None, poly=None):
+        if bbox is None:
+            bbox=self.bbox
+        if poly is None:
+            poly=self.poly
+        else:
+            poly=prep_poly(poly)
+        return _oqt.calc_idset_filter(self.rbc, bbox, poly, 4)
+
+_oqt.ReadBlocksCaller=ReadBlocksCaller
 
 def run_calcqts_alt(origfn, qtsfn=None, numchan=4, splitways=True, resort=True, buffer=0.05, max_depth=18):
     _oqt.get_logger().reset_timing()

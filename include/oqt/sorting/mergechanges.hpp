@@ -25,10 +25,14 @@
 #define SORTING_MERGECHANGES_HPP
 
 #include "oqt/utils/geometry.hpp"
+#include "oqt/pbfformat/readblockscaller.hpp"
+#include "oqt/pbfformat/idset.hpp"
+
 
 namespace oqt {
 
 
+std::shared_ptr<idset> calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan);
 
 void run_mergechanges(
     const std::string& infile_name,
