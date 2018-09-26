@@ -35,9 +35,7 @@ namespace oqt {
 
 namespace quadtree {
 
-    /*struct xyz {
-        int64 x,y,z;
-    };*/
+    
     typedef std::tuple<int64,int64,int64> xyz;
 
     int64 calculate(int64 min_x, int64 min_y, int64 max_x, int64 max_y, double buffer, uint64 max_depth);

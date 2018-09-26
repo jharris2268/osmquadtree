@@ -39,6 +39,8 @@ enum struct changetype {
 };
 std::ostream& operator<<(std::ostream& strm, changetype c);
 
+/*! Allows user to cast (with std::dynamic_pointer_cast) BaseElement
+ * or Element to correct type*/
 enum struct ElementType {
     Node=0,
     Way,
@@ -53,13 +55,16 @@ enum struct ElementType {
 std::ostream& operator<<(std::ostream& strm, ElementType e);
 
 
-//! Base class for 
+//! Base class for all osm Elements
 class BaseElement {
     public:
-        
+        //! Allows for simple sorting of Elements
         virtual uint64      InternalId() const =0;
+        
         virtual ElementType Type() const =0;
         virtual int64       Id() const =0;
+        
+        //! Allows for grouping of Elements by location
         virtual int64       Quadtree() const =0;
         virtual changetype  ChangeType() const =0;
         
