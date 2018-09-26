@@ -28,15 +28,15 @@ namespace oqt {
 
 
 
-relation::relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems)
-    : element(elementtype::Relation,c,i,q,inf,tags), mems_(mems) {}
+Relation::Relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems)
+    : Element(ElementType::Relation,c,i,q,inf,tags), mems_(mems) {}
         
-const memvector&  relation::Members() const { return mems_; }
+const memvector&  Relation::Members() const { return mems_; }
 
-std::shared_ptr<element> relation::copy() { return std::make_shared<relation>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Members()); }
+ElementPtr Relation::copy() { return std::make_shared<Relation>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Members()); }
 
 /*
-std::list<PbfTag> relation::pack_extras() const {
+std::list<PbfTag> Relation::pack_extras() const {
     std::list<PbfTag> mm;
     if (mems_.empty()) { return mm; }
     std::vector<int64> rfs_; rfs_.reserve(mems_.size());
@@ -53,7 +53,7 @@ std::list<PbfTag> relation::pack_extras() const {
 }
 */
 
-bool relation::filter_members(std::shared_ptr<idset> ids) {
+bool Relation::filter_members(std::shared_ptr<idset> ids) {
     if (mems_.empty()) { return true; }
     memvector mems_new;
     mems_new.reserve(mems_.size());
@@ -70,7 +70,7 @@ bool relation::filter_members(std::shared_ptr<idset> ids) {
     mems_=mems_new;
     return true;
 }
-bool fix_members(relation& rel) {
+bool fix_members(Relation& rel) {
     if (rel.mems_.empty()) { return false; }
     bool r=false;
     for (auto& m: rel.mems_) {

@@ -51,7 +51,7 @@ namespace oqt {
 
 class idset_calc : public idset {
     public:
-        virtual void insert(elementtype ty, int64 id)=0;
+        virtual void insert(ElementType ty, int64 id)=0;
         virtual std::string str()=0;
 };
 
@@ -60,10 +60,10 @@ class filter_idset : public idset_calc {
         filter_idset() {}
         virtual ~filter_idset() {}
         
-        virtual bool contains(elementtype ty, int64 id) const {
-            if (ty==Node) { return nodes.count(id)>0; }
-            if (ty==Way) { return ways.count(id)>0; }
-            if (ty==Relation) { return relations.count(id)>0; }
+        virtual bool contains(ElementType ty, int64 id) const {
+            if (ty==ElementType::Node) { return nodes.count(id)>0; }
+            if (ty==ElementType::Way) { return ways.count(id)>0; }
+            if (ty==ElementType::Relation) { return relations.count(id)>0; }
             return false;
         };
         
@@ -72,10 +72,10 @@ class filter_idset : public idset_calc {
             ss << "filter_idset with " << nodes.size() << " nodes, " << ways.size() << " ways, " << relations.size() << " relations";
             return ss.str();
         }
-        virtual void insert(elementtype ty, int64 id) {
-            if (ty==Node) { nodes.insert(id); }
-            if (ty==Way) { ways.insert(id); }
-            if (ty==Relation) { relations.insert(id); }
+        virtual void insert(ElementType ty, int64 id) {
+            if (ty==ElementType::Node) { nodes.insert(id); }
+            if (ty==ElementType::Way) { ways.insert(id); }
+            if (ty==ElementType::Relation) { relations.insert(id); }
         }
     private:
         std::set<int64> nodes;
@@ -131,11 +131,11 @@ class filter_idset_vec : public idset_calc {
             relations.clear();
         }
         
-        virtual bool contains(elementtype ty, int64 id) const {
+        virtual bool contains(ElementType ty, int64 id) const {
             
-            if (ty==Node) { return nodes.contains(id); }
-            if (ty==Way) { return ways.contains(id); }
-            if (ty==Relation) { return relations.contains(id); }
+            if (ty==ElementType::Node) { return nodes.contains(id); }
+            if (ty==ElementType::Way) { return ways.contains(id); }
+            if (ty==ElementType::Relation) { return relations.contains(id); }
             return false;
         };
         
@@ -144,10 +144,10 @@ class filter_idset_vec : public idset_calc {
             ss << "filter_idset_vec with " << nodes.size() << " nodes, " << ways.size() << " ways, " << relations.size() << " relations";
             return ss.str();
         }
-        virtual void insert(elementtype ty, int64 id) {
-            if (ty==Node) { nodes.insert(id); }
-            if (ty==Way) { ways.insert(id); }
-            if (ty==Relation) { relations.insert(id); }
+        virtual void insert(ElementType ty, int64 id) {
+            if (ty==ElementType::Node) { nodes.insert(id); }
+            if (ty==ElementType::Way) { ways.insert(id); }
+            if (ty==ElementType::Relation) { relations.insert(id); }
         }
     private:
         vecbool_set nodes;
@@ -172,20 +172,20 @@ class CalculateFilterIdset {
                 logger_message() << "CalculateFilterIdset finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
                 
                 for (auto& n : extra_nodes) {
-                    ids->insert(elementtype::Node, n);
+                    ids->insert(ElementType::Node, n);
                 }
                 extra_nodes.clear();
                 
                 for (size_t i=0; i < 5; i++) {
                     for (const auto& rr : relmems) {
-                        if ((i==0) || (std::get<0>(rr)==2)) {
-                            if (ids->contains(std::get<0>(rr),std::get<1>(rr))) {
-                                ids->insert(elementtype::Relation, std::get<2>(rr));
+                        if ((i==0) || (std::get<0>(rr)==ElementType::Relation)) {
+                            if (ids->contains(ElementType::Relation,std::get<1>(rr))) {
+                                ids->insert(ElementType::Relation, std::get<2>(rr));
                             }
                         }
                     }
                 }
-                std::vector<std::tuple<elementtype,int64,int64>> e;
+                std::vector<std::tuple<ElementType,int64,int64>> e;
                 relmems.swap(e);
                 return;
             }
@@ -234,14 +234,14 @@ class CalculateFilterIdset {
         void check_node(const minimalnode& n,bool box_contains) {
             if (box_contains || check_point(n.lon, n.lat)) {
                 
-                ids->insert(elementtype::Node, n.id);
+                ids->insert(ElementType::Node, n.id);
             }
         }
         void check_way(const minimalway& w,bool box_contains) {
             auto wns = readPackedDelta(w.refs_data);
             bool found=box_contains || [this, &wns]() {
                 for (const auto& r: wns) {
-                    if (ids->contains(elementtype::Node,r)) {
+                    if (ids->contains(ElementType::Node,r)) {
                         return true;
                     }
                 }
@@ -250,9 +250,9 @@ class CalculateFilterIdset {
             if (!found) {
                 return; 
             }
-            ids->insert(elementtype::Way, w.id);
+            ids->insert(ElementType::Way, w.id);
             for (const auto& r: wns) {
-                if (!ids->contains(elementtype::Node,r)) {
+                if (!ids->contains(ElementType::Node,r)) {
                     extra_nodes.insert(r);
                 }
             }
@@ -267,17 +267,17 @@ class CalculateFilterIdset {
             
             bool found=[&]() {
                 for (size_t i=0; i < tys.size(); i++) {
-                    if (ids->contains((elementtype) tys[i],rfs[i])) {
+                    if (ids->contains((ElementType) tys[i],rfs[i])) {
                         return true;
                     }
                 }
                 return false;
             }();
             if (found) {
-                ids->insert(elementtype::Relation, r.id);
+                ids->insert(ElementType::Relation, r.id);
             } else {
                 for (size_t i=0; i < tys.size(); i++) {
-                    relmems.push_back(std::make_tuple((elementtype) tys[i],rfs[i],r.id));
+                    relmems.push_back(std::make_tuple((ElementType) tys[i],rfs[i],r.id));
                 }
             }
         }
@@ -290,7 +290,7 @@ class CalculateFilterIdset {
         lonlatvec poly;
         
         std::set<int64> extra_nodes;
-        std::vector<std::tuple<elementtype,int64,int64>> relmems;
+        std::vector<std::tuple<ElementType,int64,int64>> relmems;
         std::set<int64> xx;
         size_t notinpoly;
 };
@@ -310,12 +310,12 @@ class FilterRels {
                 return pb;
             }
             
-            std::map<size_t,std::shared_ptr<relation>> tt;
+            std::map<size_t,std::shared_ptr<Relation>> tt;
             size_t nm=0; size_t nx=0;
             for (size_t i=0; i < pb->size(); i++) {
                 
-                if (pb->at(i)->Type()==Relation) {
-                    auto rel = std::dynamic_pointer_cast<relation>(pb->at(i));
+                if (pb->at(i)->Type()==ElementType::Relation) {
+                    auto rel = std::dynamic_pointer_cast<Relation>(pb->at(i));
                     
                     size_t x=rel->Members().size();
                     if (rel->filter_members(filter)) {
@@ -470,7 +470,7 @@ void run_mergechanges(
         
     if (sort_objs) {
         if (inmem) {
-            std::vector<element_ptr> all;
+            std::vector<ElementPtr> all;
             auto add_all = multi_threaded_callback<primitiveblock>::make([&all](primitiveblock_ptr bl) {
                 if (!bl) { return; }
                 for (size_t i=0; i < bl->size(); i++) {

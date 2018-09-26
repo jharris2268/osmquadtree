@@ -31,7 +31,7 @@ std::shared_ptr<primitiveblock> read_xml_change(const std::string& data);
 std::shared_ptr<primitiveblock> read_xml_change_file(std::istream* strm);
 
 
-typedef std::map<std::pair<elementtype,int64>, std::shared_ptr<element>> typeid_element_map;
+typedef std::map<std::pair<ElementType,int64>, ElementPtr> typeid_element_map;
 typedef std::shared_ptr<typeid_element_map> typeid_element_map_ptr;
 
 void read_xml_change_file_em(std::istream* fl, typeid_element_map_ptr em, bool allow_missing_users);

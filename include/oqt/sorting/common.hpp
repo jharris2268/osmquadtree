@@ -45,7 +45,7 @@ class SplitBlocks {
         
         virtual ~SplitBlocks();
         
-        virtual size_t find_tile(element_ptr obj)=0;
+        virtual size_t find_tile(ElementPtr obj)=0;
         virtual size_t max_tile()=0;
         
         

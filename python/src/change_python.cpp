@@ -30,16 +30,16 @@ struct element_map {
 void add_all_element_map(std::shared_ptr<objs_idset> ii, const element_map& mm) {
     if (!mm.u) { return; }
     for (auto& o : (*mm.u)) {
-        if (o.second->Type()==Node) {
-            auto n = std::dynamic_pointer_cast<node>(o.second);
+        if (o.second->Type()==ElementType::Node) {
+            auto n = std::dynamic_pointer_cast<Node>(o.second);
             if (!n) { throw std::domain_error("WTF"); }
             ii->add_node(n);
-        } else if (o.second->Type()==Way) {
-            auto w = std::dynamic_pointer_cast<way>(o.second);
+        } else if (o.second->Type()==ElementType::Way) {
+            auto w = std::dynamic_pointer_cast<Way>(o.second);
             if (!w) { throw std::domain_error("WTF"); }
             ii->add_way(w);
-        } else if (o.second->Type()==Relation) {
-            auto r = std::dynamic_pointer_cast<relation>(o.second);
+        } else if (o.second->Type()==ElementType::Relation) {
+            auto r = std::dynamic_pointer_cast<Relation>(o.second);
             if (!r) { throw std::domain_error("WTF"); }
             ii->add_relation(r);
         }
@@ -223,15 +223,15 @@ void change_defs(py::module& m) {
     m.def("add_all_element_map", &add_all_element_map);
     py::class_<element_map>(m,"element_map")
         .def(py::init<>())
-        .def("__getitem__",[](const element_map& f, std::pair<elementtype,int64> t) {
+        .def("__getitem__",[](const element_map& f, std::pair<ElementType,int64> t) {
             if (!f.u) { throw pybind11::index_error("nf"); }
             auto it=f.u->find(t);
             if (it==f.u->end()) { throw pybind11::index_error("nf"); }
             return it->second;
         })
-        .def("__setitem__",[](element_map& f, std::pair<elementtype,int64> t,  std::shared_ptr<element> u) {
+        .def("__setitem__",[](element_map& f, std::pair<ElementType,int64> t,  ElementPtr u) {
             if (!f.u) {
-                f.u = std::make_shared<std::map<std::pair<elementtype,int64>,std::shared_ptr<element>>>();
+                f.u = std::make_shared<std::map<std::pair<ElementType,int64>,ElementPtr>>();
             }
             (*f.u)[t]=u; //.insert(std::make_pair(t,u));
         })
@@ -239,7 +239,7 @@ void change_defs(py::module& m) {
             if (!f.u) { return 0; }
             return f.u->size();
         })
-        .def("__contains__",[](const element_map& f, std::pair<elementtype,int64> t) {
+        .def("__contains__",[](const element_map& f, std::pair<ElementType,int64> t) {
             if (!f.u) { return false; }
             return f.u->count(t)==1;
         })
@@ -247,7 +247,7 @@ void change_defs(py::module& m) {
             if (!f.u) { throw pybind11::index_error("nf"); }
             return py::make_iterator(f.u->begin(),f.u->end());
         }, py::keep_alive<0,1>())
-        .def("erase", [](element_map& f, std::pair<elementtype,int64> t) { if (!f.u) { return; } f.u->erase(t); })
+        .def("erase", [](element_map& f, std::pair<ElementType,int64> t) { if (!f.u) { return; } f.u->erase(t); })
         .def("clear", [](element_map& f) {
             if (!f.u) { return; }
             f.u->clear();

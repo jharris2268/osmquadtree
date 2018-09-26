@@ -25,17 +25,17 @@
 
 #include "oqt/elements/element.hpp"
 namespace oqt {
-class node : public element {
+class Node : public Element {
     public:
-        node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat);
+        Node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat);
         
-        virtual ~node() {}
+        virtual ~Node() {}
 
         int64 Lon() const;
         int64 Lat() const;
 
         
-        virtual std::shared_ptr<element> copy();
+        virtual ElementPtr copy();
     private:
         int64 lon_,lat_;
 };

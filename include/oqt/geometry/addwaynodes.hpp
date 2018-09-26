@@ -49,16 +49,16 @@ lonlat inverse_transform(double x, double y);
 
 
 
-class way_withnodes : public element {
+class way_withnodes : public Element {
     public:
-        way_withnodes(std::shared_ptr<way> wy, const lonlatvec& lonlats_)
-            : element(elementtype::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
+        way_withnodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_)
+            : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
             for (auto& l : lonlats) {
                 bounds.expand_point(l.lon,l.lat);
             }
         }
         way_withnodes(int64 id, int64 qt, const info& inf, const tagvector& tgs, const refvector& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
-            : element(elementtype::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
+            : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
 
 
         const refvector& Refs() { return refs; }
@@ -71,7 +71,7 @@ class way_withnodes : public element {
 
         virtual std::list<PbfTag> pack_extras() const;
         virtual ~way_withnodes() {}
-        virtual std::shared_ptr<element> copy() { return std::make_shared<way_withnodes>(Id(),Quadtree(),Info(),Tags(),refs,lonlats,bounds); }
+        virtual ElementPtr copy() { return std::make_shared<way_withnodes>(Id(),Quadtree(),Info(),Tags(),refs,lonlats,bounds); }
     private:
         way_withnodes(const way_withnodes&)=delete;
         way_withnodes operator=(const way_withnodes&)=delete;
@@ -86,7 +86,7 @@ class way_withnodes : public element {
 class lonlatstore {
     public:
         virtual void add_tile(std::shared_ptr<primitiveblock> block)=0;
-        virtual lonlatvec get_lonlats(std::shared_ptr<way> way)=0;
+        virtual lonlatvec get_lonlats(std::shared_ptr<Way> way)=0;
         virtual void finish()=0;
         virtual ~lonlatstore() {}
 };

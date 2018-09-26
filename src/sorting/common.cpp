@@ -144,9 +144,9 @@ void SplitBlocks::call(primitiveblock_ptr bl) {
         temps->at(k)->add(o);
         
         detail->currww += 1;
-        if ( (o->Type() == elementtype::Way) || (o->Type() == elementtype::Linestring) || (o->Type() == elementtype::SimplePolygon)) {
+        if ( (o->Type() == ElementType::Way) || (o->Type() == ElementType::Linestring) || (o->Type() == ElementType::SimplePolygon)) {
             detail->currww += 5;
-        } else if ( (o->Type() == elementtype::Relation) || (o->Type() == elementtype::ComplicatedPolygon)) {
+        } else if ( (o->Type() == ElementType::Relation) || (o->Type() == ElementType::ComplicatedPolygon)) {
             detail->currww += 10;
         }
        

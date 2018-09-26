@@ -41,7 +41,7 @@ class CollectObjs {
             
         }
         
-        void add(element_ptr obj) {
+        void add(ElementPtr obj) {
             if (curr->size()==blocksize) {
                 cb[idx%cb.size()](curr);
                 idx++;
@@ -57,7 +57,7 @@ class CollectObjs {
                         std::to_string(idx*blocksize+curr->size())+
                         ": "+std::to_string(prev>>61)+
                         " "+std::to_string(prev&0x1fffffffffffffffll)+
-                        " followed by "+std::to_string(obj->Type())+
+                        " followed by "+std::to_string(int(obj->Type()))+
                         " "+std::to_string(obj->Id())+
                         " [ "+std::to_string(obj->Info().version)+"]");
                 }
@@ -86,9 +86,9 @@ class CollectObjs {
         primitiveblock_ptr curr;
 };
 
-std::function<void(element_ptr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize)  {
+std::function<void(ElementPtr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize)  {
     auto collect = std::make_shared<CollectObjs>(callbacks,blocksize,true);
-    return [collect](element_ptr obj) {
+    return [collect](ElementPtr obj) {
         if (obj) {
             collect->add(obj);
         } else {
@@ -104,18 +104,18 @@ class SplitById : public SplitBlocks {
             SplitBlocks(callbacks,blocksplit,writeat,true), node_split_at(node_split_at_), way_split_at(way_split_at_), offset(offset_) {}
         
         virtual ~SplitById() {}
-        virtual size_t find_tile(element_ptr obj) {
+        virtual size_t find_tile(ElementPtr obj) {
             int64 i = obj->Id();
-            elementtype t = obj->Type();
-            if (t==elementtype::Node) {
+            ElementType t = obj->Type();
+            if (t==ElementType::Node) {
                 int64 x = i / node_split_at;
                 if (x>=offset) { x=offset-1; }
                 return x;
-            } else if (t==elementtype::Way) {
+            } else if (t==ElementType::Way) {
                 int64 x = i / way_split_at;
                 if (x>=offset) { x=offset-1; }
                 return offset+x;
-            } else if (t==elementtype::Relation) {
+            } else if (t==ElementType::Relation) {
                 int64 x =  i / (way_split_at/10);
                 if (x>=offset) { x=offset-1; }
                 return 2*offset+x;

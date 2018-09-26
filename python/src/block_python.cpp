@@ -110,16 +110,16 @@ size_t read_blocks_caller_read_minimal(
 }
 
 
-std::shared_ptr<element> make_node(int64 id, info inf, tagvector tags, int64 lon, int64 lat, int64 qt, changetype ct) {
-    return std::make_shared<node>(ct, id, qt, inf, tags, lon, lat);
+ElementPtr make_node(int64 id, info inf, tagvector tags, int64 lon, int64 lat, int64 qt, changetype ct) {
+    return std::make_shared<Node>(ct, id, qt, inf, tags, lon, lat);
 }
 
-std::shared_ptr<element> make_way(int64 id, info inf, tagvector tags, std::vector<int64> refs, int64 qt, changetype ct) {
-    return std::make_shared<way>(ct, id, qt, inf, tags,refs);
+ElementPtr make_way(int64 id, info inf, tagvector tags, std::vector<int64> refs, int64 qt, changetype ct) {
+    return std::make_shared<Way>(ct, id, qt, inf, tags,refs);
 }
 
-std::shared_ptr<element> make_relation(int64 id, info inf, tagvector tags, std::vector<member> mems, int64 qt, changetype ct) {
-    return std::make_shared<relation>(ct, id, qt, inf, tags, mems);
+ElementPtr make_relation(int64 id, info inf, tagvector tags, std::vector<member> mems, int64 qt, changetype ct) {
+    return std::make_shared<Relation>(ct, id, qt, inf, tags, mems);
 }
 
 std::shared_ptr<primitiveblock> readPrimitiveBlock_py(int64 idx, py::bytes data, bool change) {
@@ -131,7 +131,7 @@ class invert_idset : public idset {
         invert_idset(std::shared_ptr<idset> ids_) : ids(ids_) {}
         virtual ~invert_idset() {}
         
-        virtual bool contains(elementtype t, int64 i) const {
+        virtual bool contains(ElementType t, int64 i) const {
             return !ids->contains(t,i);
         }
     private:
@@ -227,16 +227,16 @@ void block_defs(py::module& m) {
         .value("Modify", changetype::Modify)
         .value("Create", changetype::Create)
         .export_values();
-    py::enum_<elementtype>(m, "elementtype")
-        .value("Node", elementtype::Node)
-        .value("Way", elementtype::Way)
-        .value("Relation", elementtype::Relation)
-        .value("Point", elementtype::Point)
-        .value("Linestring", elementtype::Linestring)
-        .value("SimplePolygon", elementtype::SimplePolygon)
-        .value("ComplicatedPolygon", elementtype::ComplicatedPolygon)
-        .value("WayWithNodes", elementtype::WayWithNodes)
-        .value("Unknown", elementtype::Unknown)
+    py::enum_<ElementType>(m, "ElementType")
+        .value("Node", ElementType::Node)
+        .value("Way", ElementType::Way)
+        .value("Relation", ElementType::Relation)
+        .value("Point", ElementType::Point)
+        .value("Linestring", ElementType::Linestring)
+        .value("SimplePolygon", ElementType::SimplePolygon)
+        .value("ComplicatedPolygon", ElementType::ComplicatedPolygon)
+        .value("WayWithNodes", ElementType::WayWithNodes)
+        .value("Unknown", ElementType::Unknown)
         .export_values();
         
 
@@ -263,28 +263,27 @@ void block_defs(py::module& m) {
         .def_readwrite("enddate", &primitiveblock::enddate)
         .def("__len__", [](const primitiveblock& pb) { return pb.size(); })
         .def("__getitem__", [](const primitiveblock& pb, int i) { if (i<0) { i+= pb.objects.size(); } return pb.at(i); })
-        .def("__setitem__", [](primitiveblock& pb, int i, element_ptr e) { if (i<0) { i+= pb.objects.size(); } pb.objects.at(i)=e; })
-        .def("add", [](primitiveblock& pb, std::shared_ptr<element> e) { pb.add(e); })
+        .def("__setitem__", [](primitiveblock& pb, int i, ElementPtr e) { if (i<0) { i+= pb.objects.size(); } pb.objects.at(i)=e; })
+        .def("add", [](primitiveblock& pb, ElementPtr e) { pb.add(e); })
         .def("sort", [](primitiveblock& pb) { std::sort(pb.objects.begin(),pb.objects.end(),element_cmp); })
         .def_readonly("file_progress", &primitiveblock::file_progress)
         .def_readonly("file_position", &primitiveblock::file_position)
     ;
-    py::class_<element,std::shared_ptr<element>>(m, "element")
-        .def_property_readonly("InternalId", &element::InternalId)
-        .def_property_readonly("Type", &element::Type)
-        .def_property_readonly("Id", &element::Id)
-        .def_property_readonly("ChangeType", &element::ChangeType)
-        .def_property_readonly("Quadtree", &element::Quadtree)
-        .def_property_readonly("Tags", &element::Tags)
-        .def_property_readonly("Info", &element::Info)
-        .def("SetQuadtree", &element::SetQuadtree)
-        .def("SetChangeType", &element::SetChangeType)
-        .def("SetTags", &element::SetTags)
-        .def("RemoveTag", &element::RemoveTag)
-        .def("AddTag", &element::AddTag)
-        //.def("pack", &element::pack)
-        .def("copy", &element::copy)
-        //.def("pack_extras", &element::pack_extras)
+    py::class_<Element,std::shared_ptr<Element>>(m, "element")
+        .def_property_readonly("InternalId", &Element::InternalId)
+        .def_property_readonly("Type", &Element::Type)
+        .def_property_readonly("Id", &Element::Id)
+        .def_property_readonly("ChangeType", &Element::ChangeType)
+        .def_property_readonly("Quadtree", &Element::Quadtree)
+        .def_property_readonly("Tags", &Element::Tags)
+        .def_property_readonly("Info", &Element::Info)
+        .def("SetQuadtree", &Element::SetQuadtree)
+        .def("SetChangeType", &Element::SetChangeType)
+        .def("SetTags", &Element::SetTags)
+        .def("RemoveTag", &Element::RemoveTag)
+        .def("AddTag", &Element::AddTag)
+        .def("copy", &Element::copy)
+        
     ;
 
     py::class_<info>(m, "info")
@@ -299,7 +298,7 @@ void block_defs(py::module& m) {
     ;
 
     py::class_<member>(m, "member")
-        .def(py::init<elementtype,int64,std::string>(),py::arg("type"),py::arg("ref"), py::arg("role"))
+        .def(py::init<ElementType,int64,std::string>(),py::arg("type"),py::arg("ref"), py::arg("role"))
         .def_readonly("type", &member::type)
         .def_readonly("ref", &member::ref)
         .def_readonly("role", &member::role)
@@ -319,19 +318,19 @@ void block_defs(py::module& m) {
         })
     ;
     
-    py::class_<node, element, std::shared_ptr<node>>(m,"node")
-        .def_property_readonly("Lon", &node::Lon)
-        .def_property_readonly("Lat", &node::Lat)
+    py::class_<Node, Element, std::shared_ptr<Node>>(m,"Node")
+        .def_property_readonly("Lon", &Node::Lon)
+        .def_property_readonly("Lat", &Node::Lat)
         //.def("copy", &node::copy)
     ;
 
-    py::class_<way, element, std::shared_ptr<way>>(m,"way")
-        .def_property_readonly("Refs", &way::Refs)
+    py::class_<Way, Element, std::shared_ptr<Way>>(m,"Way")
+        .def_property_readonly("Refs", &Way::Refs)
         //.def("copy", &way::copy)
     ;
 
-    py::class_<relation, element, std::shared_ptr<relation>>(m,"relation")
-        .def_property_readonly("Members", &relation::Members)
+    py::class_<Relation, Element, std::shared_ptr<Relation>>(m,"Relation")
+        .def_property_readonly("Members", &Relation::Members)
         //.def("copy", &relation::copy)
     ;
 

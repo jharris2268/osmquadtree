@@ -30,7 +30,7 @@ namespace oqt {
 namespace geometry {
 
 
-typedef std::tuple<std::shared_ptr<relation>,std::string,std::vector<ringpartvec>,std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> mperror;
+typedef std::tuple<std::shared_ptr<Relation>,std::string,std::vector<ringpartvec>,std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> mperror;
 typedef std::vector<mperror> mperrorvec;
 std::shared_ptr<BlockHandler> make_multipolygons(
     std::shared_ptr<mperrorvec> multipolygon_errors,

@@ -5,7 +5,7 @@ LIBS = -lz -lstdc++fs -lpq
 ROOT_OBJS = count.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o pbfformat/readfile.o pbfformat/readfileparallel.o pbfformat/readblock.o
-ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
+ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/baseelement.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
@@ -93,6 +93,9 @@ pbfformat/writepbffile.o: ../src/pbfformat/writepbffile.cpp $(HEADERS)
 
 elements/element.o: ../src/elements/element.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/elements/element.cpp -o elements/element.o
+
+elements/baseelement.o: ../src/elements/baseelement.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/elements/baseelement.cpp -o elements/baseelement.o
 
 elements/node.o: ../src/elements/node.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/elements/node.cpp -o elements/node.o

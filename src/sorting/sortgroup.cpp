@@ -45,7 +45,7 @@ class SortGroup : public SplitBlocks {
                 
         }
         virtual ~SortGroup() {}
-        virtual size_t find_tile(element_ptr obj) {
+        virtual size_t find_tile(ElementPtr obj) {
             return tree->find_tile(obj->Quadtree()).idx / blocksplit;
         }
         virtual size_t max_tile() { return mxt; }

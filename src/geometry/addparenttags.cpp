@@ -26,7 +26,7 @@ namespace oqt {
 namespace geometry {
 
 typedef std::map<std::string,std::string> temp_tags_map;
-typedef std::map<int64,std::pair<std::shared_ptr<element>,temp_tags_map>> pending_objs_map;
+typedef std::map<int64,std::pair<ElementPtr,temp_tags_map>> pending_objs_map;
 typedef std::map<int64,pending_objs_map> pending_blocks_map;
 
 
@@ -128,9 +128,9 @@ class AddParentTags : public BlockHandler {
 
             pending_objs_map nb;
 
-            std::vector<std::shared_ptr<element>> tempobjs;
+            std::vector<ElementPtr> tempobjs;
             for (auto o : bl->objects) {
-                if (o->Type()==0) {
+                if (o->Type()==ElementType::Node) {
                     bool hast=false;
                     for (const auto& tt: o->Tags()) {
                         if (spec.count(tt.key)>0) {
@@ -163,7 +163,7 @@ class AddParentTags : public BlockHandler {
 
             for (auto o : tempobjs) {
 
-                if (o->Type()==7) {
+                if (o->Type()==ElementType::WayWithNodes) {
                     auto w = std::dynamic_pointer_cast<way_withnodes>(o);
                     
                     for (auto i : w->Refs()) {

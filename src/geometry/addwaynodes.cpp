@@ -92,8 +92,8 @@ class lonlatstore_impl : public lonlatstore {
 
             loctile lls; lls.reserve(block->objects.size());
             for (auto& o : block->objects) {
-                if (o->Type()==0) {
-                    auto n = std::dynamic_pointer_cast<node>(o);
+                if (o->Type()==ElementType::Node) {
+                    auto n = std::dynamic_pointer_cast<Node>(o);
                     //lls.insert(std::make_pair(o->Id(), lonlat{n->Lon(),n->Lat()}));
                     lls.push_back(std::make_pair(o->Id(), lonlat{n->Lon(),n->Lat()}));
                 }
@@ -103,7 +103,7 @@ class lonlatstore_impl : public lonlatstore {
             }
         }
 
-        virtual lonlatvec get_lonlats(std::shared_ptr<way> way) {
+        virtual lonlatvec get_lonlats(std::shared_ptr<Way> way) {
             lonlatvec res;
             res.reserve(way->Refs().size());
             for (auto& r : way->Refs()) {
@@ -131,12 +131,12 @@ std::shared_ptr<primitiveblock> add_waynodes(std::shared_ptr<lonlatstore> lls, s
     out_bl->enddate = in_bl->enddate;
 
     for (auto& o : in_bl->objects) {
-        if (o->Type()==0) {
+        if (o->Type()==ElementType::Node) {
             if (!o->Tags().empty()) {
                 out_bl->objects.push_back(o);
             }
-        } else if (o->Type()==1) {
-            auto w = std::dynamic_pointer_cast<way>(o);
+        } else if (o->Type()==ElementType::Way) {
+            auto w = std::dynamic_pointer_cast<Way>(o);
             auto wwn = std::make_shared<way_withnodes>(w, lls->get_lonlats(w));
             out_bl->objects.push_back(wwn);
         } else {

@@ -27,7 +27,7 @@
 namespace oqt {
 
 
-std::function<void(element_ptr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize);
+std::function<void(ElementPtr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize);
 
 primitiveblock_callback make_splitbyid_callback(primitiveblock_callback packers, size_t blocksplit, size_t writeat, int64 split_at);
 

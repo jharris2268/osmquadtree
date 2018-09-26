@@ -20,42 +20,23 @@
  *
  *****************************************************************************/
 
-#ifndef ELEMENTS_RAWELEMENT_HPP
-#define ELEMENTS_RAWELEMENT_HPP
 
-#include "oqt/common.hpp"
+#include "oqt/elements/baseelement.hpp"
+#include <ostream>
 namespace oqt {
-enum changetype {
-    Normal=0,
-    Delete,
-    Remove,
-    Unchanged,
-    Modify,
-    Create
-};
+    
 
-enum elementtype {
-    Node=0,
-    Way,
-    Relation,
-    Point,
-    Linestring,
-    SimplePolygon,
-    ComplicatedPolygon,
-    WayWithNodes,
-    Unknown
-};
-
-class rawelement {
-    public:
-        
-        virtual uint64      InternalId() const =0;
-        virtual elementtype Type() const =0;
-        virtual int64       Id() const =0;
-        virtual int64       Quadtree() const =0;
-        virtual changetype  ChangeType() const =0;
-        
-        virtual ~rawelement() {}
-};
+std::ostream& operator<<(std::ostream& strm, ElementType e) {
+    strm << (uint64) e;
+    return strm;
 }
-#endif
+
+std::ostream& operator<<(std::ostream& strm, changetype c) {
+    strm << (uint64) c;
+    return strm;
+}
+
+}
+    
+    
+    

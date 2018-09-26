@@ -25,14 +25,14 @@
 
 
 #include "oqt/common.hpp"
-#include "oqt/elements/rawelement.hpp"
+#include "oqt/elements/baseelement.hpp"
 #include <string>
 #include <vector>
 namespace oqt {
 struct member {
-    member() : type(Node),ref(0),role("") {}
-    member(elementtype t, int64 r, std::string rl) : type(t),ref(r),role(rl) {}
-    elementtype type;
+    member() : type(ElementType::Node),ref(0),role("") {}
+    member(ElementType t, int64 r, std::string rl) : type(t),ref(r),role(rl) {}
+    ElementType type;
     int64 ref;
     std::string role;
 };

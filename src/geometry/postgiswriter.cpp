@@ -109,7 +109,7 @@ std::string pack_hstoretags(const tagvector& tags) {
 }
 
 
-std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t>& tags, std::shared_ptr<element> obj, bool other_tags, bool asjson) {
+std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t>& tags, ElementPtr obj, bool other_tags, bool asjson) {
     std::vector<std::string> tt(tags.size(),"");
     
     tagvector others;
@@ -264,7 +264,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
             }
             for (auto o : bl->objects) {
 
-                if (o->Type()==3) {
+                if (o->Type()==ElementType::Point) {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << bl->quadtree << delim << o->Quadtree() << delim;
                     auto pt = std::dynamic_pointer_cast<point>(o);
@@ -297,7 +297,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                     }
                     res->points.add(ss.str());
 
-                } else if (o->Type()==4) {
+                } else if (o->Type()==ElementType::Linestring) {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << bl->quadtree << delim << o->Quadtree() << delim;
                     auto ln = std::dynamic_pointer_cast<linestring>(o);
@@ -329,7 +329,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                         res->lines.add(point_header);
                     }
                     res->lines.add(ss.str());
-                } else if (o->Type()==5) {
+                } else if (o->Type()==ElementType::SimplePolygon) {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << delim << bl->quadtree << delim << o->Quadtree() << delim;
                     
@@ -362,7 +362,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                         res->polygons.add(point_header);
                     }
                     res->polygons.add(ss.str());
-                } else if (o->Type()==6) {
+                } else if (o->Type()==ElementType::ComplicatedPolygon) {
                     std::stringstream ss;
                     auto py = std::dynamic_pointer_cast<complicatedpolygon>(o);
                     ss << std::dec << (-1ll * o->Id()) << delim << py->Part() << delim << bl->quadtree << delim << o->Quadtree() << delim;

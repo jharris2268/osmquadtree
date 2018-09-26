@@ -283,10 +283,10 @@ py::object count_blocks_call(const std::string& fn, size_t numchan, size_t objfl
 
 struct objdiff {
     size_t left_idx;
-    element_ptr left;
+    ElementPtr left;
     
     size_t right_idx;
-    element_ptr right;
+    ElementPtr right;
 };
 
 
@@ -294,7 +294,7 @@ class obj_iter2 {
     public:
         obj_iter2(std::function<primitiveblock_ptr(void)> reader_) : reader(reader_), idx(0), ii(0) { curr = reader(); }
         
-        std::pair<size_t,element_ptr> next() {
+        std::pair<size_t,ElementPtr> next() {
             while (curr && (ii==curr->size())) {
                 curr=reader();
                 ii=0;
@@ -322,7 +322,7 @@ enum diffreason {
     Refs,
     Members
 };
-diffreason compare_element(element_ptr left, element_ptr right) {
+diffreason compare_element(ElementPtr left, ElementPtr right) {
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
     const info& li = left->Info();
     const info& ri = right->Info();
@@ -341,23 +341,23 @@ diffreason compare_element(element_ptr left, element_ptr right) {
             }
         }
     }
-    if (left->Type()==Node) {
-        auto ln = std::dynamic_pointer_cast<node>(left);
-        auto rn = std::dynamic_pointer_cast<node>(right);
+    if (left->Type()==ElementType::Node) {
+        auto ln = std::dynamic_pointer_cast<Node>(left);
+        auto rn = std::dynamic_pointer_cast<Node>(right);
         if ((ln->Lon()!=rn->Lon()) || (ln->Lat()!=rn->Lat())) {
             return diffreason::LonLat;
         }
-    } else if (left->Type()==Way) {
-        auto lw = std::dynamic_pointer_cast<way>(left)->Refs();
-        auto rw = std::dynamic_pointer_cast<way>(right)->Refs();
+    } else if (left->Type()==ElementType::Way) {
+        auto lw = std::dynamic_pointer_cast<Way>(left)->Refs();
+        auto rw = std::dynamic_pointer_cast<Way>(right)->Refs();
         if (lw.size()!=rw.size()) { return diffreason::Refs; }
         for (size_t i=0; i < lw.size(); i++) {
             if (lw[i]!=rw[i]) { return diffreason::Refs; }
         }
         
-    } else if (left->Type()==Relation) {
-        auto lr = std::dynamic_pointer_cast<relation>(left)->Members();
-        auto rr = std::dynamic_pointer_cast<relation>(right)->Members();
+    } else if (left->Type()==ElementType::Relation) {
+        auto lr = std::dynamic_pointer_cast<Relation>(left)->Members();
+        auto rr = std::dynamic_pointer_cast<Relation>(right)->Members();
         if (lr.size()!=rr.size()) { return diffreason::Members; }
         for (size_t i=0; i < lr.size(); i++) {
             if ((lr[i].type!=rr[i].type) || (lr[i].ref!=rr[i].ref) || (lr[i].role!=rr[i].role)) { return diffreason::Members; }
@@ -417,7 +417,7 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
                             << " " << std::setw(5) << tot[5]
                             << " " << std::setw(5) << tot[6]
                             << ", found " << std::setw(6) << users.size() << " changed users]" << std::flush;
-                if (left.second->Type()==Node) {
+                if (left.second->Type()==ElementType::Node) {
                     next_obj = left.second->InternalId() + (1ll<<20);
                 } else {
                     next_obj = left.second->InternalId() + (1ll<<17);

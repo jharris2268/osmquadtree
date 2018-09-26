@@ -79,7 +79,7 @@ inline bool check_info(const Inspector::AttributeType& attr, info& inf) {
     return false;
 }
 
-void read_node(Inspector& inspector, changetype mode, std::function<void(std::shared_ptr<element>)>& add, bool allow_missing_users) {
+void read_node(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0,lon=0,lat=0;
     info inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
@@ -98,7 +98,7 @@ void read_node(Inspector& inspector, changetype mode, std::function<void(std::sh
         else { throw std::domain_error("unexpected attribute "+attr.Name); }
     }
     if (inspector.GetInspected() == Xml::Inspected::EmptyElementTag) {
-        add(std::make_shared<node>(mode,id,-1,inf,tags,lon,lat));
+        add(std::make_shared<Node>(mode,id,-1,inf,tags,lon,lat));
         return;
     }
     while (inspector.Inspect()) {
@@ -112,7 +112,7 @@ void read_node(Inspector& inspector, changetype mode, std::function<void(std::sh
         if ((ii == Xml::Inspected::EndTag) &&
             (inspector.GetName()=="node")) {
 
-            add(std::make_shared<node>(mode,id,-1,inf,tags,lon,lat));
+            add(std::make_shared<Node>(mode,id,-1,inf,tags,lon,lat));
             return;
         }
     }
@@ -139,7 +139,7 @@ void add_ref(Inspector& inspector, std::vector<int64>& refs) {
 }
 
 
-void read_way(Inspector& inspector, changetype mode, std::function<void(std::shared_ptr<element>)>& add, bool allow_missing_users) {
+void read_way(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0;
     info inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
@@ -156,7 +156,7 @@ void read_way(Inspector& inspector, changetype mode, std::function<void(std::sha
         else { throw std::domain_error("unexpected attribute "+attr.Name); }
     }
     if (inspector.GetInspected() == Xml::Inspected::EmptyElementTag) {
-        add(std::make_shared<way>(mode,id,-1,inf,tags,refs));
+        add(std::make_shared<Way>(mode,id,-1,inf,tags,refs));
         return;
     }
 
@@ -172,18 +172,18 @@ void read_way(Inspector& inspector, changetype mode, std::function<void(std::sha
         if ((ii == Xml::Inspected::EndTag) &&
             (inspector.GetName()=="way")) {
 
-            add(std::make_shared<way>(mode,id,-1,inf,tags,refs));
+            add(std::make_shared<Way>(mode,id,-1,inf,tags,refs));
             return;
         }
     }
 }
 
-elementtype read_member_type(const std::string s) {
-    if (s=="node") { return Node; }
-    if (s=="way") { return Way; }
-    if (s=="relation") { return Relation; }
+ElementType read_member_type(const std::string s) {
+    if (s=="node") { return ElementType::Node; }
+    if (s=="way") { return ElementType::Way; }
+    if (s=="relation") { return ElementType::Relation; }
     throw std::domain_error("unexpected member type");
-    return WayWithNodes;
+    return ElementType::Unknown;
     //return -1;
 }
 
@@ -211,7 +211,7 @@ void add_member(Inspector& inspector, std::vector<member>& mems) {
     }
 }
 
-void read_relation(Inspector& inspector, changetype mode, std::function<void(std::shared_ptr<element>)>& add, bool allow_missing_users) {
+void read_relation(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0;
     info inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
@@ -231,7 +231,7 @@ void read_relation(Inspector& inspector, changetype mode, std::function<void(std
     }
 
     if (inspector.GetInspected() == Xml::Inspected::EmptyElementTag) {
-        add(std::make_shared<relation>(mode,id,-1,inf,tags,membs));
+        add(std::make_shared<Relation>(mode,id,-1,inf,tags,membs));
         return;
     }
 
@@ -247,7 +247,7 @@ void read_relation(Inspector& inspector, changetype mode, std::function<void(std
         if ((ii == Xml::Inspected::EndTag) &&
             (inspector.GetName()=="relation")) {
 
-            add(std::make_shared<relation>(mode,id,-1,inf,tags,membs));
+            add(std::make_shared<Relation>(mode,id,-1,inf,tags,membs));
             return;
         }
     }
@@ -255,8 +255,8 @@ void read_relation(Inspector& inspector, changetype mode, std::function<void(std
 
 }
 
-void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function<void(std::shared_ptr<element>)> add, bool allow_missing_users) {
-    changetype mode=Normal;
+void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function<void(ElementPtr)> add, bool allow_missing_users) {
+    changetype mode=changetype::Normal;
     while (inspector.Inspect()) {
        switch (inspector.GetInspected())
         {
@@ -264,11 +264,11 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
                 if (inspector.GetName()=="osmChange") {
                     //pass
                 } else if (inspector.GetName()=="delete") {
-                    mode=Delete;
+                    mode=changetype::Delete;
                 } else if (inspector.GetName()=="modify") {
-                    mode=Modify;
+                    mode=changetype::Modify;
                 } else if (inspector.GetName()=="create") {
-                    mode=Create;
+                    mode=changetype::Create;
                 } else if (inspector.GetName()=="node") {
                     read_node(inspector, mode,add, allow_missing_users);
                 } else if (inspector.GetName()=="way") {
@@ -294,11 +294,11 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
                 if (inspector.GetName()=="osmChange") {
                     //pass
                 } else if (inspector.GetName()=="delete") {
-                    mode=Normal;
+                    mode=changetype::Normal;
                 } else if (inspector.GetName()=="modify") {
-                    mode=Normal;
+                    mode=changetype::Normal;
                 } else if (inspector.GetName()=="create") {
-                    mode=Normal;
+                    mode=changetype::Normal;
                 } else {
                     logger_message() << "EndTag name: " << inspector.GetName();
                 }
@@ -311,7 +311,7 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
 
 std::shared_ptr<primitiveblock> read_xml_change_detail(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector) {
     auto pb = std::make_shared<primitiveblock>(0,0);
-    auto add = [pb](std::shared_ptr<element> e)->void {
+    auto add = [pb](ElementPtr e)->void {
         pb->objects.push_back(e);
     };
     add_all(inspector,add, true);
@@ -320,7 +320,7 @@ std::shared_ptr<primitiveblock> read_xml_change_detail(Xml::Inspector<Xml::Encod
 
 void read_xml_change_detail(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, typeid_element_map_ptr em, bool allow_missing_users) {
 
-    auto add = [em](std::shared_ptr<element> e)->void {
+    auto add = [em](ElementPtr e)->void {
         auto k = std::make_pair(e->Type(),e->Id());
         if (em->count(k)==0) {
             (*em)[k]=e;

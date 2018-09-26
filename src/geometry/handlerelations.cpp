@@ -44,10 +44,10 @@ class HandleRelationTags : public BlockHandler {
 
         virtual primblock_vec process(primblock_ptr bl) {
 
-            std::vector<std::shared_ptr<element>> tempobjs;
+            std::vector<ElementPtr> tempobjs;
             for (auto o : bl->objects) {
-                if (o->Type()==2) {
-                    auto r = std::dynamic_pointer_cast<relation>(o);
+                if (o->Type()==ElementType::Relation) {
+                    auto r = std::dynamic_pointer_cast<Relation>(o);
                     auto type = get_tag(r, "type");
                     if ((type == "route") && (!route_types.empty())) {
                         auto rt = get_tag(r, "route");
@@ -56,7 +56,7 @@ class HandleRelationTags : public BlockHandler {
                             
                             if (!rf.empty()) {
                                 for (const auto& m : r->Members()) {
-                                    if (m.type==1) {
+                                    if (m.type==ElementType::Way) {
                                         route_refs[m.ref].insert(std::make_pair(rt,rf));
                                     }
                                 }
@@ -73,7 +73,7 @@ class HandleRelationTags : public BlockHandler {
                             if (lev>=0) {
                                 
                                 for (const auto& m : r->Members()) {
-                                    if (m.type==1) {
+                                    if (m.type==ElementType::Way) {
                                         auto it = admin_levels.find(m.ref);
                                         if (it==admin_levels.end()) {
                                             admin_levels[m.ref] = std::make_pair(lev,lev);
@@ -99,7 +99,7 @@ class HandleRelationTags : public BlockHandler {
             bl->objects.swap(tempobjs);
 
             for (auto o : bl->objects) {
-                if (o->Type()==7) {
+                if (o->Type()==ElementType::WayWithNodes) {
 
                     auto rf_it = route_refs.find(o->Id());
                     if (rf_it!=route_refs.end()) {

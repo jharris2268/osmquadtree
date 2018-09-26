@@ -37,14 +37,14 @@ class objs_idset : public idset {
     public:
         objs_idset() {}
         virtual ~objs_idset() {}
-        virtual bool contains(elementtype ty, int64 id) const;
+        virtual bool contains(ElementType ty, int64 id) const;
         
-        void add(elementtype t, int64 i);
-        void add_node(std::shared_ptr<node> nn);
+        void add(ElementType t, int64 i);
+        void add_node(std::shared_ptr<Node> nn);
 
-        void add_way(std::shared_ptr<way> ww);
+        void add_way(std::shared_ptr<Way> ww);
 
-        void add_relation(std::shared_ptr<relation> rr);
+        void add_relation(std::shared_ptr<Relation> rr);
         
         void add_all(std::shared_ptr<primitiveblock> pb);
     

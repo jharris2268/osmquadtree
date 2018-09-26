@@ -36,7 +36,7 @@ bool check_changetype(changetype ct) {
     return true;
 }
 
-int obj_cmp(std::shared_ptr<element> l, std::shared_ptr<element> r) {
+int obj_cmp(ElementPtr l, ElementPtr r) {
     if (l->Type()==r->Type()) {
         if (l->Id()==r->Id()) {
             return 0;
@@ -72,7 +72,7 @@ std::shared_ptr<primitiveblock> combine_primitiveblock_two(
     size_t right_idx= 0;
 
     for ( ; left_idx<left_size || right_idx < right_size; ) {
-        std::shared_ptr<element> left_object, right_object;
+        ElementPtr left_object, right_object;
         if (left_idx<left_size) { left_object = left->objects[left_idx]; }
         if (right_idx<right_size) { right_object = right->objects[right_idx]; }
 

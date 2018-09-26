@@ -29,15 +29,15 @@
 #include "oqt/utils/pbf/protobuf.hpp"
 
 namespace oqt {
-bool isGeometryType(elementtype ty);
+bool isGeometryType(ElementType ty);
 
-class basegeometry : public element {
+class BaseGeometry : public Element {
     public:
-        basegeometry(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_) :
-            element(t,c,i,q,inf,tags), minzoom(minzoom_) {};
+        BaseGeometry(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_) :
+            Element(t,c,i,q,inf,tags), minzoom(minzoom_) {};
             
     
-        virtual elementtype OriginalType() const=0;
+        virtual ElementType OriginalType() const=0;
         virtual bbox Bounds() const=0;
 
         virtual std::string Wkb(bool transform, bool srid) const=0;
@@ -45,7 +45,7 @@ class basegeometry : public element {
         virtual int64 MinZoom() const { return minzoom; }
         void SetMinZoom(int64 mz) { minzoom = mz; }
         
-        virtual ~basegeometry() {}
+        virtual ~BaseGeometry() {}
         
         virtual std::list<PbfTag> pack_extras() const=0;
         
@@ -55,20 +55,20 @@ class basegeometry : public element {
         
 };
 
-class geometry_packed : public basegeometry {
+class GeometryPacked : public BaseGeometry {
     public:
-        geometry_packed(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_);
+        GeometryPacked(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_);
         virtual uint64 InternalId() const;
         
         
-        virtual elementtype OriginalType() const;
+        virtual ElementType OriginalType() const;
         virtual bbox Bounds() const;
         virtual std::string Wkb(bool transform, bool srid) const;
         virtual std::list<PbfTag> pack_extras() const;
         
-        virtual element_ptr copy();
+        virtual ElementPtr copy();
         
-        virtual ~geometry_packed() {}
+        virtual ~GeometryPacked() {}
         
     private:
         std::list<PbfTag> geom_messages;

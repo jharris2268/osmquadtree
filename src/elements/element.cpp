@@ -28,25 +28,25 @@
 namespace oqt {
 
 
-element::element(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags)
+Element::Element(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags)
     : type_(t),changetype_(c), id_(i), quadtree_(q), info_(inf), tags_(tags) {}
 
-uint64 element::InternalId() const {
-    uint64 r = type_;
+uint64 Element::InternalId() const {
+    uint64 r = (uint64) type_;
     r<<=61;
     r += (uint64) id_;
     return r;
 }
-elementtype element::Type() const { return type_; }
-changetype element::ChangeType() const { return changetype_; }
-void element::SetChangeType(changetype ct) { changetype_=ct; }
-int64 element::Id() const { return id_; }
-info element::Info() const  { return info_; }
-const tagvector& element::Tags() const { return tags_; }
-int64 element::Quadtree() const { return quadtree_; }
-void element::SetQuadtree(int64 qt) { quadtree_=qt; }
+ElementType Element::Type() const { return type_; }
+changetype Element::ChangeType() const { return changetype_; }
+void Element::SetChangeType(changetype ct) { changetype_=ct; }
+int64 Element::Id() const { return id_; }
+info Element::Info() const  { return info_; }
+const tagvector& Element::Tags() const { return tags_; }
+int64 Element::Quadtree() const { return quadtree_; }
+void Element::SetQuadtree(int64 qt) { quadtree_=qt; }
 
-void element::AddTag(const std::string& k, const std::string& v, bool replaceifpresent) {
+void Element::AddTag(const std::string& k, const std::string& v, bool replaceifpresent) {
     if (replaceifpresent) {
         for (auto& t: tags_) {
             if (t.key==k) {
@@ -58,7 +58,7 @@ void element::AddTag(const std::string& k, const std::string& v, bool replaceifp
     tags_.push_back(tag{k,v});
 }
 
-bool element::RemoveTag(const std::string& k) {
+bool Element::RemoveTag(const std::string& k) {
     if (tags_.empty()) { return false; }
     for (auto it=tags_.begin(); it < tags_.end(); ++it) {
         if (it->key==k) {
@@ -69,12 +69,12 @@ bool element::RemoveTag(const std::string& k) {
     return false;
 }
 
-void element::SetTags(const tagvector& new_tags) {
+void Element::SetTags(const tagvector& new_tags) {
     tags_ = new_tags;
 }
 
         
-bool fix_tags(element& ele) {
+bool fix_tags(Element& ele) {
     if (ele.tags_.empty()) { return false; }
     std::sort(ele.tags_.begin(),ele.tags_.end(),[](const tag&l, const tag& r) { return l.key<r.key; });
     bool r=false;

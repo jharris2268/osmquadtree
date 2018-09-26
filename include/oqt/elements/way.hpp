@@ -27,13 +27,13 @@
 
 namespace oqt {
 typedef std::vector<int64> refvector;
-class way : public element {
+class Way : public Element {
     public:
-        way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs);
-        virtual ~way() {}
+        Way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs);
+        virtual ~Way() {}
 
         const refvector& Refs() const;
-        virtual std::shared_ptr<element> copy();
+        virtual ElementPtr copy();
     private:
         refvector refs_;
 };

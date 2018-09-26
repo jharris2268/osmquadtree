@@ -33,13 +33,13 @@ namespace oqt {
     
 
 
-typedef std::function<std::shared_ptr<element>(elementtype, const std::string&, const std::vector<std::string>&, changetype)> read_geometry_func;
+typedef std::function<ElementPtr(ElementType, const std::string&, const std::vector<std::string>&, changetype)> read_geometry_func;
 std::shared_ptr<primitiveblock> readPrimitiveBlock(int64 idx, const std::string& data, bool change,
     size_t objflags=7, std::shared_ptr<idset> ids=std::shared_ptr<idset>(),
     read_geometry_func readGeometry = read_geometry_func());
 
 std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
-    readCommon(elementtype ty, const std::string& data, const std::vector<std::string>& stringtable, std::shared_ptr<idset> ids);
+    readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, std::shared_ptr<idset> ids);
 
 std::vector<std::string> readStringTable(const std::string& data);
 int64 readQuadTree(const std::string& data);

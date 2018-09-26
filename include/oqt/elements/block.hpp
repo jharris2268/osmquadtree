@@ -53,7 +53,7 @@ struct primitiveobjectblock {
     
 };
 
-typedef primitiveobjectblock<element> primitiveblock;
+typedef primitiveobjectblock<Element> primitiveblock;
 typedef std::shared_ptr<primitiveblock> primitiveblock_ptr;
 typedef std::function<void(primitiveblock_ptr)> primitiveblock_callback;
 

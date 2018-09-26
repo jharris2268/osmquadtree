@@ -200,9 +200,9 @@ std::tuple<tagvector, bool,int64, int64> filter_way_tags(const style_info_map& s
     return std::make_tuple(res,hasarea,zorder,layer);
 }
 
-bbox get_bound(std::shared_ptr<element> o) {
+bbox get_bound(ElementPtr o) {
     
-    auto gg = std::dynamic_pointer_cast<basegeometry>(o);
+    auto gg = std::dynamic_pointer_cast<BaseGeometry>(o);
     if (gg) {
         return gg->Bounds();
     }
@@ -247,18 +247,18 @@ std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, con
     //bool all_tags = style.count("*")!=0;
 
     for (auto e : in->objects) {
-        if(e->Type()==0) {
+        if(e->Type()==ElementType::Node) {
 
             tagvector tgs; int64 ly;
         
             std::tie(tgs,ly) = filter_node_tags(style, e->Tags(), extra_tag_key);
             if (!tgs.empty()) {
-                auto n = std::dynamic_pointer_cast<node>(e);
+                auto n = std::dynamic_pointer_cast<Node>(e);
                 if (contains_point(box, n->Lon(),n->Lat())) {
                     result->objects.push_back(std::make_shared<point>(n, tgs,ly,-1));
                 }
             }
-        } else if (e->Type()==7) {
+        } else if (e->Type()==ElementType::WayWithNodes) {
             auto w = std::dynamic_pointer_cast<way_withnodes>(e);
             if (w->Refs().size()<2) {
                 continue;
@@ -276,7 +276,7 @@ std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, con
                     result->objects.push_back(std::make_shared<linestring>(w, tgs,zo,ly,-1));
                 }
             }
-        } else if (e->Type()==2) {
+        } else if (e->Type()==ElementType::Relation) {
              //pass
         } else {
 
@@ -324,10 +324,10 @@ void calculate_minzoom(std::shared_ptr<primitiveblock> block, std::shared_ptr<fi
             if ((ele->Quadtree()&31) > mz) {
                 ele->SetQuadtree(quadtree::round(ele->Quadtree(),mz));
             }
-            if (ele->Type()==3) { std::dynamic_pointer_cast<point>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==4) { std::dynamic_pointer_cast<linestring>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==5) { std::dynamic_pointer_cast<simplepolygon>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==6) { std::dynamic_pointer_cast<complicatedpolygon>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<point>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<linestring>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<simplepolygon>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<complicatedpolygon>(ele)->SetMinZoom(mz); }
             
         }
     }

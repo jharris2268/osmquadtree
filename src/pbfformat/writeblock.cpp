@@ -51,7 +51,7 @@ uint64 getString(std::map<std::string,uint64>& stringtable, const std::string& s
 
 std::string packObject(
     std::map<std::string,uint64>& stringtable,
-    std::shared_ptr<element> obj,
+    ElementPtr obj,
     bool includeQts,bool includeInfos,bool includeRefs) {
         
     std::list<PbfTag> msgs;
@@ -91,15 +91,15 @@ std::string packObject(
         msgs.push_back(PbfTag{4,0,packPbfTags(infmsgs)});
     }
     
-    if (obj->Type()==Node) {
-        auto nd = std::dynamic_pointer_cast<node>(obj);
+    if (obj->Type()==ElementType::Node) {
+        auto nd = std::dynamic_pointer_cast<Node>(obj);
         msgs.push_back(PbfTag{8,zigZag(nd->Lat()),""});
         msgs.push_back(PbfTag{9,zigZag(nd->Lon()),""});
-    } else if (obj->Type()==Way) {
-        auto wy = std::dynamic_pointer_cast<way>(obj);
+    } else if (obj->Type()==ElementType::Way) {
+        auto wy = std::dynamic_pointer_cast<Way>(obj);
         msgs.push_back(PbfTag{8, 0, writePackedDelta(wy->Refs())});
-    } else if (obj->Type()==Relation) {
-        auto rl = std::dynamic_pointer_cast<relation>(obj);
+    } else if (obj->Type()==ElementType::Relation) {
+        auto rl = std::dynamic_pointer_cast<Relation>(obj);
         if (!rl->Members().empty()) {
             msgs.push_back(PbfTag{8,0,writePackedIntFunc<member>(rl->Members(), [&stringtable](const member& m) { return getString(stringtable, m.role); })});
             msgs.push_back(PbfTag{9,0,writePackedDeltaFunc<member>(rl->Members(), [](const member& m) { return m.ref; })});
@@ -107,9 +107,9 @@ std::string packObject(
         }
         
     } else {
-        auto geom = std::dynamic_pointer_cast<basegeometry>(obj);
+        auto geom = std::dynamic_pointer_cast<BaseGeometry>(obj);
         if (!geom) {
-            throw std::domain_error("unexpected type ??"+std::to_string(obj->Type()));
+            throw std::domain_error("unexpected type ??"+std::to_string(uint64(obj->Type())));
         }
         for (const auto& m: geom->pack_extras()) {
             msgs.push_back(m);
@@ -153,7 +153,7 @@ std::string packDenseNodes(
     kvs.reserve(nobj*5);
     
     for (auto it=beg; it!=end; ++it) {
-        auto obj = std::dynamic_pointer_cast<node>(*it);        
+        auto obj = std::dynamic_pointer_cast<Node>(*it);        
         
         ids.push_back(obj->Id());
         if (includeQts) {
@@ -216,29 +216,29 @@ std::string packDenseNodes(
 template <class Iter>
 std::string packPrimitiveGroup(
     std::map<std::string,uint64>& stringtable,
-    Iter beg, Iter end,size_t nobj,uint64 ct,
+    Iter beg, Iter end,size_t nobj,changetype ct,
     bool includeQts, bool includeInfos, bool includeRefs) {
 
     std::list<PbfTag> msgs;
 
-    if ((*beg)->Type()==0) {
+    if ((*beg)->Type()==ElementType::Node) {
         msgs.push_back(PbfTag{2,0,packDenseNodes(stringtable,beg,end,nobj,includeQts,includeInfos)});
     } else {
         for (auto it=beg; it != end; ++it) {
-            if ((*beg)->Type()==0) {
+            if ((*beg)->Type()==ElementType::Node) {
                 msgs.push_back(PbfTag{1,0,packObject(stringtable,*it,includeQts,includeInfos,includeRefs)});
-            } else if ((*beg)->Type()==1) {
+            } else if ((*beg)->Type()==ElementType::Way) {
                 msgs.push_back(PbfTag{3,0,packObject(stringtable,*it,includeQts,includeInfos,includeRefs)});
-            } else if ((*beg)->Type()==2) {
+            } else if ((*beg)->Type()==ElementType::Relation) {
                 msgs.push_back(PbfTag{4,0,packObject(stringtable,*it,includeQts,includeInfos,includeRefs)});
             } else {
-                uint64 ty = (*beg)->Type();
-                msgs.push_back(PbfTag{ty+17,0,packObject(stringtable,*it,includeQts,includeInfos,includeRefs)});
+                ElementType ty = (*beg)->Type();
+                msgs.push_back(PbfTag{uint64(ty)+17,0,packObject(stringtable,*it,includeQts,includeInfos,includeRefs)});
             }
         }
     }
-    if (ct>0) {
-        msgs.push_back(PbfTag{10,ct,""});
+    if (ct!=changetype::Normal) {
+        msgs.push_back(PbfTag{10,uint64(ct),""});
     }
 
     return packPbfTags(msgs);
@@ -340,7 +340,7 @@ std::string writePbfBlock(std::shared_ptr<primitiveblock> block, bool includeQts
                 ++jt;
             }
 
-            msgs.push_back(PbfTag{2,0,writeblock_detail::packPrimitiveGroup(stringtable,it,jt,jt-it,change ? (*it)->ChangeType() : 0, includeQts, includeInfo, includeRefs)});
+            msgs.push_back(PbfTag{2,0,writeblock_detail::packPrimitiveGroup(stringtable,it,jt,jt-it,change ? (*it)->ChangeType() : changetype::Normal, includeQts, includeInfo, includeRefs)});
             it=jt;
         }
     }

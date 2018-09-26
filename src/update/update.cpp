@@ -43,15 +43,15 @@
 #include "oqt/utils/logger.hpp"
 
 namespace oqt {
-int64 make_internalid(elementtype ty, int64 rf) {
-    if (ty==Node) { return rf; }
-    if (ty==Way) { return (1ll<<61) | rf; }
-    if (ty==Relation) { return (2ll<<61) | rf; }
+int64 make_internalid(ElementType ty, int64 rf) {
+    if (ty==ElementType::Node) { return rf; }
+    if (ty==ElementType::Way) { return (1ll<<61) | rf; }
+    if (ty==ElementType::Relation) { return (2ll<<61) | rf; }
     throw std::domain_error("wrong type");
 }
 
 
-bool has_id(elementtype ty, const std::string& id_data, std::shared_ptr<idset> ids) {
+bool has_id(ElementType ty, const std::string& id_data, std::shared_ptr<idset> ids) {
     size_t id_pos=0;
     int64 id=0;
     while ( (id_pos < id_data.size())) {
@@ -75,15 +75,15 @@ void checkIndexBlock(const std::string& ss, std::shared_ptr<idset> ids, std::sha
 
         //if ((tg.tag==2) || (tg.tag==3) || (tg.tag==4)) {
         if (tg.tag==2) {
-            if (has_id(elementtype::Node, tg.data, ids)) {
+            if (has_id(ElementType::Node, tg.data, ids)) {
                 blocks->insert(qt);
             }
         } else if (tg.tag==3) {
-            if (has_id(elementtype::Way, tg.data, ids)) {
+            if (has_id(ElementType::Way, tg.data, ids)) {
                 blocks->insert(qt);
             }
         } else if (tg.tag==4) {
-            if (has_id(elementtype::Relation, tg.data, ids)) {
+            if (has_id(ElementType::Relation, tg.data, ids)) {
                 blocks->insert(qt);
             }
         }
@@ -108,7 +108,7 @@ std::string pack_minimal_ids(const std::vector<T>& in) {
     return res.substr(0,p);
 }
 
-
+/*
 std::string makeIndexBlock(std::shared_ptr<minimalblock> in) {
 
     std::list<PbfTag> mm;
@@ -127,13 +127,13 @@ std::string makeIndexBlock(std::shared_ptr<minimalblock> in) {
 
     return prepareFileBlock("IndexBlock", dd);
 }
-
+*/
 std::string makeIndexBlock2(std::shared_ptr<primitiveblock> in) {
     std::vector<int64> n,w,r;
     for (auto o : in->objects) {
-        if (o->Type()==0) { n.push_back(o->Id());}
-        if (o->Type()==1) { w.push_back(o->Id());}
-        if (o->Type()==2) { r.push_back(o->Id());}
+        if (o->Type()==ElementType::Node) { n.push_back(o->Id());}
+        if (o->Type()==ElementType::Way) { w.push_back(o->Id());}
+        if (o->Type()==ElementType::Relation) { r.push_back(o->Id());}
     }
 
     std::list<PbfTag> mm;
@@ -215,7 +215,7 @@ void checkIdxBlock(const std::string& ss, std::shared_ptr<idset> ids, std::share
     while ( (id_pos < id_data.size()) && (bl_pos < bl_data.size())) {
         id += readVarint(id_data,id_pos);
         bl += readVarint(bl_data,bl_pos);
-        elementtype t = (elementtype) (id>>59);
+        ElementType t = (ElementType) (id>>59);
         if (ids->contains(t, id&0xffffffffffffll)) {
             blocks->insert(std::get<0>(head->index[bl]));
         }
@@ -289,15 +289,15 @@ std::shared_ptr<objs_idset> make_idset(typeid_element_map_ptr em) {
     auto ids = std::make_shared<objs_idset>();
     for (auto& tie : *em) {
         ids->add(tie.first.first, tie.first.second);
-        if (tie.first.first==Way) {
-            auto w = std::dynamic_pointer_cast<way>(tie.second);
+        if (tie.first.first==ElementType::Way) {
+            auto w = std::dynamic_pointer_cast<Way>(tie.second);
             for (auto& n : w->Refs()) {
-                ids->add(Node,n);
+                ids->add(ElementType::Node,n);
             }
-        } else if (tie.first.first==Relation) {
-            auto r = std::dynamic_pointer_cast<relation>(tie.second);
+        } else if (tie.first.first==ElementType::Relation) {
+            auto r = std::dynamic_pointer_cast<Relation>(tie.second);
             for (auto& m : r->Members()) {
-                ids->add((elementtype) m.type,m.ref);
+                ids->add(m.type,m.ref);
             }
         }
     }
@@ -358,7 +358,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
             int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
             allocs->expand(k, bl->quadtree);
             qts->expand(k, o->Quadtree());
-            if (o->Type()==Node) {
+            if (o->Type()==ElementType::Node) {
                 //o->SetChangeType(Normal);
                 auto k2=std::make_pair(o->Type(),o->Id());
                 if (em->count(k2)==0) {
@@ -423,13 +423,13 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
                     for (auto o : bl->objects) {
                         int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
                         if (dels.count(k)==1) { continue; }
-                        if ((o->ChangeType()==Normal) || (o->ChangeType()==Unchanged) || (o->ChangeType()==Modify) || (o->ChangeType()==Create)) {
+                        if ((o->ChangeType()==changetype::Normal) || (o->ChangeType()==changetype::Unchanged) || (o->ChangeType()==changetype::Modify) || (o->ChangeType()==changetype::Create)) {
 
                             if (allocs->contains(k)==0) {
                                 allocs->expand(k, bl->quadtree);
                                 qts->expand(k, o->Quadtree());
-                                if (o->Type()==Node) {
-                                    o->SetChangeType(Normal);
+                                if (o->Type()==ElementType::Node) {
+                                    o->SetChangeType(changetype::Normal);
                                     auto k2=std::make_pair(o->Type(),o->Id());
                                     if (em->count(k2)==0) {
                                         (*em)[k2] = o;
@@ -437,7 +437,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
                                 }
                             }
                         }
-                        if (o->ChangeType()==Delete) {
+                        if (o->ChangeType()==changetype::Delete) {
                             dels.insert(k);
                         }
                     }
@@ -455,13 +455,13 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
     std::set<int64> nq;
     logger_message() << "calc way qts";
     for (auto& pp : (*em)) {
-        if ((pp.first.first == Way) && (pp.second->ChangeType()>Delete)) {
+        if ((pp.first.first == ElementType::Way) && (pp.second->ChangeType()>changetype::Delete)) {
             bbox bx;
-            auto o = std::dynamic_pointer_cast<way>(pp.second);
+            auto o = std::dynamic_pointer_cast<Way>(pp.second);
             for (auto& n: o->Refs()) {
-                auto it=em->find(std::make_pair(Node,n));
+                auto it=em->find(std::make_pair(ElementType::Node,n));
                 if (it==em->end()) { throw std::domain_error("node not present"); }
-                auto no = std::dynamic_pointer_cast<node>(it->second);
+                auto no = std::dynamic_pointer_cast<Node>(it->second);
                 bx.expand_point(no->Lon(),no->Lat());
             }
             int64 k = pp.second->InternalId();//(1ll<<61) | pp.first.second;
@@ -480,10 +480,10 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
     }
     logger_message() << "calc node qts";
     for (auto& pp : (*em)) {
-        if ((pp.first.first == 0) && (pp.second->ChangeType()>1)) {
+        if ((pp.first.first == ElementType::Node) && (pp.second->ChangeType()>changetype::Delete)) {
 
             if (nq.count(pp.first.second)==0) {
-                auto o = std::dynamic_pointer_cast<node>(pp.second);
+                auto o = std::dynamic_pointer_cast<Node>(pp.second);
                 int64 qt = quadtree::calculate(o->Lon(),o->Lat(),o->Lon(),o->Lat(),0.05,18);
                 qts->expand(pp.first.second,qt);
             }
@@ -492,8 +492,8 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
     logger_message() << "calc rel qts";
     std::multimap<int64,int64> rr;
     for (auto& pp : (*em)) {
-        if ((pp.first.first == 2) && (pp.second->ChangeType()>1)) {
-            auto obj = std::dynamic_pointer_cast<relation>(pp.second);
+        if ((pp.first.first == ElementType::Relation) && (pp.second->ChangeType()>changetype::Delete)) {
+            auto obj = std::dynamic_pointer_cast<Relation>(pp.second);
             int64 k = pp.second->InternalId();
             if (obj->Members().empty()) {
                 qts->expand(k,0);
@@ -501,7 +501,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
                 std::list<member> missing_members;
                 
                 for (auto& m : obj->Members()) {
-                    if (m.type==2) {
+                    if (m.type==ElementType::Relation) {
                         rr.insert(std::make_pair(pp.first.second, m.ref));
                     } else {
                         int64 mk = make_internalid(m.type,m.ref);
@@ -529,25 +529,25 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
     }
     for (size_t z=0; z< 5; z++) {
         for (auto& r: rr) {
-            int64 k0 = make_internalid(Relation, r.first);
-            int64 k1 = make_internalid(Relation, r.second);
+            int64 k0 = make_internalid(ElementType::Relation, r.first);
+            int64 k1 = make_internalid(ElementType::Relation, r.second);
             if (qts->contains(k1)) {
                 qts->expand(k0, qts->at(k1));
             }
         }
     }
-    std::list<std::pair<elementtype,int64>> mms;
+    std::list<std::pair<ElementType,int64>> mms;
     for (auto& pp:  (*em)) {
         auto k = pp.second->InternalId();//(pp.first.first<<61) | pp.first.second;
-        if (pp.second->ChangeType()==Normal) {
+        if (pp.second->ChangeType()==changetype::Normal) {
 
             if (qts->at(k)==pp.second->Quadtree()) {
                 mms.push_back(pp.first);
             } else {
                 pp.second->SetQuadtree(qts->at(k));
-                pp.second->SetChangeType(Unchanged);
+                pp.second->SetChangeType(changetype::Unchanged);
             }
-        } else if (pp.second->ChangeType()>Remove) {
+        } else if (pp.second->ChangeType()>changetype::Remove) {
             pp.second->SetQuadtree(qts->at(k));
         }
     }
@@ -577,13 +577,13 @@ std::vector<std::shared_ptr<primitiveblock>> find_change_tiles(
     for (auto& pp : (*em)) {
         auto o = pp.second;
         int64 k = o->InternalId();//(pp.first.first<<61) | pp.first.second;
-        if (o->ChangeType()>2) {
+        if (o->ChangeType()>changetype::Remove) {
             int64 a = tree->find_tile(o->Quadtree()).qt;
             check_tile(a);
             tiles[a]->objects.push_back(o);
             if (orig_allocs->contains(k) && (orig_allocs->at(k) != a)) {
                 auto n = o->copy();
-                n->SetChangeType(Remove);
+                n->SetChangeType(changetype::Remove);
                 n->SetQuadtree(0);
                 int64 na=orig_allocs->at(k);
                 check_tile(na);

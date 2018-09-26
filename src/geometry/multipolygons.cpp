@@ -29,7 +29,7 @@ namespace geometry {
 
 bool hasr(primblock_ptr p) {
     for (auto o : p->objects) {
-        if ((o->Type()==1) || (o->Type()==2)) { return true; }
+        if ((o->Type()==ElementType::Way) || (o->Type()==ElementType::Relation)) { return true; }
     }
     return false;
 }
@@ -227,7 +227,7 @@ bool ring_contains(const std::vector<lonlat>& outer, const std::vector<lonlat>& 
 class MakeMultiPolygons : public BlockHandler {
     struct pendingrel {
         int64 tile_quadtree;
-        std::shared_ptr<relation> rel;
+        std::shared_ptr<Relation> rel;
     };
 
     struct pendingway {
@@ -283,19 +283,19 @@ class MakeMultiPolygons : public BlockHandler {
 
             //
 
-            std::vector<std::shared_ptr<element>> tempobjs;
+            std::vector<ElementPtr> tempobjs;
             tempobjs.reserve(in->objects.size());
             for (auto o : in->objects) {
-                if (o->Type()==2) {
+                if (o->Type()==ElementType::Relation) {
                     auto ty=get_tag(o,"type");
 
                     if ((boundary && (ty=="boundary")) || (multipolygon && (ty=="multipolygon"))) {
 
-                        auto r = std::dynamic_pointer_cast<relation>(o);
+                        auto r = std::dynamic_pointer_cast<Relation>(o);
                         if (r->Members().size()==0) { continue; }
 
                         for (const auto& m : r->Members()) {
-                            if (m.type==1) {
+                            if (m.type==ElementType::Way) {
                                 auto& pw = pendingways[m.ref];
                                 pw.rels+=1;
                             }
@@ -311,7 +311,7 @@ class MakeMultiPolygons : public BlockHandler {
             }
             
             for (auto& o: tempobjs) {
-                if ((o->Type()==7) && (pendingways.count(o->Id())>0)) {
+                if ((o->Type()==ElementType::WayWithNodes) && (pendingways.count(o->Id())>0)) {
                     pendingways[o->Id()].tile_quadtree=in->quadtree;
                     pendingways[o->Id()].wy = std::dynamic_pointer_cast<way_withnodes>(o);
 
@@ -406,7 +406,7 @@ class MakeMultiPolygons : public BlockHandler {
 
 
             for (auto& m: pr.rel->Members()) {
-                if (m.type==1) {
+                if (m.type==ElementType::Way) {
                     auto jt = pendingways.find(m.ref);
                     if (jt==pendingways.end()) {
                         logger_message() << "relation " << pr.rel->Id() << " missing way " << m.ref;
@@ -482,10 +482,10 @@ class MakeMultiPolygons : public BlockHandler {
             return result;
         }
 
-        std::tuple<std::vector<ringpartvec>, std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> collect_rings(std::shared_ptr<relation> rel) {
+        std::tuple<std::vector<ringpartvec>, std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> collect_rings(std::shared_ptr<Relation> rel) {
             std::vector<std::shared_ptr<way_withnodes>> outers, inners;
             for (const auto& m: rel->Members()) {
-                if ((m.type==1)) {
+                if ((m.type==ElementType::Way)) {
                     auto w = pendingways[m.ref].wy;
                     if (w) {
                         if (m.role=="inner") { inners.push_back(w); }

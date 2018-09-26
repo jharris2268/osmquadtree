@@ -76,7 +76,7 @@ tagvector makeTags(
 
 
 std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
-    readCommon(elementtype ty, const std::string& data, const std::vector<std::string>& stringtable, std::shared_ptr<idset> ids) {
+    readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, std::shared_ptr<idset> ids) {
 
 
     std::vector<uint64> keys,vals;
@@ -110,7 +110,7 @@ std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
 }
 
 
-std::shared_ptr<element> readNode(
+ElementPtr readNode(
         const std::string& data, const std::vector<std::string>& stringtable,
         changetype ct, std::shared_ptr<idset> ids) {
     int64 id,qt;
@@ -118,8 +118,8 @@ std::shared_ptr<element> readNode(
     info inf; tagvector tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(elementtype::Node,data,stringtable,ids);
-    if (id==0) { return std::shared_ptr<element>(); }
+    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Node,data,stringtable,ids);
+    if (id==0) { return ElementPtr(); }
 
     int64 lon=0,lat=0;
     for (const auto& t : rem) {
@@ -129,7 +129,7 @@ std::shared_ptr<element> readNode(
             lon = unZigZag(t.value);
         }
     }
-    return std::make_shared<node>(ct,id,qt,inf,tags, lon,lat);
+    return std::make_shared<Node>(ct,id,qt,inf,tags, lon,lat);
     
 }
 
@@ -152,7 +152,7 @@ std::tuple<std::vector<uint64>,std::vector<int64>,std::vector<int64>,std::vector
     }
     return std::make_tuple(vs,ts,cs,ui,us,vv);
 }
-bool has_an_id(std::shared_ptr<idset> id_set, elementtype ty, const std::vector<int64>& ids) {
+bool has_an_id(std::shared_ptr<idset> id_set, ElementType ty, const std::vector<int64>& ids) {
     for (auto& i: ids) {
         if (id_set->contains(ty, i)){
             return true;
@@ -163,7 +163,7 @@ bool has_an_id(std::shared_ptr<idset> id_set, elementtype ty, const std::vector<
 
 int readDenseNodes(
         const std::string& data, const std::vector<std::string>& stringtable,
-        changetype ct, std::vector<std::shared_ptr<element> >& objects, std::shared_ptr<idset> id_set) {
+        changetype ct, std::vector<ElementPtr >& objects, std::shared_ptr<idset> id_set) {
 
     std::vector<int64> ids, lons, lats, qts;
     std::vector<uint64> kvs;
@@ -177,7 +177,7 @@ int readDenseNodes(
     for ( ; pbfTag.tag>0; pbfTag = readPbfTag(data,pos)) {
         if      (pbfTag.tag==1) {
             ids = readPackedDelta(pbfTag.data);
-            if (id_set && !has_an_id(id_set,elementtype::Node, ids)) {
+            if (id_set && !has_an_id(id_set,ElementType::Node, ids)) {
                 return 0;
             }
         }
@@ -234,8 +234,8 @@ int readDenseNodes(
             lon=lons.at(i);
             lat=lats.at(i);
         }
-        if (!id_set || id_set->contains(elementtype::Node,id)) {
-            objects.push_back(std::make_shared<node>(ct,id,qt,inf,tags,lon,lat));
+        if (!id_set || id_set->contains(ElementType::Node,id)) {
+            objects.push_back(std::make_shared<Node>(ct,id,qt,inf,tags,lon,lat));
             pp++;
         }
 
@@ -243,15 +243,15 @@ int readDenseNodes(
     return pp;
 }
 
-std::shared_ptr<element> readWay(const std::string& data, const std::vector<std::string>& stringtable, changetype ct, std::shared_ptr<idset> ids) {
+ElementPtr readWay(const std::string& data, const std::vector<std::string>& stringtable, changetype ct, std::shared_ptr<idset> ids) {
 
     int64 id,qt;
 
     info inf; tagvector tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(elementtype::Way,data,stringtable,ids);
-    if (id==0) { return std::shared_ptr<element>(); }
+    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Way,data,stringtable,ids);
+    if (id==0) { return ElementPtr(); }
 
     std::vector<int64> refs;
     
@@ -261,19 +261,19 @@ std::shared_ptr<element> readWay(const std::string& data, const std::vector<std:
 
         }
     }
-    return std::make_shared<way>(ct,id,qt,inf,tags,refs);
+    return std::make_shared<Way>(ct,id,qt,inf,tags,refs);
 
 }
 
-std::shared_ptr<element> readRelation(const std::string& data, const std::vector<std::string>& stringtable,
+ElementPtr readRelation(const std::string& data, const std::vector<std::string>& stringtable,
         changetype ct, std::shared_ptr<idset> ids) {
     int64 id,qt;
 
     info inf; tagvector tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(elementtype::Relation,data,stringtable,ids);
-    if (id==0) { return std::shared_ptr<element>(); }
+    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Relation,data,stringtable,ids);
+    if (id==0) { return ElementPtr(); }
     std::vector<uint64> ty, rl;
     std::vector<int64> rf;
     for (const auto& t : rem) {
@@ -288,11 +288,11 @@ std::shared_ptr<element> readRelation(const std::string& data, const std::vector
     memvector mems(rf.size());
     for (size_t i=0; i < rf.size(); i++) {
         if (ty[i]==0) {
-            mems[i].type = Node;
+            mems[i].type = ElementType::Node;
         } else if (ty[i]==1) {
-            mems[i].type = Way;
+            mems[i].type = ElementType::Way;
         } else if (ty[i]==2) {
-            mems[i].type = Relation;
+            mems[i].type = ElementType::Relation;
         } else {
             throw std::domain_error("wrong member type?? "+std::to_string(ty[i]));
         }
@@ -302,13 +302,13 @@ std::shared_ptr<element> readRelation(const std::string& data, const std::vector
         }
     }
 
-    return std::make_shared<relation>(ct,id,qt,inf,tags,mems);
+    return std::make_shared<Relation>(ct,id,qt,inf,tags,mems);
 
 
 }
 
 
-std::shared_ptr<element> readGeometry_default(elementtype ty, const std::string& data, const std::vector<std::string>& stringtable, changetype ct) {
+ElementPtr readGeometry_default(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, changetype ct) {
     int64 id,qt;
 
     info inf; tagvector tags;
@@ -319,12 +319,12 @@ std::shared_ptr<element> readGeometry_default(elementtype ty, const std::string&
     if ((!rem.empty()) && (rem.back().tag==22)) {
         minzoom=rem.back().value;        
     }    
-    return std::make_shared<geometry_packed>(ty,ct,id,qt,inf,tags,minzoom,rem);
+    return std::make_shared<GeometryPacked>(ty,ct,id,qt,inf,tags,minzoom,rem);
 };
 
 void readPrimitiveGroupCommon(
         const std::string& data, const std::vector<std::string>& stringtable,
-        std::vector<std::shared_ptr<element> >& objects,
+        std::vector<ElementPtr >& objects,
         changetype ct, size_t objflags, std::shared_ptr<idset> ids,
         read_geometry_func readGeometry) {
 
@@ -352,7 +352,7 @@ void readPrimitiveGroupCommon(
             if (o) { objects.push_back(o); }
         } else if ((tag.tag>=20) && (objflags&8) ) {
 
-            elementtype ty = (elementtype) (tag.tag-17);
+            ElementType ty = (ElementType) (tag.tag-17);
             auto o = readGeometry(ty, tag.data, stringtable, ct);
             if (o) { objects.push_back(o); }
         }
@@ -362,7 +362,7 @@ void readPrimitiveGroupCommon(
     return;
 }
 
-void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<std::shared_ptr<element> >& objects, bool change, size_t objflags, std::shared_ptr<idset> ids,read_geometry_func readGeometry) {
+void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<ElementPtr >& objects, bool change, size_t objflags, std::shared_ptr<idset> ids,read_geometry_func readGeometry) {
 
     
 

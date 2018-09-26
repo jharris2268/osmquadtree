@@ -24,13 +24,13 @@
 #define PBFFORMAT_IDSET_HPP
 
 
-#include "oqt/elements/rawelement.hpp"
+#include "oqt/elements/baseelement.hpp"
 
 
 namespace oqt {
 class idset {
     public:
-        virtual bool contains(elementtype ty, int64 id) const=0;
+        virtual bool contains(ElementType ty, int64 id) const=0;
         virtual ~idset() {}
 };
 

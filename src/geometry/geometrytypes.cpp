@@ -454,7 +454,7 @@ void process_all(std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
 }
 */
 
-std::string get_tag(std::shared_ptr<element> e, const std::string& k) {
+std::string get_tag(ElementPtr e, const std::string& k) {
     for (const auto& t : e->Tags()) {
         if (t.key==k) {
             return t.val;
@@ -520,9 +520,9 @@ ringpartvec unpack_ringpart_vec(const std::string& data) {
     return res;
 }
 
-std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, const tagvector& tgs, int64 qt, const std::list<PbfTag>& pbftags, uint64 ct) {
+ElementPtr readGeometry_int(ElementType ty, int64 id, info inf, const tagvector& tgs, int64 qt, const std::list<PbfTag>& pbftags, changetype ct) {
         
-    if (ty==Point) {
+    if (ty==ElementType::Point) {
         int64 lon=0, lat=0, minzoom=-1; int64 layer=0;
         for (const auto& t : pbftags) {
             if (t.tag==8) { lat=unZigZag(t.value); }
@@ -531,7 +531,7 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
             if (t.tag==24) { layer = unZigZag(t.value); }
         }
         return std::make_shared<point>(id,qt,inf,tgs,lon,lat,layer,minzoom);
-    } else if ((ty==Linestring) || (ty==SimplePolygon)) {
+    } else if ((ty==ElementType::Linestring) || (ty==ElementType::SimplePolygon)) {
         refvector rfs;
         lonlatvec lonlats;
         int64 minzoom=-1;
@@ -553,12 +553,12 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
         bbox bounds;
         expand_bbox(bounds,lonlats);
 
-        if (ty==Linestring) {
+        if (ty==ElementType::Linestring) {
             return std::make_shared<linestring>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,length,bounds,minzoom);
-        } else if (ty==SimplePolygon) {
+        } else if (ty==ElementType::SimplePolygon) {
             return std::make_shared<simplepolygon>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,area,bounds,minzoom,rev);
         }
-    } else if ((ty==ComplicatedPolygon)) {
+    } else if ((ty==ElementType::ComplicatedPolygon)) {
         int64 minzoom=-1;
         int64 zorder=0, layer=0, part=0; double area=0;
         ringpartvec outer;
@@ -587,7 +587,7 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
 
 
         return std::make_shared<complicatedpolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
-    } else if ((ty==WayWithNodes)) {
+    } else if ((ty==ElementType::WayWithNodes)) {
         refvector refs;
         lonlatvec lonlats;
         for (const auto& t: pbftags) {
@@ -599,10 +599,10 @@ std::shared_ptr<element> readGeometry_int(elementtype ty, int64 id, info inf, co
         for (const auto& l : lonlats) { bounds.expand_point(l.lon,l.lat); }
         return std::make_shared<way_withnodes>(id,qt,inf,tgs,refs,lonlats,bounds);
     }
-    return std::shared_ptr<element>();
+    return ElementPtr();
 }
 
-std::shared_ptr<element> readGeometry(elementtype ty, const std::string& data, const std::vector<std::string>& st, uint64 ct) {
+ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vector<std::string>& st, changetype ct) {
     int64 id, qt;
     info inf; tagvector tgs;
     std::list<PbfTag> pbftags;
@@ -611,9 +611,9 @@ std::shared_ptr<element> readGeometry(elementtype ty, const std::string& data, c
     return readGeometry_int(ty,id,inf,tgs,qt,pbftags,ct);
 }
 
-std::shared_ptr<element> unpack_geometry_element(std::shared_ptr<element> ele) {
+ElementPtr unpack_geometry_element(ElementPtr ele) {
     
-    auto geom = std::dynamic_pointer_cast<basegeometry>(ele);
+    auto geom = std::dynamic_pointer_cast<BaseGeometry>(ele);
     if (!geom) {
         throw std::domain_error("not a geometry?");
     }
@@ -628,9 +628,9 @@ size_t unpack_geometry_primitiveblock(primblock_ptr pb) {
     for (size_t i=0; i<pb->size(); i++) {
         auto o = pb->at(i);
         if (isGeometryType(o->Type())) {
-            auto gp = std::dynamic_pointer_cast<basegeometry>(o);
+            auto gp = std::dynamic_pointer_cast<BaseGeometry>(o);
             if (!gp) { throw std::domain_error("cast to geometry failed??"); }
-            if (gp->OriginalType()==Unknown) {
+            if (gp->OriginalType()==ElementType::Unknown) {
                 auto g = unpack_geometry_element(gp);
                 if (g) {
                     pb->objects.at(i) = g;

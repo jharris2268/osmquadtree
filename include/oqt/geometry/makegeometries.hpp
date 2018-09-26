@@ -53,7 +53,7 @@ size_t recalculate_quadtree(std::shared_ptr<primitiveblock> block, uint64 maxdep
 
 class findminzoom {
     public:
-        virtual int64 calculate(std::shared_ptr<element> ele)=0;
+        virtual int64 calculate(ElementPtr ele)=0;
         virtual ~findminzoom() {}
 };
     

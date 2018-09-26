@@ -27,21 +27,21 @@
 #include "oqt/pbfformat/idset.hpp"
 #include "oqt/elements/member.hpp"
 namespace oqt {
-class relation : public element {
+class Relation : public Element {
     public:
-        relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems);
-        virtual ~relation() {}
+        Relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems);
+        virtual ~Relation() {}
 
         const memvector&  Members() const;
         
-        virtual std::shared_ptr<element> copy();
+        virtual ElementPtr copy();
         
         bool filter_members(std::shared_ptr<idset> ids);
-        friend bool fix_members(relation& rel);
+        friend bool fix_members(Relation& rel);
     private:
         memvector mems_;
 };
 
-bool fix_members(relation& rel);
+bool fix_members(Relation& rel);
 }
 #endif

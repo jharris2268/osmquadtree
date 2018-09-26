@@ -25,7 +25,7 @@
 
 #include "oqt/common.hpp"
 
-#include "oqt/elements/rawelement.hpp"
+#include "oqt/elements/baseelement.hpp"
 #include "oqt/elements/info.hpp"
 #include "oqt/elements/tag.hpp"
 
@@ -33,11 +33,11 @@
 namespace oqt {
 
 
-class element : public rawelement {
+class Element : public BaseElement {
     public:
-        element(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags);
+        Element(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags);
         uint64 InternalId() const;
-        elementtype Type() const;
+        ElementType Type() const;
         changetype ChangeType() const;
         void SetChangeType(changetype ct);
         int64 Id() const;
@@ -52,28 +52,28 @@ class element : public rawelement {
         
         void SetTags(const tagvector& new_tags);
 
-        virtual ~element() {}
-        virtual std::shared_ptr<element> copy()=0;
+        virtual ~Element() {}
+        virtual std::shared_ptr<Element> copy()=0;
 
         
-        friend bool fix_tags(element& ele);
+        friend bool fix_tags(Element& ele);
 
     private:
-        elementtype type_;
+        ElementType type_;
         changetype changetype_;
         int64 id_, quadtree_ ;
         info info_;
         tagvector tags_;
 };
 
-typedef std::shared_ptr<element> element_ptr;
+typedef std::shared_ptr<Element> ElementPtr;
 
 
-inline bool element_cmp(const element_ptr& l, const element_ptr& r) {
+inline bool element_cmp(const ElementPtr& l, const ElementPtr& r) {
     return l->InternalId()<r->InternalId();
 }
 
-bool fix_tags(element& ele);
+bool fix_tags(Element& ele);
 std::string fix_str(const std::string& str);
 }
 #endif

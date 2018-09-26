@@ -27,11 +27,11 @@
 namespace oqt {
 
 
-way::way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs)
-    : element(elementtype::Way,c,i,q,inf,tags), refs_(refs) {}
+Way::Way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs)
+    : Element(ElementType::Way,c,i,q,inf,tags), refs_(refs) {}
 
 
-const refvector& way::Refs() const { return refs_; }
+const refvector& Way::Refs() const { return refs_; }
 
         
 
@@ -40,7 +40,7 @@ std::list<PbfTag> way::pack_extras() const {
     return {PbfTag{8,0,writePackedDelta(refs_)}};
 }
   */      
-std::shared_ptr<element> way::copy() { return std::make_shared<way>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Refs()); }
+ElementPtr Way::copy() { return std::make_shared<Way>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Refs()); }
     
 }
 

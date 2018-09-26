@@ -44,7 +44,7 @@ namespace oqt {
 
 class ApplyChange { 
     public:
-        ApplyChange(std::function<void(element_ptr)> collect_, typeid_element_map_ptr changeobjs_) :
+        ApplyChange(std::function<void(ElementPtr)> collect_, typeid_element_map_ptr changeobjs_) :
             collect(collect_), changeobjs(changeobjs_), finished(false), change_key(0) {
             
             change_iter = changeobjs->begin();
@@ -56,9 +56,9 @@ class ApplyChange {
         
         void add_change_obj(bool has) {
             auto o = change_iter->second;
-            if (o->ChangeType() >= Modify) {
+            if (o->ChangeType() >= changetype::Modify) {
                 
-                o->SetChangeType(Normal);
+                o->SetChangeType(changetype::Normal);
                 logger_message() << (has ? "replace with" : "insert") << " obj " << o->Type() << " " << o->Id();
                 collect(o);
             } else {
@@ -90,7 +90,7 @@ class ApplyChange {
             }
         }
     private:
-        std::function<void(element_ptr)> collect;
+        std::function<void(ElementPtr)> collect;
         typeid_element_map_ptr changeobjs;
         typeid_element_map::const_iterator change_iter;
         bool finished;
@@ -155,8 +155,8 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
         }
         for (auto o: pp->objects) {
             if (fix_tags(*o)) { nc++; };
-            if (o->Type()==Relation) {
-                auto rel = std::dynamic_pointer_cast<relation>(o);
+            if (o->Type()==ElementType::Relation) {
+                auto rel = std::dynamic_pointer_cast<Relation>(o);
                 if (fix_members(*rel)) {
                     nc++;
                 }

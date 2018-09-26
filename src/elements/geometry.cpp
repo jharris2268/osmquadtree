@@ -22,11 +22,11 @@
 
 #include "oqt/elements/geometry.hpp"
 namespace oqt {
-geometry_packed::geometry_packed(elementtype t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_) :
-    basegeometry(t,c,i,q,inf,tags,minzoom_), geom_messages(geom_messages_), internalid(0) {
+GeometryPacked::GeometryPacked(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_) :
+    BaseGeometry(t,c,i,q,inf,tags,minzoom_), geom_messages(geom_messages_), internalid(0) {
     
     internalid = (((uint64) t)<<61ull);
-    if (t==6) {
+    if (t==ElementType::ComplicatedPolygon) {
         internalid |= ( ((uint64) i) << 16ull);
         for (const auto& m: geom_messages) {
             if (m.tag==19) { internalid |= m.value/2; } //part (zigzag int64)
@@ -36,29 +36,29 @@ geometry_packed::geometry_packed(elementtype t, changetype c, int64 i, int64 q, 
     }
         
 }
-uint64 geometry_packed::InternalId() const { return internalid; }
+uint64 GeometryPacked::InternalId() const { return internalid; }
 
 
-elementtype geometry_packed::OriginalType() const { return Unknown; }
-bbox geometry_packed::Bounds() const { return bbox{1,1,0,0}; }
-std::string geometry_packed::Wkb(bool transform, bool srid) const { throw std::domain_error("not implemented"); }
+ElementType GeometryPacked::OriginalType() const { return ElementType::Unknown; }
+bbox GeometryPacked::Bounds() const { return bbox{1,1,0,0}; }
+std::string GeometryPacked::Wkb(bool transform, bool srid) const { throw std::domain_error("not implemented"); }
 
-std::list<PbfTag> geometry_packed::pack_extras() const { return geom_messages; }
+std::list<PbfTag> GeometryPacked::pack_extras() const { return geom_messages; }
 
-element_ptr geometry_packed::copy() {
-    return std::make_shared<geometry_packed>(Type(),ChangeType(),Id(),Quadtree(),Info(),Tags(),MinZoom(),geom_messages);
+ElementPtr GeometryPacked::copy() {
+    return std::make_shared<GeometryPacked>(Type(),ChangeType(),Id(),Quadtree(),Info(),Tags(),MinZoom(),geom_messages);
 }
-bool isGeometryType(elementtype ty) {
+bool isGeometryType(ElementType ty) {
     switch (ty) {
-        case Node: return false;
-        case Way: return false;
-        case Relation: return false;
-        case Point: return true;
-        case Linestring: return true;
-        case SimplePolygon: return true;
-        case ComplicatedPolygon: return true;
-        case WayWithNodes: return false;
-        case Unknown: return false;
+        case ElementType::Node: return false;
+        case ElementType::Way: return false;
+        case ElementType::Relation: return false;
+        case ElementType::Point: return true;
+        case ElementType::Linestring: return true;
+        case ElementType::SimplePolygon: return true;
+        case ElementType::ComplicatedPolygon: return true;
+        case ElementType::WayWithNodes: return false;
+        case ElementType::Unknown: return false;
     }
     return false;
 }
