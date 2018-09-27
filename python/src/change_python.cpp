@@ -49,7 +49,7 @@ void add_all_element_map(std::shared_ptr<objs_idset> ii, const element_map& mm) 
 
 
 
-std::shared_ptr<primitiveblock> read_xml_change_file_py(std::string fn, bool isgzip) {
+PrimitiveBlockPtr read_xml_change_file_py(std::string fn, bool isgzip) {
     if (isgzip) {
         gzstream::igzstream f(fn.c_str());
         return read_xml_change_file(&f);
@@ -80,7 +80,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
     return add_orig_elements_alt(em.u,prfx,fls);
 }
 
-std::vector<std::shared_ptr<primitiveblock>> find_change_tiles_py(element_map& em, std::shared_ptr<qtstore> orig_allocs,
+std::vector<PrimitiveBlockPtr> find_change_tiles_py(element_map& em, std::shared_ptr<qtstore> orig_allocs,
     std::shared_ptr<qttree> tree,
     int64 startdate,
     int64 enddate){
@@ -114,7 +114,7 @@ std::set<int64> checkIndexFile_py(const std::string& idxfn, std::shared_ptr<head
 
 class WritePbfFile {
     public:
-        virtual void write(std::vector<std::shared_ptr<primitiveblock>> blocks)=0;
+        virtual void write(std::vector<PrimitiveBlockPtr> blocks)=0;
         virtual std::pair<int64,int64> finish()=0;
         virtual ~WritePbfFile() {}
 };
@@ -135,7 +135,7 @@ class WritePbfFileImpl : public WritePbfFile {
             
         }
 
-        void write(std::vector<std::shared_ptr<primitiveblock>> blocks) {
+        void write(std::vector<PrimitiveBlockPtr> blocks) {
             
             
             
@@ -154,10 +154,10 @@ class WritePbfFileImpl : public WritePbfFile {
                 }
             }, numchan);
             
-            std::vector<std::function<void(std::shared_ptr<primitiveblock>)>> packers;
+            std::vector<std::function<void(PrimitiveBlockPtr)>> packers;
             for (auto cb: outcb) {
-                packers.push_back(threaded_callback<primitiveblock>::make(
-                    [cb,this](std::shared_ptr<primitiveblock> pb) {
+                packers.push_back(threaded_callback<PrimitiveBlock>::make(
+                    [cb,this](PrimitiveBlockPtr pb) {
                         if (!pb) { return cb(nullptr); }
                         cb(write_and_pack_pbfblock(pb));
                     }
@@ -192,10 +192,10 @@ class WritePbfFileImpl : public WritePbfFile {
         
         
         
-        keystring_ptr write_and_pack_pbfblock(std::shared_ptr<primitiveblock> bl) {
+        keystring_ptr write_and_pack_pbfblock(PrimitiveBlockPtr bl) {
             auto data = writePbfBlock(bl, !dropqts, change, true, true);
             auto block = prepareFileBlock("OSMData", data);
-            return std::make_shared<keystring>(bl->quadtree, block);
+            return std::make_shared<keystring>(bl->Quadtree(), block);
         }
             
         
@@ -211,7 +211,7 @@ void change_defs(py::module& m) {
     m.def("checkIndexFile", &checkIndexFile_py);
     m.def("writeIndexFile", writeIndexFile_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
     m.def("writePbfBlock", 
-        [](std::shared_ptr<primitiveblock> b, bool incQts, bool change, bool incInfo, bool incRefs) {
+        [](PrimitiveBlockPtr b, bool incQts, bool change, bool incInfo, bool incRefs) {
                 return py::bytes(writePbfBlock(b,incQts,change,incInfo,incRefs)); },
         py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
     
@@ -269,7 +269,7 @@ void change_defs(py::module& m) {
 
     py::class_<WritePbfFile, std::shared_ptr<WritePbfFile>>(m, "WritePbfFile_obj")
         //.def(py::init<std::string,bool,bool,bool,bool,size_t,bbox>())
-        .def("write", [](WritePbfFile& wpf, std::vector<std::shared_ptr<primitiveblock>> tls) {
+        .def("write", [](WritePbfFile& wpf, std::vector<PrimitiveBlockPtr> tls) {
             py::gil_scoped_release r;
             wpf.write(tls);
         })

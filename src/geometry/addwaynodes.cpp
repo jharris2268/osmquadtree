@@ -69,7 +69,7 @@ class lonlatstore_impl : public lonlatstore {
     public:
         lonlatstore_impl() {}
 
-        virtual void add_tile(std::shared_ptr<primitiveblock> block) {
+        virtual void add_tile(PrimitiveBlockPtr block) {
 
             /*
             std::vector<int64> dels;
@@ -82,7 +82,7 @@ class lonlatstore_impl : public lonlatstore {
                 tiles.erase(c);
             }*/
             for (auto it=tiles.cbegin(); it!=tiles.cend(); ) {
-                if (quadtree::common(block->quadtree, it->first) != it->first) {
+                if (quadtree::common(block->Quadtree(), it->first) != it->first) {
                     it=tiles.erase(it);
                 } else {
                     it++;
@@ -90,8 +90,8 @@ class lonlatstore_impl : public lonlatstore {
             }
 
 
-            loctile lls; lls.reserve(block->objects.size());
-            for (auto& o : block->objects) {
+            loctile lls; lls.reserve(block->size());
+            for (auto& o : block->Objects()) {
                 if (o->Type()==ElementType::Node) {
                     auto n = std::dynamic_pointer_cast<Node>(o);
                     //lls.insert(std::make_pair(o->Id(), lonlat{n->Lon(),n->Lat()}));
@@ -99,7 +99,7 @@ class lonlatstore_impl : public lonlatstore {
                 }
             }
             if (!lls.empty()) {
-                tiles[block->quadtree] = lls;
+                tiles[block->Quadtree()] = lls;
             }
         }
 
@@ -123,24 +123,24 @@ std::shared_ptr<lonlatstore> make_lonlatstore() {
 }
 
 
-std::shared_ptr<primitiveblock> add_waynodes(std::shared_ptr<lonlatstore> lls, std::shared_ptr<primitiveblock> in_bl) {
+PrimitiveBlockPtr add_waynodes(std::shared_ptr<lonlatstore> lls, PrimitiveBlockPtr in_bl) {
     lls->add_tile(in_bl);
-    auto out_bl = std::make_shared<primitiveblock>(in_bl->index, in_bl->objects.size());
-    out_bl->quadtree = in_bl->quadtree;
-    out_bl->startdate = in_bl->startdate;
-    out_bl->enddate = in_bl->enddate;
+    auto out_bl = std::make_shared<PrimitiveBlock>(in_bl->Index(), in_bl->size());
+    out_bl->SetQuadtree(in_bl->Quadtree());
+    out_bl->SetStartDate(in_bl->StartDate());
+    out_bl->SetEndDate(in_bl->EndDate());
 
-    for (auto& o : in_bl->objects) {
+    for (auto& o : in_bl->Objects()) {
         if (o->Type()==ElementType::Node) {
             if (!o->Tags().empty()) {
-                out_bl->objects.push_back(o);
+                out_bl->add(o);
             }
         } else if (o->Type()==ElementType::Way) {
             auto w = std::dynamic_pointer_cast<Way>(o);
             auto wwn = std::make_shared<way_withnodes>(w, lls->get_lonlats(w));
-            out_bl->objects.push_back(wwn);
+            out_bl->add(wwn);
         } else {
-            out_bl->objects.push_back(o);
+            out_bl->add(o);
         }
     }
     return out_bl;
@@ -148,7 +148,7 @@ std::shared_ptr<primitiveblock> add_waynodes(std::shared_ptr<lonlatstore> lls, s
 
 block_callback make_addwaynodes_cb(block_callback cb) {
     auto lls = make_lonlatstore();
-    return [lls,cb](primitiveblock_ptr bl) {
+    return [lls,cb](PrimitiveBlockPtr bl) {
         if (!bl) {
             lls->finish();
             cb(nullptr);

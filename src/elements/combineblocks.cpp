@@ -53,54 +53,56 @@ int obj_cmp(ElementPtr l, ElementPtr r) {
 }
 
 
-std::shared_ptr<primitiveblock> combine_primitiveblock_two(
+PrimitiveBlockPtr combine_primitiveblock_two(
     size_t idx,
-    std::shared_ptr<primitiveblock> left,
-    std::shared_ptr<primitiveblock> right,
+    PrimitiveBlockPtr left,
+    PrimitiveBlockPtr right,
     bool apply_change) {
 
     if (!left || !right) { throw std::domain_error("??"); }
-    if (left->quadtree!=right->quadtree) { throw std::domain_error("?? different quadtree"); }
+    if (left->Quadtree()!=right->Quadtree()) { throw std::domain_error("?? different quadtree"); }
 
-    size_t left_size = left->objects.size(), right_size = right->objects.size();
-    auto res = std::make_shared<primitiveblock>(idx,left_size+right_size);
-    res->quadtree  = left->quadtree;
-    res->startdate = left->startdate;
-    res->enddate   = right->enddate;
+    size_t left_size = left->size();
+    size_t right_size = right->size();
+    
+    auto res = std::make_shared<PrimitiveBlock>(idx,left_size+right_size);
+    res->SetQuadtree(left->Quadtree());
+    res->SetStartDate(left->StartDate());
+    res->SetEndDate(right->EndDate());
 
     size_t left_idx = 0;
     size_t right_idx= 0;
 
     for ( ; left_idx<left_size || right_idx < right_size; ) {
         ElementPtr left_object, right_object;
-        if (left_idx<left_size) { left_object = left->objects[left_idx]; }
-        if (right_idx<right_size) { right_object = right->objects[right_idx]; }
+        if (left_idx<left_size) { left_object = left->at(left_idx); }
+        if (right_idx<right_size) { right_object = right->at(right_idx); }
 
         if (!left_object) {
             if (!apply_change || check_changetype(right_object->ChangeType())) {
-                res->objects.push_back(right_object);
+                res->add(right_object);
             }
             right_idx++;
         } else if (!right_object) {
             if (!apply_change || check_changetype(left_object->ChangeType())) {
-                res->objects.push_back(left_object);
+                res->add(left_object);
             }
             left_idx++;
         } else {
             auto c = obj_cmp(left_object,right_object);
             if (c<0) {
                 if (!apply_change || check_changetype(left_object->ChangeType())) {
-                    res->objects.push_back(left_object);
+                    res->add(left_object);
                 }
                 left_idx++;
             } else if (c==1) {
                 if (!apply_change || check_changetype(right_object->ChangeType())) {
-                    res->objects.push_back(right_object);
+                    res->add(right_object);
                 }
                 right_idx++;
             } else {
                 if (!apply_change || check_changetype(right_object->ChangeType())) {
-                    res->objects.push_back(right_object);
+                    res->add(right_object);
                 }
                 left_idx++;
                 right_idx++;
@@ -108,7 +110,7 @@ std::shared_ptr<primitiveblock> combine_primitiveblock_two(
         }
     }
     if (apply_change) {
-        for (auto e:res->objects) {
+        for (auto e:res->Objects()) {
             e->SetChangeType(changetype::Normal);
         }
     }
@@ -118,21 +120,21 @@ std::shared_ptr<primitiveblock> combine_primitiveblock_two(
 
 
 
-std::shared_ptr<primitiveblock> combine_primitiveblock_many(
-    std::shared_ptr<primitiveblock> main,
-    const std::vector<std::shared_ptr<primitiveblock>>& changes) {
+PrimitiveBlockPtr combine_primitiveblock_many(
+    PrimitiveBlockPtr main,
+    const std::vector<PrimitiveBlockPtr>& changes) {
 
     if (changes.size()==0) {
         return main;
     }
-    std::shared_ptr<primitiveblock> merged_changes;
+    PrimitiveBlockPtr merged_changes;
     merged_changes=changes[0];
     if (changes.size()>1) {
         for (size_t i=1; i < changes.size(); i++) {
-            merged_changes = combine_primitiveblock_two(main->index, merged_changes, changes[i], false);
+            merged_changes = combine_primitiveblock_two(main->Index(), merged_changes, changes[i], false);
         }
     }
-    return combine_primitiveblock_two(main->index, main, merged_changes, true);
+    return combine_primitiveblock_two(main->Index(), main, merged_changes, true);
 }
 
 

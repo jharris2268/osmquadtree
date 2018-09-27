@@ -259,7 +259,7 @@ class complicatedpolygon : public BaseGeometry {
         
 };
 
-typedef std::shared_ptr<primitiveblock> primblock_ptr;
+typedef PrimitiveBlockPtr primblock_ptr;
 typedef std::vector<primblock_ptr> primblock_vec;
 
 class BlockHandler  {

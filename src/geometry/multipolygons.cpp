@@ -28,7 +28,7 @@ namespace geometry {
 
 
 bool hasr(primblock_ptr p) {
-    for (auto o : p->objects) {
+    for (auto o : p->Objects()) {
         if ((o->Type()==ElementType::Way) || (o->Type()==ElementType::Relation)) { return true; }
     }
     return false;
@@ -272,20 +272,18 @@ class MakeMultiPolygons : public BlockHandler {
 
         virtual primblock_vec process(primblock_ptr in) {
 
-            //if (!hasr(in)) {
-            //    return {in};
-            //}
+            
             primblock_vec res;
-            if (in->quadtree > maxqt) {
-                res = check_finished(in->quadtree);
-                maxqt = in->quadtree;
+            if (in->Quadtree() > maxqt) {
+                res = check_finished(in->Quadtree());
+                maxqt = in->Quadtree();
             }
 
-            //
+            
 
             std::vector<ElementPtr> tempobjs;
-            tempobjs.reserve(in->objects.size());
-            for (auto o : in->objects) {
+            tempobjs.reserve(in->size());
+            for (auto o : in->Objects()) {
                 if (o->Type()==ElementType::Relation) {
                     auto ty=get_tag(o,"type");
 
@@ -300,7 +298,7 @@ class MakeMultiPolygons : public BlockHandler {
                                 pw.rels+=1;
                             }
                         }
-                        pendingrels[o->Id()] = pendingrel{in->quadtree,r};
+                        pendingrels[o->Id()] = pendingrel{in->Quadtree(),r};
                     }
                 } else {
                     
@@ -312,14 +310,14 @@ class MakeMultiPolygons : public BlockHandler {
             
             for (auto& o: tempobjs) {
                 if ((o->Type()==ElementType::WayWithNodes) && (pendingways.count(o->Id())>0)) {
-                    pendingways[o->Id()].tile_quadtree=in->quadtree;
+                    pendingways[o->Id()].tile_quadtree=in->Quadtree();
                     pendingways[o->Id()].wy = std::dynamic_pointer_cast<way_withnodes>(o);
 
                 }
             }
         
         
-            in->objects.swap(tempobjs);
+            in->Objects().swap(tempobjs);
             res.push_back(in);
             return res;
         }
@@ -387,7 +385,7 @@ class MakeMultiPolygons : public BlockHandler {
 
                     for (const auto& pp : parts) {
                         auto cp = std::make_shared<complicatedpolygon>(r, pp.first, outers[pp.first], pp.second.second,tgs,zorder,layer,-1);
-                        finished[tq]->objects.push_back(cp);
+                        finished[tq]->add(cp);
 
                         
                     }
@@ -445,7 +443,7 @@ class MakeMultiPolygons : public BlockHandler {
             for (auto it=pendingrels.cbegin(); it!=pendingrels.cend(); /*no ince*/) {
                 int64 tq=it->second.tile_quadtree;
                 if (finished.count(tq)==0) {
-                    finished[tq]=std::make_shared<primitiveblock>(0,0);
+                    finished[tq]=std::make_shared<PrimitiveBlock>(0,0);
                 }
                 
                 if ((qt<0) || (quadtree::common(tq,qt)!=tq)) {
@@ -471,10 +469,10 @@ class MakeMultiPolygons : public BlockHandler {
             size_t mm=0;
             primblock_vec result;
             for (const auto& ff: finished) {
-                ff.second->quadtree = ff.first;
-                if (ff.second->objects.size()>0) {
+                ff.second->SetQuadtree(ff.first);
+                if (ff.second->size()>0) {
                     result.push_back(ff.second);
-                    mm+=ff.second->objects.size();
+                    mm+=ff.second->size();
                 }
             }
             

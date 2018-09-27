@@ -70,7 +70,7 @@ class ApplyChange {
                 change_key = change_iter->second->InternalId();
             }
         }
-        void apply(primitiveblock_ptr block) {
+        void apply(PrimitiveBlockPtr block) {
             if (!block) {
                 while (!finished) {
                     add_change_obj(false);
@@ -78,7 +78,7 @@ class ApplyChange {
                 collect(nullptr);
                 return;
             }   
-            for (auto obj: block->objects) {
+            for (auto obj: block->Objects()) {
                 while ((!finished) && (change_key < obj->InternalId())) {
                     add_change_obj(false);                    
                 }
@@ -141,7 +141,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     if (writer) {
         packers = make_final_packers_sync(writer,numchan,0,false,true);
     } else {
-        packers.push_back([](primitiveblock_ptr p) {});
+        packers.push_back([](PrimitiveBlockPtr p) {});
     }
     auto collect = make_collectobjs(packers, 8000);
     
@@ -149,11 +149,11 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     
     
     size_t nc=0;
-    auto fixtags = [applychange,&nc](primitiveblock_ptr pp) {
+    auto fixtags = [applychange,&nc](PrimitiveBlockPtr pp) {
         if (!pp) {
             return applychange->apply(nullptr);
         }
-        for (auto o: pp->objects) {
+        for (auto o: pp->Objects()) {
             if (fix_tags(*o)) { nc++; };
             if (o->Type()==ElementType::Relation) {
                 auto rel = std::dynamic_pointer_cast<Relation>(o);
@@ -167,17 +167,17 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     
     
     auto cvf = [](std::shared_ptr<FileBlock> bl) {
-        if (!bl) { return primitiveblock_ptr(); }
+        if (!bl) { return PrimitiveBlockPtr(); }
         if ((bl->blocktype=="OSMData")) {
             std::string dd = bl->get_data();//decompress(std::get<2>(*bl), std::get<3>(*bl))
             return readPrimitiveBlock(bl->idx, dd, false,7,nullptr,nullptr);
             
         }
-        return std::make_shared<primitiveblock>(-1);
+        return std::make_shared<PrimitiveBlock>(-1);
     };
     
     
-    //[applychange](primitiveblock_ptr bl) { applychange->apply(bl); }
+    //[applychange](PrimitiveBlockPtr bl) { applychange->apply(bl); }
     read_blocks_convfunc_primitiveblock(origfn, fixtags, {}, numchan, cvf);
     lg->time("applied change");
     

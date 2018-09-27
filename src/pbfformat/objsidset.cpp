@@ -58,8 +58,8 @@ void objs_idset::add_relation(std::shared_ptr<Relation> rr) {
         else if (m.type==ElementType::Relation) { relations_.insert(m.ref);}                
     }
 }
-void objs_idset::add_all(std::shared_ptr<primitiveblock> pb) {
-    for (auto& o : pb->objects) {
+void objs_idset::add_all(PrimitiveBlockPtr pb) {
+    for (auto& o : pb->Objects()) {
         if (o->Type()==ElementType::Node) {
             auto n = std::dynamic_pointer_cast<Node>(o);
             if (!n) { throw std::domain_error("WTF"); }

@@ -633,7 +633,7 @@ size_t unpack_geometry_primitiveblock(primblock_ptr pb) {
             if (gp->OriginalType()==ElementType::Unknown) {
                 auto g = unpack_geometry_element(gp);
                 if (g) {
-                    pb->objects.at(i) = g;
+                    pb->Objects().at(i) = g;
                     cnt++;
                 }
             }

@@ -34,7 +34,7 @@ namespace oqt {
 
 
 typedef std::function<ElementPtr(ElementType, const std::string&, const std::vector<std::string>&, changetype)> read_geometry_func;
-std::shared_ptr<primitiveblock> readPrimitiveBlock(int64 idx, const std::string& data, bool change,
+PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool change,
     size_t objflags=7, std::shared_ptr<idset> ids=std::shared_ptr<idset>(),
     read_geometry_func readGeometry = read_geometry_func());
 

@@ -45,7 +45,7 @@ namespace oqt {
 
 
 
-primitiveblock_ptr read_as_primitiveblock(
+PrimitiveBlockPtr read_as_primitiveblock(
     std::shared_ptr<FileBlock> bl, 
     std::shared_ptr<idset> idset, 
     bool ischange,
@@ -61,7 +61,7 @@ std::shared_ptr<qtvec> read_as_qtvec(
     size_t objflags);
 
 
-primitiveblock_ptr merge_as_primitiveblock(
+PrimitiveBlockPtr merge_as_primitiveblock(
     std::shared_ptr<FileBlock> bl, 
     std::shared_ptr<idset> idset, 
     size_t objflags);
@@ -192,13 +192,13 @@ void read_blocks_convfunc_primitiveblock(
     primitiveblock_callback callback,
     std::vector<int64> locs, 
     size_t numchan,
-    std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> convfunc);
+    std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convfunc);
 
 void read_blocks_split_convfunc_primitiveblock(
     const std::string& filename,
     std::vector<primitiveblock_callback> callbacks,
     std::vector<int64> locs, 
-    std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> convfunc);
+    std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convfunc);
 
 void read_blocks_nothread_primitiveblock(
     const std::string& filename,
@@ -243,12 +243,12 @@ namespace readpbffile_detail {
 
 
     template <>
-    inline std::shared_ptr<primitiveblock> merge_keyedblob<primitiveblock>(
+    inline PrimitiveBlockPtr merge_keyedblob<PrimitiveBlock>(
         std::shared_ptr<keyedblob> bl,
         size_t objflags, std::shared_ptr<idset> ids) {
         
-        std::vector<std::shared_ptr<primitiveblock>> changes;
-        std::shared_ptr<primitiveblock> main;
+        std::vector<PrimitiveBlockPtr> changes;
+        PrimitiveBlockPtr main;
         for (auto& b: bl->blobs) {
             std::string dd = decompress(b.first,b.second);
             if (main) {
@@ -259,12 +259,12 @@ namespace readpbffile_detail {
         }
         
         if (changes.empty()) {
-            main->file_progress = bl->file_progress;
+            main->SetFileProgress(bl->file_progress);
             return main;
         }
         auto comb = combine_primitiveblock_many(main,changes);
-        comb->file_progress = bl->file_progress;
-        comb->index = bl->idx;
+        comb->SetFileProgress(bl->file_progress);
+        
         return comb;
     }
 

@@ -292,7 +292,7 @@ struct objdiff {
 
 class obj_iter2 {
     public:
-        obj_iter2(std::function<primitiveblock_ptr(void)> reader_) : reader(reader_), idx(0), ii(0) { curr = reader(); }
+        obj_iter2(std::function<PrimitiveBlockPtr(void)> reader_) : reader(reader_), idx(0), ii(0) { curr = reader(); }
         
         std::pair<size_t,ElementPtr> next() {
             while (curr && (ii==curr->size())) {
@@ -308,10 +308,10 @@ class obj_iter2 {
             return std::make_pair(idx++, o);
         }
     private:
-        std::function<primitiveblock_ptr(void)> reader;
+        std::function<PrimitiveBlockPtr(void)> reader;
         size_t idx;
         size_t ii;
-        primitiveblock_ptr curr;
+        PrimitiveBlockPtr curr;
 };
 enum diffreason {
     Same,
@@ -365,7 +365,7 @@ diffreason compare_element(ElementPtr left, ElementPtr right) {
     }
     return diffreason::Same;
 }
-typedef std::function<void(primitiveblock_ptr)> primitiveblock_callback;
+
 std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2(const std::string& left_fn, const std::string& right_fn, size_t numchan, std::function<bool(std::vector<objdiff>)> callback) {
     py::gil_scoped_release rel;
     
@@ -374,8 +374,8 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
     size_t numchan_half = numchan/2;
     if (numchan_half==0) { numchan_half=1; }
             
-    auto left_reader  = std::make_shared<inverted_callback<primitiveblock>>([left_fn, numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(left_fn,  cb, {}, numchan_half, nullptr, false, 7); });
-    auto right_reader = std::make_shared<inverted_callback<primitiveblock>>([right_fn,numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(right_fn, cb, {}, numchan_half, nullptr, false, 7); });
+    auto left_reader  = std::make_shared<inverted_callback<PrimitiveBlock>>([left_fn, numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(left_fn,  cb, {}, numchan_half, nullptr, false, 7); });
+    auto right_reader = std::make_shared<inverted_callback<PrimitiveBlock>>([right_fn,numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(right_fn, cb, {}, numchan_half, nullptr, false, 7); });
     
     std::vector<objdiff> curr;
     curr.reserve(10000);

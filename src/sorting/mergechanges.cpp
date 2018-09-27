@@ -304,7 +304,7 @@ class FilterRels {
         ~FilterRels() {
             logger_message() << "filtered " << tr << " relations, removed " << tnm << " completely, removed " << tnx << " members";
         }
-        primitiveblock_ptr call(primitiveblock_ptr pb) {
+        PrimitiveBlockPtr call(PrimitiveBlockPtr pb) {
             
             if (!pb) {
                 return pb;
@@ -337,10 +337,10 @@ class FilterRels {
                 return pb;
             }
             
-            auto pb_new = std::make_shared<primitiveblock>(pb->index, pb->size()-nm);
-            pb_new->quadtree=pb->quadtree;
-            pb_new->startdate=pb->startdate;
-            pb_new->enddate=pb->enddate;
+            auto pb_new = std::make_shared<PrimitiveBlock>(pb->Index(), pb->size()-nm);
+            pb_new->SetQuadtree(pb->Quadtree());
+            pb_new->SetStartDate(pb->StartDate());
+            pb_new->SetEndDate(pb->EndDate());
             
             
             for (size_t i=0; i < pb->size(); i++) {
@@ -363,7 +363,7 @@ class FilterRels {
             auto fr = std::make_shared<FilterRels>(filter);//,cbs);
             std::vector<primitiveblock_callback> res;
             for (auto cb: cbs) {
-                res.push_back([fr,cb](primitiveblock_ptr pb) { cb(fr->call(pb)); });
+                res.push_back([fr,cb](PrimitiveBlockPtr pb) { cb(fr->call(pb)); });
             }
             return res;
         }
@@ -380,7 +380,7 @@ class progress {
     public:
         progress(primitiveblock_callback cb_) : i(0), nt(1), cb(cb_) {}
         
-        void call(primitiveblock_ptr bl) {
+        void call(PrimitiveBlockPtr bl) {
             if (!bl) {
                 logger_progress(100.0) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " ";
                 
@@ -389,11 +389,11 @@ class progress {
             }
             //if ((i%100)==1 ) {
             
-            logger_progress(bl->file_progress) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " "
-                << " " << std::setw(6) << bl->index
-                << " " << std::setw(18) << quadtree::string(bl->quadtree);
+            logger_progress(bl->FileProgress()) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " "
+                << " " << std::setw(6) << bl->Index()
+                << " " << std::setw(18) << quadtree::string(bl->Quadtree());
                 
-            i=bl->index;
+            i=bl->Index();
             cb(bl);
         }
     private:
@@ -406,7 +406,7 @@ class progress {
 primitiveblock_callback log_progress(primitiveblock_callback cb) {
     auto pg = std::make_shared<progress>(cb);
     
-    return [pg](primitiveblock_ptr bl) { pg->call(bl); };
+    return [pg](PrimitiveBlockPtr bl) { pg->call(bl); };
 }
 
 
@@ -471,7 +471,7 @@ void run_mergechanges(
     if (sort_objs) {
         if (inmem) {
             std::vector<ElementPtr> all;
-            auto add_all = multi_threaded_callback<primitiveblock>::make([&all](primitiveblock_ptr bl) {
+            auto add_all = multi_threaded_callback<PrimitiveBlock>::make([&all](PrimitiveBlockPtr bl) {
                 if (!bl) { return; }
                 for (size_t i=0; i < bl->size(); i++) {
                     all.push_back(bl->at(i));
@@ -517,9 +517,9 @@ void run_mergechanges(
         
                         
             auto collect = make_collectobjs(packers,8000);
-            auto collect_cb = [collect](primitiveblock_ptr p) {
+            auto collect_cb = [collect](PrimitiveBlockPtr p) {
                 if (p) {
-                    for (auto o: p->objects) {
+                    for (auto o: p->Objects()) {
                         collect(o);
                     }
                 } else {
@@ -527,7 +527,7 @@ void run_mergechanges(
                 }
             };
             
-            auto collect_split = multi_threaded_callback<primitiveblock>::make(collect_cb,numchan);
+            auto collect_split = multi_threaded_callback<PrimitiveBlock>::make(collect_cb,numchan);
             
             
             std::vector<primitiveblock_callback> merged_sorted;
@@ -535,13 +535,13 @@ void run_mergechanges(
             bool isf=true;
             for (auto mm: collect_split) {
                 merged_sorted.push_back(
-                    [mm,&ts,isf](primitiveblock_ptr oo) {
+                    [mm,&ts,isf](PrimitiveBlockPtr oo) {
                         if (!oo) { return mm(nullptr); }
-                        auto& objs = oo->objects;
+                        auto& objs = oo->Objects();
                         std::sort(objs.begin(), objs.end(), element_cmp);
                         if (isf) {
-                            logger_progress lp(oo->file_progress);
-                            lp << "{" << TmStr{ts.since(),6,1} << "} merged " << std::setw(5) << oo->index << " " << std::setw(8) << objs.size() << " objs";
+                            logger_progress lp(oo->FileProgress());
+                            lp << "{" << TmStr{ts.since(),6,1} << "} merged " << std::setw(5) << oo->Index() << " " << std::setw(8) << objs.size() << " objs";
                             if (objs.size()>0) {
                                 auto f=objs.front();
                                 lp << " " << f->Type() << " " << std::setw(10) << f->Id();

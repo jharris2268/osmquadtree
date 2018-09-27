@@ -26,7 +26,7 @@
 namespace oqt {
 
     
-std::shared_ptr<primitiveblock> read_as_primitiveblock(
+PrimitiveBlockPtr read_as_primitiveblock(
     std::shared_ptr<FileBlock> bl,
     std::shared_ptr<idset> filter, bool isc, size_t objflags) {
     
@@ -34,14 +34,15 @@ std::shared_ptr<primitiveblock> read_as_primitiveblock(
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();
         auto r = readPrimitiveBlock(bl->idx, dd, isc, objflags, filter, nullptr);
-        r->file_progress = bl->file_progress;
-        r->file_position = bl->file_position;
+        r->SetFilePosition(bl->file_position);
+        r->SetFileProgress(bl->file_progress);
+        
         return r;
         
     }
-    auto r=std::make_shared<primitiveblock>(-1);
-    r->file_progress = bl->file_progress;
-    r->file_position = bl->file_position;
+    auto r=std::make_shared<PrimitiveBlock>(-1);
+    r->SetFilePosition(bl->file_position);
+    r->SetFileProgress(bl->file_progress);
     return r;
 }
 
@@ -78,12 +79,12 @@ std::shared_ptr<qtvec> read_as_qtvec(
     return r;
 }
 
-std::shared_ptr<primitiveblock> merge_as_primitiveblock(
+PrimitiveBlockPtr merge_as_primitiveblock(
     std::shared_ptr<keyedblob> bl,
     size_t objflags, std::shared_ptr<idset> ids) {
     
-    std::vector<std::shared_ptr<primitiveblock>> changes;
-    std::shared_ptr<primitiveblock> main;
+    std::vector<PrimitiveBlockPtr> changes;
+    PrimitiveBlockPtr main;
     for (auto& b: bl->blobs) {
         std::string dd = decompress(b.first,b.second);
         if (main) {
@@ -94,12 +95,14 @@ std::shared_ptr<primitiveblock> merge_as_primitiveblock(
     }
     
     if (changes.empty()) {
-        main->file_progress = bl->file_progress;
+    
+        main->SetFileProgress(bl->file_progress);
         return main;
     }
     auto comb = combine_primitiveblock_many(main,changes);
-    comb->file_progress = bl->file_progress;
-    comb->index = bl->idx;
+    
+    comb->SetFileProgress(bl->file_progress);
+    
     return comb;
 }
 
@@ -163,7 +166,7 @@ void read_blocks_primitiveblock(
     std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
         
         
-    return read_blocks_convfunc<primitiveblock>(filename, callback, locs, numchan,
+    return read_blocks_convfunc<PrimitiveBlock>(filename, callback, locs, numchan,
         [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_primitiveblock(fb, filter, ischange, objflags); });
 }
@@ -175,7 +178,7 @@ void read_blocks_split_primitiveblock(
     std::shared_ptr<idset> filter, bool ischange, size_t objflags)  {
         
         
-    return read_blocks_split_convfunc<primitiveblock>(filename, callbacks, locs,
+    return read_blocks_split_convfunc<PrimitiveBlock>(filename, callbacks, locs,
         [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_primitiveblock(fb, filter, ischange, objflags); });
 }       
@@ -185,19 +188,19 @@ void read_blocks_convfunc_primitiveblock(
     primitiveblock_callback callback,
     std::vector<int64> locs, 
     size_t numchan, 
-    std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> convfunc)  {
+    std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convfunc)  {
         
         
-    return read_blocks_convfunc<primitiveblock>(filename, callback, locs, numchan, convfunc);
+    return read_blocks_convfunc<PrimitiveBlock>(filename, callback, locs, numchan, convfunc);
 }
 
 void read_blocks_split_convfunc_primitiveblock(
     const std::string& filename,
     std::vector<primitiveblock_callback> callbacks,
     std::vector<int64> locs, 
-    std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> convfunc) {
+    std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convfunc) {
     
-    return read_blocks_split_convfunc<primitiveblock>(filename, callbacks, locs, convfunc);
+    return read_blocks_split_convfunc<PrimitiveBlock>(filename, callbacks, locs, convfunc);
 }
 
 void read_blocks_nothread_primitiveblock(
@@ -207,7 +210,7 @@ void read_blocks_nothread_primitiveblock(
     std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
         
     
-    return read_blocks_nothread_convfunc<primitiveblock>(filename,callback,locs,
+    return read_blocks_nothread_convfunc<PrimitiveBlock>(filename,callback,locs,
         [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_primitiveblock(fb, filter, ischange, objflags); });
 }       

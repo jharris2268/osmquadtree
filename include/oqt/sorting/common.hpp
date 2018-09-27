@@ -37,7 +37,7 @@ typedef std::function<void(std::shared_ptr<keystring_vec>)> writevec_callback;
 
 class SplitBlocksDetail;
 class SplitBlocks {
-    typedef std::vector<primitiveblock_ptr> tempsvec;
+    typedef std::vector<PrimitiveBlockPtr> tempsvec;
     
     
     public:
@@ -50,7 +50,7 @@ class SplitBlocks {
         
         
         
-        void call(primitiveblock_ptr bl);
+        void call(PrimitiveBlockPtr bl);
     
     private:
         size_t blocksplit;

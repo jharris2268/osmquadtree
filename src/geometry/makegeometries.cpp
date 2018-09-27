@@ -211,10 +211,10 @@ bbox get_bound(ElementPtr o) {
 }
 
 
-size_t recalculate_quadtree(std::shared_ptr<primitiveblock> block, uint64 maxdepth, double buf) {
-    if (!block || block->objects.empty()) { return 0; }
+size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf) {
+    if (!block || block->Objects().empty()) { return 0; }
     size_t c=0;
-    for (auto o : block->objects) {
+    for (auto o : block->Objects()) {
         auto b = get_bound(o);
         int64 q = quadtree::calculate(b.minx,b.miny,b.maxx,b.maxy,buf,maxdepth);
         if (q!=o->Quadtree()) {
@@ -225,17 +225,19 @@ size_t recalculate_quadtree(std::shared_ptr<primitiveblock> block, uint64 maxdep
     return c;
 }
 
+void copy_metadata(PrimitiveBlockPtr into, PrimitiveBlockPtr from) {
+    into->SetQuadtree(from->Quadtree());
+    into->SetStartDate(from->StartDate());
+    into->SetEndDate(from->EndDate());
+    into->SetFilePosition(from->FilePosition());
+    into->SetFileProgress(from->FileProgress());
+}
 
+PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, PrimitiveBlockPtr in) {
 
-std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, const bbox& box, std::shared_ptr<primitiveblock> in) {
-
-    auto result = std::make_shared<primitiveblock>(in->index,0);
-    result->startdate = in->startdate;
-    result->enddate = in->enddate;
-    result->quadtree = in->quadtree;
+    auto result = std::make_shared<PrimitiveBlock>(in->Index(),0);
+    copy_metadata(result, in);
     
-    result->file_position = in->file_position;
-    result->file_progress = in->file_progress;
     
     std::string extra_tag_key;
     for (const auto& st: style) {
@@ -246,7 +248,7 @@ std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, con
     
     //bool all_tags = style.count("*")!=0;
 
-    for (auto e : in->objects) {
+    for (auto e : in->Objects()) {
         if(e->Type()==ElementType::Node) {
 
             tagvector tgs; int64 ly;
@@ -255,7 +257,7 @@ std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, con
             if (!tgs.empty()) {
                 auto n = std::dynamic_pointer_cast<Node>(e);
                 if (contains_point(box, n->Lon(),n->Lat())) {
-                    result->objects.push_back(std::make_shared<point>(n, tgs,ly,-1));
+                    result->add(std::make_shared<point>(n, tgs,ly,-1));
                 }
             }
         } else if (e->Type()==ElementType::WayWithNodes) {
@@ -271,16 +273,16 @@ std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, con
             std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
             if (!tgs.empty()) {
                 if (ispoly) {
-                    result->objects.push_back(std::make_shared<simplepolygon>(w, tgs,zo,ly,-1));
+                    result->add(std::make_shared<simplepolygon>(w, tgs,zo,ly,-1));
                 } else {
-                    result->objects.push_back(std::make_shared<linestring>(w, tgs,zo,ly,-1));
+                    result->add(std::make_shared<linestring>(w, tgs,zo,ly,-1));
                 }
             }
         } else if (e->Type()==ElementType::Relation) {
              //pass
         } else {
 
-            result->objects.push_back(e);
+            result->add(e);
         }
     }
 
@@ -317,8 +319,8 @@ std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, 
 
     
 
-void calculate_minzoom(std::shared_ptr<primitiveblock> block, std::shared_ptr<findminzoom> minzoom) {
-    for (auto ele: block->objects) {
+void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> minzoom) {
+    for (auto ele: block->Objects()) {
         int64 mz = minzoom->calculate(ele);
         if (mz>=0) {
             if ((ele->Quadtree()&31) > mz) {

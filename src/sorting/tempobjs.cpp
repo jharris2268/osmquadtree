@@ -200,8 +200,8 @@ std::function<void(std::shared_ptr<keyedblob>)> make_conv_keyedblob_primblock(pr
     return [oo](std::shared_ptr<keyedblob> kk) {
         if (!kk) { return oo(nullptr); }
         
-        primitiveblock_ptr res = std::make_shared<primitiveblock>(kk->key);
-        res->quadtree = kk->key;
+        PrimitiveBlockPtr res = std::make_shared<PrimitiveBlock>(kk->key);
+        res->SetQuadtree(kk->key);
         for (const auto& x: kk->blobs) {
             auto dd = decompress(x.first,x.second);
             auto bl = readPrimitiveBlock(kk->key,dd,false,15,nullptr,nullptr);
@@ -209,11 +209,11 @@ std::function<void(std::shared_ptr<keyedblob>)> make_conv_keyedblob_primblock(pr
             
             
             
-            for (auto o: bl->objects) {
+            for (auto o: bl->Objects()) {
                 res->add(o);
             }
         }
-        res->file_progress = kk->file_progress;
+        res->SetFileProgress(kk->file_progress);
         oo(res);
     };
 }

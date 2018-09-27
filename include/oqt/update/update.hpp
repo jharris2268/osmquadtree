@@ -34,7 +34,7 @@ std::shared_ptr<header> getHeaderBlock(const std::string& fn);
 size_t writeIndexFile(const std::string& srcfn, size_t numchan, const std::string& destfn);
 std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, std::shared_ptr<idset> ids);
 
-std::vector<std::shared_ptr<primitiveblock>> read_file_blocks(
+std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
     size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids);
 
@@ -60,7 +60,7 @@ std::tuple<
 
 void calc_change_qts(typeid_element_map_ptr objs, std::shared_ptr<qtstore> qts);
 
-std::vector<std::shared_ptr<primitiveblock>> find_change_tiles(
+std::vector<PrimitiveBlockPtr> find_change_tiles(
     typeid_element_map_ptr objs,
     std::shared_ptr<qtstore> orig_allocs,
     std::shared_ptr<qttree> tree,

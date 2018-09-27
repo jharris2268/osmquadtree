@@ -458,12 +458,12 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
 
 
 
-std::shared_ptr<primitiveblock> readPrimitiveBlock(int64 idx, const std::string& data, bool change, size_t objflags, std::shared_ptr<idset> ids, read_geometry_func readGeometry) {
+PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool change, size_t objflags, std::shared_ptr<idset> ids, read_geometry_func readGeometry) {
 
 
     std::vector<std::string> stringtable;
 
-    std::shared_ptr<primitiveblock> primblock(new primitiveblock(idx,(change || ids || (objflags!=7)) ? 0 : 8000));
+    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=7)) ? 0 : 8000);
 
 
     std::vector<uint64> kk,vv;
@@ -479,13 +479,13 @@ std::shared_ptr<primitiveblock> readPrimitiveBlock(int64 idx, const std::string&
         } else if (pbfTag.tag==2) {
             blocks.push_back(pbfTag.data);
         } else if (pbfTag.tag==31) {
-            primblock->quadtree = readQuadTree(pbfTag.data);
+            primblock->SetQuadtree(readQuadTree(pbfTag.data));
         } else if (pbfTag.tag == 32) {
-            primblock->quadtree = unZigZag(pbfTag.value);
+            primblock->SetQuadtree(unZigZag(pbfTag.value));
         } else if (pbfTag.tag==33) {
-            primblock->startdate = int64(pbfTag.value);
+            primblock->SetStartDate(int64(pbfTag.value));
         } else if (pbfTag.tag==34) {
-            primblock->enddate = int64(pbfTag.value);
+            primblock->SetEndDate(int64(pbfTag.value));
         }
     }
 
@@ -493,7 +493,7 @@ std::shared_ptr<primitiveblock> readPrimitiveBlock(int64 idx, const std::string&
     
 
     for (size_t i=0; i < blocks.size(); i++) {
-        readPrimitiveGroup(blocks[i], stringtable, primblock->objects,change, objflags,ids, readGeometry);
+        readPrimitiveGroup(blocks[i], stringtable, primblock->Objects(),change, objflags,ids, readGeometry);
     }
 
 

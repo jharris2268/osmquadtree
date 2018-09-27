@@ -45,7 +45,7 @@ class HandleRelationTags : public BlockHandler {
         virtual primblock_vec process(primblock_ptr bl) {
 
             std::vector<ElementPtr> tempobjs;
-            for (auto o : bl->objects) {
+            for (auto o : bl->Objects()) {
                 if (o->Type()==ElementType::Relation) {
                     auto r = std::dynamic_pointer_cast<Relation>(o);
                     auto type = get_tag(r, "type");
@@ -96,9 +96,9 @@ class HandleRelationTags : public BlockHandler {
                 }
 
             }
-            bl->objects.swap(tempobjs);
+            bl->Objects().swap(tempobjs);
 
-            for (auto o : bl->objects) {
+            for (auto o : bl->Objects()) {
                 if (o->Type()==ElementType::WayWithNodes) {
 
                     auto rf_it = route_refs.find(o->Id());

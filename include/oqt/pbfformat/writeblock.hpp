@@ -28,7 +28,7 @@
 #include "oqt/elements/header.hpp"
 
 namespace oqt {
-std::string writePbfBlock(std::shared_ptr<primitiveblock> block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
+std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
 std::string writePbfHeader(std::shared_ptr<header> head);
 }
 

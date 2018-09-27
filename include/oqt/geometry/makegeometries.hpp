@@ -45,11 +45,11 @@ typedef std::map<std::string,style_info> style_info_map;
 std::pair<tagvector,int64> filter_node_tags(const style_info_map& style, const tagvector& tags, const std::string& extra_tags_key);
 std::tuple<tagvector, bool, int64, int64> filter_way_tags(const style_info_map& style, const tagvector& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key);
 
-std::shared_ptr<primitiveblock> make_geometries(const style_info_map& style, const bbox& box, std::shared_ptr<primitiveblock> in);
+PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, PrimitiveBlockPtr in);
 
 
 
-size_t recalculate_quadtree(std::shared_ptr<primitiveblock> block, uint64 maxdepth, double buf);
+size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf);
 
 class findminzoom {
     public:
@@ -59,7 +59,7 @@ class findminzoom {
     
 
 
-void calculate_minzoom(std::shared_ptr<primitiveblock> block, std::shared_ptr<findminzoom> minzoom);
+void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> minzoom);
 
 std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<findminzoom> fmz);
 

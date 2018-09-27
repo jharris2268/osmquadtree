@@ -27,8 +27,8 @@
 #include <map>
 
 namespace oqt {
-std::shared_ptr<primitiveblock> read_xml_change(const std::string& data);
-std::shared_ptr<primitiveblock> read_xml_change_file(std::istream* strm);
+PrimitiveBlockPtr read_xml_change(const std::string& data);
+PrimitiveBlockPtr read_xml_change_file(std::istream* strm);
 
 
 typedef std::map<std::pair<ElementType,int64>, ElementPtr> typeid_element_map;

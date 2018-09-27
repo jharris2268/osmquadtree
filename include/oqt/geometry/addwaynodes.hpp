@@ -85,7 +85,7 @@ class way_withnodes : public Element {
 
 class lonlatstore {
     public:
-        virtual void add_tile(std::shared_ptr<primitiveblock> block)=0;
+        virtual void add_tile(PrimitiveBlockPtr block)=0;
         virtual lonlatvec get_lonlats(std::shared_ptr<Way> way)=0;
         virtual void finish()=0;
         virtual ~lonlatstore() {}
@@ -93,7 +93,7 @@ class lonlatstore {
 
 std::shared_ptr<lonlatstore> make_lonlatstore();
 
-std::shared_ptr<primitiveblock> add_waynodes(std::shared_ptr<lonlatstore> lls, std::shared_ptr<primitiveblock> bl);
+PrimitiveBlockPtr add_waynodes(std::shared_ptr<lonlatstore> lls, PrimitiveBlockPtr bl);
 /*
 void add_waynodes_process(
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
@@ -102,7 +102,7 @@ void add_waynodes_process(
 */
 
 
-typedef std::function<void(primitiveblock_ptr)> block_callback;
+typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 block_callback make_addwaynodes_cb(block_callback cb);
 }}
 

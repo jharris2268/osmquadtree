@@ -258,15 +258,15 @@ class pack_csvblocks_impl : public pack_csvblocks {
             
         }
 
-        void add_to_csvblock(std::shared_ptr<primitiveblock> bl, std::shared_ptr<csv_block> res) {
-            if (bl->objects.empty()) {
+        void add_to_csvblock(PrimitiveBlockPtr bl, std::shared_ptr<csv_block> res) {
+            if (bl->size()==0) {
                 return;
             }
-            for (auto o : bl->objects) {
+            for (auto o : bl->Objects()) {
 
                 if (o->Type()==ElementType::Point) {
                     std::stringstream ss;
-                    ss << std::dec << o->Id() << delim << bl->quadtree << delim << o->Quadtree() << delim;
+                    ss << std::dec << o->Id() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     auto pt = std::dynamic_pointer_cast<point>(o);
                     auto other = prep_tags(ss,point_tags,o, other_tags, asjson);
                     
@@ -299,7 +299,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
 
                 } else if (o->Type()==ElementType::Linestring) {
                     std::stringstream ss;
-                    ss << std::dec << o->Id() << delim << bl->quadtree << delim << o->Quadtree() << delim;
+                    ss << std::dec << o->Id() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     auto ln = std::dynamic_pointer_cast<linestring>(o);
                     auto other = prep_tags(ss,line_tags,o, other_tags, asjson);
                     
@@ -331,7 +331,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                     res->lines.add(ss.str());
                 } else if (o->Type()==ElementType::SimplePolygon) {
                     std::stringstream ss;
-                    ss << std::dec << o->Id() << delim << delim << bl->quadtree << delim << o->Quadtree() << delim;
+                    ss << std::dec << o->Id() << delim << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     
                     auto py = std::dynamic_pointer_cast<simplepolygon>(o);
                     auto other = prep_tags(ss,poly_tags,o, other_tags, asjson);
@@ -365,7 +365,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                 } else if (o->Type()==ElementType::ComplicatedPolygon) {
                     std::stringstream ss;
                     auto py = std::dynamic_pointer_cast<complicatedpolygon>(o);
-                    ss << std::dec << (-1ll * o->Id()) << delim << py->Part() << delim << bl->quadtree << delim << o->Quadtree() << delim;
+                    ss << std::dec << (-1ll * o->Id()) << delim << py->Part() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     auto other = prep_tags(ss,poly_tags,o, other_tags, asjson);
                     if (other_tags) {
                         if (!other.empty()) {
@@ -398,7 +398,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
         }
         virtual ~pack_csvblocks_impl() {}
         
-        std::shared_ptr<csv_block> call(std::shared_ptr<primitiveblock> block) {
+        std::shared_ptr<csv_block> call(PrimitiveBlockPtr block) {
             if (!block) { return nullptr; }
             auto res = std::make_shared<csv_block>();
             add_to_csvblock(block,res);

@@ -42,7 +42,7 @@ class find_network {
             netnodes.resize(maxnd);
         }
 
-        bool add_blocks(std::vector<std::shared_ptr<primitiveblock>> bls) {
+        bool add_blocks(std::vector<PrimitiveBlockPtr> bls) {
             py::gil_scoped_release r;
             try {
 
@@ -53,8 +53,8 @@ class find_network {
                 //std::cout << "have " << bls.size() << " blocks" << std::endl;
                 size_t a=0;
                 for (auto bl : bls) {
-                    if (!bl->objects.empty()) {
-                        for (auto o : bl->objects) {
+                    if (!bl->Objects().empty()) {
+                        for (auto o : bl->Objects()) {
                             if (check_tags(o)) {
                                 if (o->Type()==ElementType::Way) {
                                     auto w = std::dynamic_pointer_cast<Way>(o);
@@ -288,10 +288,10 @@ class lines_graph : public std::enable_shared_from_this<lines_graph> {
     
         lines_graph(std::shared_ptr<find_network> net_) : net(net_) {}
         
-        size_t add_lines(const std::string& key, std::shared_ptr<primitiveblock> block, bool incpolys) {
-            if (!block || block->objects.empty()) { return 0; }
+        size_t add_lines(const std::string& key, PrimitiveBlockPtr block, bool incpolys) {
+            if (!block || block->Objects().empty()) { return 0; }
             size_t cc=0;
-            for (auto ele: block->objects) {
+            for (auto ele: block->Objects()) {
                 if (ele->Type()==ElementType::Linestring) {
                     auto ls = std::dynamic_pointer_cast<geometry::linestring>(ele);
                     if (!ls) { throw std::domain_error("?? not a line"); }
@@ -598,8 +598,8 @@ class findminzoom_onetag : public geometry::findminzoom {
         std::set<std::string> keys;
 };
 
-typedef std::function<void(std::shared_ptr<primitiveblock>)> block_callback;
-typedef std::function<bool(std::vector<std::shared_ptr<primitiveblock>>)> external_callback;
+typedef std::function<void(PrimitiveBlockPtr)> block_callback;
+typedef std::function<bool(std::vector<PrimitiveBlockPtr>)> external_callback;
 
 
 void call_all(block_callback callback, geometry::primblock_vec bls) {
@@ -613,7 +613,7 @@ class blockhandler_callback_time {
         blockhandler_callback_time(const std::string& name_, std::shared_ptr<geometry::BlockHandler> handler_, block_callback callback_)
             : name(name_), handler(handler_), callback(callback_), wait(0), exec(0), cbb(0) {}
         
-        void call(primitiveblock_ptr bl) {
+        void call(PrimitiveBlockPtr bl) {
             wait += ts.since_reset();
             if (!bl) {
                 auto res = handler->finish();
@@ -634,7 +634,7 @@ class blockhandler_callback_time {
         
         static block_callback make(const std::string& name, std::shared_ptr<geometry::BlockHandler> handler, block_callback callback) {
             auto bct = std::make_shared<blockhandler_callback_time>(name,handler,callback);
-            return [bct](primitiveblock_ptr bl) {
+            return [bct](PrimitiveBlockPtr bl) {
                 bct->call(bl);
             };
         }
@@ -652,10 +652,10 @@ class blockhandler_callback_time {
 block_callback blockhandler_callback(std::shared_ptr<geometry::BlockHandler> handler, block_callback callback) {
     
     
-    return [handler,callback](std::shared_ptr<primitiveblock> bl) {
+    return [handler,callback](PrimitiveBlockPtr bl) {
         if (!bl) {
             call_all(callback, handler->finish());
-            callback(std::shared_ptr<primitiveblock>());
+            callback(nullptr);
             return;
         }
         call_all(callback, handler->process(bl));
@@ -678,7 +678,7 @@ block_callback process_geometry_blocks(
     for (size_t i=0; i < final_callbacks.size(); i++) {
         auto finalcb = final_callbacks[i];
         if (i==0) {
-            finalcb = [finalcb, errs, errors_callback](primitiveblock_ptr bl) {
+            finalcb = [finalcb, errs, errors_callback](PrimitiveBlockPtr bl) {
                 if (!bl && errs && (!errs->empty())) {
                     errors_callback(*errs);
                 }
@@ -686,7 +686,7 @@ block_callback process_geometry_blocks(
             };
         }
        
-        makegeoms[i]  =threaded_callback<primitiveblock>::make(
+        makegeoms[i]  =threaded_callback<PrimitiveBlock>::make(
             blockhandler_callback_time::make("MakeGeometries["+std::to_string(i)+"]",
                 geometry::make_geometryprocess(style,box,recalcqts,findmz),
                 finalcb
@@ -699,7 +699,7 @@ block_callback process_geometry_blocks(
     if (final_callbacks.size()==1) {
         makegeoms_split = makegeoms[0];
     } else {
-        makegeoms_split = split_callback<primitiveblock>::make(makegeoms);
+        makegeoms_split = split_callback<PrimitiveBlock>::make(makegeoms);
     }
     
     block_callback make_mps = makegeoms_split;
@@ -713,7 +713,7 @@ block_callback process_geometry_blocks(
                 break;
             }
         }
-        make_mps = threaded_callback<primitiveblock>::make(
+        make_mps = threaded_callback<PrimitiveBlock>::make(
             blockhandler_callback_time::make("MultiPolygons", //blockhandler_callback(
                 geometry::make_multipolygons(errs,style,box,bounds,mps),
                 makegeoms_split
@@ -746,7 +746,7 @@ block_callback process_geometry_blocks(
         }
         std::cout <<"})" <<std::endl;
         
-        reltags = threaded_callback<primitiveblock>::make(
+        reltags = threaded_callback<PrimitiveBlock>::make(
             blockhandler_callback_time::make("HandleRelations", //blockhandler_callback(
                 geometry::make_handlerelations(add_bounds, add_admin_levels, routes),
                 make_mps
@@ -756,7 +756,7 @@ block_callback process_geometry_blocks(
     
     block_callback apt = reltags;
     if (!apt_spec.empty()) {
-        apt = threaded_callback<primitiveblock>::make(
+        apt = threaded_callback<PrimitiveBlock>::make(
             blockhandler_callback_time::make("AddParentTags", //blockhandler_callback(
                 geometry::make_addparenttags(apt_spec),
                 reltags
@@ -764,7 +764,7 @@ block_callback process_geometry_blocks(
         );
     }
         
-    return threaded_callback<primitiveblock>::make(geometry::make_addwaynodes_cb(apt));
+    return threaded_callback<PrimitiveBlock>::make(geometry::make_addwaynodes_cb(apt));
         
 
     
@@ -780,7 +780,7 @@ block_callback process_geometry_blocks_nothread(
     
     auto errs = std::make_shared<geometry::mperrorvec>();
     
-    block_callback make_geom = [&style, box, final_callback, errs, errors_callback, recalcqts, findmz](std::shared_ptr<primitiveblock> bl) {
+    block_callback make_geom = [&style, box, final_callback, errs, errors_callback, recalcqts, findmz](PrimitiveBlockPtr bl) {
         if (!bl) {
             std::cout << "make_geom done" << std::endl;
             final_callback(bl);
@@ -886,7 +886,7 @@ std::vector<block_callback> pack_and_write_callback(
         block_callback cb;
         if (!callbacks.empty()) { cb = callbacks[i]; }
         pack[i] = //threaded_callback<primitiveblock>::make(
-            [write_i, cb, writeqts,writeinfos,writerefs,i](std::shared_ptr<primitiveblock> bl) {
+            [write_i, cb, writeqts,writeinfos,writerefs,i](PrimitiveBlockPtr bl) {
                 if (cb) {
                     cb(bl);
                 }
@@ -897,7 +897,7 @@ std::vector<block_callback> pack_and_write_callback(
                 } else {
                     auto data = writePbfBlock(bl, writeqts, false, writeinfos, writerefs);
                     auto packed = prepareFileBlock("OSMData", data);
-                    write_i(std::make_shared<keystring>(bl->quadtree,packed));
+                    write_i(std::make_shared<keystring>(bl->Quadtree(),packed));
                 }
             };
         //);
@@ -919,7 +919,7 @@ block_callback pack_and_write_callback_nothread(
     
     write_file_callback write = make_pbffilewriter_callback(filename,head,indexed);
     
-    return [write, callback, writeqts,writeinfos,writerefs](std::shared_ptr<primitiveblock> bl) {
+    return [write, callback, writeqts,writeinfos,writerefs](PrimitiveBlockPtr bl) {
         if (callback) {
             callback(bl);
         }
@@ -930,7 +930,7 @@ block_callback pack_and_write_callback_nothread(
             auto data = writePbfBlock(bl, writeqts, false, writeinfos, writerefs);
             
             auto packed = prepareFileBlock("OSMData", data);
-            write(std::make_shared<keystring>(bl->quadtree,packed));
+            write(std::make_shared<keystring>(bl->Quadtree(),packed));
         }
     };
 }
@@ -939,7 +939,7 @@ block_callback pack_and_write_callback_nothread(
 
 block_callback make_pack_csvblocks_callback(block_callback cb, std::function<void(std::shared_ptr<geometry::csv_block>)> wr, geometry::pack_csvblocks::tagspec tags,bool with_header) {
     auto pc = geometry::make_pack_csvblocks(tags,with_header);
-    return [cb, wr, pc](std::shared_ptr<primitiveblock> bl) {
+    return [cb, wr, pc](PrimitiveBlockPtr bl) {
         if (!bl) {
             //std::cout << "pack_csvblocks done" << std::endl;
             wr(std::shared_ptr<geometry::csv_block>());
@@ -1005,12 +1005,12 @@ class geom_progress {
             }
         }
         
-        void call(primitiveblock_ptr bl) {
+        void call(PrimitiveBlockPtr bl) {
             
             if (bl) {
                 nb++;
-                if (bl->quadtree > maxqt) { maxqt = bl->quadtree; }
-                for (auto o: bl->objects) {
+                if (bl->Quadtree() > maxqt) { maxqt = bl->Quadtree(); }
+                for (auto o: bl->Objects()) {
                     if (o->Type() == ElementType::Point) { npt++; }
                     else if (o->Type() == ElementType::Linestring) { nln++; }
                     else if (o->Type() == ElementType::SimplePolygon) { nsp++; }
@@ -1072,13 +1072,13 @@ std::pair<size_t,geometry::mperrorvec> process_geometry(const geometry_parameter
     geometry::mperrorvec errors_res;
     block_callback wrapped;
     if (params.callback) {
-        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
-        wrapped = [collect](primitiveblock_ptr bl) { collect->call(bl); };
+        auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(params.callback),params.numblocks);
+        wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
     } else {
         auto pp = std::make_shared<geom_progress>(params.locs);
-        wrapped = [pp](primitiveblock_ptr bl) { pp->call(bl); };
+        wrapped = [pp](PrimitiveBlockPtr bl) { pp->call(bl); };
     }
-    std::vector<block_callback> writer = multi_threaded_callback<primitiveblock>::make(wrapped,params.numchan);
+    std::vector<block_callback> writer = multi_threaded_callback<PrimitiveBlock>::make(wrapped,params.numchan);
     
         
     if (params.outfn!="") {
@@ -1124,13 +1124,13 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks(const geometr
     sb->finish();
     block_callback wrapped;
     if (params.callback) {
-        auto collect = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
-        wrapped = [collect](primitiveblock_ptr bl) { collect->call(bl); };
+        auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(params.callback),params.numblocks);
+        wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
     }
     
     std::vector<block_callback> writer;
     if (params.callback) {
-        writer = multi_threaded_callback<primitiveblock>::make(wrapped,params.numchan);
+        writer = multi_threaded_callback<PrimitiveBlock>::make(wrapped,params.numchan);
     }
     
         
@@ -1151,8 +1151,8 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_nothread(const geometry_
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
-    block_callback cbc = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(params.callback),params.numblocks);
+    block_callback cbc = [cb](PrimitiveBlockPtr bl) { cb->call(bl); };
     block_callback writer=cbc;
     if (params.outfn!="") {
         writer = pack_and_write_callback_nothread(cbc, params.outfn, params.indexed, params.box, true, true, true);
@@ -1180,8 +1180,8 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread(con
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(params.callback),params.numblocks);
-    block_callback cbc = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(params.callback),params.numblocks);
+    block_callback cbc = [cb](PrimitiveBlockPtr bl) { cb->call(bl); };
     block_callback csvcallback = make_pack_csvblocks_callback(cbc,wrap_callback(params.csvblock_callback),params.coltags, true);
     
     block_callback addwns = process_geometry_blocks_nothread(
@@ -1199,7 +1199,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread(con
 
 
 std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec(
-    std::vector<std::shared_ptr<primitiveblock>> blocks,
+    std::vector<PrimitiveBlockPtr> blocks,
     external_callback callback,
     size_t numblocks,
     const geometry::style_info_map& style, bbox box,
@@ -1210,9 +1210,9 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec(
     py::gil_scoped_release r;
     
     geometry::mperrorvec errors_res;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
     std::vector<block_callback> cbf;
-    cbf.push_back([cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); });
+    cbf.push_back([cb](PrimitiveBlockPtr bl) { cb->call(bl); });
     
     
     
@@ -1225,7 +1225,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec(
     for (auto bl : blocks) {
         addwns(bl);
     }
-    addwns(std::shared_ptr<primitiveblock>());
+    addwns(PrimitiveBlockPtr());
       
     
     return std::make_pair(cb->total(),errors_res);
@@ -1233,24 +1233,24 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec(
 }
     
     
-primitiveblock_ptr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
-    if (!fb) { return primitiveblock_ptr(); }
-    if (fb->blocktype!="OSMData") { return std::make_shared<primitiveblock>(fb->idx,0); }
+PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
+    if (!fb) { return PrimitiveBlockPtr(); }
+    if (fb->blocktype!="OSMData") { return std::make_shared<PrimitiveBlock>(fb->idx,0); }
     return readPrimitiveBlock(fb->idx,fb->get_data(),false,15,nullptr,geometry::readGeometry);
 }
 
-std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> make_read_blocks_geometry_convfunc_filter(bbox filt) {
+std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> make_read_blocks_geometry_convfunc_filter(bbox filt) {
     if (box_planet(filt)) { return read_blocks_geometry_convfunc; }
     if (box_empty(filt)) { return read_blocks_geometry_convfunc; }
     return [filt](std::shared_ptr<FileBlock> fb) {
         auto pb = read_blocks_geometry_convfunc(fb);
         if (!pb) { return pb; }
         
-        auto pb2 = std::make_shared<primitiveblock>(pb->index, pb->size());
-        pb2->quadtree=pb->quadtree;
-        pb2->startdate=pb->startdate;
-        pb2->enddate=pb->enddate;
-        for (auto o: pb->objects) {
+        auto pb2 = std::make_shared<PrimitiveBlock>(pb->Index(), pb->size());
+        pb2->SetQuadtree(pb->Quadtree());
+        pb2->SetStartDate(pb->StartDate());
+        pb2->SetEndDate(pb->EndDate());
+        for (auto o: pb->Objects()) {
             auto g = std::dynamic_pointer_cast<BaseGeometry>(o);
             if (overlaps(filt, g->Bounds())) {
                 pb2->add(o);
@@ -1262,13 +1262,13 @@ std::function<primitiveblock_ptr(std::shared_ptr<FileBlock>)> make_read_blocks_g
 
 size_t read_blocks_geometry_py(
     const std::string& filename,
-    std::function<bool(std::vector<std::shared_ptr<primitiveblock>>)> callback,
+    std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     const std::vector<int64>& locs, size_t numchan, size_t numblocks, bbox filt) {
 
 
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
-    std::function<void(std::shared_ptr<primitiveblock>)> cbf = [cb](std::shared_ptr<primitiveblock> bl) { cb->call(bl); };
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
+    std::function<void(PrimitiveBlockPtr)> cbf = [cb](PrimitiveBlockPtr bl) { cb->call(bl); };
     
     read_blocks_convfunc_primitiveblock(filename, cbf, locs, numchan, make_read_blocks_geometry_convfunc_filter(filt));
     return cb->total();

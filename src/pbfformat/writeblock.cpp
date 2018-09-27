@@ -323,20 +323,20 @@ std::string writePbfHeader(std::shared_ptr<header> head) {
     return packPbfTags(msgs);
 }
 
-std::string writePbfBlock(std::shared_ptr<primitiveblock> block, bool includeQts, bool change, bool includeInfo, bool includeRefs) {
+std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs) {
     
     std::list<PbfTag> msgs;
 
     std::map<std::string,uint64> stringtable;
     stringtable["%%$6535ff"]=0;
 
-    if (!block->objects.empty()) {
-        auto it=block->objects.begin();
-        while (it < block->objects.end()) {
+    if (block->size()>0) {
+        auto it=block->Objects().begin();
+        while (it < block->Objects().end()) {
             
             auto jt=it;
             ++jt;
-            while ( jt!=block->objects.end() && ((*it)->Type()==(*jt)->Type()) && ( (!change) || ((*it)->ChangeType()==(*jt)->ChangeType()))) {
+            while ( jt!=block->Objects().end() && ((*it)->Type()==(*jt)->Type()) && ( (!change) || ((*it)->ChangeType()==(*jt)->ChangeType()))) {
                 ++jt;
             }
 
@@ -348,14 +348,14 @@ std::string writePbfBlock(std::shared_ptr<primitiveblock> block, bool includeQts
 
     msgs.push_front(PbfTag{1,0,writeblock_detail::packStringTable(stringtable)});
 
-    if (block->quadtree>=0) {
-        msgs.push_back(PbfTag{32,zigZag(block->quadtree),""});
+    if (block->Quadtree()>=0) {
+        msgs.push_back(PbfTag{32,zigZag(block->Quadtree()),""});
     }
-    if (block->startdate>0) {
-        msgs.push_back(PbfTag{33,uint64(block->startdate),""});
+    if (block->StartDate()>0) {
+        msgs.push_back(PbfTag{33,uint64(block->StartDate()),""});
     }
-    if (block->enddate>0) {
-        msgs.push_back(PbfTag{34,uint64(block->enddate),""});
+    if (block->EndDate()>0) {
+        msgs.push_back(PbfTag{34,uint64(block->EndDate()),""});
     }
 
     return packPbfTags(msgs);

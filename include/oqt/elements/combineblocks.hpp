@@ -30,15 +30,15 @@
 
 namespace oqt {
 
-std::shared_ptr<primitiveblock> combine_primitiveblock_two(
+PrimitiveBlockPtr combine_primitiveblock_two(
     size_t idx,
-    std::shared_ptr<primitiveblock> left,
-    std::shared_ptr<primitiveblock> right,
+    PrimitiveBlockPtr left,
+    PrimitiveBlockPtr right,
     bool apply_change);
 
-std::shared_ptr<primitiveblock> combine_primitiveblock_many(
-    std::shared_ptr<primitiveblock> main,
-    const std::vector<std::shared_ptr<primitiveblock>>& changes);
+PrimitiveBlockPtr combine_primitiveblock_many(
+    PrimitiveBlockPtr main,
+    const std::vector<PrimitiveBlockPtr>& changes);
 
 
 std::shared_ptr<minimalblock> combine_minimalblock_two(

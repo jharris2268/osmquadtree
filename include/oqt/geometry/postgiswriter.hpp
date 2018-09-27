@@ -47,7 +47,7 @@ struct csv_block {
 class pack_csvblocks {
     public:
         typedef std::vector<std::tuple<std::string,bool,bool,bool>> tagspec;
-        virtual std::shared_ptr<csv_block> call(std::shared_ptr<primitiveblock> bl) = 0;
+        virtual std::shared_ptr<csv_block> call(PrimitiveBlockPtr bl) = 0;
         virtual ~pack_csvblocks() {}
 };
 

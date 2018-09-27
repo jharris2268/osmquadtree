@@ -30,9 +30,9 @@ typedef std::map<int64,std::pair<ElementPtr,temp_tags_map>> pending_objs_map;
 typedef std::map<int64,pending_objs_map> pending_blocks_map;
 
 
-std::shared_ptr<primitiveblock> finish_tags(int64 qt, pending_objs_map& pending) {
-    auto pb = std::make_shared<primitiveblock>(0,pending.size());
-    pb->quadtree=qt;
+PrimitiveBlockPtr finish_tags(int64 qt, pending_objs_map& pending) {
+    auto pb = std::make_shared<PrimitiveBlock>(0,pending.size());
+    pb->SetQuadtree(qt);
     for (auto& po : pending) {
         if (!po.second.second.empty()) {
 
@@ -42,7 +42,7 @@ std::shared_ptr<primitiveblock> finish_tags(int64 qt, pending_objs_map& pending)
                 }
             }
         }
-        pb->objects.push_back(po.second.first);
+        pb->add(po.second.first);
     }
     pending.clear();
     return pb;
@@ -97,7 +97,7 @@ class AddParentTags : public BlockHandler {
             primblock_vec out;
             for (auto& cc: cache) {
                 auto fb=finish_tags(cc.first,cc.second);
-                if (!fb->objects.empty()) {
+                if (fb->size()>0) {
                     out.push_back(fb);
                 }
             }
@@ -108,14 +108,14 @@ class AddParentTags : public BlockHandler {
             return out;
         }
         
-        virtual primblock_vec process(std::shared_ptr<primitiveblock> bl) {
+        virtual primblock_vec process(PrimitiveBlockPtr bl) {
             
             primblock_vec out;
-            int64 qt = bl->quadtree;
+            int64 qt = bl->Quadtree();
             for (auto it = cache.begin(); it!=cache.end(); ) {
                 if (quadtree::common(it->first,qt)!=it->first) {
                     auto finbl = finish_tags(it->first, it->second);
-                    if (!finbl->objects.empty()) {
+                    if (finbl->size()>0) {
                         out.push_back(finbl);
                     }
                     it=cache.erase(it);
@@ -129,7 +129,7 @@ class AddParentTags : public BlockHandler {
             pending_objs_map nb;
 
             std::vector<ElementPtr> tempobjs;
-            for (auto o : bl->objects) {
+            for (auto o : bl->Objects()) {
                 if (o->Type()==ElementType::Node) {
                     bool hast=false;
                     for (const auto& tt: o->Tags()) {
@@ -158,7 +158,7 @@ class AddParentTags : public BlockHandler {
                 }
             }
             if (!nb.empty()) {
-                cache[bl->quadtree]=nb;
+                cache[bl->Quadtree()]=nb;
             }
 
             for (auto o : tempobjs) {
@@ -180,8 +180,8 @@ class AddParentTags : public BlockHandler {
                 }
             }
 
-            bl->objects.swap(tempobjs);
-            if (!bl->objects.empty()) {
+            bl->Objects().swap(tempobjs);
+            if (!bl->Objects().empty()) {
                 out.push_back(bl);
             }
             return out;

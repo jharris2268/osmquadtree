@@ -45,7 +45,7 @@ struct SplitBlocksDetail {
     
     double ltt();
     
-    void writetemps(std::shared_ptr<std::vector<primitiveblock_ptr>>);
+    void writetemps(std::shared_ptr<std::vector<PrimitiveBlockPtr>>);
     
     double tmm,tww,trr,last;
     
@@ -67,7 +67,7 @@ double SplitBlocksDetail::ltt() {
     last=m;
     return n;
 }
-void SplitBlocksDetail::writetemps(std::shared_ptr<std::vector<primitiveblock_ptr>> temps) {
+void SplitBlocksDetail::writetemps(std::shared_ptr<std::vector<PrimitiveBlockPtr>> temps) {
     if (!temps) {
         return;
     }
@@ -118,7 +118,7 @@ SplitBlocks::SplitBlocks(primitiveblock_callback callback_, size_t blocksplit_, 
 
 SplitBlocks::~SplitBlocks() {}
 
-void SplitBlocks::call(primitiveblock_ptr bl) {
+void SplitBlocks::call(PrimitiveBlockPtr bl) {
     if (!bl) {
         call_writetemps(temps);
         detail->finished_message();
@@ -127,18 +127,18 @@ void SplitBlocks::call(primitiveblock_ptr bl) {
         return;
     }
     detail->tww += detail->ltt();
-    if (bl->file_progress> detail->maxp) {
-        detail->maxp = bl->file_progress;
+    if (bl->FileProgress()> detail->maxp) {
+        detail->maxp = bl->FileProgress();
     }
     
     if (temps->empty()) {
         temps->resize(max_tile()+1);
     }
-    for (auto o: bl->objects) {
+    for (auto o: bl->Objects()) {
         size_t k = find_tile(o);
         if (!temps->at(k)) {
-            auto x = std::make_shared<primitiveblock>(k,0);
-            x->quadtree=k;
+            auto x = std::make_shared<PrimitiveBlock>(k,0);
+            x->SetQuadtree(k);
             temps->at(k) = x; 
         }
         temps->at(k)->add(o);

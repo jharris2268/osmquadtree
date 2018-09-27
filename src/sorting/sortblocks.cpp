@@ -130,12 +130,12 @@ class AddQuadtrees {
             }
             
         
-        size_t call(primitiveblock_ptr bl) {
+        size_t call(PrimitiveBlockPtr bl) {
             
             if (msgs && ((count % 1000)==0)) {
                 
-                logger_progress pp(bl->file_progress);
-                pp << "Block " << bl->index << " " << bl->size()
+                logger_progress pp(bl->FilePosition());
+                pp << "Block " << bl->Index() << " " << bl->size()
                    << " [" << std::fixed << std::setprecision(1) << ts.since() << "s]";
                 if (bl->size()>0) {
                     auto f = bl->at(0);
@@ -224,7 +224,7 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
     //auto nqb = inverted_callback<qtvec>::make([&qtsfn](std::function<void(std::shared_ptr<qtvec>)> qtc) { read_blocks<qtvec>(qtsfn,qtc,{},4,nullptr,false,7,false); });
     
     auto aq = std::make_shared<AddQuadtrees>(nqb,false);
-    return [aq,callbacks](primitiveblock_ptr bl) {
+    return [aq,callbacks](PrimitiveBlockPtr bl) {
         if (!bl) {
             logger_message() << "finished add_quadtrees";
             for (auto cb: callbacks) {
@@ -254,17 +254,17 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     
     
     //auto resort/*_int*/ = make_resortobjects_callback(packers2, groups, groups->size());
-    std::vector<primitiveblock_ptr> outs;
+    std::vector<PrimitiveBlockPtr> outs;
     outs.resize(groups->size());
     
-    auto resort = [&outs,groups,timestamp](primitiveblock_ptr bl) {
+    auto resort = [&outs,groups,timestamp](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
-        for (auto o: bl->objects) {
+        for (auto o: bl->Objects()) {
             auto tl = groups->find_tile(o->Quadtree());
             if (!outs.at(tl.idx)) {
-                auto nbl = std::make_shared<primitiveblock>(tl.idx, tl.weight);
-                nbl->enddate=timestamp;
-                nbl->quadtree=tl.qt;
+                auto nbl = std::make_shared<PrimitiveBlock>(tl.idx, tl.weight);
+                nbl->SetEndDate(timestamp);
+                nbl->SetQuadtree(tl.qt);
                 outs.at(tl.idx) = nbl;
             }
             outs.at(tl.idx)->add(o);
@@ -302,16 +302,16 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
 
 
 
-std::shared_ptr<primitiveblock> convert_primblock(std::shared_ptr<FileBlock> bl) {
-    if (!bl) { return primitiveblock_ptr(); }
+PrimitiveBlockPtr convert_primblock(std::shared_ptr<FileBlock> bl) {
+    if (!bl) { return PrimitiveBlockPtr(); }
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();//decompress(std::get<2>(*bl), std::get<3>(*bl))
         auto pb = readPrimitiveBlock(bl->idx, dd, false,15,nullptr,nullptr);
-        pb->file_position = bl->file_position;
-        pb->file_progress= bl->file_progress;
+        pb->SetFilePosition(bl->file_position);
+        pb->SetFileProgress(bl->file_progress);
         return pb;
     }
-    return std::make_shared<primitiveblock>(-1);
+    return std::make_shared<PrimitiveBlock>(-1);
 }
 
 
@@ -348,7 +348,7 @@ class SortBlocksImpl : public SortBlocks {
             for (size_t i=0; i < numchan; i++) {
                 auto cb = make_sortgroup_callback(tempobjs->add_func(i),groups,blocksplit, 1000000);
                 if (threaded) {
-                    cb = threaded_callback<primitiveblock>::make(cb);
+                    cb = threaded_callback<PrimitiveBlock>::make(cb);
                 }
                 sgg.push_back(cb);
             }

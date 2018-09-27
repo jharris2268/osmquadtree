@@ -46,14 +46,14 @@ size_t read_blocks_merge_py(
 
 size_t read_blocks_primitiveblock_py(
     const std::string& filename,
-    std::function<bool(std::vector<primitiveblock_ptr>)> callback,
+    std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
     std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
 
 
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
-    primitiveblock_callback cbf = [cb](primitiveblock_ptr bl) { cb->call(bl); };
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
+    primitiveblock_callback cbf = [cb](PrimitiveBlockPtr bl) { cb->call(bl); };
     read_blocks_primitiveblock(filename, cbf, locs, numchan, filter, ischange, objflags);
     return cb->total();
 }
@@ -76,15 +76,15 @@ size_t read_blocks_minimalblock_py(
 
 size_t read_blocks_caller_read_primitive(
     std::shared_ptr<ReadBlocksCaller> rbc,
-    std::function<bool(std::vector<primitiveblock_ptr>)> callback,
+    std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     size_t numchan,
     size_t numblocks,
     std::shared_ptr<idset> filter) {
         
     
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<primitiveblock>>(wrap_callback(callback),numblocks);
-    auto cbf = multi_threaded_callback<primitiveblock>::make([cb](primitiveblock_ptr bl) { cb->call(bl); },numchan);
+    auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
+    auto cbf = multi_threaded_callback<PrimitiveBlock>::make([cb](PrimitiveBlockPtr bl) { cb->call(bl); },numchan);
     rbc->read_primitive(cbf, filter);
     return cb->total();
     
@@ -122,7 +122,7 @@ ElementPtr make_relation(int64 id, info inf, tagvector tags, std::vector<member>
     return std::make_shared<Relation>(ct, id, qt, inf, tags, mems);
 }
 
-std::shared_ptr<primitiveblock> readPrimitiveBlock_py(int64 idx, py::bytes data, bool change) {
+PrimitiveBlockPtr readPrimitiveBlock_py(int64 idx, py::bytes data, bool change) {
     return readPrimitiveBlock(idx,data,change,15,std::shared_ptr<idset>(),geometry::readGeometry);
 }
 
@@ -228,15 +228,15 @@ void block_defs(py::module& m) {
         .value("Create", changetype::Create)
         .export_values();
     py::enum_<ElementType>(m, "ElementType")
-        .value("Node", ElementType::Node)
-        .value("Way", ElementType::Way)
-        .value("Relation", ElementType::Relation)
-        .value("Point", ElementType::Point)
-        .value("Linestring", ElementType::Linestring)
-        .value("SimplePolygon", ElementType::SimplePolygon)
-        .value("ComplicatedPolygon", ElementType::ComplicatedPolygon)
-        .value("WayWithNodes", ElementType::WayWithNodes)
-        .value("Unknown", ElementType::Unknown)
+        .value("ElementTypeNode", ElementType::Node)
+        .value("ElementTypeWay", ElementType::Way)
+        .value("ElementTypeRelation", ElementType::Relation)
+        .value("ElementTypePoint", ElementType::Point)
+        .value("ElementTypeLinestring", ElementType::Linestring)
+        .value("ElementTypeSimplePolygon", ElementType::SimplePolygon)
+        .value("ElementTypeComplicatedPolygon", ElementType::ComplicatedPolygon)
+        .value("ElementTypeWayWithNodes", ElementType::WayWithNodes)
+        .value("ElementTypeUnknown", ElementType::Unknown)
         .export_values();
         
 
@@ -255,19 +255,19 @@ void block_defs(py::module& m) {
     m.def("bbox_empty", []() { return bbox{1800000000,900000000,-1800000000,-900000000}; });
     m.def("bbox_planet", []() { return bbox{-1800000000,-900000000,1800000000,900000000}; });
 
-    py::class_<primitiveblock, std::shared_ptr<primitiveblock>>(m, "primitiveblock")
+    py::class_<PrimitiveBlock, PrimitiveBlockPtr>(m, "PrimitiveBlock")
         .def(py::init<int64,size_t>())
-        .def_readonly("index", &primitiveblock::index)
-        .def_readwrite("quadtree", &primitiveblock::quadtree)
-        .def_readwrite("startdate", &primitiveblock::startdate)
-        .def_readwrite("enddate", &primitiveblock::enddate)
-        .def("__len__", [](const primitiveblock& pb) { return pb.size(); })
-        .def("__getitem__", [](const primitiveblock& pb, int i) { if (i<0) { i+= pb.objects.size(); } return pb.at(i); })
-        .def("__setitem__", [](primitiveblock& pb, int i, ElementPtr e) { if (i<0) { i+= pb.objects.size(); } pb.objects.at(i)=e; })
-        .def("add", [](primitiveblock& pb, ElementPtr e) { pb.add(e); })
-        .def("sort", [](primitiveblock& pb) { std::sort(pb.objects.begin(),pb.objects.end(),element_cmp); })
-        .def_readonly("file_progress", &primitiveblock::file_progress)
-        .def_readonly("file_position", &primitiveblock::file_position)
+        .def_property_readonly("index", &PrimitiveBlock::Index)
+        .def_property("Quadtree", &PrimitiveBlock::Quadtree, &PrimitiveBlock::SetQuadtree)
+        .def_property("StartDate", &PrimitiveBlock::StartDate, &PrimitiveBlock::SetStartDate)
+        .def_property("EndDate", &PrimitiveBlock::EndDate, &PrimitiveBlock::SetEndDate)
+        .def("__len__", [](const PrimitiveBlock& pb) { return pb.size(); })
+        .def("__getitem__", [](const PrimitiveBlock& pb, int i) { if (i<0) { i+= pb.size(); } return pb.at(i); })
+        .def("__setitem__", [](PrimitiveBlock& pb, int i, ElementPtr e) { if (i<0) { i+= pb.size(); } pb.at(i)=e; })
+        .def("add", [](PrimitiveBlock& pb, ElementPtr e) { pb.add(e); })
+        .def("sort", [](PrimitiveBlock& pb) { std::sort(pb.Objects().begin(),pb.Objects().end(),element_cmp); })
+        .def_property_readonly("FileProgress", &PrimitiveBlock::FileProgress)
+        .def_property_readonly("FilePosition", &PrimitiveBlock::FilePosition)
     ;
     py::class_<Element,std::shared_ptr<Element>>(m, "element")
         .def_property_readonly("InternalId", &Element::InternalId)
@@ -505,7 +505,7 @@ void block_defs(py::module& m) {
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("objflags")=7);
    
-   m.def("read_blocks_merge_primitive", &read_blocks_merge_py<primitiveblock>,
+   m.def("read_blocks_merge_primitive", &read_blocks_merge_py<PrimitiveBlock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);

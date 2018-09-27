@@ -37,7 +37,7 @@ class CollectObjs {
     public:
         CollectObjs(std::vector<primitiveblock_callback> cb_, size_t blocksize_, bool checkorder_) : cb(cb_), idx(0), blocksize(blocksize_), checkorder(checkorder_), prev(0) {
             
-            curr = std::make_shared<primitiveblock>(idx,blocksize);
+            curr = std::make_shared<PrimitiveBlock>(idx,blocksize);
             
         }
         
@@ -45,7 +45,7 @@ class CollectObjs {
             if (curr->size()==blocksize) {
                 cb[idx%cb.size()](curr);
                 idx++;
-                curr = std::make_shared<primitiveblock>(idx,blocksize);
+                curr = std::make_shared<PrimitiveBlock>(idx,blocksize);
                 
                 
             }
@@ -83,7 +83,7 @@ class CollectObjs {
         bool checkorder;
         uint64 prev;
         
-        primitiveblock_ptr curr;
+        PrimitiveBlockPtr curr;
 };
 
 std::function<void(ElementPtr)> make_collectobjs(std::vector<primitiveblock_callback> callbacks, size_t blocksize)  {
@@ -133,7 +133,7 @@ class SplitById : public SplitBlocks {
 
 primitiveblock_callback make_splitbyid_callback(primitiveblock_callback packers, size_t blocksplit, size_t writeat, int64 split_at) {
     auto sg = std::make_shared<SplitById>(packers,blocksplit,writeat,split_at, split_at / 8, ((1ll)<<34) / split_at);
-    return [sg](primitiveblock_ptr bl) { sg->call(bl); };
+    return [sg](PrimitiveBlockPtr bl) { sg->call(bl); };
 }
 
 }

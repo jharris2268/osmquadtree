@@ -46,7 +46,7 @@ class objs_idset : public idset {
 
         void add_relation(std::shared_ptr<Relation> rr);
         
-        void add_all(std::shared_ptr<primitiveblock> pb);
+        void add_all(PrimitiveBlockPtr pb);
     
     
         const std::set<int64>& nodes() { return nodes_; }

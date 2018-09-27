@@ -27,11 +27,44 @@
 #include "oqt/elements/element.hpp"
 
 namespace oqt {
-template<class T>
-struct primitiveobjectblock {
+
+
+class PrimitiveBlock {
     public:
+        PrimitiveBlock(int64 i, size_t sz=0) : index(i),quadtree(-1),startdate(0),enddate(0),file_position(0),file_progress(0) {
+            objects.reserve(sz);
+        }   
+    
+        int64 Index() { return index; }
+        
+        
+        int64 Quadtree() { return quadtree; }
+        void SetQuadtree(int64 qt) { quadtree=qt; }
+        
+        int64 StartDate() { return startdate; }
+        void SetStartDate(int64 sd) { startdate=sd; }
+        
+        int64 EndDate() { return enddate; }
+        void SetEndDate(int64 ed) { enddate=ed; }
+        
+        int64 FilePosition() { return file_position; }
+        void SetFilePosition(int64 fp) { file_position =fp; }
+        double FileProgress() { return file_progress; }
+        void SetFileProgress(double fp) { file_progress = fp; }
+        
+        
+        std::vector<ElementPtr>& Objects() { return objects; }
+        
+        size_t size() const { return objects.size(); }
+        ElementPtr at(size_t i) const { return objects.at(i); }
+        void add(ElementPtr o) {
+            if (!o) { throw std::domain_error("tried to add nullptr to PrimitiveBlock"); };
+            objects.push_back(o);
+        }
+    
+    private:
         int64 index;
-        std::vector<std::shared_ptr<T>> objects;
+        std::vector<ElementPtr> objects;
         int64 quadtree;
         int64 startdate;
         int64 enddate;
@@ -39,23 +72,12 @@ struct primitiveobjectblock {
         int64 file_position;
         double file_progress;
         
-        primitiveobjectblock(int64 i, size_t sz=0) : index(i),quadtree(-1),startdate(0),enddate(0),file_position(0),file_progress(0) {
-            objects.reserve(sz);
-        }   
         
-        
-        size_t size() const { return objects.size(); }
-        std::shared_ptr<T> at(size_t i) const { return objects.at(i); }
-        void add(std::shared_ptr<T> o) {
-            if (!o) { throw std::domain_error("tried to add nullptr to primitiveobjectblock"); };
-            objects.push_back(o);
-        }
-    
 };
 
-typedef primitiveobjectblock<Element> primitiveblock;
-typedef std::shared_ptr<primitiveblock> primitiveblock_ptr;
-typedef std::function<void(primitiveblock_ptr)> primitiveblock_callback;
+
+typedef std::shared_ptr<PrimitiveBlock> PrimitiveBlockPtr;
+typedef std::function<void(PrimitiveBlockPtr)> primitiveblock_callback;
 
 }
 #endif

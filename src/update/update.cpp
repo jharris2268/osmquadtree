@@ -128,16 +128,16 @@ std::string makeIndexBlock(std::shared_ptr<minimalblock> in) {
     return prepareFileBlock("IndexBlock", dd);
 }
 */
-std::string makeIndexBlock2(std::shared_ptr<primitiveblock> in) {
+std::string makeIndexBlock2(PrimitiveBlockPtr in) {
     std::vector<int64> n,w,r;
-    for (auto o : in->objects) {
+    for (auto o : in->Objects()) {
         if (o->Type()==ElementType::Node) { n.push_back(o->Id());}
         if (o->Type()==ElementType::Way) { w.push_back(o->Id());}
         if (o->Type()==ElementType::Relation) { r.push_back(o->Id());}
     }
 
     std::list<PbfTag> mm;
-    mm.push_back(PbfTag{1,zigZag(in->quadtree),""});
+    mm.push_back(PbfTag{1,zigZag(in->Quadtree()),""});
     if (!n.empty()) {
         mm.push_back(PbfTag{2,0,writePackedDelta(n)});
     }
@@ -178,14 +178,14 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
         }
     }, numchan);
     
-    std::vector<std::function<void(std::shared_ptr<primitiveblock>)>> converts;
+    std::vector<std::function<void(PrimitiveBlockPtr)>> converts;
     for (auto oo: out_callback) {
-        converts.push_back(threaded_callback<primitiveblock>::make(
-            [oo](std::shared_ptr<primitiveblock> mb) {
+        converts.push_back(threaded_callback<PrimitiveBlock>::make(
+            [oo](PrimitiveBlockPtr mb) {
                 if (!mb) {
                     return oo(nullptr);
                 }
-                oo(std::make_shared<keystring>(mb->quadtree, makeIndexBlock2(mb)));
+                oo(std::make_shared<keystring>(mb->Quadtree(), makeIndexBlock2(mb)));
             }
         ));
     }           
@@ -263,19 +263,19 @@ std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header>
 
 
 
-std::vector<std::shared_ptr<primitiveblock>> read_file_blocks(
+std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
     size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids) {
 
 
     
-    std::vector<std::shared_ptr<primitiveblock>> res;
+    std::vector<PrimitiveBlockPtr> res;
     if (locs.empty()) { return res; }
     if (locs.size() < numchan) {
         numchan=locs.size();
    }
 
-    auto cb = [&res](std::shared_ptr<primitiveblock> bl) {
+    auto cb = [&res](PrimitiveBlockPtr bl) {
         if (bl) {
             res.push_back(bl);
         }
@@ -351,12 +351,12 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
     auto allocs = make_qtstore_map();
     auto qts = make_qtstore_map();
     size_t orig_size=em->size();
-    auto cb = [allocs, qts, em, orig_size](primitiveblock_ptr bl) {
+    auto cb = [allocs, qts, em, orig_size](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
-        logger_progress(bl->file_progress) << " read " << qts->size() << " qts, added " << (em->size()-orig_size) << " nodes"; 
-        for (auto o : bl->objects) {
+        logger_progress(bl->FileProgress()) << " read " << qts->size() << " qts, added " << (em->size()-orig_size) << " nodes"; 
+        for (auto o : bl->Objects()) {
             int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
-            allocs->expand(k, bl->quadtree);
+            allocs->expand(k, bl->Quadtree());
             qts->expand(k, o->Quadtree());
             if (o->Type()==ElementType::Node) {
                 //o->SetChangeType(Normal);
@@ -368,7 +368,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
         }
     };
     
-    read_blocks_merge<primitiveblock>(fl, cb, locs, 4, ids, 7, 1<<14);
+    read_blocks_merge<PrimitiveBlock>(fl, cb, locs, 4, ids, 7, 1<<14);
     return std::make_tuple(allocs, qts,tree);
 }
     
@@ -416,17 +416,17 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
             logger_progress(i*100.0/fls.size()) << "have " << em->size() << "objs (" << ne << " empty blocks): read " << locs.size() << " blocks from " << fn;
             auto bb = read_file_blocks(fn,locs,4,0,true,7,ids);
             for (auto bl: bb) {
-                if (bl->objects.empty()) {
+                if (bl->size() == 0) {
                     
                     ne++;
                 } else {
-                    for (auto o : bl->objects) {
+                    for (auto o : bl->Objects()) {
                         int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
                         if (dels.count(k)==1) { continue; }
                         if ((o->ChangeType()==changetype::Normal) || (o->ChangeType()==changetype::Unchanged) || (o->ChangeType()==changetype::Modify) || (o->ChangeType()==changetype::Create)) {
 
                             if (allocs->contains(k)==0) {
-                                allocs->expand(k, bl->quadtree);
+                                allocs->expand(k, bl->Quadtree());
                                 qts->expand(k, o->Quadtree());
                                 if (o->Type()==ElementType::Node) {
                                     o->SetChangeType(changetype::Normal);
@@ -559,17 +559,17 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
 
 }
 
-std::vector<std::shared_ptr<primitiveblock>> find_change_tiles(
+std::vector<PrimitiveBlockPtr> find_change_tiles(
     typeid_element_map_ptr em, std::shared_ptr<qtstore> orig_allocs,
     std::shared_ptr<qttree> tree, int64 ss, int64 ee) {
 
-    std::map<int64, std::shared_ptr<primitiveblock>> tiles;
+    std::map<int64, PrimitiveBlockPtr> tiles;
     auto check_tile = [&tiles,ss,ee](int64 a) {
         if (tiles.count(a)==0) {
-            tiles[a]=std::make_shared<primitiveblock>(tiles.size(),0);
-            tiles[a]->quadtree=a;
-            tiles[a]->startdate=ss;
-            tiles[a]->enddate=ee;
+            tiles[a]=std::make_shared<PrimitiveBlock>(tiles.size(),0);
+            tiles[a]->SetQuadtree(a);
+            tiles[a]->SetStartDate(ss);
+            tiles[a]->SetEndDate(ee);
         }
     };
 
@@ -580,23 +580,23 @@ std::vector<std::shared_ptr<primitiveblock>> find_change_tiles(
         if (o->ChangeType()>changetype::Remove) {
             int64 a = tree->find_tile(o->Quadtree()).qt;
             check_tile(a);
-            tiles[a]->objects.push_back(o);
+            tiles[a]->add(o);
             if (orig_allocs->contains(k) && (orig_allocs->at(k) != a)) {
                 auto n = o->copy();
                 n->SetChangeType(changetype::Remove);
                 n->SetQuadtree(0);
                 int64 na=orig_allocs->at(k);
                 check_tile(na);
-                tiles[na]->objects.push_back(n);
+                tiles[na]->add(n);
             }
         } else if (orig_allocs->contains(k)) {
             int64 a = orig_allocs->at(k);
             o->SetQuadtree(0);
             check_tile(a);
-            tiles[a]->objects.push_back(o);
+            tiles[a]->add(o);
         }
     }
-    std::vector<std::shared_ptr<primitiveblock>> res;
+    std::vector<PrimitiveBlockPtr> res;
     for (auto& t: tiles) {
         res.push_back(t.second);
     }
@@ -624,7 +624,7 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
     for (auto bl: tiles) {
         auto dd = writePbfBlock(bl, true, true, true, true);
         auto p = prepareFileBlock("OSMData",dd);
-        out->writeBlock(bl->quadtree,p);
+        out->writeBlock(bl->Quadtree(),p);
     }
 /*
     std::vector<std::string> packed;

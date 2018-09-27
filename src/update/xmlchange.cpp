@@ -309,10 +309,10 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
     }
 }
 
-std::shared_ptr<primitiveblock> read_xml_change_detail(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector) {
-    auto pb = std::make_shared<primitiveblock>(0,0);
+PrimitiveBlockPtr read_xml_change_detail(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector) {
+    auto pb = std::make_shared<PrimitiveBlock>(0,0);
     auto add = [pb](ElementPtr e)->void {
-        pb->objects.push_back(e);
+        pb->add(e);
     };
     add_all(inspector,add, true);
     return pb;
@@ -338,12 +338,12 @@ void read_xml_change_detail(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector
 
 }
 
-std::shared_ptr<primitiveblock> read_xml_change(const std::string& data) {
+PrimitiveBlockPtr read_xml_change(const std::string& data) {
     Xml::Inspector<Xml::Encoding::Utf8Writer> inspector(data.begin(), data.end());
     return xmlchangedetail::read_xml_change_detail(inspector);
 }
 
-std::shared_ptr<primitiveblock> read_xml_change_file(std::istream* fl) {
+PrimitiveBlockPtr read_xml_change_file(std::istream* fl) {
 
     Xml::Inspector<Xml::Encoding::Utf8Writer> inspector(fl);
     return xmlchangedetail::read_xml_change_detail(inspector);

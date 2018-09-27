@@ -160,7 +160,7 @@ class ReadBlocksMerged : public ReadBlocksCaller {
         void read_primitive(std::vector<primitiveblock_callback> cbs, std::shared_ptr<idset> filter) {
             logger_message() << "ReadBlocksMerged::read_primitive";
             
-            read_blocks_split_merge<primitiveblock>(filenames, cbs, locs, filter, 7, buffer);
+            read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, 7, buffer);
         }
         void read_minimal(std::vector<std::function<void(std::shared_ptr<minimalblock>)>> cbs, std::shared_ptr<idset> filter)  {
             read_blocks_split_merge<minimalblock>(filenames, cbs, locs, filter, 7, buffer);

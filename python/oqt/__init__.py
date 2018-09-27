@@ -105,28 +105,28 @@ calcqts = _oqt.calcqts
 mergechanges = _oqt.mergechanges
 count = _oqt.count
 
-#_oqt.node._Quadtree=_oqt.node.Quadtree
-#_oqt.node.Quadtree=property(lambda q: quadtree(q._Quadtree))
+#_oqt.Node._Quadtree=_oqt.Node.Quadtree
+#_oqt.Node.Quadtree=property(lambda q: quadtree(q._Quadtree))
 
-_oqt.node.__repr__ = lambda n: "Node(%10d %0.40s %.40s % 8d % 8d %-18s %d)" % (n.Id,repr(n.Info),repr(n.Tags),n.Lon,n.Lat,n.Quadtree,n.ChangeType)
-_oqt.node.__unicode__ = lambda n: u"Node(%10d %s %s % 8d % 8d %-18s %d)" % (n.Id,n.Info,n.Tags,n.Lon,n.Lat,n.Quadtree,n.ChangeType)
-_oqt.node.tuple = property(lambda n: (0, n.ChangeType, n.Id,n.Info.tuple,[t.tuple for t in n.Tags], n.Lon,n.Lat, n.Quadtree))
+_oqt.Node.__repr__ = lambda n: "Node(%10d %0.40s %.40s % 8d % 8d %-18s %d)" % (n.Id,repr(n.Info),repr(n.Tags),n.Lon,n.Lat,n.Quadtree,n.ChangeType)
+_oqt.Node.__unicode__ = lambda n: u"Node(%10d %s %s % 8d % 8d %-18s %d)" % (n.Id,n.Info,n.Tags,n.Lon,n.Lat,n.Quadtree,n.ChangeType)
+_oqt.Node.tuple = property(lambda n: (0, n.ChangeType, n.Id,n.Info.tuple,[t.tuple for t in n.Tags], n.Lon,n.Lat, n.Quadtree))
 
 
-#_oqt.way._Quadtree=_oqt.way.Quadtree
-#_oqt.way.Quadtree=property(lambda q: quadtree(q._Quadtree))
-_oqt.way.__repr__ = lambda w: "Way(%10d %0.40s %.40s %.20s %-18s %d)" % (w.Id,repr(w.Info),repr(w.Tags),w.Refs,w.Quadtree,w.ChangeType)
-_oqt.way.__unicode__ = lambda w: u"Way(%10d %s %s %s %-18s %d)" % (w.Id,w.Info,w.Tags,w.Refs,w.Quadtree,w.ChangeType)
-_oqt.way.tuple = property(lambda w: (1, w.ChangeType, w.Id,w.Info.tuple,[t.tuple for t in w.Tags], w.Refs, w.Quadtree))
+#_oqt.Way._Quadtree=_oqt.Way.Quadtree
+#_oqt.Way.Quadtree=property(lambda q: quadtree(q._Quadtree))
+_oqt.Way.__repr__ = lambda w: "Way(%10d %0.40s %.40s %.20s %-18s %d)" % (w.Id,repr(w.Info),repr(w.Tags),w.Refs,w.Quadtree,w.ChangeType)
+_oqt.Way.__unicode__ = lambda w: u"Way(%10d %s %s %s %-18s %d)" % (w.Id,w.Info,w.Tags,w.Refs,w.Quadtree,w.ChangeType)
+_oqt.Way.tuple = property(lambda w: (1, w.ChangeType, w.Id,w.Info.tuple,[t.tuple for t in w.Tags], w.Refs, w.Quadtree))
 
-#_oqt.relation._Quadtree=_oqt.relation.Quadtree
-#_oqt.relation.Quadtree=property(lambda q: quadtree(q._Quadtree))
-_oqt.relation.__repr__ = lambda r: "Relation(%10d %0.40s %.40s %.20s %-18s %d)" % (r.Id,repr(r.Info),repr(r.Tags),r.Members,r.Quadtree,r.ChangeType)
-_oqt.relation.__unicode__ = lambda r: u"Relation(%10d %s %s %s %-18s %d)" % (r.Id,r.Info,r.Tags,r.Members,r.Quadtree,r.ChangeType)
-_oqt.relation.tuple = property(lambda r: (2, r.ChangeType, r.Id,r.Info.tuple,[t.tuple for t in r.Tags], [m.tuple for m in r.Members], r.Quadtree))
+#_oqt.Relation._Quadtree=_oqt.Relation.Quadtree
+#_oqt.Relation.Quadtree=property(lambda q: quadtree(q._Quadtree))
+_oqt.Relation.__repr__ = lambda r: "Relation(%10d %0.40s %.40s %.20s %-18s %d)" % (r.Id,repr(r.Info),repr(r.Tags),r.Members,r.Quadtree,r.ChangeType)
+_oqt.Relation.__unicode__ = lambda r: u"Relation(%10d %s %s %s %-18s %d)" % (r.Id,r.Info,r.Tags,r.Members,r.Quadtree,r.ChangeType)
+_oqt.Relation.tuple = property(lambda r: (2, r.ChangeType, r.Id,r.Info.tuple,[t.tuple for t in r.Tags], [m.tuple for m in r.Members], r.Quadtree))
 
 _oqt.info.__unicode__ = lambda i: u"(%d, %d, %d, %d, %s, %s)" % (i.version,i.timestamp,i.changeset,i.user_id,i.user,'t' if i.visible else 'f')
-_oqt.info.__repr__ = lambda i: "info(%d,...)" % (i.version,)
+_oqt.info.__repr__ = lambda i: "info(%d,..)" % (i.version,)
 _oqt.info.tuple = property(lambda i: (i.version,i.timestamp,i.changeset,i.user_id,i.user,i.visible))
 _oqt.tag.__repr__ = lambda t: "Tag(%s,%.50s)" % (t.key,repr(t.val))
 _oqt.tag.__unicode__ = lambda t: u"%s='%s'" % (t.key,t.val)
@@ -143,9 +143,9 @@ def find_tag(obj, idx):
         if tg.key==idx:
             return tg.val
     return None
-_oqt.node.find_tag = find_tag
-_oqt.way.find_tag = find_tag
-_oqt.relation.find_tag = find_tag
+_oqt.Node.find_tag = find_tag
+_oqt.Way.find_tag = find_tag
+_oqt.Relation.find_tag = find_tag
 _oqt.point.find_tag = find_tag
 _oqt.linestring.find_tag = find_tag
 _oqt.simplepolygon.find_tag = find_tag

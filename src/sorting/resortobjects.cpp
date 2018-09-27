@@ -41,34 +41,34 @@ class ResortObjects {
         ResortObjects(primitiveblock_callback callback_, std::shared_ptr<qttree> groups_, int64 blocksize_, bool sortobjs_) :
                 callback(callback_), groups(groups_), blocksize(blocksize_), sortobjs(sortobjs_) {}
         
-        void call(primitiveblock_ptr inobjs) {
+        void call(PrimitiveBlockPtr inobjs) {
             if (!inobjs) { return callback(nullptr); }
             
-            std::vector<primitiveblock_ptr> result(blocksize);
-            size_t off = (inobjs->index)*blocksize;
+            std::vector<PrimitiveBlockPtr> result(blocksize);
+            size_t off = (inobjs->Index())*blocksize;
             int64 tt=0;
-            for (auto o: inobjs->objects) {
+            for (auto o: inobjs->Objects()) {
                 const auto& tile = groups->find_tile(o->Quadtree());
                 if (tile.idx < off) { throw std::domain_error("wrong tile"); }
                 size_t ii = tile.idx-off;
                 if (ii>=blocksize) {throw std::domain_error("wrong tile"); }
                 if (!result.at(ii)) {
-                    result.at(ii) = std::make_shared<primitiveblock>(ii, tile.weight);
-                    result.at(ii)->quadtree=tile.qt;
+                    result.at(ii) = std::make_shared<PrimitiveBlock>(ii, tile.weight);
+                    result.at(ii)->SetQuadtree(tile.qt);
                     tt++;
                 }
                 result.at(ii)->add(o);
             }
             
             logger_progress(100.0*off/groups->size()) << "ResortObjects [" << TmStr{ts.since(),6,1} << "] "
-                << "finish_current: " << inobjs->index << ": have " << tt
-                << " tiles // " << inobjs->objects.size() << " objs";
+                << "finish_current: " << inobjs->Index() << ": have " << tt
+                << " tiles // " << inobjs->size() << " objs";
             
            
             for (auto t: result) {
                 if (t) {
                     if (sortobjs) {
-                        std::sort(t->objects.begin(), t->objects.end(), element_cmp);
+                        std::sort(t->Objects().begin(), t->Objects().end(), element_cmp);
                     }
                     callback(t);
                 }
@@ -88,7 +88,7 @@ primitiveblock_callback make_resortobjects_callback(
     int64 blocksplit, bool sortobjs) {
     
     auto rso = std::make_shared<ResortObjects>(callback,groups,blocksplit,sortobjs);
-    return [rso](primitiveblock_ptr tl) { rso->call(tl); };
+    return [rso](PrimitiveBlockPtr tl) { rso->call(tl); };
 }
 
 
