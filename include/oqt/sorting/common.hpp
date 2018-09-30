@@ -25,7 +25,7 @@
 
 
 #include "oqt/pbfformat/writepbffile.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/sorting/qttreegroups.hpp"
 #include "oqt/elements/block.hpp"
 
 

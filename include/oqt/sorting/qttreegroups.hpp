@@ -20,10 +20,10 @@
  *
  *****************************************************************************/
 
-#ifndef CALCQTS_QTTREEGROUPS_HPP
-#define CALCQTS_QTTREEGROUPS_HPP
+#ifndef SORTING_QTTREEGROUPS_HPP
+#define SORTING_QTTREEGROUPS_HPP
 
-#include "oqt/calcqts/qttree.hpp"
+#include "oqt/sorting/qttree.hpp"
 
 namespace oqt {
 std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 target, int64 minsize);

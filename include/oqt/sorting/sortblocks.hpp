@@ -24,9 +24,10 @@
 #ifndef SORTING_SORTBLOCKS_HPP
 #define SORTING_SORTBLOCKS_HPP
 
-#include "oqt/calcqts/qtstoresplit.hpp"
-#include "oqt/calcqts/waynodesfile.hpp"
-#include "oqt/calcqts/calculaterelations.hpp"
+//#include "oqt/calcqts/qtstoresplit.hpp"
+//#include "oqt/calcqts/waynodesfile.hpp"
+//#include "oqt/calcqts/calculaterelations.hpp"
+#include "oqt/sorting/qttree.hpp"
 #include "oqt/elements/block.hpp"
 
 namespace oqt {

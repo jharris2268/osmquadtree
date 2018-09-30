@@ -22,7 +22,7 @@
 
 
 #include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/sorting/qttreegroups.hpp"
 #include <map>
 #include <set>
 #include <algorithm>
@@ -33,6 +33,7 @@
 
 #include "oqt/utils/multithreadedcallback.hpp"
 #include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/logger.hpp"
 
 
 #include "oqt/elements/quadtree.hpp"

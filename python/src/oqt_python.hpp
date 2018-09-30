@@ -27,7 +27,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include "oqt/count.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/sorting/qttreegroups.hpp"
 #include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
 #include "oqt/sorting/tempobjs.hpp"

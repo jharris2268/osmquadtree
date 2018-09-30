@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/sorting/qttreegroups.hpp"
 #include <numeric>
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/utils/logger.hpp"

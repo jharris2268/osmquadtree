@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef CALCQTS_QTTREE_HPP
-#define CALCQTS_QTTREE_HPP
+#ifndef SORTING_QTTREE_HPP
+#define SORTING_QTTREE_HPP
 
 #include "oqt/common.hpp"
 #include <map>

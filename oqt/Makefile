@@ -9,8 +9,8 @@ ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/baseelement.
 UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
-SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o
-CALCQTS_OBJS = calcqts/qtstore.o calcqts/qtstoresplit.o calcqts/calculaterelations.o calcqts/waynodes.o calcqts/waynodesfile.o calcqts/writewaynodes.o calcqts/qttree.o calcqts/qttreegroups.o calcqts/writeqts.o calcqts/calcqtsinmem.o calcqts/calcqts.o calcqts/wayqts.o
+SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o sorting/qttree.o sorting/qttreegroups.o
+CALCQTS_OBJS = calcqts/qtstore.o calcqts/qtstoresplit.o calcqts/calculaterelations.o calcqts/waynodes.o calcqts/waynodesfile.o calcqts/writewaynodes.o calcqts/writeqts.o calcqts/calcqtsinmem.o calcqts/calcqts.o calcqts/wayqts.o
 OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS) $(CALCQTS_OBJS)
 
 default: oqt liboqt.so.0.0
@@ -22,22 +22,6 @@ liboqt.so.0.0: $(OBJS)
  
 count.o:  ../src/count.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/count.cpp
-
-
-
-readfile.o: ../src/readfile.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/readfile.cpp
-
-
-primitivegroup.o: ../src/primitivegroup.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/primitivegroup.cpp
-
-readblock.o: ../src/readblock.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/readblock.cpp
-
-
-utils.o: ../src/utils.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/utils.cpp
 
 oqt_main.o: ../src/oqt_main.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/oqt_main.cpp
@@ -141,6 +125,11 @@ sorting/mergechanges.o: ../src/sorting/mergechanges.cpp $(HEADERS)
 sorting/tempobjs.o: ../src/sorting/tempobjs.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/sorting/tempobjs.cpp -o sorting/tempobjs.o
 
+sorting/qttree.o: ../src/sorting/qttree.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/qttree.cpp -o sorting/qttree.o
+
+sorting/qttreegroups.o: ../src/sorting/qttreegroups.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/sorting/qttreegroups.cpp -o sorting/qttreegroups.o
 
 utils/bbox.o: ../src/utils/bbox.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/bbox.cpp -o utils/bbox.o
@@ -213,11 +202,7 @@ calcqts/calcqtsinmem.o: ../src/calcqts/calcqtsinmem.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/calcqts/calcqtsinmem.cpp -o calcqts/calcqtsinmem.o
 
 
-calcqts/qttree.o: ../src/calcqts/qttree.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/calcqts/qttree.cpp -o calcqts/qttree.o
 
-calcqts/qttreegroups.o: ../src/calcqts/qttreegroups.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/calcqts/qttreegroups.cpp -o calcqts/qttreegroups.o
 
 clean:
 	$(RM) liboqt.so.0.0 oqt *.o update/*.o utils/*.o utils/pbf/*.o sorting/*.o pbfformat/*.o calcqts/*.o elements/*.o geometry/*.o

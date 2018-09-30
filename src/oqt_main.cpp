@@ -22,7 +22,7 @@
 
 
 #include "oqt/count.hpp"
-#include "oqt/calcqts/qttreegroups.hpp"
+#include "oqt/sorting/qttreegroups.hpp"
 #include <regex>
 
 #include <fstream>
