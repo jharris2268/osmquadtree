@@ -32,7 +32,7 @@
 namespace oqt {
     
 
-typedef std::function<void(std::shared_ptr<way_nodes>)> waynodes_callback;
+typedef std::function<void(std::shared_ptr<WayNodes>)> waynodes_callback;
 
 
 class WriteWayNodes {
@@ -48,7 +48,7 @@ class WriteWayNodes {
         
         
         
-        std::shared_ptr<way_nodes_write> tile_at(size_t k) {
+        std::shared_ptr<WayNodesWrite> tile_at(size_t k) {
             if (k>=waynodes.size()) { return nullptr; }
             return waynodes[k];
         }
@@ -57,7 +57,7 @@ class WriteWayNodes {
         }
         void empty_tiles() {
             for (auto& t: waynodes) { t.reset(); }
-            std::vector<std::shared_ptr<way_nodes_write>> x;
+            std::vector<std::shared_ptr<WayNodesWrite>> x;
             waynodes.swap(x);
         }
         size_t num_tiles() { return waynodes.size(); }
@@ -127,7 +127,7 @@ class WriteWayNodes {
         size_t block_size;
         int64 split_at;
         
-       std::vector<std::shared_ptr<way_nodes_write>> waynodes;
+       std::vector<std::shared_ptr<WayNodesWrite>> waynodes;
        
        
         write_file_callback writer;
@@ -164,7 +164,7 @@ class WayNodesFilePrep {
         
         
         //std::vector<minimalblock_callback> make_writewaynodes(std::shared_ptr<calculate_relations> rels, bool resort, size_t numchan) {
-        minimalblock_callback make_writewaynodes(std::shared_ptr<calculate_relations> rels, bool sortinmem, size_t numchan) {
+        minimalblock_callback make_writewaynodes(std::shared_ptr<CalculateRelations> rels, bool sortinmem, size_t numchan) {
             if (sortinmem) {
                 waynodes_writer_obj = make_pbffilewriter_indexedinmem(fn, nullptr);
             } else {
@@ -254,7 +254,7 @@ class WayNodesFilePrep {
 
 
 
-std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<calculate_relations>,std::string,std::vector<int64>>
+std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std::string,std::vector<int64>>
     write_waynodes(const std::string& orig_fn, const std::string& waynodes_fn, size_t numchan, bool sortinmem, std::shared_ptr<logger> lg) {
     
     auto rels = make_calculate_relations();

@@ -28,12 +28,14 @@
 #include <cmath>
 #include <map>
 namespace oqt {
-class qtstore_map : public qtstore {
-    std::map<int64,int64> m;
+class QtStoreMap : public QtStore {
+    
 
     public:
-        qtstore_map() {}
-        qtstore_map(std::map<int64,int64>&& m_) : m(m_) {}
+        QtStoreMap() {}
+        QtStoreMap(std::map<int64,int64>&& m_) : m(m_) {}
+
+        virtual ~QtStoreMap() {}
 
         void expand(int64 ref, int64 qt) {
 
@@ -81,18 +83,19 @@ class qtstore_map : public qtstore {
         size_t size() { return m.size(); }
         
         int64 key() { return -1; }
+    private:
+        std::map<int64,int64> m;
 };
 
 
 
-class qtstore_arr : public qtstore  {
-    std::vector<int64> pts;
-    int64 min;
-    size_t count;
-    int64 key_;
+class QtStoreVector : public QtStore  {
+    
     public:
-        qtstore_arr(int64 min_way, int64 max_way, int64 k) : pts(max_way-min_way,-1), min(min_way),count(0),key_(k) {};
-        qtstore_arr(std::vector<int64>&& pts_, int64 min_, size_t count_, int64 k) : pts(std::move(pts_)),min(min_),count(count_),key_(k) {}
+        QtStoreVector(int64 min_way, int64 max_way, int64 k) : pts(max_way-min_way,-1), min(min_way),count(0),key_(k) {};
+        QtStoreVector(std::vector<int64>&& pts_, int64 min_, size_t count_, int64 k) : pts(std::move(pts_)),min(min_),count(count_),key_(k) {}
+
+        ~QtStoreVector() {}
 
         void expand(int64 ref, int64 qt) {
             if (ref < min) {
@@ -160,20 +163,25 @@ class qtstore_arr : public qtstore  {
         }
         
         int64 key() { return key_; }
-
+    
+    private:
+        std::vector<int64> pts;
+        int64 min;
+        size_t count;
+        int64 key_;
 
 };
 
 
-std::shared_ptr<qtstore> make_qtstore_arr_alt(std::vector<int64>&& pts, int64 min, size_t count, int64 k) {
-    return std::make_shared<qtstore_arr>(std::move(pts),min,count,k);
+std::shared_ptr<QtStore> make_qtstore_vector_move(std::vector<int64>&& pts, int64 min, size_t count, int64 k) {
+    return std::make_shared<QtStoreVector>(std::move(pts),min,count,k);
 }
 
-std::shared_ptr<qtstore> make_qtstore_map() {
-    return std::make_shared<qtstore_map>();
+std::shared_ptr<QtStore> make_qtstore_map() {
+    return std::make_shared<QtStoreMap>();
 }
-std::shared_ptr<qtstore> make_qtstore_arr(int64 min, int64 max, int64 key) {
-    return std::make_shared<qtstore_arr>(min,max,key);
+std::shared_ptr<QtStore> make_qtstore_vector(int64 min, int64 max, int64 key) {
+    return std::make_shared<QtStoreVector>(min,max,key);
 }
 
 

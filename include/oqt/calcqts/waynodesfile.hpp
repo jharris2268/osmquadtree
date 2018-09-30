@@ -31,7 +31,7 @@
 namespace oqt {
 class WayNodesFile {
     public:
-        virtual void read_waynodes(std::function<void(std::shared_ptr<way_nodes>)> cb, int64 minway, int64 maxway)=0;
+        virtual void read_waynodes(std::function<void(std::shared_ptr<WayNodes>)> cb, int64 minway, int64 maxway)=0;
         virtual void remove_file()=0;
         virtual ~WayNodesFile() {}
 };

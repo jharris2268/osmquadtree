@@ -32,31 +32,16 @@ namespace oqt {
     
     
 
-class calculate_relations_impl : public calculate_relations {
+class CalculateRelationsImpl : public CalculateRelations {
     typedef int32_t relation_id_type;
     typedef std::pair<relation_id_type,relation_id_type> id_pair;
     typedef std::vector<id_pair> id_pair_vec;
 
     typedef std::multimap<relation_id_type,relation_id_type> id_pair_map;
 
-
-    std::shared_ptr<qtstore> rel_qts;
-
-    std::map<int64,id_pair_vec> rel_nodes;
-    bool nodes_sorted;
-    
-    id_pair_vec rel_ways;
-    id_pair_vec rel_rels;
-    std::vector<relation_id_type> empty_rels;
-    bool objs_sorted;
-    
-    size_t node_rshift;
-    size_t node_mask;
-    
-    std::vector<bool> node_check;
     
     public:
-        calculate_relations_impl() : rel_qts(make_qtstore_map()),nodes_sorted(false), node_rshift(30) {
+        CalculateRelationsImpl() : rel_qts(make_qtstore_map()),nodes_sorted(false), node_rshift(30) {
             node_mask = (1ull<<node_rshift) - 1;
             logger_message() << "calculate_relations_impl: node_rshift = " << node_rshift << ", node_mask = " << node_mask;
             
@@ -167,7 +152,7 @@ class calculate_relations_impl : public calculate_relations {
         }
         
 
-        virtual void add_ways(std::shared_ptr<qtstore> qts) {
+        virtual void add_ways(std::shared_ptr<QtStore> qts) {
             for (const auto& wq : rel_ways) {
                 int64 q=qts->at(wq.first);
                 if (q>=0) {
@@ -227,12 +212,26 @@ class calculate_relations_impl : public calculate_relations {
                 << "      " << empty_rels.size() << " empty_rels";
             return ss.str();
         }
+    private:
+        std::shared_ptr<QtStore> rel_qts;
 
+        std::map<int64,id_pair_vec> rel_nodes;
+        bool nodes_sorted;
+        
+        id_pair_vec rel_ways;
+        id_pair_vec rel_rels;
+        std::vector<relation_id_type> empty_rels;
+        bool objs_sorted;
+        
+        size_t node_rshift;
+        size_t node_mask;
+        
+        std::vector<bool> node_check;
 
 };
 
-std::shared_ptr<calculate_relations> make_calculate_relations() {
-    return std::make_shared<calculate_relations_impl>();
+std::shared_ptr<CalculateRelations> make_calculate_relations() {
+    return std::make_shared<CalculateRelationsImpl>();
 }
 
  

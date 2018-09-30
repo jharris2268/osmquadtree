@@ -139,7 +139,7 @@ int run_sortblocks_py(
     return r;
 }
 
-std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<calculate_relations>,std::string,std::vector<int64>>
+std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std::string,std::vector<int64>>
     run_write_waynodes_py(const std::string& origfn, const std::string& waynodes_fn, size_t numchan, bool sortinmem) {
     
     py::gil_scoped_release release;
@@ -151,7 +151,7 @@ void find_way_quadtrees_py(
     const std::string& source_filename,
     const std::vector<int64>& source_locs, 
     size_t numchan,
-    std::shared_ptr<qtstore_split> way_qts,
+    std::shared_ptr<QtStoreSplit> way_qts,
     std::shared_ptr<WayNodesFile> wns,
     double buffer, size_t max_depth,int64 minway, int64 maxway) {
     
@@ -160,8 +160,8 @@ void find_way_quadtrees_py(
     find_way_quadtrees(source_filename, source_locs, numchan, way_qts, wns, buffer, max_depth, minway, maxway);
 }
 void write_qts_file_py(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,
-    const std::vector<int64>& node_locs, std::shared_ptr<qtstore_split> way_qts,
-    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<calculate_relations> rels, double buffer, size_t max_depth) {
+    const std::vector<int64>& node_locs, std::shared_ptr<QtStoreSplit> way_qts,
+    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<CalculateRelations> rels, double buffer, size_t max_depth) {
     
     py::gil_scoped_release release;
     write_qts_file(qtsfn, nodes_fn, numchan, node_locs, way_qts, wns, rels, buffer, max_depth);
@@ -561,8 +561,8 @@ void core_defs(py::module& m) {
     
     
     py::class_<WayNodesFile, std::shared_ptr<WayNodesFile>>(m,"WayNodesFile");
-    py::class_<calculate_relations, std::shared_ptr<calculate_relations>>(m,"calculate_relations")
-        .def("str",&calculate_relations::str)    
+    py::class_<CalculateRelations, std::shared_ptr<CalculateRelations>>(m,"CalculateRelations")
+        .def("str",&CalculateRelations::str)    
     ;
     
     
@@ -584,12 +584,12 @@ void core_defs(py::module& m) {
         py::arg("wns"), py::arg("rels"), py::arg("buffer"), py::arg("max_depth")
     );
     
-    py::class_<qtstore_split, std::shared_ptr<qtstore_split>>(m,"qtstore_split")
-        .def("split_at", &qtstore_split::split_at)
-        .def("num_tiles", &qtstore_split::num_tiles)
-        .def("last_tile", &qtstore_split::last_tile)
-        .def("use_arr", &qtstore_split::use_arr)
-        .def("tile", &qtstore_split::tile)
+    py::class_<QtStoreSplit, std::shared_ptr<QtStoreSplit>>(m,"QtStoreSplit")
+        .def("split_at", &QtStoreSplit::split_at)
+        .def("num_tiles", &QtStoreSplit::num_tiles)
+        .def("last_tile", &QtStoreSplit::last_tile)
+        .def("use_arr", &QtStoreSplit::use_arr)
+        .def("tile", &QtStoreSplit::tile)
     ;
     m.def("make_qtstore_split", &make_qtstore_split);
     

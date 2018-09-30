@@ -60,86 +60,7 @@ std::shared_ptr<wnls> make_wnls(int64 key, size_t sz) {
     r->vals.reserve(sz);
     return r;
 };
-/*
-class CombineWaynodes {
-    public:
-        typedef std::function<void(std::shared_ptr<wnls>)> callback;
-        
-        CombineWaynodes(std::function<std::shared_ptr<minimalblock>()> nodes_, callback cb_) //std::vector<callback> cbs_)
-            :nodes(nodes_), cb(cb_) { //cbs(cbs_) {
-            
-            
-            curr_nb = nodes();
-            curr_nbi = 0;
-            nmissing=0;
-            
-            
-        }
-        
-        void call(std::shared_ptr<way_nodes> curr) {
-            if (!curr) {
-                size_t nn=0;
-                auto nd = next_node();
-                while (nd) {
-                    nn++;
-                    nd = next_node();
-                }
-                logger_message() << "\rhad " << nmissing << " missing nodes, " << nn << " nodes at end";
-                cb(nullptr);
-                return;
-            }
-            
 
-            
-            //auto wnls = make_way_node_locs(curr->key(), curr->size());
-            auto out = make_wnls(curr->key(),curr->size());
-            
-            auto nd = next_node();
-            for (size_t ni = 0; ni < curr->size(); ni++) {
-                
-                
-
-                int64 node_ref = curr->node_at(ni);
-                
-                while ((nd) && (nd->id < node_ref)) {
-                    nd = next_node();
-                }
-                if ((!nd) || (nd->id > node_ref)) {
-                    logger_message lm; lm << "\rmissing node " << node_ref;
-                    if (nd) { lm << " @ nd " << nd->id << " " << nd->lon << ", " << nd->lat; }
-                    nmissing+=1;
-                    if (nmissing>500) { throw std::domain_error("??"); }
-                } else {
-                    int64 way_ref = curr->way_at(ni);
-                    out->vals.push_back(wnl{way_ref,nd->lon,nd->lat});
-                }
-            }
-            //cb(wnls);
-            cb(out);
-            
-        }
-        
-    private:
-        const minimalnode* next_node() {
-            if (!curr_nb) { return nullptr; }
-            if (curr_nbi == curr_nb->nodes.size()) {
-                curr_nb = nodes();
-                curr_nbi=0;
-                return next_node();
-            }
-            return &(curr_nb->nodes[curr_nbi++]);
-        }
-        std::function<std::shared_ptr<minimalblock>()> nodes;
-        //std::vector<callback> cbs;
-        callback cb;
-        
-        
-        std::shared_ptr<minimalblock> curr_nb;
-        size_t curr_nbi;
-        size_t nmissing=0;
-};
-
-*/
 
 struct wb {
     int32 minx;
@@ -177,7 +98,7 @@ class wbtile {
             boxes.swap(empty);
         }
         
-        std::shared_ptr<qtstore> calculate(double buffer, int64 maxdepth) {
+        std::shared_ptr<QtStore> calculate(double buffer, int64 maxdepth) {
             
             std::vector<int64> qts(size,-1);
             size_t count=0;
@@ -189,7 +110,7 @@ class wbtile {
                 }
             }
             reset();
-            return make_qtstore_arr_alt(std::move(qts), min, count, key);
+            return make_qtstore_vector_move(std::move(qts), min, count, key);
         }
         
     
@@ -205,136 +126,14 @@ class wbtile {
 
 std::string getmem(size_t);
 int64 getmemval(size_t);        
-        /*   
-class next_node {
-    public:
-        next_node(std::function<std::shared_ptr<minimalblock>()> read_nodes_) :
-            read_nodes(read_nodes_), pos(0) {
-                
-            
-            block =read_nodes();
-        }
         
-        const minimalnode* next() {
-            while (block && (pos == block->nodes.size())) {
-                block=read_nodes();
-                pos=0;
-            }
-            if (!block) {
-                return nullptr;
-            }
-            const minimalnode& n = block->nodes[pos];
-            pos++;
-            return &n;
-        };
-    private:
         
-        std::shared_ptr<minimalblock> block;
-        std::function<std::shared_ptr<minimalblock>()> read_nodes;
-        size_t pos;
-};
-
-
 class WayNodeLocs {
     public:
-        WayNodeLocs(const std::string& source_filename,const std::vector<int64>& source_locs, size_t numchan, std::function<void(std::shared_ptr<wnls>)> expand_all_) :
-            expand_all(expand_all_), missing(0) {
-                
-                
-            read_node = std::make_shared<next_node>(inverted_callback<minimalblock>::make([source_filename,numchan,&source_locs](std::function<void(std::shared_ptr<minimalblock>)> cb) {
-                read_blocks_minimalblock(source_filename, cb, source_locs, numchan, 49);
-            }));
-                
-            curr=read_node->next();
-            pid = getpid();
-            
-            
-            atend=0;
-                
-        }
-        
-        
-        static std::function<void(std::shared_ptr<way_nodes>)> make(const std::string& source_filename,const std::vector<int64>& source_locs, size_t numchan, std::function<void(std::shared_ptr<wnls>)> expand_all) {
-            auto ww = std::make_shared<WayNodeLocs>(source_filename,source_locs,numchan,expand_all);
-            return [ww](std::shared_ptr<way_nodes> wns) { ww->call(wns); };
-        }
-        
-        void call(std::shared_ptr<way_nodes> wns) {
-            if (!wns) {
-                while (curr) {
-                    atend++;
-                    curr=read_node->next();
-                }
-                
-                expand_all(nullptr);
-                int64 now=getmemval(pid);
-                
-                
-                
-                logger_progress(100) << "["  << now*1.0/1024.0/1024.0 << "/" << (now-was)*1.0/1024.0/1024.0 << "]"
-                    << " " << atend << " nodes at end, " << missing << " missing";
-                
-                was=now;
-                return;
-            }
-            if (wns->size()==0) { return; }
-            
-            if ((wns->key() % 100)==0) {
-                
-                int64 a=wns->way_at(0); int64 b=wns->node_at(0);
-                size_t li=wns->size()-1;
-                int64 c=wns->way_at(li); int64 d=wns->node_at(li);
-                
-                
-                int64 now=getmemval(pid);
-                
-                logger_progress(50) << "[" << now*1.0/1024.0/1024.0 << "/" << std::setw(12) << (now-was)*1.0/1024.0/1024.0 << "]"
-                    << " way_nodes: " << wns->key() << " " << wns->size()
-                    << " [" << std::setw(12) << a << ", " << std::setw(12) << b << "=>" << std::setw(12) << c << ", " << std::setw(12) << d << "]";
-                
-                was=now;
-            }
-            
-            
-            int64 w,n;
-            
-            auto merged = make_wnls(wns->key(), wns->size());
-            
-            for (size_t pos = 0; pos < wns->size(); pos++) {
-                w= wns->way_at(pos);
-                n= wns->node_at(pos);
-                while ((curr) && curr->id < n) {
-                    curr=read_node->next();
-                }
-                
-                if ((!curr) || (curr->id > n)) {
-                    missing++;
-                } else {
-                    //expand(w, curr->lon, curr->lat);
-                    merged->vals.push_back(wnl{w,curr->lon, curr->lat});
-                }
-            }
-            
-            expand_all(merged);
-            
-        }
-    private:
-        std::shared_ptr<next_node> read_node;
-        std::function<void(std::shared_ptr<wnls>)> expand_all;
-        size_t missing;
-        const minimalnode* curr;
-        size_t pid;
-        int64 was;
-        
-        size_t atend;
-};
-*/            
-class WayNodeLocsAlt {
-    public:
-        WayNodeLocsAlt(std::shared_ptr<WayNodesFile> wnf, std::function<void(std::shared_ptr<wnls>)> expand_all_, int64 minway, int64 maxway) :
+        WayNodeLocs(std::shared_ptr<WayNodesFile> wnf, std::function<void(std::shared_ptr<wnls>)> expand_all_, int64 minway, int64 maxway) :
             expand_all(expand_all_), missing(0), atend(0) {
         
-            next_block = inverted_callback<way_nodes>::make([wnf,minway,maxway](std::function<void(std::shared_ptr<way_nodes>)> ww) {
+            next_block = inverted_callback<WayNodes>::make([wnf,minway,maxway](std::function<void(std::shared_ptr<WayNodes>)> ww) {
                 wnf->read_waynodes(ww, minway, maxway);
             });
             pid = getpid();
@@ -409,8 +208,8 @@ class WayNodeLocsAlt {
         std::function<void(std::shared_ptr<wnls>)> expand_all;
         size_t missing;
         size_t atend;
-        std::function<std::shared_ptr<way_nodes>()> next_block;
-        std::shared_ptr<way_nodes> block;
+        std::function<std::shared_ptr<WayNodes>()> next_block;
+        std::shared_ptr<WayNodes> block;
         size_t pos;
         std::shared_ptr<wnls> curr;
         
@@ -496,7 +295,7 @@ class ExpandBoxes {
         
         
         
-        void calculate(std::shared_ptr<qtstore_split> qts, double buffer, size_t maxdepth) {
+        void calculate(std::shared_ptr<QtStoreSplit> qts, double buffer, size_t maxdepth) {
             int64 now=getmemval(pid);
             logger_message() << "[" << std::setw(8)  << cc << " tiles, " << std::setw(12) << now*1.0/1024.0/1024.0  << "]";
             int64 was=now;
@@ -537,7 +336,7 @@ void find_way_quadtrees(
     const std::string& source_filename,
     const std::vector<int64>& source_locs, 
     size_t numchan,
-    std::shared_ptr<qtstore_split> way_qts,
+    std::shared_ptr<QtStoreSplit> way_qts,
     std::shared_ptr<WayNodesFile> wns,
     double buffer, size_t max_depth,int64 minway, int64 maxway) {
     
@@ -550,12 +349,7 @@ void find_way_quadtrees(
     auto expand_all = [expand](std::shared_ptr<wnls> ww) { expand->expand_all(ww); };
     
     
-    //auto wnlocs = WayNodeLocs::make(source_filename, source_locs, numchan, expand_all); 
-    
-    //wns->read_waynodes(wnlocs, minway, maxway);
-    
-    
-    auto wnla = std::make_shared<WayNodeLocsAlt>(wns, expand_all, minway, maxway);
+    auto wnla = std::make_shared<WayNodeLocs>(wns, expand_all, minway, maxway);
     read_blocks_minimalblock(source_filename, [wnla](std::shared_ptr<minimalblock> mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
     
     

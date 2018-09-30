@@ -47,12 +47,12 @@ namespace oqt {
 
 class WaynodesQts {
     public:
-        typedef std::function<void(std::shared_ptr<qtstore>)> callback;
+        typedef std::function<void(std::shared_ptr<QtStore>)> callback;
         
-        WaynodesQts(callback cb_, std::shared_ptr<qtstore> qts_)
+        WaynodesQts(callback cb_, std::shared_ptr<QtStore> qts_)
             : qts(qts_), cb(cb_), nmissing(0) {}
         
-        void call(std::shared_ptr<way_nodes> curr) {
+        void call(std::shared_ptr<WayNodes> curr) {
             if (!curr) {
                 logger_message() << "had " << nmissing << " missing ways";
                 cb(nullptr);
@@ -67,7 +67,7 @@ class WaynodesQts {
             int64 mx = mn + (1<<20);
             
             
-            auto out = make_qtstore_arr(mn, mx, curr->key());
+            auto out = make_qtstore_vector(mn, mx, curr->key());
             
             for (size_t i=0; i < curr->size(); i++) {
                 
@@ -88,7 +88,7 @@ class WaynodesQts {
         
     private:
         
-        std::shared_ptr<qtstore> qts;
+        std::shared_ptr<QtStore> qts;
         callback cb;
         size_t nmissing;
 };
@@ -96,13 +96,13 @@ class WaynodesQts {
 
 
 void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,
-    const std::vector<int64>& node_locs, std::shared_ptr<qtstore_split> way_qts,
-    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<calculate_relations> rels, double buffer, size_t max_depth) {
+    const std::vector<int64>& node_locs, std::shared_ptr<QtStoreSplit> way_qts,
+    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<CalculateRelations> rels, double buffer, size_t max_depth) {
     
     
-    auto node_qts = inverted_callback<qtstore>::make([wns,way_qts](std::function<void(std::shared_ptr<qtstore>)> cb) {
+    auto node_qts = inverted_callback<QtStore>::make([wns,way_qts](std::function<void(std::shared_ptr<QtStore>)> cb) {
         auto nn = std::make_shared<WaynodesQts>(cb, way_qts);
-        auto nncb = threaded_callback<way_nodes>::make([nn](std::shared_ptr<way_nodes> x) { nn->call(x); });
+        auto nncb = threaded_callback<WayNodes>::make([nn](std::shared_ptr<WayNodes> x) { nn->call(x); });
         wns->read_waynodes(nncb, 0, 0);
     });
     
@@ -187,7 +187,7 @@ int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numc
     auto lg=get_logger();
     std::string waynodes_fn = qtsfn+"-waynodes";
     
-    std::shared_ptr<calculate_relations> rels;
+    std::shared_ptr<CalculateRelations> rels;
     std::shared_ptr<WayNodesFile> wns;
      
     std::string nodes_fn;
@@ -201,7 +201,7 @@ int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numc
    // logger_message() << "trim ? " << (trim_memory() ? "yes" : "no");
     //logger_message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
     
-    std::shared_ptr<qtstore_split> way_qts = make_qtstore_split(1<<20,true);
+    std::shared_ptr<QtStoreSplit> way_qts = make_qtstore_split(1<<20,true);
     
     
     

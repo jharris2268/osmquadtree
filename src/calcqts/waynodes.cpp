@@ -37,18 +37,15 @@ bool sort_cmp_first(const std::pair<T1,T2>& l, const std::pair<T1,T2>& r) {
 }
 
 
-class way_nodes_impl : public way_nodes_write {
-    typedef std::pair<int64,int64> wn;
-    std::vector<wn> waynodes;
-    size_t l;
-    int64 key_;
+class WayNodesImpl : public WayNodesWrite {
+    
     
     public:
-        way_nodes_impl(size_t cap) : waynodes(cap), l(0),key_(-1) {};
-        way_nodes_impl(size_t cap, int64 k) : waynodes(cap), l(0),key_(k) {};
+        WayNodesImpl(size_t cap) : waynodes(cap), l(0),key_(-1) {};
+        WayNodesImpl(size_t cap, int64 k) : waynodes(cap), l(0),key_(k) {};
 
 
-        virtual ~way_nodes_impl() {}
+        virtual ~WayNodesImpl() {}
 
 
         virtual bool add(int64 w, int64 n, bool resize) {
@@ -113,18 +110,20 @@ class way_nodes_impl : public way_nodes_write {
         virtual int64 way_at(size_t i) const { return waynodes.at(i).first; }
         virtual int64 node_at(size_t i) const { return waynodes.at(i).second; }
 
+    private:
+        typedef std::pair<int64,int64> wn;
+        std::vector<wn> waynodes;
+        size_t l;
+        int64 key_;
        
 };
 
-std::shared_ptr<way_nodes> make_way_nodes(size_t cap, int64 key) {
-    return std::make_shared<way_nodes_impl>(cap,key);
-}
-std::shared_ptr<way_nodes_write> make_way_nodes_write(size_t cap, int64 key) {
-    return std::make_shared<way_nodes_impl>(cap,key);
+std::shared_ptr<WayNodesWrite> make_way_nodes_write(size_t cap, int64 key) {
+    return std::make_shared<WayNodesImpl>(cap,key);
 }
 
 
-keystring_ptr pack_waynodes_block(std::shared_ptr<way_nodes> tile) {
+keystring_ptr pack_waynodes_block(std::shared_ptr<WayNodes> tile) {
     size_t sz=tile->size();
     
     size_t node_len = packedDeltaLength_func([&tile](size_t i) { return tile->node_at(i); }, sz);
@@ -157,7 +156,7 @@ keystring_ptr pack_waynodes_block(std::shared_ptr<way_nodes> tile) {
     
 }
     
-void unpack_noderefs(const std::string& data, int64 key, way_nodes_impl& waynodes, int64 minway, int64 maxway) {
+void unpack_noderefs(const std::string& data, int64 key, WayNodesImpl& waynodes, int64 minway, int64 maxway) {
     size_t pos=0;
     PbfTag tag = readPbfTag(data,pos);
     std::string nn,ww;
@@ -190,7 +189,7 @@ void unpack_noderefs(const std::string& data, int64 key, way_nodes_impl& waynode
    }
 }
 
-std::shared_ptr<way_nodes> read_waynodes_block(const std::string& data, int64 minway, int64 maxway) {
+std::shared_ptr<WayNodes> read_waynodes_block(const std::string& data, int64 minway, int64 maxway) {
     size_t pos=0;
     PbfTag tag = readPbfTag(data,pos);
     std::string nn,ww;
@@ -213,7 +212,7 @@ std::shared_ptr<way_nodes> read_waynodes_block(const std::string& data, int64 mi
     size_t wp=0;
     int64 nd=0,wy=0;
     
-    auto res = std::make_shared<way_nodes_impl>(sz,ky);
+    auto res = std::make_shared<WayNodesImpl>(sz,ky);
     
     while (np < nn.size()) {
         nd += readVarint(nn,np);

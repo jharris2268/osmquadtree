@@ -34,23 +34,25 @@ namespace oqt {
     
 
 
-class qtstore_split_impl : public qtstore_split {
+class QtStoreSplitImpl : public QtStoreSplit {
     public:
-        qtstore_split_impl(int64 splitat, bool use_arr) : splitat_(splitat), use_arr_(use_arr) {};
-        qtstore_split_impl(int64 splitat, bool use_arr, std::map<int64,std::shared_ptr<qtstore>> tiles_) : splitat_(splitat), use_arr_(use_arr), tiles(tiles_) {};
+        QtStoreSplitImpl(int64 splitat, bool use_arr) : splitat_(splitat), use_arr_(use_arr) {};
+        QtStoreSplitImpl(int64 splitat, bool use_arr, std::map<int64,std::shared_ptr<QtStore>> tiles_) : splitat_(splitat), use_arr_(use_arr), tiles(tiles_) {};
+
+        virtual ~QtStoreSplitImpl() {}
 
         virtual void expand(int64 ref, int64 qt) {
             get_tile(ref,true)->expand(ref,qt);
         }
 
         virtual int64 at(int64 ref) {
-            std::shared_ptr<qtstore> tile = get_tile(ref,false);
+            std::shared_ptr<QtStore > tile = get_tile(ref,false);
             if (!tile) { return -1; }
             return tile->at(ref);
         };
 
         virtual bool contains(int64 ref) {
-            std::shared_ptr<qtstore> tile = get_tile(ref,false);
+            std::shared_ptr<QtStore> tile = get_tile(ref,false);
             if (!tile) { return false; }
             return tile->contains(ref);
         };
@@ -77,7 +79,7 @@ class qtstore_split_impl : public qtstore_split {
             return tiles.rbegin()->first + 1;
         }
 
-        virtual std::shared_ptr<qtstore> tile(size_t i) {
+        virtual std::shared_ptr<QtStore> tile(size_t i) {
             return get_tile_key(i,false);
         }
 
@@ -86,17 +88,17 @@ class qtstore_split_impl : public qtstore_split {
         
 
 
-        void add_tile(size_t i, std::shared_ptr<qtstore> qts) {
+        void add_tile(size_t i, std::shared_ptr<QtStore> qts) {
             if (tiles.count(i)) {
                 throw std::domain_error("already have tile");
             }
             tiles[i]=qts;
         }
         
-        void merge(std::shared_ptr<qtstore_split> other_in) {
-            auto other = std::dynamic_pointer_cast<qtstore_split_impl>(other_in);
+        void merge(std::shared_ptr<QtStoreSplit> other_in) {
+            auto other = std::dynamic_pointer_cast<QtStoreSplitImpl>(other_in);
             if (!other) {
-                throw std::domain_error("not a qtstore_split_impl??");
+                throw std::domain_error("not a QtStoreSplitImpl??");
             }
 
             for (auto& bl : other->tiles) {
@@ -114,36 +116,36 @@ class qtstore_split_impl : public qtstore_split {
         int64 splitat_;
         bool use_arr_;
 
-        std::shared_ptr<qtstore> get_tile(int64 ref, bool create) {
+        std::shared_ptr<QtStore> get_tile(int64 ref, bool create) {
             return get_tile_key(ref/splitat_, create);
         }
-        std::shared_ptr<qtstore> get_tile_key(int64 k, bool create) {
+        std::shared_ptr<QtStore> get_tile_key(int64 k, bool create) {
             if (tiles.count(k)>0) {
                 return tiles[k];
             }
-            if (!create) { return std::shared_ptr<qtstore>(); }
+            if (!create) { return std::shared_ptr<QtStore>(); }
             if (use_arr_) {
-                tiles[k] = make_qtstore_arr(k*splitat_, (k+1)*splitat_,k);
+                tiles[k] = make_qtstore_vector(k*splitat_, (k+1)*splitat_,k);
             } else {
                 tiles[k] = make_qtstore_map();
             }
             return tiles[k];
         }
 
-        std::map<int64, std::shared_ptr<qtstore>> tiles;
+        std::map<int64, std::shared_ptr<QtStore>> tiles;
 };
 
 
-std::shared_ptr<qtstore_split> make_qtstore_split(int64 splitat, bool usearr) {
-    return std::make_shared<qtstore_split_impl>(splitat,usearr);
+std::shared_ptr<QtStoreSplit> make_qtstore_split(int64 splitat, bool usearr) {
+    return std::make_shared<QtStoreSplitImpl>(splitat,usearr);
 }
-std::shared_ptr<qtstore_split> combine_qtstores(std::vector<std::shared_ptr<qtstore_split>> src) {
+std::shared_ptr<QtStoreSplit> combine_qtstores(std::vector<std::shared_ptr<QtStoreSplit>> src) {
     if (src.empty()) { throw std::domain_error("??"); }
     if (!src.front()) { throw std::domain_error("??"); }
     int64 splitat= src.front()->split_at();
     bool use_arr = src.front()->use_arr();
 
-    std::map<int64,std::shared_ptr<qtstore>> qts;
+    std::map<int64,std::shared_ptr<QtStore>> qts;
 
     for (const auto& store : src) {
         if (!store) { throw std::domain_error("??"); }
@@ -160,7 +162,7 @@ std::shared_ptr<qtstore_split> combine_qtstores(std::vector<std::shared_ptr<qtst
             }
         }
     }
-    return std::make_shared<qtstore_split_impl>(splitat, use_arr,qts);
+    return std::make_shared<QtStoreSplitImpl>(splitat, use_arr,qts);
 }
 
 }

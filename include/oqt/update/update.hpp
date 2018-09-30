@@ -39,8 +39,8 @@ std::vector<PrimitiveBlockPtr> read_file_blocks(
     size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids);
 
 std::tuple<
-    std::shared_ptr<qtstore>, //orig allocs
-    std::shared_ptr<qtstore>, //qts
+    std::shared_ptr<QtStore>, //orig allocs
+    std::shared_ptr<QtStore>, //qts
     std::shared_ptr<qttree>   //tree
 > add_orig_elements(
         typeid_element_map_ptr objs,
@@ -48,8 +48,8 @@ std::tuple<
         const std::vector<std::string>& fls);
 
 std::tuple<
-    std::shared_ptr<qtstore>, //orig allocs
-    std::shared_ptr<qtstore>, //qts
+    std::shared_ptr<QtStore>, //orig allocs
+    std::shared_ptr<QtStore>, //qts
     std::shared_ptr<qttree>   //tree
 > add_orig_elements_alt(
         typeid_element_map_ptr objs,
@@ -58,11 +58,11 @@ std::tuple<
 
 
 
-void calc_change_qts(typeid_element_map_ptr objs, std::shared_ptr<qtstore> qts);
+void calc_change_qts(typeid_element_map_ptr objs, std::shared_ptr<QtStore> qts);
 
 std::vector<PrimitiveBlockPtr> find_change_tiles(
     typeid_element_map_ptr objs,
-    std::shared_ptr<qtstore> orig_allocs,
+    std::shared_ptr<QtStore> orig_allocs,
     std::shared_ptr<qttree> tree,
     int64 startdate,
     int64 enddate);

@@ -31,9 +31,6 @@
 #include "oqt/calcqts/qtstoresplit.hpp"
 #include "oqt/calcqts/writeqts.hpp"
 
-#include "oqt/calcqts/calculaterelations.hpp"
-#include "oqt/calcqts/waynodes.hpp"
-#include "oqt/calcqts/waynodesfile.hpp"
 
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/utils/pbf/packedint.hpp"

@@ -26,7 +26,7 @@
 #include "oqt/common.hpp"
 
 namespace oqt {
-class qtstore {
+class QtStore {
     public:
         virtual void expand(int64 ref, int64 quadtree)=0;
         virtual int64 at(int64 ref)=0;
@@ -38,11 +38,11 @@ class qtstore {
         
         virtual int64 key()=0;
         virtual std::pair<int64,int64> ref_range()=0;
-        virtual ~qtstore() {}
+        virtual ~QtStore() {}
 };
 
-std::shared_ptr<qtstore> make_qtstore_map();
-std::shared_ptr<qtstore> make_qtstore_arr(int64 min, int64 max, int64 key);
-std::shared_ptr<qtstore> make_qtstore_arr_alt(std::vector<int64>&& pts, int64 min, size_t count, int64 k);
+std::shared_ptr<QtStore> make_qtstore_map();
+std::shared_ptr<QtStore> make_qtstore_vector(int64 min, int64 max, int64 key);
+std::shared_ptr<QtStore> make_qtstore_vector_move(std::vector<int64>&& pts, int64 min, size_t count, int64 k);
 }
 #endif

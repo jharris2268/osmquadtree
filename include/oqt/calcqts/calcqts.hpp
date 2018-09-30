@@ -39,14 +39,14 @@ void find_way_quadtrees(
     const std::string& source_filename,
     const std::vector<int64>& source_locs, 
     size_t numchan,
-    std::shared_ptr<qtstore_split> way_qts,
+    std::shared_ptr<QtStoreSplit> way_qts,
     std::shared_ptr<WayNodesFile> wns,
     double buffer, size_t max_depth,int64 minway, int64 maxway);
 
 
 void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,
-    const std::vector<int64>& node_locs, std::shared_ptr<qtstore_split> way_qts,
-    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<calculate_relations> rels, double buffer, size_t max_depth);
+    const std::vector<int64>& node_locs, std::shared_ptr<QtStoreSplit> way_qts,
+    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<CalculateRelations> rels, double buffer, size_t max_depth);
 
 }
 #endif

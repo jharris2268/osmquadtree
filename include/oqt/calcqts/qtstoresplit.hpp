@@ -25,20 +25,20 @@
 
 #include "oqt/calcqts/qtstore.hpp"
 namespace oqt {
-class qtstore_split : public qtstore {
+class QtStoreSplit : public QtStore {
     public:
         virtual int64 split_at()=0;
         virtual size_t num_tiles()=0;
         virtual size_t last_tile()=0;
         virtual bool use_arr()=0;
-        virtual std::shared_ptr<qtstore> tile(size_t i)=0;
+        virtual std::shared_ptr<QtStore> tile(size_t i)=0;
 
-        virtual void add_tile(size_t i, std::shared_ptr<qtstore> t)=0;
-        virtual void merge(std::shared_ptr<qtstore_split>)=0;
-        virtual ~qtstore_split() {}
+        virtual void add_tile(size_t i, std::shared_ptr<QtStore> t)=0;
+        virtual void merge(std::shared_ptr<QtStoreSplit>)=0;
+        virtual ~QtStoreSplit() {}
 
 };
-std::shared_ptr<qtstore_split> make_qtstore_split(int64 splitat, bool usearr);
+std::shared_ptr<QtStoreSplit> make_qtstore_split(int64 splitat, bool usearr);
 }
 
 

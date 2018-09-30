@@ -341,7 +341,7 @@ std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check
     return std::make_tuple(tree, outfl, locs);
 }
 
-std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qttree>> add_orig_elements_alt(
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>> add_orig_elements_alt(
     typeid_element_map_ptr em, const std::string& prfx, const std::vector<std::string>& fls) {
     
     auto ids = make_idset(em);
@@ -374,7 +374,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
     
 
 
-std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qttree>> add_orig_elements(
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>> add_orig_elements(
     typeid_element_map_ptr em, const std::string& prfx, const std::vector<std::string>& fls) {
 
 
@@ -451,7 +451,7 @@ std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qtt
     return std::make_tuple(allocs, qts,tree);
 }
 
-void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
+void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
     std::set<int64> nq;
     logger_message() << "calc way qts";
     for (auto& pp : (*em)) {
@@ -560,7 +560,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<qtstore> qts) {
 }
 
 std::vector<PrimitiveBlockPtr> find_change_tiles(
-    typeid_element_map_ptr em, std::shared_ptr<qtstore> orig_allocs,
+    typeid_element_map_ptr em, std::shared_ptr<QtStore> orig_allocs,
     std::shared_ptr<qttree> tree, int64 ss, int64 ee) {
 
     std::map<int64, PrimitiveBlockPtr> tiles;
@@ -610,7 +610,7 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
 
     gzstream::igzstream src_fl(src.c_str());
     read_xml_change_file_em(&src_fl, objs, true);
-    std::shared_ptr<qtstore> qts, orig_allocs;
+    std::shared_ptr<QtStore> qts, orig_allocs;
     std::shared_ptr<qttree> tree;
     std::tie(orig_allocs,qts,tree) =  add_orig_elements(objs, prfx, fls);
     calc_change_qts(objs, qts);

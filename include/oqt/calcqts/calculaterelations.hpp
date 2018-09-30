@@ -28,20 +28,20 @@
 #include "oqt/calcqts/qtstore.hpp"
 #include "oqt/calcqts/waynodes.hpp"
 namespace oqt {
-class calculate_relations {
+class CalculateRelations {
     public:
         
         virtual void add_nodes(std::shared_ptr<minimalblock>)=0;
-        virtual void add_ways(std::shared_ptr<qtstore>)=0;
+        virtual void add_ways(std::shared_ptr<QtStore>)=0;
         
         virtual void finish_alt(std::function<void(int64,int64)>)=0;
 
         virtual std::string str()=0;
         virtual void add_relations_data(std::shared_ptr<minimalblock> data)=0;
-        virtual ~calculate_relations() {}
+        virtual ~CalculateRelations() {}
 };
 
-std::shared_ptr<calculate_relations> make_calculate_relations();
+std::shared_ptr<CalculateRelations> make_calculate_relations();
 }
 
 #endif

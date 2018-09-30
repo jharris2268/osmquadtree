@@ -29,7 +29,7 @@ namespace oqt {
 
 class MergeWayNodes {
     public:
-        typedef std::function<void(std::shared_ptr<way_nodes>)> callback;
+        typedef std::function<void(std::shared_ptr<WayNodes>)> callback;
         MergeWayNodes(callback cb_) : cb(cb_), key(-1) {
             
         }
@@ -57,14 +57,14 @@ class MergeWayNodes {
             curr->sort_node();
             
             cb(curr);
-            std::vector<std::shared_ptr<way_nodes>> x;
+            std::vector<std::shared_ptr<WayNodes>> x;
             temp.swap(x);
         }
             
             
         
         
-        void call(std::shared_ptr<way_nodes> wns) {
+        void call(std::shared_ptr<WayNodes> wns) {
             if (!wns) {
                 finish_temp();
                                 
@@ -89,18 +89,18 @@ class MergeWayNodes {
         
         callback cb;
         
-        std::vector<std::shared_ptr<way_nodes>> temp;
+        std::vector<std::shared_ptr<WayNodes>> temp;
         int64 key;
         
         
 };
-void read_merged_waynodes(const std::string& fn, const std::vector<int64>& locs, std::function<void(std::shared_ptr<way_nodes>)> cb, int64 minway, int64 maxway) {
+void read_merged_waynodes(const std::string& fn, const std::vector<int64>& locs, std::function<void(std::shared_ptr<WayNodes>)> cb, int64 minway, int64 maxway) {
     
     auto merged_waynodes = std::make_shared<MergeWayNodes>(cb);
     
-    auto mwns = [merged_waynodes](std::shared_ptr<way_nodes> s) { merged_waynodes->call(s); };
+    auto mwns = [merged_waynodes](std::shared_ptr<WayNodes> s) { merged_waynodes->call(s); };
 
-    auto read_waynode_func = [minway,maxway](std::shared_ptr<FileBlock> fb) -> std::shared_ptr<way_nodes> {
+    auto read_waynode_func = [minway,maxway](std::shared_ptr<FileBlock> fb) -> std::shared_ptr<WayNodes> {
         if (!fb) { 
             return nullptr;
         }
@@ -112,7 +112,7 @@ void read_merged_waynodes(const std::string& fn, const std::vector<int64>& locs,
         
         return read_waynodes_block(unc,minway,maxway);
     };
-    read_blocks_convfunc<way_nodes>(fn, mwns, locs, 4, read_waynode_func);
+    read_blocks_convfunc<WayNodes>(fn, mwns, locs, 4, read_waynode_func);
 }
 
 
@@ -122,7 +122,7 @@ class WayNodesFileImpl : public WayNodesFile {
            
         }
         virtual ~WayNodesFileImpl() {}
-        virtual void read_waynodes(std::function<void(std::shared_ptr<way_nodes>)> cb, int64 minway, int64 maxway) {
+        virtual void read_waynodes(std::function<void(std::shared_ptr<WayNodes>)> cb, int64 minway, int64 maxway) {
             read_merged_waynodes(fn, ll, cb, minway, maxway);
         }
         

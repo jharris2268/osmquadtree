@@ -68,19 +68,19 @@ void read_xml_change_file_em_py(std::string fn, bool isgzip, element_map& em, bo
     return read_xml_change_file_em(&f,em.u, allow_missing_users);
 }
 
-std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qttree>>
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>>
     add_orig_elements_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
     py::gil_scoped_release r;
     return add_orig_elements(em.u,prfx,fls);
 }
 
-std::tuple<std::shared_ptr<qtstore>,std::shared_ptr<qtstore>,std::shared_ptr<qttree>>
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>>
     add_orig_elements_alt_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
     py::gil_scoped_release r;
     return add_orig_elements_alt(em.u,prfx,fls);
 }
 
-std::vector<PrimitiveBlockPtr> find_change_tiles_py(element_map& em, std::shared_ptr<qtstore> orig_allocs,
+std::vector<PrimitiveBlockPtr> find_change_tiles_py(element_map& em, std::shared_ptr<QtStore> orig_allocs,
     std::shared_ptr<qttree> tree,
     int64 startdate,
     int64 enddate){
@@ -91,7 +91,7 @@ std::vector<PrimitiveBlockPtr> find_change_tiles_py(element_map& em, std::shared
 
 
 
-void calc_change_qts_py(element_map& em, std::shared_ptr<qtstore> qts) {
+void calc_change_qts_py(element_map& em, std::shared_ptr<QtStore> qts) {
     py::gil_scoped_release r;
     calc_change_qts(em.u, qts);
 }
@@ -257,13 +257,13 @@ void change_defs(py::module& m) {
         })
     ;
 
-    py::class_<qtstore, std::shared_ptr<qtstore>>(m,"qtstore")
-        .def("__getitem__", [](qtstore& qq, std::pair<int64,int64> p) { return qq.at((p.first<<61) | p.second);})
-        .def("expand", [](qtstore& qq, int64 t, int64 i, int64 q) { return qq.expand((t<<61) | i, q);})
-        .def("__contains__", [](qtstore& qq, std::pair<int64,int64> p) { return qq.contains((p.first<<61) | p.second);})
-        .def("__len__",&qtstore::size)
-        .def("first", &qtstore::first)
-        .def("next", &qtstore::next)
+    py::class_<QtStore, std::shared_ptr<QtStore>>(m,"QtStore")
+        .def("__getitem__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.at((p.first<<61) | p.second);})
+        .def("expand", [](QtStore& qq, int64 t, int64 i, int64 q) { return qq.expand((t<<61) | i, q);})
+        .def("__contains__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.contains((p.first<<61) | p.second);})
+        .def("__len__",&QtStore::size)
+        .def("first", &QtStore::first)
+        .def("next", &QtStore::next)
     ;
     m.def("make_qtstore", &make_qtstore_map);
 
