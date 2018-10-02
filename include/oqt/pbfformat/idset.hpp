@@ -28,12 +28,13 @@
 
 
 namespace oqt {
-class idset {
+class IdSet {
     public:
         virtual bool contains(ElementType ty, int64 id) const=0;
-        virtual ~idset() {}
+        virtual ~IdSet() {}
 };
 
+typedef std::shared_ptr<IdSet> IdSetPtr;
 
 }
 

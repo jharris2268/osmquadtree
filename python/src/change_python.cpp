@@ -27,7 +27,7 @@ struct element_map {
     typeid_element_map_ptr u;
 };
 
-void add_all_element_map(std::shared_ptr<objs_idset> ii, const element_map& mm) {
+void add_all_element_map(std::shared_ptr<ObjsIdSet> ii, const element_map& mm) {
     if (!mm.u) { return; }
     for (auto& o : (*mm.u)) {
         if (o.second->Type()==ElementType::Node) {
@@ -107,7 +107,7 @@ size_t writeIndexFile_py(const std::string& fn, size_t numchan, const std::strin
     return writeIndexFile(fn,numchan,outfn);
 }
 
-std::set<int64> checkIndexFile_py(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, std::shared_ptr<idset> ids) {
+std::set<int64> checkIndexFile_py(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids) {
     py::gil_scoped_release r;
     return checkIndexFile(idxfn,head,numchan,ids);
 }
@@ -292,7 +292,7 @@ void change_defs(py::module& m) {
     });
     m.def("read_xml_change_file_em", &read_xml_change_file_em_py);
 
-    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids   ) {
+    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, size_t objflags, IdSetPtr ids   ) {
         py::gil_scoped_release r;
         return read_file_blocks(fn,locs,numchan,index_offset,change,objflags,ids);
     });

@@ -32,11 +32,11 @@
 namespace oqt {
 std::shared_ptr<header> getHeaderBlock(const std::string& fn);
 size_t writeIndexFile(const std::string& srcfn, size_t numchan, const std::string& destfn);
-std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, std::shared_ptr<idset> ids);
+std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids);
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
-    size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids);
+    size_t index_offset, bool change, size_t objflags, IdSetPtr ids);
 
 std::tuple<
     std::shared_ptr<QtStore>, //orig allocs

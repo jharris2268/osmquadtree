@@ -27,22 +27,22 @@
 namespace oqt {
 
 
-bool objs_idset::contains(ElementType ty, int64 id) const {
+bool ObjsIdSet::contains(ElementType ty, int64 id) const {
     if (ty==ElementType::Node) { return nodes_.count(id); }
     if (ty==ElementType::Way) { return ways_.count(id); }
     if (ty==ElementType::Relation) { return relations_.count(id); }
     return false;
 }
-void objs_idset::add(ElementType t, int64 i) {
+void ObjsIdSet::add(ElementType t, int64 i) {
     if (t==ElementType::Node) { nodes_.insert(i); }
     else if (t==ElementType::Way) { ways_.insert(i); }
     else if (t==ElementType::Relation) { relations_.insert(i); }
 }
-void objs_idset::add_node(std::shared_ptr<Node> nn) {
+void ObjsIdSet::add_node(std::shared_ptr<Node> nn) {
     nodes_.insert(nn->Id());
 }
 
-void objs_idset::add_way(std::shared_ptr<Way> ww) {
+void ObjsIdSet::add_way(std::shared_ptr<Way> ww) {
     ways_.insert(ww->Id());
     for (auto& r : ww->Refs()) {
         nodes_.insert(r);
@@ -50,7 +50,7 @@ void objs_idset::add_way(std::shared_ptr<Way> ww) {
 
 }
 
-void objs_idset::add_relation(std::shared_ptr<Relation> rr) {
+void ObjsIdSet::add_relation(std::shared_ptr<Relation> rr) {
     relations_.insert(rr->Id());
     for (auto& m: rr->Members()) {
         if (m.type==ElementType::Node) { nodes_.insert(m.ref); }
@@ -58,7 +58,7 @@ void objs_idset::add_relation(std::shared_ptr<Relation> rr) {
         else if (m.type==ElementType::Relation) { relations_.insert(m.ref);}                
     }
 }
-void objs_idset::add_all(PrimitiveBlockPtr pb) {
+void ObjsIdSet::add_all(PrimitiveBlockPtr pb) {
     for (auto& o : pb->Objects()) {
         if (o->Type()==ElementType::Node) {
             auto n = std::dynamic_pointer_cast<Node>(o);

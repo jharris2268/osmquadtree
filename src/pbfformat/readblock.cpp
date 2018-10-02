@@ -76,7 +76,7 @@ tagvector makeTags(
 
 
 std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
-    readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, std::shared_ptr<idset> ids) {
+    readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, IdSetPtr ids) {
 
 
     std::vector<uint64> keys,vals;
@@ -112,7 +112,7 @@ std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
 
 ElementPtr readNode(
         const std::string& data, const std::vector<std::string>& stringtable,
-        changetype ct, std::shared_ptr<idset> ids) {
+        changetype ct, IdSetPtr ids) {
     int64 id,qt;
     
     info inf; tagvector tags;
@@ -152,7 +152,7 @@ std::tuple<std::vector<uint64>,std::vector<int64>,std::vector<int64>,std::vector
     }
     return std::make_tuple(vs,ts,cs,ui,us,vv);
 }
-bool has_an_id(std::shared_ptr<idset> id_set, ElementType ty, const std::vector<int64>& ids) {
+bool has_an_id(IdSetPtr id_set, ElementType ty, const std::vector<int64>& ids) {
     for (auto& i: ids) {
         if (id_set->contains(ty, i)){
             return true;
@@ -163,7 +163,7 @@ bool has_an_id(std::shared_ptr<idset> id_set, ElementType ty, const std::vector<
 
 int readDenseNodes(
         const std::string& data, const std::vector<std::string>& stringtable,
-        changetype ct, std::vector<ElementPtr >& objects, std::shared_ptr<idset> id_set) {
+        changetype ct, std::vector<ElementPtr >& objects, IdSetPtr id_set) {
 
     std::vector<int64> ids, lons, lats, qts;
     std::vector<uint64> kvs;
@@ -243,7 +243,7 @@ int readDenseNodes(
     return pp;
 }
 
-ElementPtr readWay(const std::string& data, const std::vector<std::string>& stringtable, changetype ct, std::shared_ptr<idset> ids) {
+ElementPtr readWay(const std::string& data, const std::vector<std::string>& stringtable, changetype ct, IdSetPtr ids) {
 
     int64 id,qt;
 
@@ -266,7 +266,7 @@ ElementPtr readWay(const std::string& data, const std::vector<std::string>& stri
 }
 
 ElementPtr readRelation(const std::string& data, const std::vector<std::string>& stringtable,
-        changetype ct, std::shared_ptr<idset> ids) {
+        changetype ct, IdSetPtr ids) {
     int64 id,qt;
 
     info inf; tagvector tags;
@@ -325,7 +325,7 @@ ElementPtr readGeometry_default(ElementType ty, const std::string& data, const s
 void readPrimitiveGroupCommon(
         const std::string& data, const std::vector<std::string>& stringtable,
         std::vector<ElementPtr >& objects,
-        changetype ct, size_t objflags, std::shared_ptr<idset> ids,
+        changetype ct, size_t objflags, IdSetPtr ids,
         read_geometry_func readGeometry) {
 
     
@@ -362,7 +362,7 @@ void readPrimitiveGroupCommon(
     return;
 }
 
-void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<ElementPtr >& objects, bool change, size_t objflags, std::shared_ptr<idset> ids,read_geometry_func readGeometry) {
+void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<ElementPtr >& objects, bool change, size_t objflags, IdSetPtr ids,read_geometry_func readGeometry) {
 
     
 
@@ -458,7 +458,7 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
 
 
 
-PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool change, size_t objflags, std::shared_ptr<idset> ids, read_geometry_func readGeometry) {
+PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
 
 
     std::vector<std::string> stringtable;

@@ -36,7 +36,7 @@ class Relation : public Element {
         
         virtual ElementPtr copy();
         
-        bool filter_members(std::shared_ptr<idset> ids);
+        bool filter_members(IdSetPtr ids);
         friend bool fix_members(Relation& rel);
     private:
         memvector mems_;

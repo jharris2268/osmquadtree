@@ -53,7 +53,7 @@ std::list<PbfTag> Relation::pack_extras() const {
 }
 */
 
-bool Relation::filter_members(std::shared_ptr<idset> ids) {
+bool Relation::filter_members(IdSetPtr ids) {
     if (mems_.empty()) { return true; }
     memvector mems_new;
     mems_new.reserve(mems_.size());

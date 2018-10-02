@@ -1096,7 +1096,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry(const geometry_parameter
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, std::shared_ptr<idset>(), 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
       
     
     return std::make_pair(0,errors_res);
@@ -1118,7 +1118,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks(const geometr
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, std::shared_ptr<idset>(), 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
     
     
     sb->finish();
@@ -1168,7 +1168,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_nothread(const geometry_
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(params.filenames, addwns, params.locs, std::shared_ptr<idset>(), 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, 7);
       
     
     return std::make_pair(cb->total(),errors_res);
@@ -1190,7 +1190,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread(con
             [&errors_res](geometry::mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(params.filenames, addwns, params.locs, std::shared_ptr<idset>(), 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, 7);
       
     
     return std::make_pair(cb->total(),errors_res);

@@ -51,7 +51,7 @@ int64 make_internalid(ElementType ty, int64 rf) {
 }
 
 
-bool has_id(ElementType ty, const std::string& id_data, std::shared_ptr<idset> ids) {
+bool has_id(ElementType ty, const std::string& id_data, IdSetPtr ids) {
     size_t id_pos=0;
     int64 id=0;
     while ( (id_pos < id_data.size())) {
@@ -64,7 +64,7 @@ bool has_id(ElementType ty, const std::string& id_data, std::shared_ptr<idset> i
     return false;
 }
 
-void checkIndexBlock(const std::string& ss, std::shared_ptr<idset> ids, std::shared_ptr<std::set<int64>> blocks) {
+void checkIndexBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set<int64>> blocks) {
 
     size_t pos=0;
 
@@ -202,7 +202,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
 
 
 
-void checkIdxBlock(const std::string& ss, std::shared_ptr<idset> ids, std::shared_ptr<std::set<int64>> blocks, std::shared_ptr<header> head) {
+void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set<int64>> blocks, std::shared_ptr<header> head) {
     size_t pos=0;
     std::string id_data,bl_data;
 
@@ -222,7 +222,7 @@ void checkIdxBlock(const std::string& ss, std::shared_ptr<idset> ids, std::share
     }
 }
 
-std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, std::shared_ptr<idset> ids) {
+std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids) {
     if ((numchan==0) || (numchan > 8)) {
         throw std::domain_error("numchan should be between 1 and 8");
     }
@@ -265,7 +265,7 @@ std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header>
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
-    size_t index_offset, bool change, size_t objflags, std::shared_ptr<idset> ids) {
+    size_t index_offset, bool change, size_t objflags, IdSetPtr ids) {
 
 
     
@@ -285,8 +285,8 @@ std::vector<PrimitiveBlockPtr> read_file_blocks(
     return res;
 }
 
-std::shared_ptr<objs_idset> make_idset(typeid_element_map_ptr em) {
-    auto ids = std::make_shared<objs_idset>();
+IdSetPtr make_idset(typeid_element_map_ptr em) {
+    auto ids = std::make_shared<ObjsIdSet>();
     for (auto& tie : *em) {
         ids->add(tie.first.first, tie.first.second);
         if (tie.first.first==ElementType::Way) {
@@ -304,7 +304,7 @@ std::shared_ptr<objs_idset> make_idset(typeid_element_map_ptr em) {
     return ids;
 }
 
-std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check_index_files(const std::string& prfx, const std::vector<std::string>& fls, std::shared_ptr<idset> ids) {
+std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check_index_files(const std::string& prfx, const std::vector<std::string>& fls, IdSetPtr ids) {
     
     src_locs_map locs_all;
     std::set<int64> passed;

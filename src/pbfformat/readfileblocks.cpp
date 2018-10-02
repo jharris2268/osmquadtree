@@ -28,7 +28,7 @@ namespace oqt {
     
 PrimitiveBlockPtr read_as_primitiveblock(
     std::shared_ptr<FileBlock> bl,
-    std::shared_ptr<idset> filter, bool isc, size_t objflags) {
+    IdSetPtr filter, bool isc, size_t objflags) {
     
     
     if ((bl->blocktype=="OSMData")) {
@@ -81,7 +81,7 @@ std::shared_ptr<qtvec> read_as_qtvec(
 
 PrimitiveBlockPtr merge_as_primitiveblock(
     std::shared_ptr<keyedblob> bl,
-    size_t objflags, std::shared_ptr<idset> ids) {
+    size_t objflags, IdSetPtr ids) {
     
     std::vector<PrimitiveBlockPtr> changes;
     PrimitiveBlockPtr main;
@@ -108,7 +108,7 @@ PrimitiveBlockPtr merge_as_primitiveblock(
 
 std::shared_ptr<minimalblock> merge_as_minimalblock(
     std::shared_ptr<keyedblob> bl,
-    size_t objflags, std::shared_ptr<idset> ids) {
+    size_t objflags, IdSetPtr ids) {
     
     std::vector<std::shared_ptr<minimalblock>> changes;
     std::shared_ptr<minimalblock> main;
@@ -163,7 +163,7 @@ void read_blocks_primitiveblock(
     primitiveblock_callback callback,
     std::vector<int64> locs, 
     size_t numchan,
-    std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
+    IdSetPtr filter, bool ischange, size_t objflags) {
         
         
     return read_blocks_convfunc<PrimitiveBlock>(filename, callback, locs, numchan,
@@ -175,7 +175,7 @@ void read_blocks_split_primitiveblock(
     const std::string& filename,
     std::vector<primitiveblock_callback> callbacks,
     std::vector<int64> locs, 
-    std::shared_ptr<idset> filter, bool ischange, size_t objflags)  {
+    IdSetPtr filter, bool ischange, size_t objflags)  {
         
         
     return read_blocks_split_convfunc<PrimitiveBlock>(filename, callbacks, locs,
@@ -207,7 +207,7 @@ void read_blocks_nothread_primitiveblock(
     const std::string& filename,
     primitiveblock_callback callback,
     std::vector<int64> locs, 
-    std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
+    IdSetPtr filter, bool ischange, size_t objflags) {
         
     
     return read_blocks_nothread_convfunc<PrimitiveBlock>(filename,callback,locs,

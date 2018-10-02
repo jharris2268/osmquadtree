@@ -33,10 +33,10 @@
 namespace oqt {
 
 
-class objs_idset : public idset {
+class ObjsIdSet : public IdSet {
     public:
-        objs_idset() {}
-        virtual ~objs_idset() {}
+        ObjsIdSet() {}
+        virtual ~ObjsIdSet() {}
         virtual bool contains(ElementType ty, int64 id) const;
         
         void add(ElementType t, int64 i);

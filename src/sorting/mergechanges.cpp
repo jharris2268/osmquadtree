@@ -48,17 +48,18 @@
 #include <atomic>
 namespace oqt {
 
-
-class idset_calc : public idset {
+class IdSetFilter : public IdSet {
     public:
-        virtual void insert(ElementType ty, int64 id)=0;
+        virtual ~IdSetFilter() {}
         virtual std::string str()=0;
+        virtual void insert(ElementType ty, int64 id)=0;
 };
 
-class filter_idset : public idset_calc {
+
+class IdSetFilterSet : public IdSetFilter {
     public:
-        filter_idset() {}
-        virtual ~filter_idset() {}
+        IdSetFilterSet() {}
+        virtual ~IdSetFilterSet() {}
         
         virtual bool contains(ElementType ty, int64 id) const {
             if (ty==ElementType::Node) { return nodes.count(id)>0; }
@@ -69,7 +70,7 @@ class filter_idset : public idset_calc {
         
         virtual std::string str() {
             std::stringstream ss;
-            ss << "filter_idset with " << nodes.size() << " nodes, " << ways.size() << " ways, " << relations.size() << " relations";
+            ss << "IdSetFilter with " << nodes.size() << " nodes, " << ways.size() << " ways, " << relations.size() << " relations";
             return ss.str();
         }
         virtual void insert(ElementType ty, int64 id) {
@@ -122,10 +123,10 @@ class vecbool_set {
 };
             
 
-class filter_idset_vec : public idset_calc {
+class IdSetFilterVec : public IdSetFilter {
     public:
-        filter_idset_vec(int64 maxn, int64 maxw, int64 maxr) : nodes(maxn), ways(maxw), relations(maxr) {}
-        virtual ~filter_idset_vec() {
+        IdSetFilterVec(int64 maxn, int64 maxw, int64 maxr) : nodes(maxn), ways(maxw), relations(maxr) {}
+        virtual ~IdSetFilterVec() {
             nodes.clear();
             ways.clear();
             relations.clear();
@@ -159,17 +160,17 @@ class filter_idset_vec : public idset_calc {
         
     
 
-class CalculateFilterIdset {
+class CalculateIdSetFilter {
     public:
-        CalculateFilterIdset(std::shared_ptr<idset_calc> ids_, bbox box_, bool check_full_, const lonlatvec& poly_) : ids(ids_), box(box_), check_full(check_full_), poly(poly_) {
-            if (!poly.empty()) { logger_message() << "CalculateFilterIdset with poly [" << poly.size() << " verts]"; }
+        CalculateIdSetFilter(std::shared_ptr<IdSetFilter> ids_, bbox box_, bool check_full_, const lonlatvec& poly_) : ids(ids_), box(box_), check_full(check_full_), poly(poly_) {
+            if (!poly.empty()) { logger_message() << "CalculateIdSetFilter with poly [" << poly.size() << " verts]"; }
             notinpoly=0;
         }
         
         void call(std::shared_ptr<minimalblock> mb) {
             if (!mb) {
                 logger_message() << ids->str();
-                logger_message() << "CalculateFilterIdset finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
+                logger_message() << "CalculateIdSetFilter finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
                 
                 for (auto& n : extra_nodes) {
                     ids->insert(ElementType::Node, n);
@@ -284,7 +285,7 @@ class CalculateFilterIdset {
     
     
     private:
-        std::shared_ptr<idset_calc> ids;
+        std::shared_ptr<IdSetFilter> ids;
         bbox box;
         bool check_full;
         lonlatvec poly;
@@ -295,10 +296,28 @@ class CalculateFilterIdset {
         size_t notinpoly;
 };
 
+IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan) {
+    double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
+    logger_message() << "filter_box=" << filter_box << ", area=" << boxarea;
+    
+    std::shared_ptr<IdSetFilter> filter_impl;
+    if (boxarea > 5) {
+        filter_impl = std::make_shared<IdSetFilterVec>(1ll<<34, 1ll<<24, 1ll<<18);
+    } else {
+        filter_impl = std::make_shared<IdSetFilterSet>();
+    }
+    auto cfi = std::make_shared<CalculateIdSetFilter>(filter_impl, filter_box, poly.empty(), poly);
+    auto rc = multi_threaded_callback<minimalblock>::make([cfi](std::shared_ptr<minimalblock> mb) { cfi->call(mb); }, numchan);
+    read_blocks_caller->read_minimal(rc, nullptr);
+    
+    logger_message() << filter_impl->str();
+    
+    return filter_impl;
+}
 
 class FilterRels { 
     public:
-        FilterRels(std::shared_ptr<idset> filter_) : filter(filter_) {tr=0; tnx=0; tnm=0;}
+        FilterRels(IdSetPtr filter_) : filter(filter_) {tr=0; tnx=0; tnm=0;}
         
         
         ~FilterRels() {
@@ -357,7 +376,7 @@ class FilterRels {
         }
         
         static std::vector<primitiveblock_callback> make(
-            std::shared_ptr<idset> filter,
+            IdSetPtr filter,
             std::vector<primitiveblock_callback> cbs) {
             
             auto fr = std::make_shared<FilterRels>(filter);//,cbs);
@@ -369,7 +388,7 @@ class FilterRels {
         }
         
     private:
-        std::shared_ptr<idset> filter;
+        IdSetPtr filter;
         
         std::atomic<size_t> tr, tnm, tnx;
                 
@@ -410,24 +429,6 @@ primitiveblock_callback log_progress(primitiveblock_callback cb) {
 }
 
 
-std::shared_ptr<idset> calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan) {
-    double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
-    logger_message() << "filter_box=" << filter_box << ", area=" << boxarea;
-    
-    std::shared_ptr<idset_calc> filter_impl;
-    if (boxarea > 5) {
-        filter_impl = std::make_shared<filter_idset_vec>(1ll<<34, 1ll<<24, 1ll<<18);
-    } else {
-        filter_impl = std::make_shared<filter_idset>();
-    }
-    auto cfi = std::make_shared<CalculateFilterIdset>(filter_impl, filter_box, poly.empty(), poly);
-    auto rc = multi_threaded_callback<minimalblock>::make([cfi](std::shared_ptr<minimalblock> mb) { cfi->call(mb); }, numchan);
-    read_blocks_caller->read_minimal(rc, nullptr);
-    
-    logger_message() << filter_impl->str();
-    
-    return filter_impl;
-}
         
 
 void run_mergechanges(
@@ -443,7 +444,7 @@ void run_mergechanges(
     
     lg->time("filter file locs");
     
-    std::shared_ptr<idset> filter;
+    IdSetPtr filter;
     
     
     if (filter_objs) {

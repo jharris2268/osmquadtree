@@ -30,7 +30,7 @@ size_t read_blocks_merge_py(
     std::vector<std::string> filenames,
     std::function<bool(std::vector<std::shared_ptr<BlockType>>)> callback,
     src_locs_map locs, size_t numchan, size_t numblocks,
-    std::shared_ptr<idset> filter, size_t objflags,
+    IdSetPtr filter, size_t objflags,
     size_t buffer) {
 
 
@@ -48,7 +48,7 @@ size_t read_blocks_primitiveblock_py(
     const std::string& filename,
     std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
-    std::shared_ptr<idset> filter, bool ischange, size_t objflags) {
+    IdSetPtr filter, bool ischange, size_t objflags) {
 
 
     py::gil_scoped_release r;
@@ -79,7 +79,7 @@ size_t read_blocks_caller_read_primitive(
     std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     size_t numchan,
     size_t numblocks,
-    std::shared_ptr<idset> filter) {
+    IdSetPtr filter) {
         
     
     py::gil_scoped_release r;
@@ -96,7 +96,7 @@ size_t read_blocks_caller_read_minimal(
     std::function<bool(std::vector<minimalblock_ptr>)> callback,
     size_t numchan,
     size_t numblocks,
-    std::shared_ptr<idset> filter) {
+    IdSetPtr filter) {
         
     
     py::gil_scoped_release r;
@@ -123,19 +123,19 @@ ElementPtr make_relation(int64 id, info inf, tagvector tags, std::vector<member>
 }
 
 PrimitiveBlockPtr readPrimitiveBlock_py(int64 idx, py::bytes data, bool change) {
-    return readPrimitiveBlock(idx,data,change,15,std::shared_ptr<idset>(),geometry::readGeometry);
+    return readPrimitiveBlock(idx,data,change,15,nullptr,geometry::readGeometry);
 }
 
-class invert_idset : public idset {
+class IdSetInvert : public IdSet {
     public:
-        invert_idset(std::shared_ptr<idset> ids_) : ids(ids_) {}
-        virtual ~invert_idset() {}
+        IdSetInvert(IdSetPtr ids_) : ids(ids_) {}
+        virtual ~IdSetInvert() {}
         
         virtual bool contains(ElementType t, int64 i) const {
             return !ids->contains(t,i);
         }
     private:
-        std::shared_ptr<idset> ids;
+        IdSetPtr ids;
 };
 
 
@@ -339,24 +339,24 @@ void block_defs(py::module& m) {
     m.def("make_relation", &make_relation, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("members"), py::arg("quadtree"), py::arg("changetype"));
 
 
-    py::class_<idset,std::shared_ptr<idset>>(m, "idset")
-        .def("contains", &idset::contains)
+    py::class_<IdSet,IdSetPtr>(m, "IdSet")
+        .def("contains", &IdSet::contains)
     ;
     
-    py::class_<objs_idset, idset, std::shared_ptr<objs_idset>>(m, "objs_idset")
+    py::class_<ObjsIdSet, IdSet, std::shared_ptr<ObjsIdSet>>(m, "ObjsIdSet")
         .def(py::init<>())
-        .def_property_readonly("nodes", &objs_idset::nodes)
-        .def_property_readonly("ways", &objs_idset::ways)
-        .def_property_readonly("relations", &objs_idset::relations)
-        .def("add_node", &objs_idset::add_node)
-        .def("add_way", &objs_idset::add_way)
-        .def("add_relation", &objs_idset::add_relation)
-        .def("add_all", &objs_idset::add_all)
-        .def("add", &objs_idset::add)
+        .def_property_readonly("nodes", &ObjsIdSet::nodes)
+        .def_property_readonly("ways", &ObjsIdSet::ways)
+        .def_property_readonly("relations", &ObjsIdSet::relations)
+        .def("add_node", &ObjsIdSet::add_node)
+        .def("add_way", &ObjsIdSet::add_way)
+        .def("add_relation", &ObjsIdSet::add_relation)
+        .def("add_all", &ObjsIdSet::add_all)
+        .def("add", &ObjsIdSet::add)
 
     ;
-    py::class_<invert_idset, idset, std::shared_ptr<invert_idset>>(m, "invert_idset")
-        .def(py::init<std::shared_ptr<idset>>())
+    py::class_<IdSetInvert, IdSet, std::shared_ptr<IdSetInvert>>(m, "IdSetInvert")
+        .def(py::init<IdSetPtr>())
     ;
 
     
@@ -498,7 +498,7 @@ void block_defs(py::module& m) {
     m.def("read_blocks_primitive", &read_blocks_primitiveblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("ischange")=false,py::arg("objflags")=7);
+        py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=7);
     
     m.def("read_blocks_minimal", &read_blocks_minimalblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
@@ -508,12 +508,12 @@ void block_defs(py::module& m) {
    m.def("read_blocks_merge_primitive", &read_blocks_merge_py<PrimitiveBlock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
+        py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);
     
    m.def("read_blocks_merge_minimal", &read_blocks_merge_py<minimalblock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=std::shared_ptr<idset>(), py::arg("objflags")=7, py::arg("buffer")=0);
+        py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);
     
    
    m.def("read_blocks_tempobjs", &read_blocks_tempobjs);

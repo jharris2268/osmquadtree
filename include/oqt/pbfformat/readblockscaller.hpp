@@ -37,8 +37,8 @@ namespace oqt {
 std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx, int64 enddate);
 class ReadBlocksCaller {
     public:
-        virtual void read_primitive(std::vector<primitiveblock_callback> cbs, std::shared_ptr<idset> filter)=0;
-        virtual void read_minimal(std::vector<minimalblock_callback> cbs, std::shared_ptr<idset> filter)=0;
+        virtual void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter)=0;
+        virtual void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)=0;
         virtual size_t num_tiles()=0;
 };
 

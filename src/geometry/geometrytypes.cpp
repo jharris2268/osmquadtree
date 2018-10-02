@@ -606,7 +606,7 @@ ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vect
     int64 id, qt;
     info inf; tagvector tgs;
     std::list<PbfTag> pbftags;
-    std::tie(id,inf,tgs,qt,pbftags)=readCommon(ty,data,st,std::shared_ptr<idset>());
+    std::tie(id,inf,tgs,qt,pbftags)=readCommon(ty,data,st,nullptr);
     
     return readGeometry_int(ty,id,inf,tgs,qt,pbftags,ct);
 }
