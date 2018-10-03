@@ -473,11 +473,19 @@ void block_defs(py::module& m) {
 
 
 
-    py::class_<header, std::shared_ptr<header>>(m, "header")
-        .def_readonly("writer", &header::writer)
-        .def_readonly("features", &header::features)
-        .def_readonly("box", &header::box)
-        .def_readonly("index", &header::index)
+    py::class_<Header, HeaderPtr>(m, "Header")
+        .def_property("Writer", &Header::Writer, &Header::SetWriter)
+        .def_property("Features", &Header::Features,
+            [](Header& h, std::vector<std::string>& f) {
+                h.Features().clear();
+                std::copy(f.begin(),f.end(),std::back_inserter(h.Features()));
+            })
+        .def_property("Box", &Header::BBox, &Header::SetBBox)
+        .def_property("Index", &Header::Index,
+            [](Header& h, const block_index& f) {
+                h.Index().clear();
+                std::copy(f.begin(),f.end(),std::back_inserter(h.Index()));
+            })
     ;
     
     

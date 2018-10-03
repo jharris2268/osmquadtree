@@ -296,25 +296,25 @@ std::string packBlockIdx(int64 qt, bool isc, int64 len) {
     return packPbfTags(msgs);
 }
 }
-std::string writePbfHeader(std::shared_ptr<header> head) {
+std::string writePbfHeader(HeaderPtr head) {
     std::list<PbfTag> msgs;
-    msgs.push_back(PbfTag{1,0,writeblock_detail::packHeaderBbox(head->box)});
-    if (head->features.empty()) {
+    msgs.push_back(PbfTag{1,0,writeblock_detail::packHeaderBbox(head->BBox())});
+    if (head->Features().empty()) {
         msgs.push_back(PbfTag{4,0,"OsmSchema-V0.6"});
         msgs.push_back(PbfTag{4,0,"DenseNodes"});
     } else {
-        for (auto& f: head->features) {
+        for (auto& f: head->Features()) {
             msgs.push_back(PbfTag{4,0,f});
         }
     }
-    if (head->writer.empty()) {
+    if (head->Writer().empty()) {
         msgs.push_back(PbfTag{16,0,"osmquadtree-cpp"});
     } else {
-        msgs.push_back(PbfTag{16,0,head->writer});
+        msgs.push_back(PbfTag{16,0,head->Writer()});
     }
 
-    if (!head->index.empty()) {
-        for (auto& ii: head->index) {
+    if (!head->Index().empty()) {
+        for (auto& ii: head->Index()) {
             int64 qt,fl,ln;
             std::tie(qt,fl,ln)=ii;
             msgs.push_back(PbfTag{22,0,writeblock_detail::packBlockIdx(qt,false,ln)});

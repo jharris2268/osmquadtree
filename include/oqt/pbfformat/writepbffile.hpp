@@ -43,15 +43,15 @@ class PbfFileWriter {
         
         
 };
-std::shared_ptr<PbfFileWriter> make_pbffilewriter(const std::string& filename, std::shared_ptr<header> head, bool indexed);
-write_file_callback make_pbffilewriter_callback(const std::string& filename, std::shared_ptr<header> head, bool indexed);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter(const std::string& filename, HeaderPtr head, bool indexed);
+write_file_callback make_pbffilewriter_callback(const std::string& filename, HeaderPtr head, bool indexed);
 
-void rewrite_indexed_file(std::string filename, std::string tempfilename, std::shared_ptr<header> head, block_index& idx);
+void rewrite_indexed_file(std::string filename, std::string tempfilename, HeaderPtr head, block_index& idx);
 void sort_block_index(block_index& index);
 
-std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string& fn, std::shared_ptr<header> head);
-std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string& fn, std::shared_ptr<header> head, size_t split);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string& fn, HeaderPtr head);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string& fn, HeaderPtr head, size_t split);
 
-std::shared_ptr<header> getHeaderBlock(const std::string& fn);
+HeaderPtr getHeaderBlock(const std::string& fn);
 }
 #endif //PBFFORMAT_WRITEPBFFILE_HPP

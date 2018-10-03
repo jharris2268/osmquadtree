@@ -163,8 +163,8 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
     
     std::vector<int64> locs;
     auto hh = getHeaderBlock(fn);
-    if (hh) {
-        for (auto& l : hh->index) {
+    if (hh && (!hh->Index().empty())) {
+        for (auto& l : hh->Index()) {
             locs.push_back(std::get<1>(l));
         }
     } else {
@@ -202,7 +202,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
 
 
 
-void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set<int64>> blocks, std::shared_ptr<header> head) {
+void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set<int64>> blocks, HeaderPtr head) {
     size_t pos=0;
     std::string id_data,bl_data;
 
@@ -217,12 +217,12 @@ void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set
         bl += readVarint(bl_data,bl_pos);
         ElementType t = (ElementType) (id>>59);
         if (ids->contains(t, id&0xffffffffffffll)) {
-            blocks->insert(std::get<0>(head->index[bl]));
+            blocks->insert(std::get<0>(head->Index().at(bl)));
         }
     }
 }
 
-std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids) {
+std::set<int64> checkIndexFile(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
     if ((numchan==0) || (numchan > 8)) {
         throw std::domain_error("numchan should be between 1 and 8");
     }
@@ -317,7 +317,7 @@ std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check
         outfl.push_back(fn);
         auto hh = getHeaderBlock(fn);
         
-        for (auto& q: hh->index) {
+        for (auto& q: hh->Index()) {
             if (i==0) {
                 tree->add(std::get<0>(q),1);
             }
@@ -381,14 +381,14 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
     auto ids = make_idset(em);
     
 
-    std::vector<std::shared_ptr<header>> headers;
+    std::vector<HeaderPtr> headers;
 
     std::set<int64> tt;
     size_t fi=0;
     for (auto& f: fls) {
         headers.push_back(getHeaderBlock(prfx+f));
         logger_progress(fi*100/fls.size()) << "scan " << f+"-index.pbf [" << tt.size() << " locs]";
-        auto p = checkIndexFile(prfx+f+"-index.pbf", headers.back(), (headers.back()->index.size()>20000 ? 4 : 1), ids);
+        auto p = checkIndexFile(prfx+f+"-index.pbf", headers.back(), (headers.back()->Index().size()>20000 ? 4 : 1), ids);
         for (auto& q: p) { tt.insert(q); }
         ++fi;
     }
@@ -396,7 +396,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
 
 
     auto tree=make_tree_empty();
-    for (auto& q: headers[0]->index) {
+    for (auto& q: headers[0]->Index()) {
         tree->add(std::get<0>(q),1);
     }
     auto allocs = make_qtstore_map();
@@ -407,7 +407,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
         size_t j = fls.size()-i-1;
         auto fn=prfx+fls[j];
         std::vector<int64> locs;
-        for (auto& p: headers[j]->index) {
+        for (auto& p: headers[j]->Index()) {
             if (tt.count(std::get<0>(p))==1) {
                 locs.push_back(std::get<1>(p));
             }
@@ -617,8 +617,8 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
     auto tiles = find_change_tiles(objs, orig_allocs, tree, st, et);
 
     
-    auto head = std::make_shared<header>();
-    head->box = bbox{-1800000000,-900000000,1800000000,900000000};
+    auto head = std::make_shared<Header>();
+    head->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
 
     auto out = make_pbffilewriter_indexedinmem(outfn, head);
     for (auto bl: tiles) {

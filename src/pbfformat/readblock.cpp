@@ -508,18 +508,23 @@ PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool ch
 
 
 
-std::shared_ptr<header> readPbfHeader(const std::string& data, int64 fl) {
-    auto res=std::make_shared<header>();
+HeaderPtr readPbfHeader(const std::string& data, int64 fl) {
+    auto res=std::make_shared<Header>();
     size_t pos=0;
     for (PbfTag tg=readPbfTag(data,pos); tg.tag>0; tg=readPbfTag(data,pos)) {
         switch (tg.tag) {
-            case 1: readHeaderBbox(tg.data, res->box); break;
-            case 4: res->features.push_back(tg.data); break;
-            case 16: res->writer=tg.data; break;
+            case 1: {
+                bbox box;
+                readHeaderBbox(tg.data, box);
+                res->SetBBox(box);
+                break;
+            }
+            case 4: res->Features().push_back(tg.data); break;
+            case 16: res->SetWriter(tg.data); break;
             case 22:
                 int64 qt,len; bool isc=false;
                 std::tie(qt,isc,len) = readBlockIdx(tg.data);
-                res->index.push_back(std::make_tuple(qt,fl,len));
+                res->Index().push_back(std::make_tuple(qt,fl,len));
                 fl+=len;
 
                 break;

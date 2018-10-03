@@ -456,8 +456,8 @@ void run_mergechanges(
     
     
     
-    auto outfile_header = std::make_shared<header>();
-    outfile_header->box = filter_box;    
+    auto outfile_header = std::make_shared<Header>();
+    outfile_header->SetBBox(filter_box);
     auto outfile_writer = make_pbffilewriter(outfn, outfile_header, !sort_objs);
     auto packers = make_final_packers_sync(outfile_writer, numchan, enddate, !sort_objs, true);
     

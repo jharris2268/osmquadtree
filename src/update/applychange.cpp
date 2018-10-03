@@ -126,7 +126,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     logger_message() << "have " << change_objs->size() << " change_objs";
     
     auto head_orig = getHeaderBlock(origfn);
-    if (!head_orig->index.empty()) {
+    if (!head_orig->Index().empty()) {
         throw std::domain_error("source file has file index");
     }
     auto head = head_orig;//std::make_shared<header>();

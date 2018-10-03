@@ -27,18 +27,33 @@
 #include "oqt/common.hpp"
 #include "oqt/elements/quadtree.hpp"
 
-#include <list>
 namespace oqt {
 typedef std::vector<std::tuple<int64,int64,int64>> block_index;
-struct header {
-    std::string writer;
-    std::list<std::string> features;
-    bbox        box;
-    block_index index;
-    header() {};
-    header(const bbox& b, const block_index& idx) : box(b), index(idx) {};
+class Header {
+    
+    public:
+        Header() {}
+        Header(const bbox& b, const block_index& idx) : box(b), index(idx) {};
+    
+        std::string Writer() const { return writer; };
+        void SetWriter(const std::string& w) { writer=w; };
+        
+        std::vector<std::string>& Features() { return features; }
+        
+        bbox BBox() const { return box; }
+        void SetBBox(bbox b) { box=b; }
+    
+        block_index& Index() { return index; }
+    
+    private:
+    
+        std::string writer;
+        std::vector<std::string> features;
+        bbox        box;
+        block_index index;
+    
 };
 
-typedef std::shared_ptr<header> header_ptr;
+typedef std::shared_ptr<Header> HeaderPtr;
 }
 #endif

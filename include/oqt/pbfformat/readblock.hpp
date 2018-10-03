@@ -45,7 +45,7 @@ std::vector<std::string> readStringTable(const std::string& data);
 int64 readQuadTree(const std::string& data);
 
 
-std::shared_ptr<header> readPbfHeader(const std::string& data, int64 fl);
+HeaderPtr readPbfHeader(const std::string& data, int64 fl);
 
 
     

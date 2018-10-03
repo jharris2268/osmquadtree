@@ -29,7 +29,7 @@
 
 namespace oqt {
 std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
-std::string writePbfHeader(std::shared_ptr<header> head);
+std::string writePbfHeader(HeaderPtr head);
 }
 
 

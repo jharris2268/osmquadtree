@@ -88,7 +88,7 @@ size_t sort_inmem(std::ifstream& inf, std::ofstream& outf, block_index& idx, siz
     
 
 
-void rewrite_indexed_file(std::string filename, std::string tempfilename, std::shared_ptr<header> head, block_index& idx, int64 tot) {
+void rewrite_indexed_file(std::string filename, std::string tempfilename, HeaderPtr head, block_index& idx, int64 tot) {
     size_t pos=0;
     for (auto& ii : idx) {
         std::get<1>(ii) = pos;
@@ -101,7 +101,8 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, std::s
     if (!outfile.good()) { throw std::domain_error("can't open"); }
     
     if (head) {
-        head->index = idx;
+        block_index idx_temp(idx.begin(),idx.end());
+        head->Index().swap(idx_temp);
         auto hb = prepareFileBlock("OSMHeader",writePbfHeader(head));
         outfile.write(hb.data(),hb.size());
     }
@@ -144,7 +145,7 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, std::s
 
 class PbfFileWriterImpl : public PbfFileWriter {
     public:
-        PbfFileWriterImpl(const std::string& filename, std::shared_ptr<header> head)
+        PbfFileWriterImpl(const std::string& filename, HeaderPtr head)
             : file(filename, std::ios::out | std::ios::binary), pos(0) {
             
             if (!file.good()) { throw std::domain_error("can't open"); }
@@ -194,9 +195,9 @@ class PbfFileWriterImpl : public PbfFileWriter {
 
 class PbfFileWriterIndexed : public PbfFileWriter {
     public:
-        PbfFileWriterIndexed(const std::string& filename_, std::shared_ptr<header> head_) :
+        PbfFileWriterIndexed(const std::string& filename_, HeaderPtr head_) :
             filename(filename_), tempfilename(filename_+"-temp"), head(head_) {
-            temp = std::make_shared<PbfFileWriterImpl>(filename+"-temp", std::shared_ptr<header>());
+            temp = std::make_shared<PbfFileWriterImpl>(filename+"-temp", HeaderPtr());
         }
         virtual ~PbfFileWriterIndexed() {}
         
@@ -208,7 +209,8 @@ class PbfFileWriterIndexed : public PbfFileWriter {
             auto idx = temp->finish();
             
             if (head) {
-                head->index = idx;
+                head->Index().clear();
+                std::copy(idx.begin(), idx.end(), std::back_inserter(head->Index()));
             }
             
             rewrite_indexed_file(filename, tempfilename, head, idx, 3ll*1048*1024*1024);
@@ -221,7 +223,7 @@ class PbfFileWriterIndexed : public PbfFileWriter {
     private:
         std::string filename;
         std::string tempfilename;
-        std::shared_ptr<header> head;
+        HeaderPtr head;
         
         std::shared_ptr<PbfFileWriter> temp;
 };
@@ -330,7 +332,7 @@ class PbfFileWriterIndexedSplit : public PbfFileWriter {
     public:
         PbfFileWriterIndexedSplit(
             const std::string& filename_,
-            std::shared_ptr<header> hh_,
+            HeaderPtr hh_,
             size_t split_at_) : 
                 filename(filename_), hh(hh_), split_at(split_at_) {}
         
@@ -356,7 +358,8 @@ class PbfFileWriterIndexedSplit : public PbfFileWriter {
                 std::copy(tidx.begin(),tidx.end(),std::back_inserter(idx));
             }
             if (hh) {
-                hh->index=idx;
+                hh->Index().clear();
+                std::copy(idx.begin(), idx.end(), std::back_inserter(hh->Index()));
             }                                    
             finalwriter=std::make_shared<PbfFileWriterImpl>(filename,hh);
             for (auto& pp : temps_idx) {
@@ -368,14 +371,14 @@ class PbfFileWriterIndexedSplit : public PbfFileWriter {
         }
     private:
         std::string filename;
-        std::shared_ptr<header> hh;
+        HeaderPtr hh;
         std::shared_ptr<PbfFileWriter> finalwriter;
         
         size_t split_at;
         std::map<int64,std::pair<std::string,std::shared_ptr<PbfFileWriterImpl>>> temps;
 };        
 
-std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string& fn, std::shared_ptr<header> head, size_t split_at) {
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string& fn, HeaderPtr head, size_t split_at) {
     return std::make_shared<PbfFileWriterIndexedSplit>(fn,head,split_at);
 }
     
@@ -390,7 +393,7 @@ write_file_callback make_callback(std::shared_ptr<PbfFileWriter> writer) {
 }
 
 std::shared_ptr<PbfFileWriter> make_pbffilewriter(
-    const std::string& filename, std::shared_ptr<header> head, bool indexed) {
+    const std::string& filename, HeaderPtr head, bool indexed) {
     
     if (indexed) {
         return std::make_shared<PbfFileWriterIndexed>(filename,head);
@@ -399,7 +402,7 @@ std::shared_ptr<PbfFileWriter> make_pbffilewriter(
 }
 
 write_file_callback make_pbffilewriter_callback(
-    const std::string& filename, std::shared_ptr<header> head, bool indexed) {
+    const std::string& filename, HeaderPtr head, bool indexed) {
     
     return make_callback(make_pbffilewriter(filename,head,indexed));
 }
@@ -407,7 +410,7 @@ write_file_callback make_pbffilewriter_callback(
 
 class PbfFileWriterIndexedInmem : public PbfFileWriter {
     public:
-        PbfFileWriterIndexedInmem(const std::string& fn_, std::shared_ptr<header> head_)
+        PbfFileWriterIndexedInmem(const std::string& fn_, HeaderPtr head_)
             : fn(fn_), head(head_) {}
         
         virtual ~PbfFileWriterIndexedInmem() {}
@@ -427,10 +430,10 @@ class PbfFileWriterIndexedInmem : public PbfFileWriter {
             std::sort(temps.begin(),temps.end(),[](const keystring_ptr& l, const keystring_ptr& r) { return l->first<r->first; });
             if (head) {
                 int64 p=0;
-                head->index.clear();
-                head->index.reserve(temps.size());
+                head->Index().clear();
+                head->Index().reserve(temps.size());
                 for (const auto& ks : temps) {
-                    head->index.push_back(std::make_tuple(ks->first,p,ks->second.size()));
+                    head->Index().push_back(std::make_tuple(ks->first,p,ks->second.size()));
                     p += ks->second.size();
                 }
             }
@@ -449,7 +452,7 @@ class PbfFileWriterIndexedInmem : public PbfFileWriter {
         }
     private:
         std::string fn;
-        std::shared_ptr<header> head;
+        HeaderPtr head;
         std::vector<keystring_ptr> temps;
         
 };
@@ -461,7 +464,7 @@ class PbfFileWriterIndexedInmemAlt : public PbfFileWriter {
     
     typedef std::pair<std::string, size_t> blob_entry;
     public:
-        PbfFileWriterIndexedInmemAlt(const std::string& fn_, std::shared_ptr<header> head_)
+        PbfFileWriterIndexedInmemAlt(const std::string& fn_, HeaderPtr head_)
             : fn(fn_), head(head_) {
             
             blob_size=1024*1024*128;
@@ -493,10 +496,10 @@ class PbfFileWriterIndexedInmemAlt : public PbfFileWriter {
             std::sort(locs.begin(),locs.end(),[](const loc_entry& l, const loc_entry& r) { return std::get<0>(l)<std::get<0>(r); });
             if (head) {
                 int64 p=0;
-                head->index.clear();
-                head->index.reserve(locs.size());
+                head->Index().clear();
+                head->Index().reserve(locs.size());
                 for (const auto& ks : locs) {
-                    head->index.push_back(std::make_tuple(std::get<0>(ks),p,std::get<3>(ks)));
+                    head->Index().push_back(std::make_tuple(std::get<0>(ks),p,std::get<3>(ks)));
                     p += std::get<3>(ks);
                 }
             }
@@ -517,7 +520,7 @@ class PbfFileWriterIndexedInmemAlt : public PbfFileWriter {
         }
     private:
         std::string fn;
-        std::shared_ptr<header> head;
+        HeaderPtr head;
         size_t blob_size;
         std::vector<std::pair<std::string,size_t>> blobs;
         std::vector<std::tuple<int64,size_t,size_t,size_t>> locs;
@@ -525,11 +528,11 @@ class PbfFileWriterIndexedInmemAlt : public PbfFileWriter {
 };
 
 
-std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string& fn, std::shared_ptr<header> head) {
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string& fn, HeaderPtr head) {
     return std::make_shared<PbfFileWriterIndexedInmemAlt>(fn,head);
 }
 
-std::shared_ptr<header> getHeaderBlock_file(std::ifstream& infile) {
+HeaderPtr getHeaderBlock_file(std::ifstream& infile) {
     auto fb = readFileBlock(0,infile);
     if ((!fb) || (fb->blocktype!="OSMHeader")) {
         throw std::domain_error("first block not a header");
@@ -539,7 +542,7 @@ std::shared_ptr<header> getHeaderBlock_file(std::ifstream& infile) {
     return readPbfHeader(fb->get_data(),p);
 }
 
-std::shared_ptr<header> getHeaderBlock(const std::string& fn) {
+HeaderPtr getHeaderBlock(const std::string& fn) {
     std::ifstream infile(fn, std::ios::binary | std::ios::in);
     if (!infile.good()) { throw std::domain_error("not a file?? "+fn); }
     auto r= getHeaderBlock_file(infile);

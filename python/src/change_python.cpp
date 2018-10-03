@@ -107,7 +107,7 @@ size_t writeIndexFile_py(const std::string& fn, size_t numchan, const std::strin
     return writeIndexFile(fn,numchan,outfn);
 }
 
-std::set<int64> checkIndexFile_py(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids) {
+std::set<int64> checkIndexFile_py(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
     py::gil_scoped_release r;
     return checkIndexFile(idxfn,head,numchan,ids);
 }
@@ -125,8 +125,8 @@ class WritePbfFileImpl : public WritePbfFile {
             : numchan(numchan_), dropqts(dropqts_), change(change_) {
             
             
-            auto head = std::make_shared<header>();
-            head->box=bounds;
+            auto head = std::make_shared<Header>();
+            head->SetBBox(bounds);
             if ((!tempfile)&&(indexed)) {
                 outobj = make_pbffilewriter_indexedinmem(fn, head);
             } else {

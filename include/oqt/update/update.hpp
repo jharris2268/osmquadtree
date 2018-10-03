@@ -30,9 +30,9 @@
 #include "oqt/sorting/tempobjs.hpp"
 #include <set>
 namespace oqt {
-std::shared_ptr<header> getHeaderBlock(const std::string& fn);
+
 size_t writeIndexFile(const std::string& srcfn, size_t numchan, const std::string& destfn);
-std::set<int64> checkIndexFile(const std::string& idxfn, std::shared_ptr<header> head, size_t numchan, IdSetPtr ids);
+std::set<int64> checkIndexFile(const std::string& idxfn, HeaderPtr header, size_t numchan, IdSetPtr ids);
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,

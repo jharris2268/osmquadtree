@@ -872,8 +872,8 @@ std::vector<block_callback> pack_and_write_callback(
         
 
 
-    auto head = std::make_shared<header>();
-    head->box = box;
+    auto head = std::make_shared<Header>();
+    head->SetBBox(box);
     
     write_file_callback write = make_pbffilewriter_callback(filename,head,indexed);
     
@@ -914,8 +914,8 @@ block_callback pack_and_write_callback_nothread(
         
 
 
-    auto head = std::make_shared<header>();
-    head->box = box;
+    auto head = std::make_shared<Header>();
+    head->SetBBox(box);
     
     write_file_callback write = make_pbffilewriter_callback(filename,head,indexed);
     

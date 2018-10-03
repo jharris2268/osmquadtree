@@ -243,8 +243,8 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
         
     auto lg=get_logger();
     
-    auto hh = std::make_shared<header>();
-    hh->box=bbox{-1800000000,-900000000,1800000000,900000000};
+    auto hh = std::make_shared<Header>();
+    hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
     auto write_file_obj = make_pbffilewriter_indexedinmem(outfn, hh);
     
     
@@ -409,8 +409,8 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     
     lg->time("read data");
     
-    auto hh = std::make_shared<header>();
-    hh->box=bbox{-1800000000,-900000000,1800000000,900000000};
+    auto hh = std::make_shared<Header>();
+    hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
     auto write_file_obj = make_pbffilewriter(outfn, hh, true);
     
     

@@ -88,8 +88,8 @@ class ReadBlocksSingle : public ReadBlocksCaller {
         ReadBlocksSingle(const std::string& fn_, bbox filter_box, const lonlatvec& poly) : fn(fn_) {
             if (!box_empty(filter_box)) {
                 auto head = getHeaderBlock(fn);
-                if (head && (!head->index.empty())) {
-                    for (const auto& l : head->index) {
+                if (head && (!head->Index().empty())) {
+                    for (const auto& l : head->Index()) {
                         if (overlaps_quadtree(filter_box,std::get<0>(l))) {
                             if (poly.empty() || polygon_box_intersects(poly, quadtree::bbox(std::get<0>(l), 0.05))) {
                             
@@ -129,10 +129,10 @@ class ReadBlocksMerged : public ReadBlocksCaller {
                 const auto& fn = filenames.at(file_idx);
                 auto head = getHeaderBlock(fn);
                 if (!head) { throw std::domain_error("file "+fn+" has no header"); }
-                if (file_idx==0) { top_box=head->box; }
-                if (head->index.empty()) { throw std::domain_error("file "+fn+" has no tile index"); }
+                if (file_idx==0) { top_box=head->BBox(); }
+                if (head->Index().empty()) { throw std::domain_error("file "+fn+" has no tile index"); }
                 
-                for (const auto& l : head->index) {
+                for (const auto& l : head->Index()) {
                     if (file_idx>0) {
                         if (locs.count(std::get<0>(l))>0) {
                             locs[std::get<0>(l)].push_back(std::make_pair(file_idx, std::get<1>(l)));
@@ -185,8 +185,8 @@ std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
    
     if (EndsWith(infile_name, ".pbf")) {
         auto hh = getHeaderBlock(infile_name);
-        if (box_empty(filter_box) || (!box_empty(hh->box) && bbox_contains(filter_box, hh->box))) {
-            filter_box = hh->box;
+        if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {
+            filter_box = hh->BBox();
         }
         return std::make_shared<ReadBlocksSingle>(infile_name, filter_box, poly);
     }
