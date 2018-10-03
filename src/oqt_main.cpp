@@ -158,8 +158,8 @@ class logger2 : public logger {
             }
         } 
     private:
-        time_single st;
-        time_single lp;
+        TimeSingle st;
+        TimeSingle lp;
         std::mutex mutex;
         bool pm;
     

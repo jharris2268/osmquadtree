@@ -417,7 +417,7 @@ class progress {
         }
     private:
         size_t i;
-        time_single ts;
+        TimeSingle ts;
         double nt;
         primitiveblock_callback cb;
 };
@@ -532,7 +532,7 @@ void run_mergechanges(
             
             
             std::vector<primitiveblock_callback> merged_sorted;
-            time_single ts;
+            TimeSingle ts;
             bool isf=true;
             for (auto mm: collect_split) {
                 merged_sorted.push_back(

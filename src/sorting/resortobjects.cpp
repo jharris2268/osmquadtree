@@ -27,7 +27,7 @@
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/utils/threadedcallback.hpp"
 #include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/timer.hpp"
+#include "oqt/utils/timing.hpp"
 #include "oqt/utils/logger.hpp"
 
 #include <algorithm>
@@ -60,7 +60,7 @@ class ResortObjects {
                 result.at(ii)->add(o);
             }
             
-            logger_progress(100.0*off/groups->size()) << "ResortObjects [" << TmStr{ts.since(),6,1} << "] "
+            logger_progress(100.0*off/groups->size()) << "ResortObjects [" << ts << "] "
                 << "finish_current: " << inobjs->Index() << ": have " << tt
                 << " tiles // " << inobjs->size() << " objs";
             
@@ -78,7 +78,7 @@ class ResortObjects {
         primitiveblock_callback callback;
         std::shared_ptr<qttree> groups;
         size_t blocksize;
-        time_single ts;
+        TimeSingle ts;
         bool sortobjs;
 }; 
 

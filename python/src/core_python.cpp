@@ -384,7 +384,7 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
     
     auto left = left_obj.next();
     auto right = right_obj.next();
-    time_single ts;
+    TimeSingle ts;
     
     uint64 next_obj=0;
     std::map<std::string,std::string> users;

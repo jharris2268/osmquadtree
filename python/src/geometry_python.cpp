@@ -645,7 +645,7 @@ class blockhandler_callback_time {
         block_callback callback;
         
         double wait, exec, cbb;
-        time_single ts;
+        TimeSingle ts;
 };
             
 
@@ -1032,7 +1032,7 @@ class geom_progress {
     private:
         int64 nb, npt, nln, nsp, ncp, maxqt;
         std::map<int64,double> progs;
-        time_single ts;
+        TimeSingle ts;
 };
 
 struct geometry_parameters {

@@ -27,7 +27,7 @@
 #include "oqt/pbfformat/writepbffile.hpp"
 #include "oqt/utils/threadedcallback.hpp"
 #include "oqt/utils/multithreadedcallback.hpp"
-#include "oqt/utils/timer.hpp"
+#include "oqt/utils/timing.hpp"
 #include "oqt/utils/logger.hpp"
 #include <algorithm>
 namespace oqt {
@@ -43,7 +43,7 @@ class packfinal {
                 cb(nullptr);
                 return;
             }
-            //time_single t;
+            
             if (enddate>0) {
                 oo->SetEndDate(enddate);
             }

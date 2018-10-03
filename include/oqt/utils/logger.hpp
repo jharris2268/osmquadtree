@@ -25,7 +25,7 @@
 
 #include "oqt/common.hpp"
 
-#include "oqt/utils/timer.hpp"
+#include "oqt/utils/timing.hpp"
 
 
 namespace oqt {
@@ -65,9 +65,9 @@ class logger {
             std::stringstream strm;
             for (size_t i=0; i < msgs.size(); i++) {
                 if (i==(msgs.size()-1)) {
-                    printtime(strm, "TOTAL", ln, msgs.front().second, msgs.back().second);
+                    strm << TmMsg{"TOTAL", ln, msgs.front().second, msgs.back().second};
                 } else {
-                    printtime(strm, msgs[i+1].first, ln, msgs[i].second, msgs[i+1].second);
+                    strm << TmMsg{msgs[i+1].first, ln, msgs[i].second, msgs[i+1].second};
                     strm << "\n";
                 }
             }

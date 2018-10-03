@@ -23,7 +23,7 @@
 #include "oqt/sorting/common.hpp"
 #include "oqt/utils/threadedcallback.hpp"
 
-#include "oqt/utils/timer.hpp"
+#include "oqt/utils/timing.hpp"
 #include "oqt/utils/logger.hpp"
 
 namespace oqt {
@@ -38,7 +38,7 @@ struct SplitBlocksDetail {
     
     size_t ii;
     size_t ntile;
-    time_single ts;
+    TimeSingle ts;
     size_t tb;
     size_t currww;
     double maxp;

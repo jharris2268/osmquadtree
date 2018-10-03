@@ -28,7 +28,6 @@
 #include "oqt/calcqts/calculaterelations.hpp"
 
 namespace oqt {
-class qttree;
 
 int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth);
 int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort);

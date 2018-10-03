@@ -184,7 +184,7 @@ class AddQuadtrees {
         size_t curr_idx;
         size_t count;
         
-        time_single ts;
+        TimeSingle ts;
 };          
 
 class ReadQtsVec {
@@ -220,9 +220,6 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
     
     
     auto nqb = ReadQtsVec::make(qtsfn);
-    
-    //auto nqb = ReadBlocksNoThread<qtvec>::make(qtsfn,{}, nullptr,false,7);
-    //auto nqb = inverted_callback<qtvec>::make([&qtsfn](std::function<void(std::shared_ptr<qtvec>)> qtc) { read_blocks<qtvec>(qtsfn,qtc,{},4,nullptr,false,7,false); });
     
     auto aq = std::make_shared<AddQuadtrees>(nqb,false);
     return [aq,callbacks](PrimitiveBlockPtr bl) {
