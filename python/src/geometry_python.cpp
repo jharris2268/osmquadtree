@@ -471,17 +471,17 @@ class lines_graph : public std::enable_shared_from_this<lines_graph> {
 
 
 
-ElementPtr make_point(int64 id, info inf, tagvector tags, int64 qt, int64 lon, int64 lat, int64 layer, int64 minzoom) {
+ElementPtr make_point(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, int64 lon, int64 lat, int64 layer, int64 minzoom) {
     return std::make_shared<geometry::point>(id, qt, inf, tags, lon, lat, layer, minzoom);
 }
 
-ElementPtr make_linestring(int64 id, info inf, tagvector tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
+ElementPtr make_linestring(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
     double ln = geometry::calc_line_length(lonlats);
     bbox bounds = geometry::lonlats_bounds(lonlats);
     return std::make_shared<geometry::linestring>(id, qt, inf, tags, refs, lonlats, zorder, layer, ln, bounds, minzoom);
 }
 
-ElementPtr make_simplepolygon(int64 id, info inf, tagvector tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
+ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
     bool reversed=false;
     double ar = geometry::calc_ring_area(lonlats);
     if (ar < 0) {
@@ -492,7 +492,7 @@ ElementPtr make_simplepolygon(int64 id, info inf, tagvector tags, int64 qt, refv
     return std::make_shared<geometry::simplepolygon>(id, qt, inf, tags, refs, lonlats, zorder, layer, ar, bounds, minzoom,reversed);
 }
 
-ElementPtr make_complicatedpolygon(int64 id, info inf, tagvector tags, int64 qt,
+ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt,
     int64 part, geometry::ringpartvec exterior, std::vector<geometry::ringpartvec> interiors, int64 zorder, int64 layer, int64 minzoom) {
     double ar = geometry::calc_ring_area(exterior);
     if (!interiors.empty()) {
@@ -1424,7 +1424,7 @@ void geometry_defs(py::module& m) {
 
     m.def("pack_tags", &geometry::pack_tags);
     m.def("unpack_tags", [](const std::string& str) {
-        tagvector tgs;
+        std::vector<Tag> tgs;
         geometry::unpack_tags(str, tgs);
         return tgs;
     });

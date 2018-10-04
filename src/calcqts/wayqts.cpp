@@ -155,7 +155,7 @@ class WayNodeLocs {
         }
         
         
-        void call(std::shared_ptr<minimalblock> mb) {
+        void call(minimal::BlockPtr mb) {
             
             if (!mb) {
                 while (n>0) {
@@ -350,7 +350,7 @@ void find_way_quadtrees(
     
     
     auto wnla = std::make_shared<WayNodeLocs>(wns, expand_all, minway, maxway);
-    read_blocks_minimalblock(source_filename, [wnla](std::shared_ptr<minimalblock> mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
+    read_blocks_minimalblock(source_filename, [wnla](minimal::BlockPtr mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
     
     
     get_logger()->time("expand way bboxes");

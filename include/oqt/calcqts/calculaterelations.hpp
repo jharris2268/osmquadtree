@@ -31,13 +31,13 @@ namespace oqt {
 class CalculateRelations {
     public:
         
-        virtual void add_nodes(std::shared_ptr<minimalblock>)=0;
+        virtual void add_nodes(minimal::BlockPtr)=0;
         virtual void add_ways(std::shared_ptr<QtStore>)=0;
         
         virtual void finish_alt(std::function<void(int64,int64)>)=0;
 
         virtual std::string str()=0;
-        virtual void add_relations_data(std::shared_ptr<minimalblock> data)=0;
+        virtual void add_relations_data(minimal::BlockPtr data)=0;
         virtual ~CalculateRelations() {}
 };
 

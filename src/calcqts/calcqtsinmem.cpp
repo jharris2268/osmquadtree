@@ -50,14 +50,14 @@ bool cmp_id(const T& l, const T& r) {
 
 
 
-std::vector<size_t> find_index(const std::vector<minimalnode>& nodes, size_t nsp) {
+std::vector<size_t> find_index(const std::vector<minimal::Node>& nodes, size_t nsp) {
     
     std::vector<size_t> nodes_ii;
     for (int64 i = 0; i < nodes.back().id; i+=nsp) {
         if (i==0) {
             nodes_ii.push_back(0);
         } else {
-            auto it = std::lower_bound(nodes.begin()+nodes_ii.back(), nodes.end(), minimalnode{i,0,0,0,0}, cmp_id<minimalnode>);
+            auto it = std::lower_bound(nodes.begin()+nodes_ii.back(), nodes.end(), minimal::Node{i,0,0,0,0}, cmp_id<minimal::Node>);
             if (it<nodes.end()) {
                 nodes_ii.push_back(it-nodes.begin());
             }
@@ -67,18 +67,18 @@ std::vector<size_t> find_index(const std::vector<minimalnode>& nodes, size_t nsp
     return std::move(nodes_ii);
 }
 
-std::vector<minimalnode>::iterator find_indexed(int64 id, std::vector<minimalnode>& nodes, const std::vector<size_t>& nodes_idx, size_t nsp) {
+std::vector<minimal::Node>::iterator find_indexed(int64 id, std::vector<minimal::Node>& nodes, const std::vector<size_t>& nodes_idx, size_t nsp) {
     size_t lb = nodes_idx.at(id/nsp);
     size_t ub = nodes_idx.at((id/nsp)+1);
-    minimalnode n; n.id=id;
-    return std::lower_bound(nodes.begin()+lb,nodes.begin()+ub,n,cmp_id<minimalnode>);
+    minimal::Node n; n.id=id;
+    return std::lower_bound(nodes.begin()+lb,nodes.begin()+ub,n,cmp_id<minimal::Node>);
 }
 
-std::vector<minimalnode>::const_iterator find_indexed_const(int64 id, const std::vector<minimalnode>& nodes, const std::vector<size_t>& nodes_idx, size_t nsp) {
+std::vector<minimal::Node>::const_iterator find_indexed_const(int64 id, const std::vector<minimal::Node>& nodes, const std::vector<size_t>& nodes_idx, size_t nsp) {
     size_t lb = nodes_idx.at(id/nsp);
     size_t ub = nodes_idx.at((id/nsp)+1);
-    minimalnode n; n.id=id;
-    return std::lower_bound(nodes.begin()+lb,nodes.begin()+ub,n,cmp_id<minimalnode>);
+    minimal::Node n; n.id=id;
+    return std::lower_bound(nodes.begin()+lb,nodes.begin()+ub,n,cmp_id<minimal::Node>);
 }
 
 class ObjQts {
@@ -90,11 +90,11 @@ class ObjQts {
 
 class ObjQtsMinimalWays : public ObjQts {
     public:
-        ObjQtsMinimalWays(const std::vector<minimalway>& ways_) : ways(ways_) {}
+        ObjQtsMinimalWays(const std::vector<minimal::Way>& ways_) : ways(ways_) {}
         
         virtual int64 find(int64 id) const {
-            minimalway w; w.id=id;
-            auto it = std::lower_bound(ways.begin(),ways.end(),w,cmp_id<minimalway>);
+            minimal::Way w; w.id=id;
+            auto it = std::lower_bound(ways.begin(),ways.end(),w,cmp_id<minimal::Way>);
             
             if ((it!=ways.end()) && (it->id==id)) {
                 return it->quadtree;
@@ -105,12 +105,12 @@ class ObjQtsMinimalWays : public ObjQts {
         virtual ~ObjQtsMinimalWays() {}
         
     private:
-        const std::vector<minimalway>& ways;
+        const std::vector<minimal::Way>& ways;
 };
     
 class ObjQtsMinimalNodes : public ObjQts {
     public:
-        ObjQtsMinimalNodes(const std::vector<minimalnode>& nodes_, const std::vector<size_t>& idx_, size_t nsp_) : nodes(nodes_), idx(idx_), nsp(nsp_) {}
+        ObjQtsMinimalNodes(const std::vector<minimal::Node>& nodes_, const std::vector<size_t>& idx_, size_t nsp_) : nodes(nodes_), idx(idx_), nsp(nsp_) {}
         
         virtual int64 find(int64 id) const {
             auto it = find_indexed_const(id, nodes, idx, nsp);
@@ -124,13 +124,13 @@ class ObjQtsMinimalNodes : public ObjQts {
         virtual ~ObjQtsMinimalNodes() {}
         
     private:
-        const std::vector<minimalnode>& nodes;
+        const std::vector<minimal::Node>& nodes;
         const std::vector<size_t>& idx;
         size_t nsp;
 };
 
 void calculate_relation_quadtrees(
-    std::vector<minimalrelation>& relations, 
+    std::vector<minimal::Relation>& relations, 
     std::shared_ptr<ObjQts> node_qts, std::shared_ptr<ObjQts> way_qts) {
     
     std::vector<std::pair<size_t,size_t>> relrels;
@@ -163,8 +163,8 @@ void calculate_relation_quadtrees(
                         q = quadtree::common(q, it->quadtree);
                     }*/
                 } else {
-                    minimalrelation r; r.id=rfs[j];
-                    auto it = std::lower_bound(relations.begin(),relations.end(),r,cmp_id<minimalrelation>);
+                    minimal::Relation r; r.id=rfs[j];
+                    auto it = std::lower_bound(relations.begin(),relations.end(),r,cmp_id<minimal::Relation>);
                     if ((it!=relations.end()) && (it->id==rfs[j])) {
                         relrels.push_back(std::make_pair(i, it-relations.begin()));
                         arr=true;
@@ -204,12 +204,12 @@ void calculate_relation_quadtrees(
 int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort) {
     
     auto lg=get_logger();
-    std::vector<minimalnode> nodes;
-    std::vector<minimalway> ways;
-    std::vector<minimalrelation> relations;
+    std::vector<minimal::Node> nodes;
+    std::vector<minimal::Way> ways;
+    std::vector<minimal::Relation> relations;
     
     
-    auto read_objs = [&nodes,&ways,&relations](std::shared_ptr<minimalblock> mb) {
+    auto read_objs = [&nodes,&ways,&relations](minimal::BlockPtr mb) {
         if (!mb) { return; }
         if (!mb->nodes.empty()) {
             
@@ -237,9 +237,9 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
     lg->time("read data");    
     
     
-    std::sort(nodes.begin(),nodes.end(),cmp_id<minimalnode>);
-    std::sort(ways.begin(),ways.end(),cmp_id<minimalway>);
-    std::sort(relations.begin(),relations.end(),cmp_id<minimalrelation>);
+    std::sort(nodes.begin(),nodes.end(),cmp_id<minimal::Node>);
+    std::sort(ways.begin(),ways.end(),cmp_id<minimal::Way>);
+    std::sort(relations.begin(),relations.end(),cmp_id<minimal::Relation>);
     
     //indexed_nodes nodes_idx(nodes, 256);
     std::vector<size_t> nodes_idx = find_index(nodes,256);

@@ -35,14 +35,14 @@ namespace oqt {
 
 class Element : public BaseElement {
     public:
-        Element(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags);
+        Element(ElementType t, changetype c, int64 i, int64 q, ElementInfo info, std::vector<Tag> tags);
         uint64 InternalId() const;
         ElementType Type() const;
         changetype ChangeType() const;
         void SetChangeType(changetype ct);
         int64 Id() const;
-        info Info() const;
-        const tagvector& Tags() const;
+        ElementInfo Info() const;
+        const std::vector<Tag>& Tags() const;
         int64 Quadtree() const;
         void SetQuadtree(int64 qt);
 
@@ -50,7 +50,7 @@ class Element : public BaseElement {
 
         bool RemoveTag(const std::string& k);
         
-        void SetTags(const tagvector& new_tags);
+        void SetTags(const std::vector<Tag>& new_tags);
 
         virtual ~Element() {}
         virtual std::shared_ptr<Element> copy()=0;
@@ -62,8 +62,8 @@ class Element : public BaseElement {
         ElementType type_;
         changetype changetype_;
         int64 id_, quadtree_ ;
-        info info_;
-        tagvector tags_;
+        ElementInfo info_;
+        std::vector<Tag> tags_;
 };
 
 typedef std::shared_ptr<Element> ElementPtr;

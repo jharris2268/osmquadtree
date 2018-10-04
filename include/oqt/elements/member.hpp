@@ -29,13 +29,13 @@
 #include <string>
 #include <vector>
 namespace oqt {
-struct member {
-    member() : type(ElementType::Node),ref(0),role("") {}
-    member(ElementType t, int64 r, std::string rl) : type(t),ref(r),role(rl) {}
+struct Member {
+    Member() : type(ElementType::Node),ref(0),role("") {}
+    Member(ElementType t, int64 r, std::string rl) : type(t),ref(r),role(rl) {}
     ElementType type;
     int64 ref;
     std::string role;
 };
-typedef std::vector<member> memvector;
+
 }
 #endif

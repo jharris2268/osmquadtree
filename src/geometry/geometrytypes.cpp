@@ -520,7 +520,7 @@ ringpartvec unpack_ringpart_vec(const std::string& data) {
     return res;
 }
 
-ElementPtr readGeometry_int(ElementType ty, int64 id, info inf, const tagvector& tgs, int64 qt, const std::list<PbfTag>& pbftags, changetype ct) {
+ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std::vector<Tag>& tgs, int64 qt, const std::list<PbfTag>& pbftags, changetype ct) {
         
     if (ty==ElementType::Point) {
         int64 lon=0, lat=0, minzoom=-1; int64 layer=0;
@@ -604,7 +604,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, info inf, const tagvector&
 
 ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vector<std::string>& st, changetype ct) {
     int64 id, qt;
-    info inf; tagvector tgs;
+    ElementInfo inf; std::vector<Tag> tgs;
     std::list<PbfTag> pbftags;
     std::tie(id,inf,tgs,qt,pbftags)=readCommon(ty,data,st,nullptr);
     
@@ -668,7 +668,7 @@ inline std::string read_str(const std::string& data, size_t& pos) {
     
 
 
-std::string pack_tags(const tagvector& tgs) {
+std::string pack_tags(const std::vector<Tag>& tgs) {
     size_t len = 1;
     for (const auto& t: tgs) {
         if ((t.key.size()>0xffff) || (t.val.size()>0xffff)) {
@@ -688,7 +688,7 @@ std::string pack_tags(const tagvector& tgs) {
     
 }
     
-void unpack_tags(const std::string& data, tagvector& tgs) {
+void unpack_tags(const std::string& data, std::vector<Tag>& tgs) {
     if (data.empty()) { return; }
     if (data[0] != '\0') { throw std::domain_error("not packed tags"); }
     size_t pos=1;
@@ -696,7 +696,7 @@ void unpack_tags(const std::string& data, tagvector& tgs) {
         
         std::string k = read_str(data, pos);
         std::string v = read_str(data, pos);
-        tgs.push_back(tag{std::move(k), std::move(v)});
+        tgs.push_back(Tag{std::move(k), std::move(v)});
     }
     if (pos != data.size()) { throw std::domain_error("???"); }
 }

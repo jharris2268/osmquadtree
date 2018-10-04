@@ -38,7 +38,7 @@ PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool ch
     size_t objflags=7, IdSetPtr ids=IdSetPtr(),
     read_geometry_func readGeometry = read_geometry_func());
 
-std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
+std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
     readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, IdSetPtr ids);
 
 std::vector<std::string> readStringTable(const std::string& data);

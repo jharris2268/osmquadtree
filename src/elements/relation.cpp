@@ -28,34 +28,16 @@ namespace oqt {
 
 
 
-Relation::Relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems)
+Relation::Relation(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems)
     : Element(ElementType::Relation,c,i,q,inf,tags), mems_(mems) {}
         
-const memvector&  Relation::Members() const { return mems_; }
+const std::vector<Member>&  Relation::Members() const { return mems_; }
 
 ElementPtr Relation::copy() { return std::make_shared<Relation>(ChangeType(),Id(),Quadtree(),Info(),Tags(),Members()); }
 
-/*
-std::list<PbfTag> Relation::pack_extras() const {
-    std::list<PbfTag> mm;
-    if (mems_.empty()) { return mm; }
-    std::vector<int64> rfs_; rfs_.reserve(mems_.size());
-    std::vector<uint64> tys_; tys_.reserve(mems_.size());
-
-    for (auto m : mems_) {
-        mm.push_back(PbfTag{8,0,m.role});
-        rfs_.push_back(m.ref);
-        tys_.push_back(m.type);
-    }
-    mm.push_back(PbfTag{9,0,writePackedDelta(rfs_)});
-    mm.push_back(PbfTag{10,0,writePackedInt(tys_)});
-    return mm;
-}
-*/
-
 bool Relation::filter_members(IdSetPtr ids) {
     if (mems_.empty()) { return true; }
-    memvector mems_new;
+    std::vector<Member> mems_new;
     mems_new.reserve(mems_.size());
     
     for (auto& m: mems_) {

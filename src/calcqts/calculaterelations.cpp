@@ -48,7 +48,7 @@ class CalculateRelationsImpl : public CalculateRelations {
         }
 
         
-        virtual void add_relations_data(std::shared_ptr<minimalblock> data) {
+        virtual void add_relations_data(minimal::BlockPtr data) {
             if (!data) { return; }
             if (data->relations.empty()) { return; }
             
@@ -87,7 +87,7 @@ class CalculateRelationsImpl : public CalculateRelations {
 
 
         
-        virtual void add_nodes(std::shared_ptr<minimalblock> mb) {
+        virtual void add_nodes(minimal::BlockPtr mb) {
             auto cmpf = [](const id_pair& l, const id_pair& r) { return l.first < r.first; };
             if (!nodes_sorted) {
                 logger_message() << "sorting nodes [RSS = " << std::fixed << std::setprecision(1) << getmemval(getpid())/1024.0 << "]";

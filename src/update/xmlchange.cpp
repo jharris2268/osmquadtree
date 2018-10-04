@@ -45,9 +45,9 @@ int64 read_lonlat(const std::string& s) {
     return f*10000000 + 0.5;
 }
 
-void add_tag(Inspector& inspector, tagvector& tags) {
+void add_tag(Inspector& inspector, std::vector<Tag>& tags) {
     if (inspector.GetAttributesCount()!=2) { throw std::domain_error("expected tag to have two attributes"); }
-    tag t;
+    Tag t;
     for (int i=0; i<2; i++) {
         if (inspector.GetAttributeAt(i).Name=="k") {
             t.key = inspector.GetAttributeAt(i).Value;
@@ -70,7 +70,7 @@ void add_tag(Inspector& inspector, tagvector& tags) {
 
 }
 
-inline bool check_info(const Inspector::AttributeType& attr, info& inf) {
+inline bool check_info(const Inspector::AttributeType& attr, ElementInfo& inf) {
     if (attr.Name == "version") { inf.version = read_int(attr.Value); return true; }
     if (attr.Name == "changeset") { inf.changeset = read_int(attr.Value); return true; }
     if (attr.Name == "timestamp") { inf.timestamp = read_date(attr.Value); return true; }
@@ -81,9 +81,9 @@ inline bool check_info(const Inspector::AttributeType& attr, info& inf) {
 
 void read_node(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0,lon=0,lat=0;
-    info inf; inf.visible=true;
+    ElementInfo inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
-    tagvector tags;
+    std::vector<Tag> tags;
 
     int nattr=inspector.GetAttributesCount();
     if ((!allow_missing_users) && (nattr!=8)) {
@@ -141,9 +141,9 @@ void add_ref(Inspector& inspector, std::vector<int64>& refs) {
 
 void read_way(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0;
-    info inf; inf.visible=true;
+    ElementInfo inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
-    tagvector tags;
+    std::vector<Tag> tags;
     std::vector<int64> refs;
     int nattr=inspector.GetAttributesCount();
     if ((!allow_missing_users) && (nattr!=6)) {
@@ -187,11 +187,11 @@ ElementType read_member_type(const std::string s) {
     //return -1;
 }
 
-void add_member(Inspector& inspector, std::vector<member>& mems) {
+void add_member(Inspector& inspector, std::vector<Member>& mems) {
     if (inspector.GetAttributesCount()!=3) {
         throw std::domain_error("expected nd to have 1 attribute");
     }
-    member m;
+    Member m;
     for (int i=0; i < 3; i++) {
         auto attr = inspector.GetAttributeAt(i);
         if (attr.Name=="ref") { m.ref = read_int(attr.Value); }
@@ -213,10 +213,10 @@ void add_member(Inspector& inspector, std::vector<member>& mems) {
 
 void read_relation(Inspector& inspector, changetype mode, std::function<void(ElementPtr)>& add, bool allow_missing_users) {
     int64 id=0;
-    info inf; inf.visible=true;
+    ElementInfo inf; inf.visible=true;
     inf.user=""; inf.user_id=-1;
-    tagvector tags;
-    std::vector<member> membs;
+    std::vector<Tag> tags;
+    std::vector<Member> membs;
 
     int nattr=inspector.GetAttributesCount();
     if ((!allow_missing_users) && (nattr!=6)) {

@@ -125,15 +125,15 @@ _oqt.Relation.__repr__ = lambda r: "Relation(%10d %0.40s %.40s %.20s %-18s %d)" 
 _oqt.Relation.__unicode__ = lambda r: u"Relation(%10d %s %s %s %-18s %d)" % (r.Id,r.Info,r.Tags,r.Members,r.Quadtree,r.ChangeType)
 _oqt.Relation.tuple = property(lambda r: (2, r.ChangeType, r.Id,r.Info.tuple,[t.tuple for t in r.Tags], [m.tuple for m in r.Members], r.Quadtree))
 
-_oqt.info.__unicode__ = lambda i: u"(%d, %d, %d, %d, %s, %s)" % (i.version,i.timestamp,i.changeset,i.user_id,i.user,'t' if i.visible else 'f')
-_oqt.info.__repr__ = lambda i: "info(%d,..)" % (i.version,)
-_oqt.info.tuple = property(lambda i: (i.version,i.timestamp,i.changeset,i.user_id,i.user,i.visible))
-_oqt.tag.__repr__ = lambda t: "Tag(%s,%.50s)" % (t.key,repr(t.val))
-_oqt.tag.__unicode__ = lambda t: u"%s='%s'" % (t.key,t.val)
-_oqt.tag.tuple = property(lambda t: (t.key,t.val))
+_oqt.ElementInfo.__unicode__ = lambda i: u"(%d, %d, %d, %d, %s, %s)" % (i.version,i.timestamp,i.changeset,i.user_id,i.user,'t' if i.visible else 'f')
+_oqt.ElementInfo.__repr__ = lambda i: "ElementInfo(%d,..)" % (i.version,)
+_oqt.ElementInfo.tuple = property(lambda i: (i.version,i.timestamp,i.changeset,i.user_id,i.user,i.visible))
+_oqt.Tag.__repr__ = lambda t: "Tag(%s,%.50s)" % (t.key,repr(t.val))
+_oqt.Tag.__unicode__ = lambda t: u"%s='%s'" % (t.key,t.val)
+_oqt.Tag.tuple = property(lambda t: (t.key,t.val))
 
-_oqt.member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==0 else 'w' if m.type==1 else 'r', m.ref, " {%s}" % m.role if m.role else '')
-_oqt.member.tuple = property(lambda m: (m.type,m.ref,m.role))
+_oqt.Member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==0 else 'w' if m.type==1 else 'r', m.ref, " {%s}" % m.role if m.role else '')
+_oqt.Member.tuple = property(lambda m: (m.type,m.ref,m.role))
 
 _oqt.PbfTag.__repr__ = lambda p: "(%d, %d, %.20s)" % (p.tag, p.value, p.data)
 _oqt.PbfTag.tuple = property(lambda p: (p.tag, p.value, p.data))
@@ -195,10 +195,10 @@ class minimalblock_geometries:
         return self.mb.geometries_getitem(i)
 
     
-_oqt.minimalblock.nodes = property(lambda mb: minimalblock_nodes(mb))
-_oqt.minimalblock.ways = property(lambda mb: minimalblock_ways(mb))
-_oqt.minimalblock.relations = property(lambda mb: minimalblock_relations(mb))
-_oqt.minimalblock.geometries = property(lambda mb: minimalblock_geometries(mb))
+_oqt.MinimalBlock.nodes = property(lambda mb: minimalblock_nodes(mb))
+_oqt.MinimalBlock.ways = property(lambda mb: minimalblock_ways(mb))
+_oqt.MinimalBlock.relations = property(lambda mb: minimalblock_relations(mb))
+_oqt.MinimalBlock.geometries = property(lambda mb: minimalblock_geometries(mb))
 
 
 _oqt._ReadBlocksCaller = _oqt.ReadBlocksCaller
@@ -217,7 +217,7 @@ def prep_poly(poly):
         poly=read_poly_file(poly)
     
     
-    return [oqt._oqt.lonlat(x,y) for x,y in poly]
+    return [_oqt.lonlat(x,y) for x,y in poly]
 
 class ReadBlocksCaller:
     def __init__(self, prfx, bbox, poly=None, lastdate=None):
@@ -229,7 +229,13 @@ class ReadBlocksCaller:
         
         self.bbox=bbox
         self.poly=prep_poly(poly)
-        
+        if self.bbox is None:
+            if self.poly:
+                ln=[l.lon for l in self.poly]
+                lt=[l.lat for l in self.poly]
+                self.bbox=_oqt.bbox(min(ln),min(lt),max(ln),max(lt))
+            else:
+                self.bbox=_oqt.bbox(-1800000000,-900000000,1800000000,900000000)
         self.rbc = _oqt.make_read_blocks_caller(prfx, self.bbox, self.poly, lastdate)
     
     def read_primitive(self, cb, numblocks=512, numchan=4, filter=None):
@@ -238,8 +244,8 @@ class ReadBlocksCaller:
     def read_minimal(self, cb, numblocks=512, numchan=4, filter=None):
         return _oqt.read_blocks_caller_read_minimal(self.rbc, cb, numblocks, numchan, filter)            
 
-    def num_blocks(self):
-        return self.rbc.num_blocks()
+    def num_tiles(self):
+        return self.rbc.num_tiles()
         
     def calc_idset(self, bbox=None, poly=None):
         if bbox is None:

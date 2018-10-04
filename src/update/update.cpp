@@ -498,7 +498,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
             if (obj->Members().empty()) {
                 qts->expand(k,0);
             } else {
-                std::list<member> missing_members;
+                std::list<Member> missing_members;
                 
                 for (auto& m : obj->Members()) {
                     if (m.type==ElementType::Relation) {

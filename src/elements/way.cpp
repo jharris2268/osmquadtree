@@ -27,7 +27,7 @@
 namespace oqt {
 
 
-Way::Way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs)
+Way::Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, refvector refs)
     : Element(ElementType::Way,c,i,q,inf,tags), refs_(refs) {}
 
 

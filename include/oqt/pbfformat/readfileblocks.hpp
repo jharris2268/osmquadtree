@@ -51,7 +51,7 @@ PrimitiveBlockPtr read_as_primitiveblock(
     bool ischange,
     size_t objflags);
 
-std::shared_ptr<minimalblock> read_as_minimalblock(
+minimal::BlockPtr read_as_minimalblock(
     std::shared_ptr<FileBlock> bl, 
     size_t objflags);
 
@@ -66,7 +66,7 @@ PrimitiveBlockPtr merge_as_primitiveblock(
     IdSetPtr idset, 
     size_t objflags);
 
-std::shared_ptr<minimalblock> merge_as_minimalblock(
+minimal::BlockPtr merge_as_minimalblock(
     std::shared_ptr<FileBlock> bl, 
     size_t objflags);
 
@@ -269,12 +269,12 @@ namespace readpbffile_detail {
     }
 
     template <>
-    inline std::shared_ptr<minimalblock> merge_keyedblob<minimalblock>(
+    inline minimal::BlockPtr merge_keyedblob<minimal::Block>(
         std::shared_ptr<keyedblob> bl,
         size_t objflags, IdSetPtr ids) {
         
-        std::vector<std::shared_ptr<minimalblock>> changes;
-        std::shared_ptr<minimalblock> main;
+        std::vector<minimal::BlockPtr> changes;
+        minimal::BlockPtr main;
         int64 ts=0;
         for (auto& b: bl->blobs) {
             std::string dd = decompress(b.first,b.second);

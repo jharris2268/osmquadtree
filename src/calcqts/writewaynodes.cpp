@@ -62,7 +62,7 @@ class WriteWayNodes {
         }
         size_t num_tiles() { return waynodes.size(); }
         
-        void call(std::shared_ptr<minimalblock> block) {
+        void call(minimal::BlockPtr block) {
             if (!block) {
                 
                 for (size_t k=0; k < waynodes.size(); k++) {
@@ -141,7 +141,7 @@ minimalblock_callback make_write_waynodes_callback(
             size_t block_size, int64 split_at, int comp_level) {
 
     auto wwn = std::make_shared<WriteWayNodes>(writer,relations,block_size,split_at,comp_level);
-    return [wwn](std::shared_ptr<minimalblock> mb) {
+    return [wwn](minimal::BlockPtr mb) {
         wwn->call(mb);
     };
 }
@@ -172,7 +172,7 @@ class WayNodesFilePrep {
             }
                 
             //auto add_relations = threaded_callback<way_nodes>::make([rels](std::shared_ptr<way_nodes> r) {
-            minimalblock_callback add_relations = [rels](std::shared_ptr<minimalblock> r) {
+            minimalblock_callback add_relations = [rels](minimal::BlockPtr r) {
                 if (r) {
                     rels->add_relations_data(r);
                 }
@@ -188,7 +188,7 @@ class WayNodesFilePrep {
             
             
             if (numchan!=0) {
-                add_relations = threaded_callback<minimalblock>::make(add_relations,numchan);
+                add_relations = threaded_callback<minimal::Block>::make(add_relations,numchan);
                 write_waynodes = threaded_callback<keystring>::make(write_waynodes,numchan);
             }
             
@@ -202,7 +202,7 @@ class WayNodesFilePrep {
             } else {
             
                 for (size_t i=0; i < numchan; i++) {
-                    pack_waynodes.push_back(threaded_callback<minimalblock>::make(
+                    pack_waynodes.push_back(threaded_callback<minimal::Block>::make(
                         
                         make_write_waynodes_callback(write_waynodes, add_relations, block_size,split_at,comp_level)
                     )
@@ -211,7 +211,7 @@ class WayNodesFilePrep {
             }
             
             node_blocks.reserve(800000);
-            return [pack_waynodes,this](std::shared_ptr<minimalblock> bl) {
+            return [pack_waynodes,this](minimal::BlockPtr bl) {
                 if (!bl) {
                     for (auto pw: pack_waynodes) { pw(bl); }
                 } else {

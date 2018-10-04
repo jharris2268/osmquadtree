@@ -29,17 +29,17 @@
 namespace oqt {
 class Relation : public Element {
     public:
-        Relation(changetype c, int64 i, int64 q, info inf, tagvector tags, memvector mems);
+        Relation(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems);
         virtual ~Relation() {}
 
-        const memvector&  Members() const;
+        const std::vector<Member>&  Members() const;
         
         virtual ElementPtr copy();
         
         bool filter_members(IdSetPtr ids);
         friend bool fix_members(Relation& rel);
     private:
-        memvector mems_;
+        std::vector<Member> mems_;
 };
 
 bool fix_members(Relation& rel);

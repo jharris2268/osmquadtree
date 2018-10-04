@@ -57,7 +57,7 @@ class way_withnodes : public Element {
                 bounds.expand_point(l.lon,l.lat);
             }
         }
-        way_withnodes(int64 id, int64 qt, const info& inf, const tagvector& tgs, const refvector& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
+        way_withnodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const refvector& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
             : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
 
 

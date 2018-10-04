@@ -101,9 +101,9 @@ std::string packObject(
     } else if (obj->Type()==ElementType::Relation) {
         auto rl = std::dynamic_pointer_cast<Relation>(obj);
         if (!rl->Members().empty()) {
-            msgs.push_back(PbfTag{8,0,writePackedIntFunc<member>(rl->Members(), [&stringtable](const member& m) { return getString(stringtable, m.role); })});
-            msgs.push_back(PbfTag{9,0,writePackedDeltaFunc<member>(rl->Members(), [](const member& m) { return m.ref; })});
-            msgs.push_back(PbfTag{10,0,writePackedIntFunc<member>(rl->Members(), [](const member& m) { return (uint64) m.type; })});
+            msgs.push_back(PbfTag{8,0,writePackedIntFunc<Member>(rl->Members(), [&stringtable](const Member& m) { return getString(stringtable, m.role); })});
+            msgs.push_back(PbfTag{9,0,writePackedDeltaFunc<Member>(rl->Members(), [](const Member& m) { return m.ref; })});
+            msgs.push_back(PbfTag{10,0,writePackedIntFunc<Member>(rl->Members(), [](const Member& m) { return (uint64) m.type; })});
         }
         
     } else {

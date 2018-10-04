@@ -61,14 +61,14 @@ size_t read_blocks_primitiveblock_py(
 
 size_t read_blocks_minimalblock_py(
     const std::string& filename,
-    std::function<bool(std::vector<minimalblock_ptr>)> callback,
+    std::function<bool(std::vector<minimal::BlockPtr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
     size_t objflags) {
 
 
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<minimalblock>>(wrap_callback(callback),numblocks);
-    minimalblock_callback cbf = [cb](minimalblock_ptr bl) { cb->call(bl); };
+    auto cb = std::make_shared<collect_blocks<minimal::Block>>(wrap_callback(callback),numblocks);
+    minimalblock_callback cbf = [cb](minimal::BlockPtr bl) { cb->call(bl); };
     read_blocks_minimalblock(filename, cbf, locs, numchan, objflags);
     return cb->total();
 }
@@ -93,15 +93,15 @@ size_t read_blocks_caller_read_primitive(
 
 size_t read_blocks_caller_read_minimal(
     std::shared_ptr<ReadBlocksCaller> rbc,
-    std::function<bool(std::vector<minimalblock_ptr>)> callback,
+    std::function<bool(std::vector<minimal::BlockPtr>)> callback,
     size_t numchan,
     size_t numblocks,
     IdSetPtr filter) {
         
     
     py::gil_scoped_release r;
-    auto cb = std::make_shared<collect_blocks<minimalblock>>(wrap_callback(callback),numblocks);
-    auto cbf = multi_threaded_callback<minimalblock>::make([cb](minimalblock_ptr bl) { cb->call(bl); },numchan);
+    auto cb = std::make_shared<collect_blocks<minimal::Block>>(wrap_callback(callback),numblocks);
+    auto cbf = multi_threaded_callback<minimal::Block>::make([cb](minimal::BlockPtr bl) { cb->call(bl); },numchan);
     
     rbc->read_minimal(cbf, filter);
     return cb->total();
@@ -110,15 +110,15 @@ size_t read_blocks_caller_read_minimal(
 }
 
 
-ElementPtr make_node(int64 id, info inf, tagvector tags, int64 lon, int64 lat, int64 qt, changetype ct) {
+ElementPtr make_node(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 lon, int64 lat, int64 qt, changetype ct) {
     return std::make_shared<Node>(ct, id, qt, inf, tags, lon, lat);
 }
 
-ElementPtr make_way(int64 id, info inf, tagvector tags, std::vector<int64> refs, int64 qt, changetype ct) {
+ElementPtr make_way(int64 id, ElementInfo inf, std::vector<Tag> tags, std::vector<int64> refs, int64 qt, changetype ct) {
     return std::make_shared<Way>(ct, id, qt, inf, tags,refs);
 }
 
-ElementPtr make_relation(int64 id, info inf, tagvector tags, std::vector<member> mems, int64 qt, changetype ct) {
+ElementPtr make_relation(int64 id, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems, int64 qt, changetype ct) {
     return std::make_shared<Relation>(ct, id, qt, inf, tags, mems);
 }
 
@@ -286,33 +286,31 @@ void block_defs(py::module& m) {
         
     ;
 
-    py::class_<info>(m, "info")
+    py::class_<ElementInfo>(m, "ElementInfo")
 
         .def(py::init<int64,int64,int64,int64,std::string,bool>(),py::arg("version"),py::arg("timestamp"),py::arg("changeset"),py::arg("user_id"),py::arg("user"),py::arg("visible"))
-        .def_readonly("version", &info::version)
-        .def_readonly("timestamp", &info::timestamp)
-        .def_readonly("changeset", &info::changeset)
-        .def_readonly("user_id", &info::user_id)
-        .def_readonly("user", &info::user)
-        .def_readonly("visible", &info::visible)
+        .def_readonly("version", &ElementInfo::version)
+        .def_readonly("timestamp", &ElementInfo::timestamp)
+        .def_readonly("changeset", &ElementInfo::changeset)
+        .def_readonly("user_id", &ElementInfo::user_id)
+        .def_readonly("user", &ElementInfo::user)
+        .def_readonly("visible", &ElementInfo::visible)
     ;
 
-    py::class_<member>(m, "member")
+    py::class_<Member>(m, "Member")
         .def(py::init<ElementType,int64,std::string>(),py::arg("type"),py::arg("ref"), py::arg("role"))
-        .def_readonly("type", &member::type)
-        .def_readonly("ref", &member::ref)
-        .def_readonly("role", &member::role)
+        .def_readonly("type", &Member::type)
+        .def_readonly("ref", &Member::ref)
+        .def_readonly("role", &Member::role)
     ;
 
-    py::class_<tag>(m, "tag")
+    py::class_<Tag>(m, "Tag")
         .def(py::init<std::string,std::string>(),py::arg("key"), py::arg("val"))
-        .def_readonly("key", &tag::key)
-        .def_property_readonly("val", [](const tag& t) {
+        .def_readonly("key", &Tag::key)
+        .def_property_readonly("val", [](const Tag& t) {
             if (!t.val.empty() && (t.val[0]=='\0')) {
-                //return py::cast(py::bytes(t.val));
                 return py::object(py::bytes(t.val));
             }
-            //return py::cast(py::str(t.val));
             return py::object(py::str(t.val));
             
         })
@@ -390,64 +388,59 @@ void block_defs(py::module& m) {
     ;
     m.def("read_packedobj", &read_packedobj);*/
 
-    py::class_<minimalblock, std::shared_ptr<minimalblock>>(m, "minimalblock")
-        .def_readonly("index", &minimalblock::index)
-        .def_readonly("quadtree", &minimalblock::quadtree)
-        //.def_readonly("nodes", &minimalblock::nodes)
-        //.def_readonly("ways", &minimalblock::ways)
-        //.def_readonly("relations", &minimalblock::relations)
-        .def("nodes_len", [](const minimalblock& mb) { return mb.nodes.size(); })
-        .def("nodes_getitem", [](const minimalblock& mb, int i) { if (i<0) { i+=mb.nodes.size(); } return mb.nodes.at(i); })
-        .def("ways_len", [](const minimalblock& mb) { return mb.ways.size(); })
-        .def("ways_getitem", [](const minimalblock& mb, int i) { if (i<0) { i+=mb.ways.size(); } return mb.ways.at(i); })
-        .def("relations_len", [](const minimalblock& mb) { return mb.relations.size(); })
-        .def("relations_getitem", [](const minimalblock& mb, int i) { if (i<0) { i+=mb.relations.size(); } return mb.relations.at(i); })
-        .def("geometries_len", [](const minimalblock& mb) { return mb.geometries.size(); })
-        .def("geometries_getitem", [](const minimalblock& mb, int i) { if (i<0) { i+=mb.geometries.size(); } return mb.geometries.at(i); })
-        .def_readonly("file_progress", &minimalblock::file_progress)
-        .def_readonly("file_position", &minimalblock::file_position)
+    py::class_<minimal::Block, std::shared_ptr<minimal::Block>>(m, "MinimalBlock")
+        .def_readonly("index", &minimal::Block::index)
+        .def_readonly("quadtree", &minimal::Block::quadtree)
+        
+        .def("nodes_len", [](const minimal::Block& mb) { return mb.nodes.size(); })
+        .def("nodes_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.nodes.size(); } return mb.nodes.at(i); })
+        .def("ways_len", [](const minimal::Block& mb) { return mb.ways.size(); })
+        .def("ways_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.ways.size(); } return mb.ways.at(i); })
+        .def("relations_len", [](const minimal::Block& mb) { return mb.relations.size(); })
+        .def("relations_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.relations.size(); } return mb.relations.at(i); })
+        .def("geometries_len", [](const minimal::Block& mb) { return mb.geometries.size(); })
+        .def("geometries_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.geometries.size(); } return mb.geometries.at(i); })
+        .def_readonly("file_progress", &minimal::Block::file_progress)
+        .def_readonly("file_position", &minimal::Block::file_position)
 
     ;
-    py::class_<minimalnode>(m, "minimalnode")
-        .def_readonly("id", &minimalnode::id)
-        .def_property_readonly("timestamp", [](const minimalnode& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimalnode& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimalnode& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimalnode::quadtree)
-        .def_readonly("lon", &minimalnode::lon)
-        .def_readonly("lat", &minimalnode::lat)
-        .def("sizeof", [](const minimalnode&m ) { return sizeof(m); })
+    py::class_<minimal::Node>(m, "MinimalNode")
+        .def_readonly("id", &minimal::Node::id)
+        .def_property_readonly("timestamp", [](const minimal::Node& mn) { return mn.timestamp; })
+        .def_property_readonly("version", [](const minimal::Node& mn) { return mn.version; })
+        .def_property_readonly("changetype", [](const minimal::Node& mn) { return mn.changetype; })
+        .def_readonly("quadtree", &minimal::Node::quadtree)
+        .def_readonly("lon", &minimal::Node::lon)
+        .def_readonly("lat", &minimal::Node::lat)
+        .def("sizeof", [](const minimal::Node& m ) { return sizeof(m); })
     ;
 
-    py::class_<minimalway>(m, "minimalway")
-        .def_readonly("id", &minimalway::id)
-        //.def_readonly("timestamp", &minimalway::timestamp)
-        .def_property_readonly("timestamp", [](const minimalway& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimalway& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimalway& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimalway::quadtree)
-        .def_property_readonly("refs_data", [](const minimalway& w)->py::bytes { return py::bytes(w.refs_data); })
+    py::class_<minimal::Way>(m, "MinimalWay")
+        .def_readonly("id", &minimal::Way::id)
+        .def_property_readonly("timestamp", [](const minimal::Way& mn) { return mn.timestamp; })
+        .def_property_readonly("version", [](const minimal::Way& mn) { return mn.version; })
+        .def_property_readonly("changetype", [](const minimal::Way& mn) { return mn.changetype; })
+        .def_readonly("quadtree", &minimal::Way::quadtree)
+        .def_property_readonly("refs_data", [](const minimal::Way& w)->py::bytes { return py::bytes(w.refs_data); })
     ;
 
-    py::class_<minimalrelation>(m, "minimalrelation")
-        .def_readonly("id", &minimalrelation::id)
-        //.def_readonly("timestamp", &minimalrelation::timestamp)
-        .def_property_readonly("timestamp", [](const minimalrelation& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimalrelation& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimalrelation& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimalrelation::quadtree)
-        .def_property_readonly("tys_data", [](const minimalrelation& r)->py::bytes { return py::bytes(r.tys_data); })
-        .def_property_readonly("refs_data", [](const minimalrelation& r)->py::bytes { return py::bytes(r.refs_data); })
+    py::class_<minimal::Relation>(m, "MinimalRelation")
+        .def_readonly("id", &minimal::Relation::id)
+        .def_property_readonly("timestamp", [](const minimal::Relation& mn) { return mn.timestamp; })
+        .def_property_readonly("version", [](const minimal::Relation& mn) { return mn.version; })
+        .def_property_readonly("changetype", [](const minimal::Relation& mn) { return mn.changetype; })
+        .def_readonly("quadtree", &minimal::Relation::quadtree)
+        .def_property_readonly("tys_data", [](const minimal::Relation& r)->py::bytes { return py::bytes(r.tys_data); })
+        .def_property_readonly("refs_data", [](const minimal::Relation& r)->py::bytes { return py::bytes(r.refs_data); })
     ;
     
-    py::class_<minimalgeometry>(m, "minimalgeometry")
-        .def_property_readonly("ty", [](const minimalgeometry& mn) { return mn.ty; })
-        .def_property_readonly("id", [](const minimalgeometry& mn) { return mn.id; })
-        //.def_readonly("timestamp", &minimalgeometry::timestamp)
-        .def_property_readonly("timestamp", [](const minimalgeometry& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimalgeometry& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimalgeometry& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimalgeometry::quadtree)
+    py::class_<minimal::Geometry>(m, "MinimalGeometry")
+        .def_property_readonly("ty", [](const minimal::Geometry& mn) { return mn.ty; })
+        .def_property_readonly("id", [](const minimal::Geometry& mn) { return mn.id; })
+        .def_property_readonly("timestamp", [](const minimal::Geometry& mn) { return mn.timestamp; })
+        .def_property_readonly("version", [](const minimal::Geometry& mn) { return mn.version; })
+        .def_property_readonly("changetype", [](const minimal::Geometry& mn) { return mn.changetype; })
+        .def_readonly("quadtree", &minimal::Geometry::quadtree)
     ;
 
     
@@ -518,7 +511,7 @@ void block_defs(py::module& m) {
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);
     
-   m.def("read_blocks_merge_minimal", &read_blocks_merge_py<minimalblock>,
+   m.def("read_blocks_merge_minimal", &read_blocks_merge_py<minimal::Block>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);

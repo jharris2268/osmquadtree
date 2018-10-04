@@ -31,6 +31,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <set>
+#include <deque>
+
 namespace oqt {
 std::string item_string(size_t i, const qttree_item& t) {
     std::stringstream ss;
@@ -212,7 +214,7 @@ class qttree_impl : public qttree {
 
 
 
-void collect_block(std::shared_ptr<count_map> res, std::shared_ptr<minimalblock> block) {
+void collect_block(std::shared_ptr<count_map> res, minimal::BlockPtr block) {
 
     for (const auto&  nn : block->nodes) {
         (*res)[nn.quadtree]+=1;

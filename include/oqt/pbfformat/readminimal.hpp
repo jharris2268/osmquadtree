@@ -33,7 +33,7 @@ namespace oqt {
 
 
 
-std::shared_ptr<minimalblock> readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
+minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
 
 typedef std::vector<std::pair<uint64,int64> > qtvec;
 std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags=7);

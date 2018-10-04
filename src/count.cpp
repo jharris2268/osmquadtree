@@ -48,7 +48,7 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     size_t nexttot = step/2;
     
     
-    auto cb = [&result,&nexttot,&step](std::shared_ptr<minimalblock> mb) {
+    auto cb = [&result,&nexttot,&step](minimal::BlockPtr mb) {
         if (!mb) {
             logger_progress(100) << "\r" << result.short_str();
             return;

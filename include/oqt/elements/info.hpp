@@ -28,9 +28,9 @@
 
 #include <string>
 namespace oqt {
-struct info {
-    info() : version(0),timestamp(0),changeset(0),user_id(0),user(""),visible(false) {}
-    info(int64 vs, int64 ts, int64 cs, int64 ui, std::string us, bool vis=true) :
+struct ElementInfo {
+    ElementInfo() : version(0),timestamp(0),changeset(0),user_id(0),user(""),visible(false) {}
+    ElementInfo(int64 vs, int64 ts, int64 cs, int64 ui, std::string us, bool vis=true) :
         version(vs),timestamp(ts),changeset(cs),user_id(ui),user(us),visible(vis) {}
 
     int64 version;

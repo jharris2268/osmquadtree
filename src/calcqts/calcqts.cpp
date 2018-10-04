@@ -112,7 +112,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
     auto nq = node_qts();
     int64 nql = nq->ref_range().second;
     
-    auto calc_node_qts = threaded_callback<minimalblock>::make([rels,out,buffer,max_depth](std::shared_ptr<minimalblock> nds) {
+    auto calc_node_qts = threaded_callback<minimal::Block>::make([rels,out,buffer,max_depth](minimal::BlockPtr nds) {
         if (!nds) { return; }
         for (auto& n : nds->nodes) {
             if (n.quadtree==-1) {
@@ -125,7 +125,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
             
             
     
-    auto add_nodeway_qts = [&nq,&nql,node_qts,&calc_node_qts](std::shared_ptr<minimalblock> nds) {
+    auto add_nodeway_qts = [&nq,&nql,node_qts,&calc_node_qts](minimal::BlockPtr nds) {
         if (!nds) {
 
             calc_node_qts(nullptr);

@@ -24,11 +24,15 @@
 #define ELEMENTS_MINIMALBLOCK_HPP
 
 #include "oqt/common.hpp"
-#include <deque>
+
 namespace oqt {
-struct minimalnode {
+    
+namespace minimal {
+    
+    
+struct Node {
     int64 id;
-    //int64 timestamp;
+    
     size_t changetype : 4;
     size_t version : 24;
     size_t timestamp : 36;
@@ -38,21 +42,20 @@ struct minimalnode {
     int32 lat;
 };
     
-struct minimalway {
+struct Way {
     int64 id;
-    //int64 timestamp;
+    
     size_t changetype : 4;
     size_t version : 24;
     size_t timestamp : 36;
     int64 quadtree;
     
-    //std::vector<int64> refs;
     std::string refs_data;
 };
 
-struct minimalrelation {
+struct Relation {
     int64 id;
-    //int64 timestamp;
+    
     size_t changetype : 4;
     size_t version : 24;
     size_t timestamp : 36;
@@ -62,7 +65,7 @@ struct minimalrelation {
     std::string refs_data;
 };
 
-struct minimalgeometry {
+struct Geometry {
     size_t ty : 8;
     size_t id : 56;
     
@@ -72,14 +75,14 @@ struct minimalgeometry {
     int64 quadtree;
 };
 
-struct minimalblock {
+struct Block {
     int64 index;
     int64 quadtree;
     
-    std::vector<minimalnode> nodes;
-    std::vector<minimalway> ways;
-    std::vector<minimalrelation> relations;
-    std::vector<minimalgeometry> geometries;
+    std::vector<Node> nodes;
+    std::vector<Way> ways;
+    std::vector<Relation> relations;
+    std::vector<Geometry> geometries;
     
     int64 file_position;
     
@@ -89,7 +92,12 @@ struct minimalblock {
     double file_progress;
     
 };
-typedef std::shared_ptr<minimalblock> minimalblock_ptr;
-typedef std::function<void(minimalblock_ptr)> minimalblock_callback;
+
+typedef std::shared_ptr<Block> BlockPtr;
+
+}
+
+
+typedef std::function<void(minimal::BlockPtr)> minimalblock_callback;
 }
 #endif

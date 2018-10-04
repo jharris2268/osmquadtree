@@ -44,11 +44,11 @@ class point : public BaseGeometry {
         point(std::shared_ptr<Node> nd) :
             BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),nd->Tags(),-1),
             lon(nd->Lon()), lat(nd->Lat()) {}
-        point(std::shared_ptr<Node> nd, const tagvector& tgs, int64 layer_, int64 minzoom_) :
+        point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, int64 layer_, int64 minzoom_) :
             BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),tgs,minzoom_),
             lon(nd->Lon()), lat(nd->Lat()),layer(layer_) {}
 
-        point(int64 id, int64 qt, const info& inf, const tagvector& tags, int64 lon_, int64 lat_, int64 layer_, int64 minzoom_) :
+        point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, int64 layer_, int64 minzoom_) :
             BaseGeometry(ElementType::Point,changetype::Normal,id,qt,inf,tags,minzoom_), lon(lon_), lat(lat_),layer(layer_){}
 
         virtual ~point() {}
@@ -85,12 +85,12 @@ class linestring : public BaseGeometry {
                 length=calc_line_length(lonlats);
             }
 
-        linestring(std::shared_ptr<way_withnodes> wy, const tagvector& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
+        linestring(std::shared_ptr<way_withnodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
             BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
             refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()){
                 length=calc_line_length(lonlats);
             }
-        linestring(int64 id, int64 qt, const info& inf, const tagvector& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
+        linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
             BaseGeometry(ElementType::Linestring,changetype::Normal,id,qt,inf,tags,minzoom_), refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), length(length_), bounds(bounds_) {}
 
 
@@ -132,7 +132,7 @@ class simplepolygon : public BaseGeometry {
                 }
             }
 
-        simplepolygon(std::shared_ptr<way_withnodes> wy, const tagvector& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
+        simplepolygon(std::shared_ptr<way_withnodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
             BaseGeometry(ElementType::SimplePolygon, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
             refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()), reversed(false) {
                 area = calc_ring_area(lonlats);
@@ -142,7 +142,7 @@ class simplepolygon : public BaseGeometry {
                 }
             }
 
-        simplepolygon(int64 id, int64 qt, const info& inf, const tagvector& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_) :
+        simplepolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_) :
             BaseGeometry(ElementType::SimplePolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
             refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), area(area_), bounds(bounds_),reversed(reversed_) {}
 
@@ -195,7 +195,7 @@ void reverse_ring(ringpartvec& ring);
 
 class complicatedpolygon : public BaseGeometry {
     public:
-        complicatedpolygon(std::shared_ptr<Relation> rel, int64 part_, const ringpartvec& outers_, const std::vector<ringpartvec>& inners_, const tagvector& tags, int64 zorder_, int64 layer_, int64 minzoom_) :
+        complicatedpolygon(std::shared_ptr<Relation> rel, int64 part_, const ringpartvec& outers_, const std::vector<ringpartvec>& inners_, const std::vector<Tag>& tags, int64 zorder_, int64 layer_, int64 minzoom_) :
             BaseGeometry(ElementType::ComplicatedPolygon, changetype::Normal, rel->Id(), rel->Quadtree(), rel->Info(), tags,minzoom_),
             part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_) {
 
@@ -223,7 +223,7 @@ class complicatedpolygon : public BaseGeometry {
             }
 
         }
-        complicatedpolygon(int64 id, int64 qt, const info& inf, const tagvector& tags, int64 part_, const ringpartvec& outers_, const std::vector<ringpartvec>& inners_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_)
+        complicatedpolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 part_, const ringpartvec& outers_, const std::vector<ringpartvec>& inners_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_)
             : BaseGeometry(ElementType::ComplicatedPolygon,changetype::Normal,id,qt,inf,tags,minzoom_), part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_), area(area_), bounds(bounds_){}
 
 
@@ -291,8 +291,8 @@ void process_all_vec(std::vector<std::shared_ptr<single_queue<primitiveblock>>> 
 
 
 
-std::string pack_tags(const tagvector& tgs);
-void unpack_tags(const std::string& str, tagvector& tgs);
+std::string pack_tags(const std::vector<Tag>& tgs);
+void unpack_tags(const std::string& str, std::vector<Tag>& tgs);
 std::string convert_packed_tags_to_json(const std::string& str);
 } }
 

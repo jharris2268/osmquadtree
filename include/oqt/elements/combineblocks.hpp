@@ -41,15 +41,15 @@ PrimitiveBlockPtr combine_primitiveblock_many(
     const std::vector<PrimitiveBlockPtr>& changes);
 
 
-std::shared_ptr<minimalblock> combine_minimalblock_two(
+minimal::BlockPtr combine_minimalblock_two(
     size_t idx,
-    std::shared_ptr<minimalblock> left,
-    std::shared_ptr<minimalblock> right,
+    minimal::BlockPtr left,
+    minimal::BlockPtr right,
     bool apply_change);
 
-std::shared_ptr<minimalblock> combine_minimalblock_many(
-    std::shared_ptr<minimalblock> main,
-    const std::vector<std::shared_ptr<minimalblock>>& changes);
+minimal::BlockPtr combine_minimalblock_many(
+    minimal::BlockPtr main,
+    const std::vector<minimal::BlockPtr>& changes);
 
 }
 #endif //ELEMENTS_COMBINEBLOCKS_HPP

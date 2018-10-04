@@ -167,7 +167,7 @@ class CalculateIdSetFilter {
             notinpoly=0;
         }
         
-        void call(std::shared_ptr<minimalblock> mb) {
+        void call(minimal::BlockPtr mb) {
             if (!mb) {
                 logger_message() << ids->str();
                 logger_message() << "CalculateIdSetFilter finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
@@ -232,13 +232,13 @@ class CalculateIdSetFilter {
             return false;
         }
         
-        void check_node(const minimalnode& n,bool box_contains) {
+        void check_node(const minimal::Node& n,bool box_contains) {
             if (box_contains || check_point(n.lon, n.lat)) {
                 
                 ids->insert(ElementType::Node, n.id);
             }
         }
-        void check_way(const minimalway& w,bool box_contains) {
+        void check_way(const minimal::Way& w,bool box_contains) {
             auto wns = readPackedDelta(w.refs_data);
             bool found=box_contains || [this, &wns]() {
                 for (const auto& r: wns) {
@@ -259,7 +259,7 @@ class CalculateIdSetFilter {
             }
         }
         
-        void check_relation(const minimalrelation& r, bool box_contains) {
+        void check_relation(const minimal::Relation& r, bool box_contains) {
             //if (box_contains) {
             //    ids->relations.insert(r.id);
            // }
@@ -307,7 +307,7 @@ IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller,
         filter_impl = std::make_shared<IdSetFilterSet>();
     }
     auto cfi = std::make_shared<CalculateIdSetFilter>(filter_impl, filter_box, poly.empty(), poly);
-    auto rc = multi_threaded_callback<minimalblock>::make([cfi](std::shared_ptr<minimalblock> mb) { cfi->call(mb); }, numchan);
+    auto rc = multi_threaded_callback<minimal::Block>::make([cfi](minimal::BlockPtr mb) { cfi->call(mb); }, numchan);
     read_blocks_caller->read_minimal(rc, nullptr);
     
     logger_message() << filter_impl->str();

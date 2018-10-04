@@ -46,7 +46,7 @@ PrimitiveBlockPtr read_as_primitiveblock(
     return r;
 }
 
-std::shared_ptr<minimalblock> read_as_minimalblock(
+minimal::BlockPtr read_as_minimalblock(
     std::shared_ptr<FileBlock> bl, size_t objflags) {
     
     
@@ -58,7 +58,7 @@ std::shared_ptr<minimalblock> read_as_minimalblock(
         r->file_position = bl->file_position;
         return r;
     }
-    auto r=std::make_shared<minimalblock>();
+    auto r=std::make_shared<minimal::Block>();
     r->index=-1;
     r->uncompressed_size=0;
     r->file_progress = bl->file_progress;
@@ -106,12 +106,12 @@ PrimitiveBlockPtr merge_as_primitiveblock(
     return comb;
 }
 
-std::shared_ptr<minimalblock> merge_as_minimalblock(
+minimal::BlockPtr merge_as_minimalblock(
     std::shared_ptr<keyedblob> bl,
     size_t objflags, IdSetPtr ids) {
     
-    std::vector<std::shared_ptr<minimalblock>> changes;
-    std::shared_ptr<minimalblock> main;
+    std::vector<minimal::BlockPtr> changes;
+    minimal::BlockPtr main;
     int64 ts=0;
     for (auto& b: bl->blobs) {
         std::string dd = decompress(b.first,b.second);
@@ -222,7 +222,7 @@ void read_blocks_minimalblock(
     size_t numchan, 
     size_t objflags) {
     
-    return read_blocks_convfunc<minimalblock>(filename, callback, locs, numchan,
+    return read_blocks_convfunc<minimal::Block>(filename, callback, locs, numchan,
         [objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_minimalblock(fb, objflags); });
     
@@ -237,7 +237,7 @@ void read_blocks_split_minimalblock(
     size_t objflags) {
     
     
-    return read_blocks_split_convfunc<minimalblock>(filename, callbacks, locs,
+    return read_blocks_split_convfunc<minimal::Block>(filename, callbacks, locs,
         [objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_minimalblock(fb, objflags); });
 }
@@ -249,7 +249,7 @@ void read_blocks_nothread_minimalblock(
     std::vector<int64> locs, 
     size_t objflags) {
         
-    return read_blocks_nothread_convfunc<minimalblock>(filename, callback, locs,
+    return read_blocks_nothread_convfunc<minimal::Block>(filename, callback, locs,
         [objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_minimalblock(fb, objflags); });
 

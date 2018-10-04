@@ -327,7 +327,7 @@ struct count_block {
             
     }
 
-    void add(size_t i, std::shared_ptr<minimalblock> block) {
+    void add(size_t i, minimal::BlockPtr block) {
         numblocks++;
         if (block->file_progress>progress) { progress=block->file_progress; }
         uncomp+=block->uncompressed_size;
@@ -352,7 +352,7 @@ struct count_block {
                     logger_message() << "wrong element type?? " << gm.ty << " " << gm.id;
                     throw std::domain_error("wrong element type??");
                 }
-                gg.at(gm.ty-3).add<minimalgeometry>(gm);
+                gg.at(gm.ty-3).add<minimal::Geometry>(gm);
                 total++;
             }
         }

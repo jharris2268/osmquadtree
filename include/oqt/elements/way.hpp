@@ -29,7 +29,7 @@ namespace oqt {
 typedef std::vector<int64> refvector;
 class Way : public Element {
     public:
-        Way(changetype c, int64 i, int64 q, info inf, tagvector tags, refvector refs);
+        Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, refvector refs);
         virtual ~Way() {}
 
         const refvector& Refs() const;

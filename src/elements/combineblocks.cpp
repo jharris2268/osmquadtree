@@ -193,13 +193,13 @@ void combine_minimalblock_objs(std::vector<T>& res, const std::vector<T>& left, 
     
 }
 
-std::shared_ptr<minimalblock> combine_minimalblock_two(
+minimal::BlockPtr combine_minimalblock_two(
     size_t idx,
-    std::shared_ptr<minimalblock> left,
-    std::shared_ptr<minimalblock> right,
+    minimal::BlockPtr left,
+    minimal::BlockPtr right,
     bool apply_change) {
         
-    auto res = std::make_shared<minimalblock>();
+    auto res = std::make_shared<minimal::Block>();
     res->index = idx;
     res->quadtree=left->quadtree;
     
@@ -212,13 +212,13 @@ std::shared_ptr<minimalblock> combine_minimalblock_two(
         
 }
 
-std::shared_ptr<minimalblock> combine_minimalblock_many(
-    std::shared_ptr<minimalblock> main,
-    const std::vector<std::shared_ptr<minimalblock>>& changes) {
+minimal::BlockPtr combine_minimalblock_many(
+    minimal::BlockPtr main,
+    const std::vector<minimal::BlockPtr>& changes) {
     if (changes.size()==0) {
         return main;
     }
-    std::shared_ptr<minimalblock> merged_changes;
+    minimal::BlockPtr merged_changes;
     merged_changes=changes[0];
     if (changes.size()>1) {
         for (size_t i=1; i < changes.size(); i++) {

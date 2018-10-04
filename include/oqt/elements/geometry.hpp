@@ -33,7 +33,7 @@ bool isGeometryType(ElementType ty);
 
 class BaseGeometry : public Element {
     public:
-        BaseGeometry(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_) :
+        BaseGeometry(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 minzoom_) :
             Element(t,c,i,q,inf,tags), minzoom(minzoom_) {};
             
     
@@ -57,7 +57,7 @@ class BaseGeometry : public Element {
 
 class GeometryPacked : public BaseGeometry {
     public:
-        GeometryPacked(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_);
+        GeometryPacked(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag>, int64 minzoom_, std::list<PbfTag> geom_messages_);
         virtual uint64 InternalId() const;
         
         

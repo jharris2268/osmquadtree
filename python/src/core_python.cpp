@@ -324,17 +324,17 @@ enum diffreason {
 };
 diffreason compare_element(ElementPtr left, ElementPtr right) {
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
-    const info& li = left->Info();
-    const info& ri = right->Info();
+    const ElementInfo& li = left->Info();
+    const ElementInfo& ri = right->Info();
     if ((li.version!=ri.version) || (li.timestamp!=ri.timestamp) || (li.changeset!=ri.changeset) || (li.user_id != ri.user_id)) {
         return diffreason::Info;
     }
-    tagvector lt = left->Tags();
-    tagvector rt = right->Tags();
+    std::vector<Tag> lt = left->Tags();
+    std::vector<Tag> rt = right->Tags();
     if (lt.size()!=rt.size()) { return diffreason::Tags; }
     if (!lt.empty()) {
-        std::sort(lt.begin(),lt.end(), [](const tag& l, const tag& r) { return l.key<r.key; });
-        std::sort(rt.begin(),rt.end(), [](const tag& l, const tag& r) { return l.key<r.key; });
+        std::sort(lt.begin(),lt.end(), [](const Tag& l, const Tag& r) { return l.key<r.key; });
+        std::sort(rt.begin(),rt.end(), [](const Tag& l, const Tag& r) { return l.key<r.key; });
         for (size_t i=0; i < lt.size(); i++) {
             if ((lt[i].key!=rt[i].key) || (lt[i].val != rt[i].val)) {
                 return diffreason::Tags;

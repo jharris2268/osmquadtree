@@ -22,7 +22,7 @@
 
 #include "oqt/elements/geometry.hpp"
 namespace oqt {
-GeometryPacked::GeometryPacked(ElementType t, changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_) :
+GeometryPacked::GeometryPacked(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 minzoom_, std::list<PbfTag> geom_messages_) :
     BaseGeometry(t,c,i,q,inf,tags,minzoom_), geom_messages(geom_messages_), internalid(0) {
     
     internalid = (((uint64) t)<<61ull);

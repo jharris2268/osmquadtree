@@ -26,11 +26,11 @@
 #include <string>
 #include <vector>
 namespace oqt {
-struct tag {
-    tag() : key(""), val("") {}
-    tag(std::string k, std::string v) : key(k), val(v) {}
+struct Tag {
+    Tag() : key(""), val("") {}
+    Tag(std::string k, std::string v) : key(k), val(v) {}
     std::string key,val;
 };
-typedef std::vector<tag> tagvector;
+typedef std::vector<Tag> tagvector;
 }
 #endif

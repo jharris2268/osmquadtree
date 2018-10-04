@@ -37,9 +37,9 @@
 namespace oqt {
 
 
-info readInfo(const std::string& data,const std::vector<std::string>& stringtable) {
+ElementInfo readInfo(const std::string& data,const std::vector<std::string>& stringtable) {
 
-    info ans;
+    ElementInfo ans;
     size_t pos = 0;
 
     bool vv=true;
@@ -60,11 +60,11 @@ info readInfo(const std::string& data,const std::vector<std::string>& stringtabl
 
 }
 
-tagvector makeTags(
+std::vector<Tag> makeTags(
     const std::vector<uint64>& keys, const std::vector<uint64>& vals,
     const std::vector<std::string>& stringtable) {
 
-    tagvector ans(keys.size());
+    std::vector<Tag> ans(keys.size());
     for (size_t i = 0; i < keys.size(); i++) {
         ans[i].key=stringtable.at(keys.at(i));
         ans[i].val=stringtable.at(vals.at(i));
@@ -75,12 +75,12 @@ tagvector makeTags(
 }
 
 
-std::tuple<int64,info,tagvector,int64,std::list<PbfTag> >
+std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
     readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, IdSetPtr ids) {
 
 
     std::vector<uint64> keys,vals;
-    std::tuple<int64,info,tagvector,int64,std::list<PbfTag> > r;
+    std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> > r;
     std::get<0>(r)=0; std::get<3>(r)=-1;
 
     size_t pos = 0;
@@ -115,7 +115,7 @@ ElementPtr readNode(
         changetype ct, IdSetPtr ids) {
     int64 id,qt;
     
-    info inf; tagvector tags;
+    ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
     std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Node,data,stringtable,ids);
@@ -192,11 +192,11 @@ int readDenseNodes(
     int pp=0;
     for (size_t i = 0; i < ids.size(); i++) {
         int64 id = ids.at(i);
-        tagvector tags;
-        info inf;
+        std::vector<Tag> tags;
+        ElementInfo inf;
 
         if (i<vs.size()) {
-            inf = info(
+            inf = ElementInfo(
                 vs.at(i),
                 ts.at(i),
                 cs.at(i),
@@ -212,7 +212,7 @@ int readDenseNodes(
             
             while ((tagi < kvs.size()) && kvs.at(tagi)!=0) {
                 
-                tags.push_back(tag(
+                tags.push_back(Tag(
                     stringtable.at(kvs.at(tagi)),
                     stringtable.at(kvs.at(tagi+1))
                 ));
@@ -247,7 +247,7 @@ ElementPtr readWay(const std::string& data, const std::vector<std::string>& stri
 
     int64 id,qt;
 
-    info inf; tagvector tags;
+    ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
     std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Way,data,stringtable,ids);
@@ -269,7 +269,7 @@ ElementPtr readRelation(const std::string& data, const std::vector<std::string>&
         changetype ct, IdSetPtr ids) {
     int64 id,qt;
 
-    info inf; tagvector tags;
+    ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
     std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Relation,data,stringtable,ids);
@@ -285,7 +285,7 @@ ElementPtr readRelation(const std::string& data, const std::vector<std::string>&
             ty = readPackedInt(t.data);
         }
     }
-    memvector mems(rf.size());
+    std::vector<Member> mems(rf.size());
     for (size_t i=0; i < rf.size(); i++) {
         if (ty[i]==0) {
             mems[i].type = ElementType::Node;
@@ -311,7 +311,7 @@ ElementPtr readRelation(const std::string& data, const std::vector<std::string>&
 ElementPtr readGeometry_default(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, changetype ct) {
     int64 id,qt;
 
-    info inf; tagvector tags;
+    ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
     std::tie(id,inf,tags,qt,rem) = readCommon(ty,data,stringtable,nullptr);

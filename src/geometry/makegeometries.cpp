@@ -28,7 +28,7 @@ namespace geometry {
 
 
 
-int64 get_zorder_value(const tag& t) {
+int64 get_zorder_value(const Tag& t) {
     if (t.key == "highway") {
         if (t.val == "motorway") { return 380; }
         if (t.val == "trunk") {return 370;}
@@ -84,7 +84,7 @@ int64 get_zorder_value(const tag& t) {
 }
 
 
-int64 calc_zorder(const tagvector& tags) {
+int64 calc_zorder(const std::vector<Tag>& tags) {
     int64 result=0;
     for (const auto& t: tags) {
         int64 v = get_zorder_value(t);
@@ -96,19 +96,19 @@ int64 calc_zorder(const tagvector& tags) {
 }
 
 
-std::pair<tagvector,bool> filter_tags(const style_info_map& style, const tagvector& tags, bool passnode, bool passway, bool is_ring, const std::string& extra_tags_key) {
-    tagvector res;
+std::pair<std::vector<Tag>,bool> filter_tags(const style_info_map& style, const std::vector<Tag>& tags, bool passnode, bool passway, bool is_ring, const std::string& extra_tags_key) {
+    std::vector<Tag> res;
     bool isf=false;
     bool hasarea=false;
     bool notarea=false;
     
     bool all_tags = !extra_tags_key.empty();
-    tagvector extra_tags;
+    std::vector<Tag> extra_tags;
     
     for (const auto& t : tags) {
         bool added=false;
         if ((t.key=="layer") && all_tags) {
-            extra_tags.push_back(tag{"orig_layer", t.val});
+            extra_tags.push_back(Tag{"orig_layer", t.val});
             added=true;
         } else if (style.count(t.key)>0) {
 
@@ -148,7 +148,7 @@ std::pair<tagvector,bool> filter_tags(const style_info_map& style, const tagvect
                 res.push_back(t);
             }
         } else {
-            res.push_back(tag{extra_tags_key, pack_tags(extra_tags)});
+            res.push_back(Tag{extra_tags_key, pack_tags(extra_tags)});
         }
     }
     
@@ -162,7 +162,7 @@ std::pair<tagvector,bool> filter_tags(const style_info_map& style, const tagvect
     return std::make_pair(res,hasarea);
 }
 
-std::pair<tagvector,int64> filter_node_tags(const style_info_map& style, const tagvector& tags, const std::string& extra_tags_key) {
+std::pair<std::vector<Tag>,int64> filter_node_tags(const style_info_map& style, const std::vector<Tag>& tags, const std::string& extra_tags_key) {
     auto tgs = filter_tags(style,tags,true,false,false,extra_tags_key).first;
     int64 layer=0;
     for (const auto& t: tags) {
@@ -177,8 +177,8 @@ std::pair<tagvector,int64> filter_node_tags(const style_info_map& style, const t
     return std::make_pair(tgs,layer);
 }
 
-std::tuple<tagvector, bool,int64, int64> filter_way_tags(const style_info_map& style, const tagvector& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key) {
-    tagvector res; bool hasarea;
+std::tuple<std::vector<Tag>, bool,int64, int64> filter_way_tags(const style_info_map& style, const std::vector<Tag>& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key) {
+    std::vector<Tag> res; bool hasarea;
     
     std::tie(res,hasarea) = filter_tags(style, tags, false, true,is_ring,extra_tags_key);
     if (hasarea || is_bp) { hasarea=is_ring; }
@@ -251,7 +251,7 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
     for (auto e : in->Objects()) {
         if(e->Type()==ElementType::Node) {
 
-            tagvector tgs; int64 ly;
+            std::vector<Tag> tgs; int64 ly;
         
             std::tie(tgs,ly) = filter_node_tags(style, e->Tags(), extra_tag_key);
             if (!tgs.empty()) {
@@ -269,7 +269,7 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
             if (!overlaps(box, w->Bounds())) {
                 continue;
             }
-            tagvector tgs; bool ispoly; int64 zo, ly;
+            std::vector<Tag> tgs; bool ispoly; int64 zo, ly;
             std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
             if (!tgs.empty()) {
                 if (ispoly) {

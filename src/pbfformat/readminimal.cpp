@@ -31,13 +31,13 @@ namespace oqt {
 
 int64 readQuadTree(const std::string& data);
 
-void readMinimalGroup(std::shared_ptr<minimalblock> block, const std::string& group, size_t objflags);
+void readMinimalGroup(minimal::BlockPtr block, const std::string& group, size_t objflags);
 
-void readMinimalBlock_alt(std::shared_ptr<minimalblock> block, const std::string& data, size_t objflags) noexcept;
+void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) noexcept;
 
-std::shared_ptr<minimalblock> readMinimalBlock(int64 index, const std::string& data, size_t objflags) {
+minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t objflags) {
 
-    std::shared_ptr<minimalblock> result(std::make_shared<minimalblock>());
+    auto result = std::make_shared<minimal::Block>();
     result->index = index;
     
     if (objflags&48) {
@@ -107,8 +107,8 @@ std::tuple<PbfTag,PbfTag,PbfTag> readMinimalCommon(const std::string& data, T& o
     return std::make_tuple(std::move(other1),std::move(other2),std::move(other3));
 }
 
-void readMinimalNode(std::shared_ptr<minimalblock> block, const std::string& data, bool skipinfo) {
-    minimalnode node{0,0,0,0,0,0,0};
+void readMinimalNode(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
+    minimal::Node node{0,0,0,0,0,0,0};
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = readMinimalCommon(data, node, skipinfo);
     
@@ -121,8 +121,8 @@ void readMinimalNode(std::shared_ptr<minimalblock> block, const std::string& dat
     block->nodes.push_back(std::move(node));
 }
 
-void readMinimalWay(std::shared_ptr<minimalblock> block, const std::string& data, bool skipinfo) {
-    minimalway way{0,0,0,0,0,""};
+void readMinimalWay(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
+    minimal::Way way{0,0,0,0,0,""};
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = std::move(readMinimalCommon(data,way, skipinfo));
     if (rem1.tag==8) {
@@ -133,8 +133,8 @@ void readMinimalWay(std::shared_ptr<minimalblock> block, const std::string& data
     block->ways.push_back(std::move(way));
 }
 
-void readMinimalRelation(std::shared_ptr<minimalblock> block, const std::string& data, bool skipinfo) {
-    minimalrelation rel{0,0,0,0,0,"",""};
+void readMinimalRelation(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
+    minimal::Relation rel{0,0,0,0,0,"",""};
     PbfTag rem1,rem2,rem3;
 
     std::tie(rem1,rem2,rem3) = std::move(readMinimalCommon(data, rel, skipinfo));
@@ -151,8 +151,8 @@ void readMinimalRelation(std::shared_ptr<minimalblock> block, const std::string&
     block->relations.push_back(std::move(rel));
 }
 
-void readMinimalGeometry(std::shared_ptr<minimalblock> block, const std::string& data, size_t ty) {
-    minimalgeometry geom{0,0,0,0,0};
+void readMinimalGeometry(minimal::BlockPtr block, const std::string& data, size_t ty) {
+    minimal::Geometry geom{0,0,0,0,0};
     //geom.ty=ty;
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = readMinimalCommon(data,geom, false);
@@ -164,7 +164,7 @@ void readMinimalGeometry(std::shared_ptr<minimalblock> block, const std::string&
     
     
     
-void readMinimalDense(std::shared_ptr<minimalblock> block, const std::string& data, bool skipinfo) {
+void readMinimalDense(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
     
     std::string id,version,timestamp,quadtree,lon,lat;
     
@@ -229,7 +229,7 @@ void readMinimalDense(std::shared_ptr<minimalblock> block, const std::string& da
             c5 = readUVarint(version,p5);
         }
         //nodes.push_back(minimalnode{c0,c1,c2,c3,c4});
-        minimalnode mn; mn.id = c0; mn.timestamp=c1; mn.quadtree=c2; mn.changetype=0; mn.lon=c3; mn.lat=c4;
+        minimal::Node mn; mn.id = c0; mn.timestamp=c1; mn.quadtree=c2; mn.changetype=0; mn.lon=c3; mn.lat=c4;
         mn.version=c5;
         block->nodes.push_back(std::move(mn));
     }
@@ -240,25 +240,13 @@ void readMinimalDense(std::shared_ptr<minimalblock> block, const std::string& da
 
 }
 
-void readMinimalGroup(std::shared_ptr<minimalblock> block, const std::string& data, size_t objflags) {
+void readMinimalGroup(minimal::BlockPtr block, const std::string& data, size_t objflags) {
     size_t pos=0;
     PbfTag tag = std::move(readPbfTag(data,pos));
     size_t np = block->nodes.size();
     size_t wp = block->ways.size();
     size_t rp = block->relations.size();
-    /*
-    size_t wcnt=0, rcnt=0;
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
-        if (tag.tag==3) {
-            wcnt+=1;
-        } else if (tag.tag==4) {
-            rcnt+=1;
-        }
-    }
-    if (wcnt>0) { block->ways.reserve(wp+wcnt); }
-    if (rcnt>0) { block->relations.reserve(rp+rcnt); }
-    pos=0;
-    tag = readPbfTag(data,pos);*/
+    
     for ( ; tag.tag>0; tag=std::move(readPbfTag(data,pos))) {
         if ((tag.tag==1) || (tag.tag==2)) { block->has_nodes=true; }
         
@@ -449,7 +437,7 @@ size_t readPackedDelta_altcb(const std::string& data, size_t pos, size_t len, st
 }
     
 
-size_t readDenseInfo_alt(std::shared_ptr<minimalblock>& block, size_t firstnd, const std::string& data, size_t posin, size_t len) {
+size_t readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::string& data, size_t posin, size_t len) {
     size_t pos=posin;
     uint64 tg=0, vl=0;
     bool isdata=false;
@@ -477,7 +465,7 @@ size_t readDenseInfo_alt(std::shared_ptr<minimalblock>& block, size_t firstnd, c
 }
             
 
-void readMinimalDense_alt(std::shared_ptr<minimalblock>& block, const std::string& data, size_t pos, size_t lim) {
+void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     size_t firstnd = block->nodes.size();
     uint64 tg=0, vl=0;
     bool isdata=false;
@@ -488,7 +476,7 @@ void readMinimalDense_alt(std::shared_ptr<minimalblock>& block, const std::strin
     }
     size_t num_ids = numPacked(data,pos,vl);
     
-    block->nodes.resize(firstnd + num_ids, minimalnode{0,0,0,0,0,0,0});
+    block->nodes.resize(firstnd + num_ids, minimal::Node{0,0,0,0,0,0,0});
     
     pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; });
     /*int64 v=0;
@@ -553,10 +541,10 @@ size_t readMinimalInfo_alt(T& obj, const std::string& data, size_t pos, size_t l
 }
     
 
-void readMinimalWay_alt(std::shared_ptr<minimalblock>& block, const std::string& data, size_t pos, size_t lim) {
+void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     //if (block->ways.capacity() == block->ways.size()) { block->ways.reserve(block->ways.size()+1000); }
     
-    minimalway w{0,0,0,0,0,""};
+    minimal::Way w{0,0,0,0,0,""};
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -583,10 +571,10 @@ void readMinimalWay_alt(std::shared_ptr<minimalblock>& block, const std::string&
     
     block->ways.push_back(std::move(w));
 }
-void readMinimalRelation_alt(std::shared_ptr<minimalblock>& block, const std::string& data, size_t pos, size_t lim) {
+void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     //if (block->relations.capacity() == block->relations.size()) { block->relations.reserve(block->relations.size()+1000); }
     
-    minimalrelation r{0,0,0,0,0,"",""};
+    minimal::Relation r{0,0,0,0,0,"",""};
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -613,7 +601,7 @@ void readMinimalRelation_alt(std::shared_ptr<minimalblock>& block, const std::st
 }
 
 
-void readMinimalGroup_alt(std::shared_ptr<minimalblock>& block, const std::string& data, size_t objflags, size_t pos, size_t lim) {
+void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, size_t objflags, size_t pos, size_t lim) {
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -641,7 +629,7 @@ void readMinimalGroup_alt(std::shared_ptr<minimalblock>& block, const std::strin
 }
     
 
-void readMinimalBlock_alt(std::shared_ptr<minimalblock> block, const std::string& data, size_t objflags) noexcept {
+void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) noexcept {
     size_t pos=0;
     size_t lim=data.size();
     

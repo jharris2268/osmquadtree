@@ -27,7 +27,7 @@
 namespace oqt {
 class Node : public Element {
     public:
-        Node(changetype c, int64 i, int64 q, info inf, std::vector<tag> tags, int64 lon, int64 lat);
+        Node(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 lon, int64 lat);
         
         virtual ~Node() {}
 
