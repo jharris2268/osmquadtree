@@ -151,11 +151,11 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
     read_blocks_minimalblock(nodes_fn, add_nodeway_qts, node_locs, 4, 1 | 48);
     
     
-    auto lg=get_logger();
+
     
-    lg->time("calculate node qts");            
+    Logger::Get().time("calculate node qts");            
     rels->add_ways(way_qts);
-    lg->time("added rel way qts");
+    Logger::Get().time("added rel way qts");
     for (size_t ti = 0; ti < way_qts->num_tiles(); ti++) {
         auto wq = way_qts->tile(ti);
         if (!wq) { continue; }
@@ -168,14 +168,14 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
             f= wq->next(f);
         }
     }
-    lg->time("wrote way qts");
+    Logger::Get().time("wrote way qts");
     
     rels->finish_alt([out](int64 i, int64 q) { out->add(2,i,q); });
     
     
     out->finish();
     
-    lg->time("wrote relation qts");
+    Logger::Get().time("wrote relation qts");
     
     
 }
@@ -184,7 +184,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
 
 int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth) {
     
-    auto lg=get_logger();
+
     std::string waynodes_fn = qtsfn+"-waynodes";
     
     std::shared_ptr<CalculateRelations> rels;
@@ -192,7 +192,7 @@ int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numc
      
     std::string nodes_fn;
     std::vector<int64> node_locs;
-    std::tie(wns,rels,nodes_fn,node_locs) = write_waynodes(origfn, waynodes_fn, 1/*numchan*/, resort, lg);    
+    std::tie(wns,rels,nodes_fn,node_locs) = write_waynodes(origfn, waynodes_fn, 1/*numchan*/, resort);    
     
     
     

@@ -44,14 +44,22 @@ inline std::ostream& operator<<(std::ostream& os, const Percent& p) {
     os << std::fixed << std::setprecision(p.precision) << std::setw(p.precision + 5) << p.val << "%";
     return os;
 }
+/*
+class Logger;
+std::shared_ptr<Logger> get_logger();
+void set_logger(std::shared_ptr<Logger> nl);*/
 
-class logger {
+class Logger {
     typename std::vector<std::pair<std::string,std::chrono::high_resolution_clock::time_point>> msgs;
 
     public:
-        logger() { time(""); }
+        Logger() { time(""); }
         virtual void message(const std::string& msg)=0;
         virtual void progress(double percent, const std::string& msg)=0;
+
+
+        static Logger& Get();
+        static void Set(std::shared_ptr<Logger> l);
 
 
         virtual void time(const std::string& msg) {
@@ -78,54 +86,59 @@ class logger {
             time("");
         }
 
-        virtual ~logger() {}
+        virtual ~Logger() {}
+
+
+
+
+
+
+
+        class Message {
+            public:
+                Message() {};
+                
+                Message(Message const&)=delete;
+                Message(Message &&)=default;
+                
+                ~Message() {
+                    Logger::Get().message(strm.str());
+                }
+                
+                template <class T>
+                Message& operator<<(const T& x) {
+                    strm << x;
+                    return *this;
+                }
+                
+            private:
+                std::stringstream strm;
+        };
+
+        class Progress {
+            public:
+                Progress(double pc_) : pc(pc_) {}
+                Progress(Progress const&)=delete;
+                Progress(Progress &&)=default;
+                ~Progress() {
+                    Logger::Get().progress(pc, strm.str());
+                }
+                
+                template <class T>
+                Progress& operator<<(const T& x) {
+                    strm << x;
+                    return *this;
+                }
+                
+            private:
+                std::stringstream strm;
+                double pc;
+        };
+
 };
 
-
-
-
-std::shared_ptr<logger> get_logger();
-void set_logger(std::shared_ptr<logger> nl);
-
-class logger_message {
-    public:
-        logger_message() {}
-        
-        ~logger_message() {
-            get_logger()->message(strm.str());
-        }
-        
-        template <class T>
-        logger_message& operator<<(const T& x) {
-            strm << x;
-            return *this;
-        }
-        
-    private:
-        std::stringstream strm;
-};
-
-class logger_progress {
-    public:
-        logger_progress(double pc_) : pc(pc_) {}
-        
-        ~logger_progress() {
-            get_logger()->progress(pc, strm.str());
-        }
-        
-        template <class T>
-        logger_progress& operator<<(const T& x) {
-            strm << x;
-            return *this;
-        }
-        
-    private:
-        std::stringstream strm;
-        double pc;
-};
-    
-    
-    
+inline Logger::Message logger_message() { Logger::Message m; return std::move(m); }
+inline Logger::Progress logger_progress(double pc) { Logger::Progress m(pc); return std::move(m); }
     
     
     

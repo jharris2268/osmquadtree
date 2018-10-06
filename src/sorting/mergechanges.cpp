@@ -439,17 +439,17 @@ void run_mergechanges(
     const std::string& tempfn, size_t blocksize, bool sortfile, bool inmem) {
     
     
-    auto lg=get_logger();
+    
     auto read_blocks_caller = make_read_blocks_caller(infile_name,filter_box,poly, enddate);
     
-    lg->time("filter file locs");
+    Logger::Get().time("filter file locs");
     
     IdSetPtr filter;
     
     
     if (filter_objs) {
         filter=calc_idset_filter(read_blocks_caller, filter_box, poly, numchan);
-        lg->time("find ids filter");
+        Logger::Get().time("find ids filter");
     }
     
     
@@ -483,9 +483,9 @@ void run_mergechanges(
             read_data(add_all);
             
             
-            lg->time("read file");
+            Logger::Get().time("read file");
             std::sort(all.begin(),all.end(),element_cmp);
-            lg->time("sort data");
+            Logger::Get().time("sort data");
             
             
             
@@ -495,7 +495,7 @@ void run_mergechanges(
             }
             collect(nullptr);
             
-            lg->time("objs written");
+            Logger::Get().time("objs written");
         } else {
             
             auto blobs = (read_blocks_caller->num_tiles() > 50000)
@@ -513,7 +513,7 @@ void run_mergechanges(
             }
             read_data(splits);
             temps->finish();
-            lg->time("read file");
+            Logger::Get().time("read file");
         
         
                         
@@ -541,7 +541,7 @@ void run_mergechanges(
                         auto& objs = oo->Objects();
                         std::sort(objs.begin(), objs.end(), element_cmp);
                         if (isf) {
-                            logger_progress lp(oo->FileProgress());
+                            Logger::Progress lp(oo->FileProgress());
                             lp << "{" << TmStr{ts.since(),6,1} << "} merged " << std::setw(5) << oo->Index() << " " << std::setw(8) << objs.size() << " objs";
                             if (objs.size()>0) {
                                 auto f=objs.front();
@@ -560,18 +560,18 @@ void run_mergechanges(
             }
             temps->read(merged_sorted);
         
-            lg->time("objs written");
+            Logger::Get().time("objs written");
         }
     } else {
         
         packers[0] = log_progress(packers[0]);
         
         read_data(packers);
-        lg->time("written blocks");
+        Logger::Get().time("written blocks");
     }    
     
     outfile_writer->finish();
-    lg->time("finished outfile");
+    Logger::Get().time("finished outfile");
     
 }
 }

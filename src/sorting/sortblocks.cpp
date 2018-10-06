@@ -135,7 +135,7 @@ class AddQuadtrees {
             
             if (msgs && ((count % 1000)==0)) {
                 
-                logger_progress pp(bl->FilePosition());
+                Logger::Progress pp(bl->FilePosition());
                 pp << "Block " << bl->Index() << " " << bl->size()
                    << " [" << std::fixed << std::setprecision(1) << ts.since() << "s]";
                 if (bl->size()>0) {
@@ -241,7 +241,7 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
 int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
     int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups) {
         
-    auto lg=get_logger();
+    
     
     auto hh = std::make_shared<Header>();
     hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
@@ -278,7 +278,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     }
     logger_message() << "finished";
     
-    lg->time("sorted data");
+    Logger::Get().time("sorted data");
     
     size_t i=0;
     for (auto bl: outs) {
@@ -291,7 +291,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     for (auto p: packers2) { p(nullptr); }
     
     write_file_obj->finish();
-    lg->time("written to file");
+    Logger::Get().time("written to file");
     return 0;
 }
     
@@ -388,7 +388,7 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups,
     const std::string& tempfn, size_t blocksplit) {
     
-    auto lg=get_logger();
+   
     if (tempfn=="NONE") {
         return run_sortblocks_inmem(origfn, qtsfn, outfn, timestamp, numchan, groups);
     }
@@ -407,7 +407,7 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     sb->finish();
     
     
-    lg->time("read data");
+    Logger::Get().time("read data");
     
     auto hh = std::make_shared<Header>();
     hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
@@ -418,10 +418,10 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     auto packers = make_final_packers(write_file_obj, numchan, timestamp, true,false);
     sb->read_blocks(packers, false);
     
-    lg->time("resort objs");
+    Logger::Get().time("resort objs");
     block_index finalidx = write_file_obj->finish();
     logger_message() << "final: have " << finalidx.size() << " blocks";
-    lg->time("rewrote file");
+    Logger::Get().time("rewrote file");
     return 0;
 }
 

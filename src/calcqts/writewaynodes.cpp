@@ -255,7 +255,7 @@ class WayNodesFilePrep {
 
 
 std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std::string,std::vector<int64>>
-    write_waynodes(const std::string& orig_fn, const std::string& waynodes_fn, size_t numchan, bool sortinmem, std::shared_ptr<logger> lg) {
+    write_waynodes(const std::string& orig_fn, const std::string& waynodes_fn, size_t numchan, bool sortinmem) {
     
     auto rels = make_calculate_relations();
     auto waynodes = std::make_shared<WayNodesFilePrep>(waynodes_fn);
@@ -271,12 +271,12 @@ std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std
         
     
     logger_message() << rels->str();
-    lg->time("wrote waynodes");
+    Logger::Get().time("wrote waynodes");
     
     auto res = waynodes->finish_writewaynodes();
     logger_message() << "have " << res.second.size() << " blocks with nodes";
     
-    lg->time("finished waynodes");    
+    Logger::Get().time("finished waynodes");    
     
     return std::make_tuple(waynodes->make_waynodesfile(),rels,orig_fn,res.second);
 }

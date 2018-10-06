@@ -31,7 +31,7 @@ namespace oqt {
 
 
 
-class logger_impl : public logger {
+class logger_impl : public Logger {
     public:
         logger_impl() : msgw(0) {}
 
@@ -57,13 +57,20 @@ class logger_impl : public logger {
         size_t msgw;
 };
 
-std::shared_ptr<logger> make_default_logger() { return std::make_shared<logger_impl>(); }
+std::shared_ptr<Logger> make_default_logger() { return std::make_shared<logger_impl>(); }
 
 
-std::shared_ptr<logger> logger_;
+std::shared_ptr<Logger> logger_;
 
+Logger& Logger::Get() { 
+    if (!logger_) {
+        logger_ = make_default_logger();
+    }
+    return *logger_;
+}
+void Logger::Set(std::shared_ptr<Logger> l) { logger_ = l; }
 
-std::shared_ptr<logger> get_logger() {
+/*std::shared_ptr<logger> get_logger() {
     if (!logger_) {
         logger_ = make_default_logger();
     }
@@ -72,7 +79,7 @@ std::shared_ptr<logger> get_logger() {
 
 void set_logger(std::shared_ptr<logger> nlog) {
     logger_ = nlog;
-}
+}*/
     
     
 }

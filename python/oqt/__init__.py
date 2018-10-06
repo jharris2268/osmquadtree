@@ -77,7 +77,7 @@ _oqt.qttree_item.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.i
 
 
 
-class py_logger(_oqt.logger):
+class py_logger(_oqt.Logger):
     def __init__(self):
         super(py_logger,self).__init__()
         self.msgs=[]

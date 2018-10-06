@@ -32,7 +32,7 @@ namespace oqt {
 count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {
     
     
-    auto lg=get_logger();
+    auto& lg=Logger::Get();
     
     std::ifstream infile(fn, std::ifstream::in | std::ifstream::binary);
     if (!infile.good()) {
@@ -64,7 +64,7 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     if (numchan==0) {
 
         read_blocks_nothread_minimalblock(fn, cb, {}, objflags);
-        lg->time("count");
+        lg.time("count");
         return result;
 
     }
@@ -72,7 +72,7 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     
     read_blocks_minimalblock(fn, cb, {}, numchan, objflags);
     
-    lg->time("count");
+    lg.time("count");
     return result;
 }
 }

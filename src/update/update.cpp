@@ -515,7 +515,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
                     }
                 }
                 if (!missing_members.empty()) {
-                    logger_message msg;
+                    Logger::Message msg;
                     msg << "relation " << obj->Id() << " missing " << missing_members.size() << " member qts";
                     if (missing_members.size() < 10) {
                         for (const auto& m: missing_members) {

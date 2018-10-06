@@ -128,12 +128,12 @@ bbox poly_bounds(const lonlatvec& poly) {
     return res;
 }
 
-class logger2 : public logger {
+class Logger_stdout : public Logger {
     
     public:
-        logger2(): pm(false) {}
+        Logger_stdout(): pm(false) {}
         
-        virtual ~logger2() {}
+        virtual ~Logger_stdout() {}
         
         void message(const std::string& msg) {
             std::lock_guard<std::mutex> lock(mutex);
@@ -167,7 +167,7 @@ class logger2 : public logger {
 
 int main(int argc, char** argv) {
     
-    set_logger(std::make_shared<logger2>());
+    Logger::Set(std::make_shared<Logger_stdout>());
     
     
     if (argc < 3) {
@@ -319,10 +319,10 @@ int main(int argc, char** argv) {
         
         if (true) {
             auto tree = make_qts_tree_maxlevel(qtsfn=="NONE" ? origfn : qtsfn, numchan, max_depth);
-            get_logger()->time("load qts");
+            Logger::Get().time("load qts");
             if (rollup) {
                 tree_rollup(tree,minsize);
-                get_logger()->time("rollup tree");
+                Logger::Get().time("rollup tree");
             }
             if (use_tree) {
                 if (max_depth>15) { throw std::domain_error("use_tree with too large a max_depth??"); }
@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
             } else {
                 groups = find_groups_copy(tree,targetsize,minsize);
                 logger_message() << "find groups";
-                get_logger()->time("find groups");
+                Logger::Get().time("find groups");
                 tree.reset();
             }
         //} else {
@@ -373,6 +373,6 @@ int main(int argc, char** argv) {
         
         
     checkstats();
-    get_logger()->timing_messages();
+    Logger::Get().timing_messages();
     return resp;
 }

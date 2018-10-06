@@ -100,7 +100,7 @@ class ApplyChange {
 
 void run_applychange(const std::string& origfn, const std::string& outfn, size_t numchan, const std::vector<std::string>& changes) {
 
-    auto lg=get_logger();
+    
     auto change_objs = std::make_shared<typeid_element_map>();
     
     for (const auto& fn: changes) {
@@ -122,7 +122,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
             throw std::domain_error(fn+" not a osc file");
         }
     }
-    lg->time("read changes files");
+    Logger::Get().time("read changes files");
     logger_message() << "have " << change_objs->size() << " change_objs";
     
     auto head_orig = getHeaderBlock(origfn);
@@ -179,12 +179,12 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     
     //[applychange](PrimitiveBlockPtr bl) { applychange->apply(bl); }
     read_blocks_convfunc_primitiveblock(origfn, fixtags, {}, numchan, cvf);
-    lg->time("applied change");
+    Logger::Get().time("applied change");
     
     logger_message() << nc << " objects with '\xef' character fixed";
     if (writer) {
         writer->finish();
-        lg->time("finished file");
+        Logger::Get().time("finished file");
     }
     
 }

@@ -31,7 +31,7 @@
 #include "oqt/utils/invertedcallback.hpp"
 
 using namespace oqt;
-class logger_python : public logger {
+class logger_python : public Logger {
     public:
         //using logger::logger;
         logger_python() {};
@@ -40,7 +40,7 @@ class logger_python : public logger {
             py::gil_scoped_acquire acquire;
             PYBIND11_OVERLOAD_PURE(
                 void,
-                logger,
+                Logger,
                 message,
                 msg);
         }
@@ -49,7 +49,7 @@ class logger_python : public logger {
             py::gil_scoped_acquire acquire;
             PYBIND11_OVERLOAD_PURE(
                 void,
-                logger,
+                Logger,
                 progress,
                 p,
                 msg);
@@ -67,10 +67,10 @@ void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool 
         qtsfn = origfn.substr(0,origfn.size()-4)+"-qts.pbf";
     }
     //auto lg = get_logger(lg_in);
-    get_logger()->reset_timing();
+    Logger::Get().reset_timing();
     py::gil_scoped_release release;
     run_calcqts(origfn, qtsfn, numchan, splitways, resort, buffer, max_depth);
-    get_logger()->timing_messages();
+    Logger::Get().timing_messages();
 
 }
 /*
@@ -131,11 +131,11 @@ int run_sortblocks_py(
     }
     
     
-    get_logger()->reset_timing();
+    Logger::Get().reset_timing();
     py::gil_scoped_release release;
     
     int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit);
-    get_logger()->timing_messages();
+    Logger::Get().timing_messages();
     return r;
 }
 
@@ -143,7 +143,7 @@ std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std
     run_write_waynodes_py(const std::string& origfn, const std::string& waynodes_fn, size_t numchan, bool sortinmem) {
     
     py::gil_scoped_release release;
-    return write_waynodes(origfn, waynodes_fn, numchan, sortinmem, get_logger()); 
+    return write_waynodes(origfn, waynodes_fn, numchan, sortinmem); 
 }
 
 
@@ -189,17 +189,17 @@ void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, 
     }
 
 
-    get_logger()->reset_timing();
+    Logger::Get().reset_timing();
     py::gil_scoped_release release;
     run_mergechanges(origfn, outfn, numchan, sort_objs, filter_objs, filter_box, poly, enddate,tempfn, grptiles,sortfile,inmem);
-    get_logger()->timing_messages();
+    Logger::Get().timing_messages();
 }
 
 
 py::object count_blocks_call(const std::string& fn, size_t numchan, size_t objflags) {
 
     
-    get_logger()->reset_timing();
+    Logger::Get().reset_timing();
     py::gil_scoped_release release;
     auto res = run_count(fn,numchan,true,true,objflags);
     //return py::cast(res.long_str());
@@ -276,7 +276,7 @@ py::object count_blocks_call(const std::string& fn, size_t numchan, size_t objfl
     
     res_dict["tiles"] = py::cast(res.tiles);
 
-    get_logger()->timing_messages();
+    Logger::Get().timing_messages();
 
     return res_dict;
 }
@@ -459,15 +459,15 @@ void core_defs(py::module& m) {
     //py::class_<logger_python, std::shared_ptr<logger_python>> lg(m, "logger");
     
     
-    py::class_<logger,std::shared_ptr<logger>, logger_python>(m, "logger")
+    py::class_<Logger,std::shared_ptr<Logger>, logger_python>(m, "Logger")
         .def(py::init<>())
-        .def("message", &logger::message)
-        .def("progress", &logger::progress)
-        .def("reset_timing", &logger::reset_timing)
-        .def("timing_messages", &logger::timing_messages)
+        .def("message", &Logger::message)
+        .def("progress", &Logger::progress)
+        .def("reset_timing", &Logger::reset_timing)
+        .def("timing_messages", &Logger::timing_messages)
     ;
-    m.def("get_logger", &get_logger);
-    m.def("set_logger", &set_logger);
+    m.def("get_logger", &Logger::Get);
+    m.def("set_logger", &Logger::Set);
 
 
     m.def("count", &count_blocks_call, "count pbf file contents",

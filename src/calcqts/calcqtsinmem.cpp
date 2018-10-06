@@ -203,7 +203,7 @@ void calculate_relation_quadtrees(
 
 int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort) {
     
-    auto lg=get_logger();
+    
     std::vector<minimal::Node> nodes;
     std::vector<minimal::Way> ways;
     std::vector<minimal::Relation> relations;
@@ -234,7 +234,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
     };
     
     read_blocks_minimalblock(origfn, read_objs, {},  numchan, 7);
-    lg->time("read data");    
+    Logger::Get().time("read data");    
     
     
     std::sort(nodes.begin(),nodes.end(),cmp_id<minimal::Node>);
@@ -245,7 +245,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
     std::vector<size_t> nodes_idx = find_index(nodes,256);
     
     
-    lg->time("sort data");
+    Logger::Get().time("sort data");
     size_t nmissing=0;
     for (auto& w : ways) {
         auto wns = readPackedDelta(w.refs_data);
@@ -281,7 +281,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
         
     }
     logger_message() << "have " << nmissing << " missing waynodes";
-    lg->time("calculate way qts");
+    Logger::Get().time("calculate way qts");
     
     
     
@@ -296,17 +296,17 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
         out->add(0,n.id,n.quadtree);
     }
     
-    lg->time("calculate node qts");
+    Logger::Get().time("calculate node qts");
     
     for (auto& w : ways) {
         out->add(1,w.id,w.quadtree);
     }
     
-    lg->time("wrote way qts");
+    Logger::Get().time("wrote way qts");
     
     calculate_relation_quadtrees(relations, std::make_shared<ObjQtsMinimalNodes>(nodes,nodes_idx,256), std::make_shared<ObjQtsMinimalWays>(ways));
     
-    lg->time("calculate relation qts");
+    Logger::Get().time("calculate relation qts");
     for (auto& r : relations) {
         
         out->add(2,r.id,r.quadtree);
@@ -314,7 +314,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
     
     out->finish();
     
-    lg->time("wrote relation qts");
+    Logger::Get().time("wrote relation qts");
     
     return 1;
 }

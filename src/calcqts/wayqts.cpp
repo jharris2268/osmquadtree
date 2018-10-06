@@ -171,7 +171,7 @@ class WayNodeLocs {
             if ((mb->index % 100) == 0) {
                 int64 now=getmemval(pid);
                 
-                logger_progress lp(mb->file_progress);
+                Logger::Progress lp(mb->file_progress);
                 lp << "[" << now*1.0/1024.0/1024.0 << "/" << std::setw(12) << (now-was)*1.0/1024.0/1024.0 << "]"
                           << "node block " << mb->index << " " << mb->nodes.front().id << " => " << mb->nodes.back().id << ", block ";
                 if (block) {
@@ -353,11 +353,11 @@ void find_way_quadtrees(
     read_blocks_minimalblock(source_filename, [wnla](minimal::BlockPtr mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
     
     
-    get_logger()->time("expand way bboxes");
+    Logger::Get().time("expand way bboxes");
     
     
     expand->calculate(way_qts, buffer, max_depth);
-    get_logger()->time("calculate way qts");
+    Logger::Get().time("calculate way qts");
 }
 
 }
