@@ -77,7 +77,7 @@ void read_some_split_locs_parallel_callback(
             callbacks[index%callbacks.size()](res);
             
         } catch (std::exception& ex) {
-            logger_message() << "read_some_split_locs_parallel_callback failed at index " << index;
+            Logger::Message() << "read_some_split_locs_parallel_callback failed at index " << index;
             for (auto& cl : callbacks) {
                 cl(std::shared_ptr<keyedblob>());
             }
@@ -239,7 +239,7 @@ void rssbkca_call(const std::vector<std::string>& filenames,
                     ts+=x.first.size();
                 }
             }
-            logger_message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
+            Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
             callcbs(blbs);
             locs_temp.clear();
             aa=0;
@@ -255,7 +255,7 @@ void rssbkca_call(const std::vector<std::string>& filenames,
                 ts+=x.first.size();
             }
         }
-        logger_message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
+        Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
         callcbs(blbs);
         
     }

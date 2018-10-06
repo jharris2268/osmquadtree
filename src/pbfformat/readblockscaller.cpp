@@ -47,13 +47,13 @@ std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx
     std::string err = picojson::get_last_error();
 
     if (! err.empty()) {
-      logger_message() << "filelist errors: " << err;
+      Logger::Message() << "filelist errors: " << err;
     }
     if (!v.is<picojson::array>()) {
         throw std::domain_error("not an array");
     }
     auto varr = v.get<picojson::array>();
-    logger_message() << "filelist: " << varr.size() << "entries";
+    Logger::Message() << "filelist: " << varr.size() << "entries";
 
     std::vector<std::string> result;
     int64 last_date=0;
@@ -67,7 +67,7 @@ std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx
             throw std::domain_error("can't parse "+vl_date_in);
         }
         if ((enddate>0) && (vl_date > enddate)) {
-            logger_message() << "skip entry for " << vl_date_in << "(" << vl_date << ">" << enddate;
+            Logger::Message() << "skip entry for " << vl_date_in << "(" << vl_date << ">" << enddate;
             continue;
         }
         
@@ -158,7 +158,7 @@ class ReadBlocksMerged : public ReadBlocksCaller {
         }
         
         void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter) {
-            logger_message() << "ReadBlocksMerged::read_primitive";
+            Logger::Message() << "ReadBlocksMerged::read_primitive";
             
             read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, 7, buffer);
         }

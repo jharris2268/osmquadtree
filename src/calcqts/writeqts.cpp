@@ -29,6 +29,7 @@
 #include "oqt/utils/pbf/packedint.hpp"
 #include "oqt/utils/multithreadedcallback.hpp"
 #include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/logger.hpp"
 
 #include <algorithm>
 #include <chrono>

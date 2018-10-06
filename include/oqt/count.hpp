@@ -349,7 +349,7 @@ struct count_block {
             for (const auto& gm: block->geometries) {
                 
                 if ((gm.ty<3) || (gm.ty>=7)) { 
-                    logger_message() << "wrong element type?? " << gm.ty << " " << gm.id;
+                    Logger::Message() << "wrong element type?? " << gm.ty << " " << gm.id;
                     throw std::domain_error("wrong element type??");
                 }
                 gg.at(gm.ty-3).add<minimal::Geometry>(gm);

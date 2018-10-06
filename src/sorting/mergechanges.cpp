@@ -163,14 +163,14 @@ class IdSetFilterVec : public IdSetFilter {
 class CalculateIdSetFilter {
     public:
         CalculateIdSetFilter(std::shared_ptr<IdSetFilter> ids_, bbox box_, bool check_full_, const lonlatvec& poly_) : ids(ids_), box(box_), check_full(check_full_), poly(poly_) {
-            if (!poly.empty()) { logger_message() << "CalculateIdSetFilter with poly [" << poly.size() << " verts]"; }
+            if (!poly.empty()) { Logger::Message() << "CalculateIdSetFilter with poly [" << poly.size() << " verts]"; }
             notinpoly=0;
         }
         
         void call(minimal::BlockPtr mb) {
             if (!mb) {
-                logger_message() << ids->str();
-                logger_message() << "CalculateIdSetFilter finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
+                Logger::Message() << ids->str();
+                Logger::Message() << "CalculateIdSetFilter finished: have " << extra_nodes.size() << " extra nodes and " << relmems.size() << " relmems; " <<notinpoly << " nodes in box but not poly";
                 
                 for (auto& n : extra_nodes) {
                     ids->insert(ElementType::Node, n);
@@ -298,7 +298,7 @@ class CalculateIdSetFilter {
 
 IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan) {
     double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
-    logger_message() << "filter_box=" << filter_box << ", area=" << boxarea;
+    Logger::Message() << "filter_box=" << filter_box << ", area=" << boxarea;
     
     std::shared_ptr<IdSetFilter> filter_impl;
     if (boxarea > 5) {
@@ -310,7 +310,7 @@ IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller,
     auto rc = multi_threaded_callback<minimal::Block>::make([cfi](minimal::BlockPtr mb) { cfi->call(mb); }, numchan);
     read_blocks_caller->read_minimal(rc, nullptr);
     
-    logger_message() << filter_impl->str();
+    Logger::Message() << filter_impl->str();
     
     return filter_impl;
 }
@@ -321,7 +321,7 @@ class FilterRels {
         
         
         ~FilterRels() {
-            logger_message() << "filtered " << tr << " relations, removed " << tnm << " completely, removed " << tnx << " members";
+            Logger::Message() << "filtered " << tr << " relations, removed " << tnm << " completely, removed " << tnx << " members";
         }
         PrimitiveBlockPtr call(PrimitiveBlockPtr pb) {
             
@@ -401,14 +401,14 @@ class progress {
         
         void call(PrimitiveBlockPtr bl) {
             if (!bl) {
-                logger_progress(100.0) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " ";
+                Logger::Progress(100.0) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " ";
                 
                 cb(bl);
                 return;
             }
             //if ((i%100)==1 ) {
             
-            logger_progress(bl->FileProgress()) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " "
+            Logger::Progress(bl->FileProgress()) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " "
                 << " " << std::setw(6) << bl->Index()
                 << " " << std::setw(18) << quadtree::string(bl->Quadtree());
                 

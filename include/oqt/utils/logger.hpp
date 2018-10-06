@@ -98,9 +98,6 @@ class Logger {
             public:
                 Message() {};
                 
-                Message(Message const&)=delete;
-                Message(Message &&)=default;
-                
                 ~Message() {
                     Logger::Get().message(strm.str());
                 }
@@ -118,8 +115,7 @@ class Logger {
         class Progress {
             public:
                 Progress(double pc_) : pc(pc_) {}
-                Progress(Progress const&)=delete;
-                Progress(Progress &&)=default;
+                
                 ~Progress() {
                     Logger::Get().progress(pc, strm.str());
                 }
@@ -137,8 +133,6 @@ class Logger {
 
 };
 
-inline Logger::Message logger_message() { Logger::Message m; return std::move(m); }
-inline Logger::Progress logger_progress(double pc) { Logger::Progress m(pc); return std::move(m); }
     
     
     

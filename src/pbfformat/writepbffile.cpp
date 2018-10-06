@@ -66,14 +66,14 @@ size_t sort_inmem(std::ifstream& inf, std::ofstream& outf, block_index& idx, siz
         
     }
     std::sort(tmp.begin(),tmp.end(),cmp_idx_item<1,0>);
-    logger_message() << "read " << tmp.size() << " blocks, " << curr << " bytes {range "
+    Logger::Message() << "read " << tmp.size() << " blocks, " << curr << " bytes {range "
             << std::get<1>(tmp.front()) << " => " << std::get<1>(tmp.back())+std::get<2>(tmp.back()) << "}";
     std::map<int64,std::string> data;
     for (auto& ii : tmp) {
         inf.seekg(std::get<1>(ii));
         auto bl = readBytes(inf,std::get<2>(ii));
         if (!bl.second) {
-            logger_message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
+            Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
             throw std::domain_error("??");
         } 
         data[std::get<0>(ii)] = bl.first;
@@ -126,8 +126,8 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, Header
             auto bl = readBytes(tempfile_read,std::get<2>(ii));
             if (!bl.second) {
                 
-                logger_message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
-                logger_message() << "eof? " << tempfile_read.eof() << " fail? " << tempfile_read.fail() << " bad? " << tempfile_read.bad();
+                Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
+                Logger::Message() << "eof? " << tempfile_read.eof() << " fail? " << tempfile_read.fail() << " bad? " << tempfile_read.bad();
                 
             }
                         
@@ -173,7 +173,7 @@ class PbfFileWriterImpl : public PbfFileWriter {
         
         block_index finish() {
             if (pos != file.tellp()) {
-                logger_message() << "PbfFileWriterImpl finished: pos=" << pos << ", file.tellp()=" << file.tellp();
+                Logger::Message() << "PbfFileWriterImpl finished: pos=" << pos << ", file.tellp()=" << file.tellp();
             }
             file.close();
             return index;
@@ -251,7 +251,7 @@ size_t sort_inmem_writer(std::ifstream& inf, std::shared_ptr<PbfFileWriter> ww, 
         inf.seekg(std::get<1>(ii));
         auto bl = readBytes(inf,std::get<2>(ii));
         if (!bl.second) {
-            logger_message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
+            Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
             throw std::domain_error("??");
         } 
         data[std::get<0>(ii)] = bl.first;
@@ -300,7 +300,7 @@ size_t sort_inmem_writer_alt(std::ifstream& inf, std::shared_ptr<PbfFileWriter> 
         
         
         if (!suc) {
-            logger_message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii);
+            Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii);
             throw std::domain_error("??");
         } 
         

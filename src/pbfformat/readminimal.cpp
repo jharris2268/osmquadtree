@@ -396,7 +396,7 @@ size_t numPacked(const std::string& data, size_t pos, size_t len) {
         c+=1;
     }
     if (pp != (pos+len)) {
-        logger_message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
+        Logger::Message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
         throw std::domain_error("wtf");
     }
     return c;
@@ -413,7 +413,7 @@ size_t readPacked_altcb(const std::string& data, size_t pos, size_t len, std::fu
     }
     
     if (pp != (pos+len)) {
-        logger_message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
+        Logger::Message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
         throw std::domain_error("wtf");
     }
     return pp;
@@ -430,7 +430,7 @@ size_t readPackedDelta_altcb(const std::string& data, size_t pos, size_t len, st
     }
     
     if (pp != (pos+len)) {
-        logger_message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
+        Logger::Message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
         throw std::domain_error("wtf");
     }
     return pp;
@@ -458,7 +458,7 @@ size_t readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::st
         
     }
     if (pos != (posin+len)) {
-        logger_message() << "?? readDenseInfo_alt " << posin << ", " << len << ", @ " << pos;
+        Logger::Message() << "?? readDenseInfo_alt " << posin << ", " << len << ", @ " << pos;
         throw std::domain_error("wtf");
     }
     return pos;
@@ -654,7 +654,7 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
     }
     
     } catch (const std::out_of_range& e) {
-        logger_message() << "?? " << block->index << " " << pos << "/" << lim << " [" << data.size() << "] {" << tg << ", " << vl << ", " << isdata << "}";
+        Logger::Message() << "?? " << block->index << " " << pos << "/" << lim << " [" << data.size() << "] {" << tg << ", " << vl << ", " << isdata << "}";
     }
     
 }

@@ -171,7 +171,7 @@ class qttree_impl : public qttree {
         void rollup_child(size_t curr, size_t ci) {
             qttree_item& t=at(curr);
             if (t.children[ci]==0) {
-                logger_message() << "rollup empty child??" << curr << " " << t.qt << " " << t.weight << " " << t.total << " " << ci;;
+                Logger::Message() << "rollup empty child??" << curr << " " << t.qt << " " << t.weight << " " << t.total << " " << ci;;
                 return;
             }
             qttree_item& ct=at(t.children[ci]);
@@ -245,7 +245,7 @@ class AddCountMapTree {
         void call(std::shared_ptr<count_map> fb) {
             tb+=std::accumulate(fb->begin(),fb->end(),0,
             [](int64 l, const std::pair<int64,int64>& r){return l+r.second;});
-            logger_progress(50) << "add " << fb->size() << " qts ["
+            Logger::Progress(50) << "add " << fb->size() << " qts ["
                     << std::setw(12) << tree->size() << " "
                     << std::fixed << std::setw(15) << std::setprecision(0) << tb
                     << "]";
@@ -257,7 +257,7 @@ class AddCountMapTree {
             }
         }
         virtual void finish() {
-            logger_progress(100) << "finished totals: [" << tree->size() << " " << tb << "]        ";
+            Logger::Progress(100) << "finished totals: [" << tree->size() << " " << tb << "]        ";
         }
     private:
         std::shared_ptr<qttree> tree;

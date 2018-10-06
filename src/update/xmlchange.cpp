@@ -276,7 +276,7 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
                 } else if (inspector.GetName()=="relation") {
                     read_relation(inspector, mode,add, allow_missing_users);
                 } else {
-                    logger_message() << "StartTag name: " << inspector.GetName();
+                    Logger::Message() << "StartTag name: " << inspector.GetName();
                 }
                 break;
             case Xml::Inspected::EmptyElementTag:
@@ -287,7 +287,7 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
                 } else if (inspector.GetName()=="relation") {
                     read_relation(inspector, mode,add, allow_missing_users);
                 } else {
-                    logger_message() << "EmptyElementTag name: " << inspector.GetName();
+                    Logger::Message() << "EmptyElementTag name: " << inspector.GetName();
                 }
                 break;
             case Xml::Inspected::EndTag:
@@ -300,7 +300,7 @@ void add_all(Xml::Inspector<Xml::Encoding::Utf8Writer>& inspector, std::function
                 } else if (inspector.GetName()=="create") {
                     mode=changetype::Normal;
                 } else {
-                    logger_message() << "EndTag name: " << inspector.GetName();
+                    Logger::Message() << "EndTag name: " << inspector.GetName();
                 }
                 break;
             default:

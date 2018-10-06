@@ -171,7 +171,7 @@ class AddParentTags : public BlockHandler {
                         if ((oi<ncheck.size()) && (ncheck[oi])) {
                             auto it=find_node_tags(cache,i);
                             if (!it) {
-                                logger_message() << "can't find " << i << " from way " << w->Id();
+                                Logger::Message() << "can't find " << i << " from way " << w->Id();
                             } else {
                                 check_way_tags(spec, *it, w->Tags());
                             }

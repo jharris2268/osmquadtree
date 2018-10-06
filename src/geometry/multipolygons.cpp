@@ -407,7 +407,7 @@ class MakeMultiPolygons : public BlockHandler {
                 if (m.type==ElementType::Way) {
                     auto jt = pendingways.find(m.ref);
                     if (jt==pendingways.end()) {
-                        logger_message() << "relation " << pr.rel->Id() << " missing way " << m.ref;
+                        Logger::Message() << "relation " << pr.rel->Id() << " missing way " << m.ref;
                     } else {
                         jt->second.rels--;
                         if (jt->second.rels==0) {
@@ -460,7 +460,7 @@ class MakeMultiPolygons : public BlockHandler {
 
             if (qt<0) {
                 if (!pendingways.empty()) {
-                    logger_message() << "at null, have " << pendingways.size() << " remaining";
+                    Logger::Message() << "at null, have " << pendingways.size() << " remaining";
                 }
 
             }

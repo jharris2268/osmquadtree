@@ -196,7 +196,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
     
     auto ii = out_obj->finish();
     
-    logger_message() << "written " << ii.size() << " blocks, " << std::get<1>(ii.back())+std::get<2>(ii.back()) << " bytes";
+    Logger::Message() << "written " << ii.size() << " blocks, " << std::get<1>(ii.back())+std::get<2>(ii.back()) << " bytes";
     return ii.size();
 }
 
@@ -325,13 +325,13 @@ std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check
         }
         
         
-        logger_progress(i*100.0/fls.size()) << "scan " << fn+"-index.pbf [" << passed.size() << " locs]";
+        Logger::Progress(i*100.0/fls.size()) << "scan " << fn+"-index.pbf [" << passed.size() << " locs]";
         auto p = checkIndexFile(fn+"-index.pbf", hh, 4, ids);
         for (auto& q: p) {
             passed.insert(q);
         }
     }
-    logger_progress(100.0)  << "scaned " << fls.size() << " files, have" << passed.size() << " locs";
+    Logger::Progress(100.0)  << "scaned " << fls.size() << " files, have" << passed.size() << " locs";
     src_locs_map locs;
     for (auto& ll: locs_all) {
         if (passed.count(ll.first)>0) {
@@ -353,7 +353,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
     size_t orig_size=em->size();
     auto cb = [allocs, qts, em, orig_size](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
-        logger_progress(bl->FileProgress()) << " read " << qts->size() << " qts, added " << (em->size()-orig_size) << " nodes"; 
+        Logger::Progress(bl->FileProgress()) << " read " << qts->size() << " qts, added " << (em->size()-orig_size) << " nodes"; 
         for (auto o : bl->Objects()) {
             int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
             allocs->expand(k, bl->Quadtree());
@@ -387,12 +387,12 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
     size_t fi=0;
     for (auto& f: fls) {
         headers.push_back(getHeaderBlock(prfx+f));
-        logger_progress(fi*100/fls.size()) << "scan " << f+"-index.pbf [" << tt.size() << " locs]";
+        Logger::Progress(fi*100/fls.size()) << "scan " << f+"-index.pbf [" << tt.size() << " locs]";
         auto p = checkIndexFile(prfx+f+"-index.pbf", headers.back(), (headers.back()->Index().size()>20000 ? 4 : 1), ids);
         for (auto& q: p) { tt.insert(q); }
         ++fi;
     }
-    logger_progress(100) << "scaned " << fls.size() << " files, have" << tt.size() << " locs";
+    Logger::Progress(100) << "scaned " << fls.size() << " files, have" << tt.size() << " locs";
 
 
     auto tree=make_tree_empty();
@@ -413,7 +413,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
             }
         }
         if (!locs.empty()) {
-            logger_progress(i*100.0/fls.size()) << "have " << em->size() << "objs (" << ne << " empty blocks): read " << locs.size() << " blocks from " << fn;
+            Logger::Progress(i*100.0/fls.size()) << "have " << em->size() << "objs (" << ne << " empty blocks): read " << locs.size() << " blocks from " << fn;
             auto bb = read_file_blocks(fn,locs,4,0,true,7,ids);
             for (auto bl: bb) {
                 if (bl->size() == 0) {
@@ -446,14 +446,14 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
             
         }
     }
-    logger_progress(100) << " have " << em->size() << "objs (" << ne << " empty blocks)";
+    Logger::Progress(100) << " have " << em->size() << "objs (" << ne << " empty blocks)";
 
     return std::make_tuple(allocs, qts,tree);
 }
 
 void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
     std::set<int64> nq;
-    logger_message() << "calc way qts";
+    Logger::Message() << "calc way qts";
     for (auto& pp : (*em)) {
         if ((pp.first.first == ElementType::Way) && (pp.second->ChangeType()>changetype::Delete)) {
             bbox bx;
@@ -468,7 +468,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
             qts->expand(k, -1);
             int64 qt = quadtree::calculate(bx.minx,bx.miny,bx.maxx,bx.maxy,0.05,18);
             if (qt<0) {
-                logger_message() << bx << "=>" << qt;
+                Logger::Message() << bx << "=>" << qt;
                 throw std::domain_error("??");
             }
             for (auto& n: o->Refs()) {
@@ -478,7 +478,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
             qts->expand(k,qt);
         }
     }
-    logger_message() << "calc node qts";
+    Logger::Message() << "calc node qts";
     for (auto& pp : (*em)) {
         if ((pp.first.first == ElementType::Node) && (pp.second->ChangeType()>changetype::Delete)) {
 
@@ -489,7 +489,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
             }
         }
     }
-    logger_message() << "calc rel qts";
+    Logger::Message() << "calc rel qts";
     std::multimap<int64,int64> rr;
     for (auto& pp : (*em)) {
         if ((pp.first.first == ElementType::Relation) && (pp.second->ChangeType()>changetype::Delete)) {
@@ -551,7 +551,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
             pp.second->SetQuadtree(qts->at(k));
         }
     }
-    logger_message() << "remove " << mms.size() << " unneeded extra nodes";
+    Logger::Message() << "remove " << mms.size() << " unneeded extra nodes";
     for (auto& m: mms) {
         em->erase(m);
     }

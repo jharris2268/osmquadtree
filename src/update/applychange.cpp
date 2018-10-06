@@ -59,10 +59,10 @@ class ApplyChange {
             if (o->ChangeType() >= changetype::Modify) {
                 
                 o->SetChangeType(changetype::Normal);
-                logger_message() << (has ? "replace with" : "insert") << " obj " << o->Type() << " " << o->Id();
+                Logger::Message() << (has ? "replace with" : "insert") << " obj " << o->Type() << " " << o->Id();
                 collect(o);
             } else {
-                logger_message() << (has ? "remove" : "skip") << " obj " << o->Type() << " " << o->Id() << " [" << change_iter->second->ChangeType() << "]";
+                Logger::Message() << (has ? "remove" : "skip") << " obj " << o->Type() << " " << o->Id() << " [" << change_iter->second->ChangeType() << "]";
             }
             change_iter++;
             finished = change_iter == changeobjs->end();
@@ -123,7 +123,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
         }
     }
     Logger::Get().time("read changes files");
-    logger_message() << "have " << change_objs->size() << " change_objs";
+    Logger::Message() << "have " << change_objs->size() << " change_objs";
     
     auto head_orig = getHeaderBlock(origfn);
     if (!head_orig->Index().empty()) {
@@ -181,7 +181,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     read_blocks_convfunc_primitiveblock(origfn, fixtags, {}, numchan, cvf);
     Logger::Get().time("applied change");
     
-    logger_message() << nc << " objects with '\xef' character fixed";
+    Logger::Message() << nc << " objects with '\xef' character fixed";
     if (writer) {
         writer->finish();
         Logger::Get().time("finished file");

@@ -60,7 +60,7 @@ class ResortObjects {
                 result.at(ii)->add(o);
             }
             
-            logger_progress(100.0*off/groups->size()) << "ResortObjects [" << ts << "] "
+            Logger::Progress(100.0*off/groups->size()) << "ResortObjects [" << ts << "] "
                 << "finish_current: " << inobjs->Index() << ": have " << tt
                 << " tiles // " << inobjs->size() << " objs";
             

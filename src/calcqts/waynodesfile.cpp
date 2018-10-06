@@ -105,7 +105,7 @@ void read_merged_waynodes(const std::string& fn, const std::vector<int64>& locs,
             return nullptr;
         }
         if (fb->blocktype!="WayNodes") {
-            logger_message() << "?? " << fb->idx << " " << fb->blocktype;
+            Logger::Message() << "?? " << fb->idx << " " << fb->blocktype;
             throw std::domain_error("not a waynodes blocks");
         }
         auto unc = fb->get_data();//decompress(std::get<2>(*fb),std::get<3>(*fb));

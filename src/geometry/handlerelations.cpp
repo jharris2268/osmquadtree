@@ -38,7 +38,7 @@ class HandleRelationTags : public BlockHandler {
 
 
         virtual ~HandleRelationTags() {
-            logger_message() << "~HandleRelationTags, route_refs.size()=" << route_refs.size() << ", admin_levels.size()=" << admin_levels.size();
+            Logger::Message() << "~HandleRelationTags, route_refs.size()=" << route_refs.size() << ", admin_levels.size()=" << admin_levels.size();
         }
 
 

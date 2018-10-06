@@ -168,7 +168,7 @@ void tree_rollup(std::shared_ptr<qttree> tree, int64 minsize) {
             
         }
     }
-    logger_message() << "rollup: minsize=" << minsize << "; removed " << p << " weight=" << v;
+    Logger::Message() << "rollup: minsize=" << minsize << "; removed " << p << " weight=" << v;
 }
 
 
@@ -232,7 +232,7 @@ std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 tar
         }
         if (result->at(0).weight==0) {
             int64 rem = tree->at(0).total-result->at(0).total;
-            logger_progress(100-rem*total_fac) << "min=" << min << ", max=" << max << " found=" << result->size() << " remaining " << rem
+            Logger::Progress(100-rem*total_fac) << "min=" << min << ", max=" << max << " found=" << result->size() << " remaining " << rem
                       << "[" << std::setw(5) << std::fixed << std::setprecision(1) << rem*total_fac << "%]]";
         }
 
@@ -250,7 +250,7 @@ std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 tar
     while (i < result->size() ) {
         qttree_item& t = result->at(i);
         if (t.qt <= qt) {
-            logger_message() << "???" << idx << " " << i << " " << quadtree::string(qt) << "<=" << quadtree::string(t.qt) << "[ " << t.weight << ", " << t.total << "]";
+            Logger::Message() << "???" << idx << " " << i << " " << quadtree::string(qt) << "<=" << quadtree::string(t.qt) << "[ " << t.weight << ", " << t.total << "]";
         }
         if (t.weight != 0) {
             t.idx=idx;
@@ -258,7 +258,7 @@ std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 tar
         }
         i = result->next(i,0);
     }
-    logger_message() << "found " << idx << " groups";
+    Logger::Message() << "found " << idx << " groups";
     return result;
     
 }

@@ -141,7 +141,7 @@ void calculate_relation_quadtrees(
         auto tys = readPackedInt(r.tys_data);
         auto rfs = readPackedDelta(r.refs_data);
         if (tys.size()!=rfs.size()) {
-            logger_message() << "??? relation " << r.id << " tys!=refs " << tys.size() << " " << rfs.size();
+            Logger::Message() << "??? relation " << r.id << " tys!=refs " << tys.size() << " " << rfs.size();
             throw std::domain_error("??? tys != refs");
         }
         
@@ -178,7 +178,7 @@ void calculate_relation_quadtrees(
         r.quadtree=q;
         
     }
-    logger_message() << "have " << relrels.size() << " relrels";
+    Logger::Message() << "have " << relrels.size() << " relrels";
     for (size_t i=0; i < 5; i++) {
         for (const auto& rr : relrels) {
             int64 a = relations[rr.first].quadtree;
@@ -196,7 +196,7 @@ void calculate_relation_quadtrees(
             nz++;
         }
     }
-    logger_message() << "set " << nz << " null quadtrees to zero";
+    Logger::Message() << "set " << nz << " null quadtrees to zero";
 }
     
 
@@ -259,7 +259,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
             auto it = find_indexed(n,nodes,nodes_idx,256);
             
             if ((it==nodes.end()) || (it->id!=n)) {
-                logger_message() << "missing node " << n << " [way " << w.id << "]";
+                Logger::Message() << "missing node " << n << " [way " << w.id << "]";
                 nmissing+=1;
                 ni.push_back(nodes.size());
             } else {
@@ -280,7 +280,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
         }
         
     }
-    logger_message() << "have " << nmissing << " missing waynodes";
+    Logger::Message() << "have " << nmissing << " missing waynodes";
     Logger::Get().time("calculate way qts");
     
     

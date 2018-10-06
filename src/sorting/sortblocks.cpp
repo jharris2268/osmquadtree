@@ -60,7 +60,7 @@ class CollectQts {
                 if (curr) {
                     cb(curr);
                 }
-                logger_message() << "CollectQts finished";
+                Logger::Message() << "CollectQts finished";
                 cb(nullptr);
                 return;
             }                
@@ -125,7 +125,7 @@ class AddQuadtrees {
                     throw std::domain_error("no qts");
                 }
                 while (curr->empty()) {
-                    logger_message() << "skip empty";
+                    Logger::Message() << "skip empty";
                     curr=next_qts_block();
                 }
             }
@@ -224,7 +224,7 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
     auto aq = std::make_shared<AddQuadtrees>(nqb,false);
     return [aq,callbacks](PrimitiveBlockPtr bl) {
         if (!bl) {
-            logger_message() << "finished add_quadtrees";
+            Logger::Message() << "finished add_quadtrees";
             for (auto cb: callbacks) {
                 cb(nullptr);
             }
@@ -276,7 +276,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
         auto add_quadtrees = add_quadtreesup_callback({resort}, qtsfn);
         read_blocks_primitiveblock(origfn, add_quadtrees, {}, numchan, nullptr, false,7);
     }
-    logger_message() << "finished";
+    Logger::Message() << "finished";
     
     Logger::Get().time("sorted data");
     
@@ -330,7 +330,7 @@ class SortBlocksImpl : public SortBlocks {
             if (blocksplit==0) {
                 blocksplit = groups->size() * 30 / orig_file_size;
             }
-            logger_message() << "orig_file_size=" << orig_file_size << "mb; blocksplit=" << blocksplit << "num_splits=" << num_splits << ", groups->size() = " << groups->size() << ", group_split=" << group_split;
+            Logger::Message() << "orig_file_size=" << orig_file_size << "mb; blocksplit=" << blocksplit << "num_splits=" << num_splits << ", groups->size() = " << groups->size() << ", group_split=" << group_split;
             
             auto blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, true);
             tempobjs = make_tempobjs(blobs, numchan);
@@ -420,7 +420,7 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     
     Logger::Get().time("resort objs");
     block_index finalidx = write_file_obj->finish();
-    logger_message() << "final: have " << finalidx.size() << " blocks";
+    Logger::Message() << "final: have " << finalidx.size() << " blocks";
     Logger::Get().time("rewrote file");
     return 0;
 }

@@ -43,7 +43,7 @@ class CalculateRelationsImpl : public CalculateRelations {
     public:
         CalculateRelationsImpl() : rel_qts(make_qtstore_map()),nodes_sorted(false), node_rshift(30) {
             node_mask = (1ull<<node_rshift) - 1;
-            logger_message() << "calculate_relations_impl: node_rshift = " << node_rshift << ", node_mask = " << node_mask;
+            Logger::Message() << "calculate_relations_impl: node_rshift = " << node_rshift << ", node_mask = " << node_mask;
             
         }
 
@@ -90,9 +90,9 @@ class CalculateRelationsImpl : public CalculateRelations {
         virtual void add_nodes(minimal::BlockPtr mb) {
             auto cmpf = [](const id_pair& l, const id_pair& r) { return l.first < r.first; };
             if (!nodes_sorted) {
-                logger_message() << "sorting nodes [RSS = " << std::fixed << std::setprecision(1) << getmemval(getpid())/1024.0 << "]";
+                Logger::Message() << "sorting nodes [RSS = " << std::fixed << std::setprecision(1) << getmemval(getpid())/1024.0 << "]";
                 if (rel_nodes.empty()) {
-                    logger_message() << "no nodes...";
+                    Logger::Message() << "no nodes...";
                 } else {
                     int64 mx = rel_nodes.rbegin()->first;
                     
@@ -106,7 +106,7 @@ class CalculateRelationsImpl : public CalculateRelations {
                         
                     }
                     
-                    logger_message() << "node_check.size() = " << node_check.size() << " [RSS = " << std::fixed << std::setprecision(1) << getmemval(getpid())/1024.0 << "]";
+                    Logger::Message() << "node_check.size() = " << node_check.size() << " [RSS = " << std::fixed << std::setprecision(1) << getmemval(getpid())/1024.0 << "]";
                 }
                 nodes_sorted=true;
             }
@@ -139,7 +139,7 @@ class CalculateRelationsImpl : public CalculateRelations {
                     
                     for ( ; it<itEnd; ++it) {
                         if (it->first != rf1) {
-                            logger_message() << "??? rel_node " << (int64) it->first + (rf>>node_rshift) << " " << it->second << " matched by " << rf;
+                            Logger::Message() << "??? rel_node " << (int64) it->first + (rf>>node_rshift) << " " << it->second << " matched by " << rf;
                             continue;
                         }
                         rel_qts->expand(it->second, qt);
@@ -180,7 +180,7 @@ class CalculateRelationsImpl : public CalculateRelations {
             }
             for (auto rr : rel_rels) {
                 if (!rel_qts->contains(rr.second)) {
-                    logger_message() << "no child rels ??" << rr.first << " " << rr.second;
+                    Logger::Message() << "no child rels ??" << rr.first << " " << rr.second;
                     rel_qts->expand(rr.second, 0);
                 }
             }

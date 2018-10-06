@@ -47,7 +47,7 @@ class BlobStoreFile : public BlobStore {
             if (!ks) {
                 tempfl_idx = fileobj->finish();
                 sort_block_index(tempfl_idx);
-                logger_message() << tempfl_idx.size() << " blocks";
+                Logger::Message() << tempfl_idx.size() << " blocks";
                 return;
             }
             
@@ -125,7 +125,7 @@ class BlobStoreFileSplit : public BlobStore {
                 p.second = prog_factor*i;
                 i++;
             }
-            logger_message() << "reading " << nblocks << " blocks with " << kk.size() << " keys";
+            Logger::Message() << "reading " << nblocks << " blocks with " << kk.size() << " keys";
             
             for (size_t i=0; i < convs.size(); i++) {
                 auto c = convs[i];
@@ -134,7 +134,7 @@ class BlobStoreFileSplit : public BlobStore {
                         try {
                             kb->file_progress = kk.at(kb->key);
                         } catch (std::exception& ex) {
-                            logger_message() << "?? kb->key=" << kb->key << ", kk.count = " << kk.count(kb->key) << " {" << ex.what() << "}";
+                            Logger::Message() << "?? kb->key=" << kb->key << ", kk.count = " << kk.count(kb->key) << " {" << ex.what() << "}";
                         }
                         
                     }

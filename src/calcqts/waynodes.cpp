@@ -52,7 +52,7 @@ class WayNodesImpl : public WayNodesWrite {
             if (l==waynodes.size()) {
                 if (resize) {
                     waynodes.resize(waynodes.size()+16384);
-                    logger_message() << "resize waynode to " << waynodes.size()+16384;
+                    Logger::Message() << "resize waynode to " << waynodes.size()+16384;
                 } else {
                     throw std::range_error("way_nodes_impl::add with resize=false");
                 }
@@ -148,7 +148,7 @@ keystring_ptr pack_waynodes_block(std::shared_ptr<WayNodes> tile) {
     pos = writePbfValue(buf, pos, 4, sz);
     
     if (pos!=len) {
-        logger_message() << "pack_noderefs_try2 failed (key=" << tile->key() << ", sz=" << sz << " node_len=" << node_len << ", way_len=" << way_len << ", len=" << len << " != pos=" << pos;
+        Logger::Message() << "pack_noderefs_try2 failed (key=" << tile->key() << ", sz=" << sz << " node_len=" << node_len << ", way_len=" << way_len << ", len=" << len << " != pos=" << pos;
         throw std::domain_error("failed");
     }
     

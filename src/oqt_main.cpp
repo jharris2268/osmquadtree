@@ -55,7 +55,7 @@ bbox read_bbox(const std::string& str) {
         ans.maxy = atoi(p.str(4).c_str());
         return ans;
     } catch(std::regex_error& err) {
-        logger_message() << "regex " << err.what();
+        Logger::Message() << "regex " << err.what();
         throw err;
     }
 
@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
     
     
     if (argc < 3) {
-        logger_message() << "specify operation and file name";
+        Logger::Message() << "specify operation and file name";
     }
     std::string operation(argv[1]);
 
@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
 
 
     if (!std::ifstream(origfn, std::ios::in | std::ios::binary).good()) {
-        logger_message() << "failed to open " << origfn;
+        Logger::Message() << "failed to open " << origfn;
         return 1;
     }
 
@@ -228,21 +228,21 @@ int main(int argc, char** argv) {
             } else if (key=="timestamp=") {
 
                 timestamp = read_date(val);
-                logger_message() << "read timestamp \"" << val << "\" as " << timestamp;
+                Logger::Message() << "read timestamp \"" << val << "\" as " << timestamp;
             } else if (key=="numchan=") {
                 numchan = atoi(val.c_str());
             } else if (key=="rollup") {
                 rollup=true;
-                logger_message() << "rollup=true";
+                Logger::Message() << "rollup=true";
             } else if (key=="targetsize=") {
                 targetsize = atoi(val.c_str());
-                logger_message() << "targetsize=" << targetsize;
+                Logger::Message() << "targetsize=" << targetsize;
             } else if (key=="minsize=") {
                 minsize = atoi(val.c_str());
-                logger_message() << "minsize=" << minsize;
+                Logger::Message() << "minsize=" << minsize;
             } else if (key=="tempfn=") {
                 tempfn = val;
-                logger_message() << "tempfn=" << tempfn;
+                Logger::Message() << "tempfn=" << tempfn;
             } else if (key=="sort") {
                 sort_objs=true;
             } else if (key=="dontsortfile") {
@@ -260,16 +260,16 @@ int main(int argc, char** argv) {
                     filter_box = read_bbox(val);
                 }
 
-                logger_message() << "read filter " << val << " as " << filter_box;
+                Logger::Message() << "read filter " << val << " as " << filter_box;
             } else if (key=="filterobjs") {
                 filter_objs=true;
             } else if (key=="grptiles=") {
                 grptiles = atoi(val.c_str());
-                logger_message() << "grptiles=" << grptiles;
+                Logger::Message() << "grptiles=" << grptiles;
             
             } else if (key=="inmem") {
                 inmem=true;
-                logger_message() << "inmem";
+                Logger::Message() << "inmem";
             } else if (key=="change=") {
                 changes.push_back(val);
             } else if (key=="countgeom") {
@@ -280,13 +280,13 @@ int main(int argc, char** argv) {
                 max_depth=atoi(val.c_str());
             } else if (key=="dontsplitways") {
                 splitways=false;
-                logger_message() << "splitways=false";
+                Logger::Message() << "splitways=false";
             } else if (key=="countflags=") {
                 countflags = std::stoull(val);  
             } else if (key=="usetree") {
                 use_tree=true;
             } else {
-               logger_message() << "unrecongisned argument " << arg;
+               Logger::Message() << "unrecongisned argument " << arg;
                return 1;
             } 
         }
@@ -298,14 +298,14 @@ int main(int argc, char** argv) {
     
     
     
-    logger_message() << "numchan=" << numchan;
+    Logger::Message() << "numchan=" << numchan;
 
     //auto lg = make_default_logger();
 
     int resp=0;
     if (operation == "count") {
         auto res = run_count(origfn, numchan,false, countgeom, countflags);
-        logger_message() << "\n"<<res.long_str();
+        Logger::Message() << "\n"<<res.long_str();
     } else if (operation == "calcqts") {
         if (inmem) {
             run_calcqts_inmem(origfn, qtsfn, numchan, true);
@@ -329,7 +329,7 @@ int main(int argc, char** argv) {
                 groups=tree;
             } else {
                 groups = find_groups_copy(tree,targetsize,minsize);
-                logger_message() << "find groups";
+                Logger::Message() << "find groups";
                 Logger::Get().time("find groups");
                 tree.reset();
             }
@@ -366,7 +366,7 @@ int main(int argc, char** argv) {
             bl = readFileBlock(idx, file);
         }
         file.close();
-        logger_message() << "uncompressed size: " << tl;
+        Logger::Message() << "uncompressed size: " << tl;
     }
     
             

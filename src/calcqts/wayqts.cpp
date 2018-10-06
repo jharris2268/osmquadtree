@@ -38,6 +38,7 @@
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/utils/pbf/packedint.hpp"
 #include "oqt/utils/invertedcallback.hpp"
+#include "oqt/utils/logger.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -162,7 +163,7 @@ class WayNodeLocs {
                     next_wn();
                     missing++;
                 }
-                logger_message() << "finished, have " << missing << " missing, " << atend << " atend";
+                Logger::Message() << "finished, have " << missing << " missing, " << atend << " atend";
                 expand_all(nullptr);
                 return;
             }
@@ -248,14 +249,14 @@ class ExpandBoxes {
             mn=1ll<<61; mx=0;
         }
         
-        virtual ~ExpandBoxes() { logger_message() << "~ExpandBoxes"; }
+        virtual ~ExpandBoxes() { Logger::Message() << "~ExpandBoxes"; }
         
         void expand(int64 w, int32 x, int32 y) {
             if (w<0) { throw std::domain_error("wtf"); }
             int64 k = (w/split);
             
             if (((size_t) k)>=tiles.size()) {
-                logger_message() << "resize ExpandBoxes to " << k+1 << " {" << 16*(k+1) << "mb}, RSS=" << getmemval(getpid())/1024.0/1024;
+                Logger::Message() << "resize ExpandBoxes to " << k+1 << " {" << 16*(k+1) << "mb}, RSS=" << getmemval(getpid())/1024.0/1024;
                 tiles.resize(k+1);
             }
             if (!tiles[k]) {
@@ -264,9 +265,9 @@ class ExpandBoxes {
                 cc++;
                 try {
                     tiles[k] = std::make_unique<wbtile<20>>(k);
-                    //logger_message() << "ExpandBoxes added tile " << k << " [have " << cc << "], RSS=" << getmemval(getpid())/1024.0/1024;
+                    //Logger::Message() << "ExpandBoxes added tile " << k << " [have " << cc << "], RSS=" << getmemval(getpid())/1024.0/1024;
                 } catch(std::exception& ex) {
-                    logger_message() << "ExpandBoxes addin tile " << k << " failed, RSS=" << getmemval(getpid())/1024.0/1024;
+                    Logger::Message() << "ExpandBoxes addin tile " << k << " failed, RSS=" << getmemval(getpid())/1024.0/1024;
                     throw ex;
                 }
                 
@@ -289,7 +290,7 @@ class ExpandBoxes {
                 }
             }
             if (mm) {
-                //logger_message() << "range " << mn << " [" << (mn/split) << "] to " << mx << " [" << (mx/split) << "]";
+                //Logger::Message() << "range " << mn << " [" << (mn/split) << "] to " << mx << " [" << (mx/split) << "]";
             }
         }
         
@@ -297,13 +298,13 @@ class ExpandBoxes {
         
         void calculate(std::shared_ptr<QtStoreSplit> qts, double buffer, size_t maxdepth) {
             int64 now=getmemval(pid);
-            logger_message() << "[" << std::setw(8)  << cc << " tiles, " << std::setw(12) << now*1.0/1024.0/1024.0  << "]";
+            Logger::Message() << "[" << std::setw(8)  << cc << " tiles, " << std::setw(12) << now*1.0/1024.0/1024.0  << "]";
             int64 was=now;
            
             
             for (size_t i=0; i < tiles.size(); i++) {
                 if (tiles[i]) {
-                    logger_progress(100.0*i/tiles.size()) <<  "calc tile " << i;
+                    Logger::Progress(100.0*i/tiles.size()) <<  "calc tile " << i;
                     
                     qts->add_tile(i,tiles[i]->calculate(buffer, maxdepth));
                     tiles[i].reset();
@@ -315,7 +316,7 @@ class ExpandBoxes {
             tiles.clear();
             
             now=getmemval(pid);
-            logger_message() << "[" << cc << " tiles, " << now*1.0/1024.0/1024.0 << "/" << (now-was)*1.0/1024.0/1024.0 << "]";
+            Logger::Message() << "[" << cc << " tiles, " << now*1.0/1024.0/1024.0 << "/" << (now-was)*1.0/1024.0/1024.0 << "]";
             
             
         }
@@ -344,7 +345,7 @@ void find_way_quadtrees(
     
     size_t nb=580;
     
-    logger_message() << "find way qts " << minway << " to " << maxway << ", RSS=" << getmemval(getpid())/1024.0/1024;
+    Logger::Message() << "find way qts " << minway << " to " << maxway << ", RSS=" << getmemval(getpid())/1024.0/1024;
     auto expand=std::make_shared<ExpandBoxes>(1<<20, nb);
     auto expand_all = [expand](std::shared_ptr<wnls> ww) { expand->expand_all(ww); };
     

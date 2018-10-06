@@ -50,7 +50,7 @@ struct SplitBlocksDetail {
     double tmm,tww,trr,last;
     
     void finished_message() {
-        logger_progress(100) << " finished SplitBlocks " << TmStr{ts.since(),6,1} << " [" << ii << " blocks, " << tb << " objects ], tmm=" << TmStr{tmm,6,1} << ", trr=" << TmStr{trr,8,1} << ", tww=" << TmStr{tww,8,1} << " {" << std::this_thread::get_id() << "}";
+        Logger::Progress(100) << " finished SplitBlocks " << TmStr{ts.since(),6,1} << " [" << ii << " blocks, " << tb << " objects ], tmm=" << TmStr{tmm,6,1} << ", trr=" << TmStr{trr,8,1} << ", tww=" << TmStr{tww,8,1} << " {" << std::this_thread::get_id() << "}";
     }
     
 };
@@ -87,7 +87,7 @@ void SplitBlocksDetail::writetemps(std::shared_ptr<std::vector<PrimitiveBlockPtr
     
     tb+=b;
     if (msgs) {
-        logger_progress(maxp) << "SplitBlocks: write " << a << " blocks // " << b << " objs"
+        Logger::Progress(maxp) << "SplitBlocks: write " << a << " blocks // " << b << " objs"
             << " [" << currww << "/" << writeat << " " << TmStr{ts.since()-x,4,1} << "]";
     }
     trr += (ts.since()-x);

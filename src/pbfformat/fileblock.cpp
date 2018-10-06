@@ -100,7 +100,7 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
         } else if (tag.tag==3) {
             block_size = tag.value;
         } else {
-            logger_message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
+            Logger::Message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
         }
         tag = readPbfTag(r.first, pos);
     }
@@ -123,7 +123,7 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
             result->data=std::move(tag.data);
             
         } else {
-            logger_message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
+            Logger::Message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
         }
 
         tag = std::move(readPbfTag(r.first, pos));

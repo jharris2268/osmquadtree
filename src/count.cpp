@@ -36,7 +36,7 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     
     std::ifstream infile(fn, std::ifstream::in | std::ifstream::binary);
     if (!infile.good()) {
-        logger_message() << "failed to open " << fn;
+        Logger::Message() << "failed to open " << fn;
         return count_block(0,false,false,false);
     }
     bool change = EndsWith(fn, "pbfc");
@@ -50,11 +50,11 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     
     auto cb = [&result,&nexttot,&step](minimal::BlockPtr mb) {
         if (!mb) {
-            logger_progress(100) << "\r" << result.short_str();
+            Logger::Progress(100) << "\r" << result.short_str();
             return;
         }
         if (result.total > nexttot) {
-            logger_progress(mb->file_progress) << result.short_str();
+            Logger::Progress(mb->file_progress) << result.short_str();
             nexttot = result.total + step;
         }
         result.add(mb->index, mb);

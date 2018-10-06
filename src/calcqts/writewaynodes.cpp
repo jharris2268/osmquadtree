@@ -155,7 +155,7 @@ class WayNodesFilePrep {
         WayNodesFilePrep(const std::string& fn_) : fn(fn_) {}
         
         std::shared_ptr<WayNodesFile> make_waynodesfile() {
-            logger_message() << "make_waynodesfile fn=" << fn << ", ll.size()=" << ll.size();
+            Logger::Message() << "make_waynodesfile fn=" << fn << ", ll.size()=" << ll.size();
             //return std::make_shared<WayNodesFileImpl>(fn, ll);
             
             return oqt::make_waynodesfile(fn, ll);
@@ -216,7 +216,7 @@ class WayNodesFilePrep {
                     for (auto pw: pack_waynodes) { pw(bl); }
                 } else {
                     
-                    logger_progress(bl->file_progress) << "writing way nodes";
+                    Logger::Progress(bl->file_progress) << "writing way nodes";
                     
                     if (bl->has_nodes) { node_blocks.push_back(bl->file_position); }
                     pack_waynodes[bl->index % pack_waynodes.size()](bl);
@@ -270,11 +270,11 @@ std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std
     }
         
     
-    logger_message() << rels->str();
+    Logger::Message() << rels->str();
     Logger::Get().time("wrote waynodes");
     
     auto res = waynodes->finish_writewaynodes();
-    logger_message() << "have " << res.second.size() << " blocks with nodes";
+    Logger::Message() << "have " << res.second.size() << " blocks with nodes";
     
     Logger::Get().time("finished waynodes");    
     

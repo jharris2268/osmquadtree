@@ -50,7 +50,7 @@ PbfTag readPbfTag(const std::string& data, size_t& pos) {
     } else if ((tag&7)==2) {
         return PbfTag{tag>>3, 0, readData(data,pos)};
     }
-    logger_message() << "?? @ " << pos << "/" << data.size() << ": " << tag << " "  << (tag&7) << " " << (tag>>3);
+    Logger::Message() << "?? @ " << pos << "/" << data.size() << ": " << tag << " "  << (tag&7) << " " << (tag>>3);
 
     throw std::domain_error("only understand varint & data");
     return PbfTag{0,0,""};

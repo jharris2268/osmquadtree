@@ -119,7 +119,7 @@ std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t
             auto it=tags.find(tg.key);
             if (it!=tags.end()) {
                 if (it->second >= tags.size()) {
-                    logger_message() << "tag out of bounds?? " << tg.key << " " << tg.val << "=>" << it->second << "/" << tt.size();
+                    Logger::Message() << "tag out of bounds?? " << tg.key << " " << tg.val << "=>" << it->second << "/" << tt.size();
                     throw std::domain_error("tag out of bounds");
                 }
                 tt.at(it->second)=tg.val;
@@ -465,7 +465,7 @@ class PostgisWriterImpl : public PostgisWriter {
                 int r = PQresultStatus(res);
                 PQclear(res);
                 if (r!=PGRES_COMMAND_OK){
-                    logger_message() << "postgiswriter: commit failed " << PQerrorMessage(conn);
+                    Logger::Message() << "postgiswriter: commit failed " << PQerrorMessage(conn);
                     PQfinish(conn);
                     throw std::domain_error("failed");
                 }
@@ -481,12 +481,12 @@ class PostgisWriterImpl : public PostgisWriter {
             if (!init) {
                 conn = PQconnectdb(connection_string.c_str());
                 if (!conn) {
-                    logger_message() << "connection to postgresql failed [" << connection_string << "]";
+                    Logger::Message() << "connection to postgresql failed [" << connection_string << "]";
                     throw std::domain_error("connection to postgressql failed");
                 }
                 auto res = PQexec(conn,"begin");
                 if (PQresultStatus(res)!=PGRES_COMMAND_OK) {
-                    logger_message() << "begin failed?? " <<  PQerrorMessage(conn);
+                    Logger::Message() << "begin failed?? " <<  PQerrorMessage(conn);
                     PQclear(res);
                     PQfinish(conn);
                     throw std::domain_error("begin failed");
@@ -505,7 +505,7 @@ class PostgisWriterImpl : public PostgisWriter {
             auto res = PQexec(conn,sql.c_str());
 
             if (PQresultStatus(res) != PGRES_COPY_IN) {
-                logger_message() << "PQresultStatus != PGRES_COPY_IN [" << PQresultStatus(res) << "] " <<  PQerrorMessage(conn);
+                Logger::Message() << "PQresultStatus != PGRES_COPY_IN [" << PQresultStatus(res) << "] " <<  PQerrorMessage(conn);
                 
                 PQclear(res);
                 PQfinish(conn);
@@ -519,7 +519,7 @@ class PostgisWriterImpl : public PostgisWriter {
             int r = PQputCopyEnd(conn,nullptr);
             PQclear(res);
             if (r!=PGRES_COMMAND_OK) {
-                logger_message() << "\n*****\ncopy failed [" << sql << "]" << PQerrorMessage(conn) << "\n" ;
+                Logger::Message() << "\n*****\ncopy failed [" << sql << "]" << PQerrorMessage(conn) << "\n" ;
                     
                 return 0;
             }
@@ -550,7 +550,7 @@ std::function<void(std::shared_ptr<csv_block>)> make_postgiswriter_callback(
     auto pw = make_postgiswriter(connection_string,table_prfx, with_header);
     return [pw](std::shared_ptr<csv_block> bl) {
         if (!bl) {
-            logger_message() << "PostgisWriter done";
+            Logger::Message() << "PostgisWriter done";
             pw->finish();
         } else {
             pw->call(bl);

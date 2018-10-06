@@ -657,7 +657,7 @@ inline std::string read_str(const std::string& data, size_t& pos) {
     size_t ln = ((unsigned char) data[pos]) * 256;
     ln += ((unsigned char) data[pos+1]);
     if (((pos+2+ln) >data.size()) || (ln > 1000)) {
-        logger_message() << "read_str pos=" << pos << ", ln=" << ln << ", data.size()=" << data.size();
+        Logger::Message() << "read_str pos=" << pos << ", ln=" << ln << ", data.size()=" << data.size();
         throw std::domain_error("???"); 
     }
     
