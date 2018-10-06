@@ -38,7 +38,7 @@ namespace oqt {
 
 class ResortObjects {
     public:
-        ResortObjects(primitiveblock_callback callback_, std::shared_ptr<qttree> groups_, int64 blocksize_, bool sortobjs_) :
+        ResortObjects(primitiveblock_callback callback_, std::shared_ptr<QtTree> groups_, int64 blocksize_, bool sortobjs_) :
                 callback(callback_), groups(groups_), blocksize(blocksize_), sortobjs(sortobjs_) {}
         
         void call(PrimitiveBlockPtr inobjs) {
@@ -76,7 +76,7 @@ class ResortObjects {
         }
     private:
         primitiveblock_callback callback;
-        std::shared_ptr<qttree> groups;
+        std::shared_ptr<QtTree> groups;
         size_t blocksize;
         TimeSingle ts;
         bool sortobjs;
@@ -84,7 +84,7 @@ class ResortObjects {
 
 primitiveblock_callback make_resortobjects_callback(
     primitiveblock_callback callback,
-    std::shared_ptr<qttree> groups,
+    std::shared_ptr<QtTree> groups,
     int64 blocksplit, bool sortobjs) {
     
     auto rso = std::make_shared<ResortObjects>(callback,groups,blocksplit,sortobjs);

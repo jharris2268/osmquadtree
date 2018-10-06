@@ -314,7 +314,7 @@ int main(int argc, char** argv) {
         }
 
     } else if (operation=="sortblocks") {
-        std::shared_ptr<qttree> groups;
+        std::shared_ptr<QtTree> groups;
         //if (usefindgroupscopy) {
         
         if (true) {

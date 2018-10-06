@@ -33,21 +33,21 @@
 #include <set>
 namespace oqt {
 
-std::pair<size_t,int64> clip_within_copy(std::shared_ptr<qttree> tree, std::shared_ptr<qttree> result, int64 min, int64 max, int64 absmin) {
+std::pair<size_t,int64> clip_within_copy(std::shared_ptr<QtTree> tree, std::shared_ptr<QtTree> result, int64 min, int64 max, int64 absmin) {
     size_t cc=0;
     int64 sz=0;
 
     int64 qq=0;
     size_t i=0;
     while (i < tree->size() ) {
-        const qttree_item& t = tree->at(i);
+        const QtTree::Item& t = tree->at(i);
 
         if (t.qt < qq) {
             throw std::domain_error("out of order");
         }
         qq=t.qt;
         int64 t_total = t.total;
-        const qttree_item& result_tile = result->at(result->find(qq));
+        const QtTree::Item& result_tile = result->at(result->find(qq));
         if (result_tile.qt == t.qt) {
             t_total -= result_tile.total;
         }
@@ -59,7 +59,7 @@ std::pair<size_t,int64> clip_within_copy(std::shared_ptr<qttree> tree, std::shar
             for (size_t ji=0; ji<4; ji++) {
                 size_t j = t.children[ji];
                 if (j>0) {
-                    const qttree_item& ct = tree->at(j);
+                    const QtTree::Item& ct = tree->at(j);
                     int64 ct_total = ct.total;
                     if ((result_tile.qt == t.qt)&&(result_tile.children[ji]>0)) {
                         
@@ -96,7 +96,7 @@ std::pair<size_t,int64> clip_within_copy(std::shared_ptr<qttree> tree, std::shar
     
     
 
-std::pair<size_t,int64> clip_within(std::shared_ptr<qttree> tree, std::set<size_t>& outs, int64 min, int64 max, int64 absmin) {
+std::pair<size_t,int64> clip_within(std::shared_ptr<QtTree> tree, std::set<size_t>& outs, int64 min, int64 max, int64 absmin) {
 
     size_t cc=0;
     int64 sz=0;
@@ -104,7 +104,7 @@ std::pair<size_t,int64> clip_within(std::shared_ptr<qttree> tree, std::set<size_
     int64 qq=0;
     size_t i=0;
     while (i < tree->size() ) {
-        const qttree_item& t = tree->at(i);
+        const QtTree::Item& t = tree->at(i);
 
 
         
@@ -117,7 +117,7 @@ std::pair<size_t,int64> clip_within(std::shared_ptr<qttree> tree, std::set<size_
             bool alls = true;
             for (size_t j : t.children)  {
                 if (j>0) {
-                    const qttree_item& ct = tree->at(j);
+                    const QtTree::Item& ct = tree->at(j);
                     if (ct.total > absmin) {
                         alls=false;
                         break;
@@ -146,17 +146,17 @@ std::pair<size_t,int64> clip_within(std::shared_ptr<qttree> tree, std::set<size_
 }
 
 
-void tree_rollup(std::shared_ptr<qttree> tree, int64 minsize) {
+void tree_rollup(std::shared_ptr<QtTree> tree, int64 minsize) {
     int p=0;
     int64 v=0;
     for (int j=0; j < 18; j++) {
         int k = 17-j;
         for (size_t i=0; i<tree->size(); i=tree->next(i) ) {
-            const qttree_item& t = tree->at(i);
+            const QtTree::Item& t = tree->at(i);
             if ((t.qt&31) == k) {
                 for (size_t ci=0; ci<4; ci++) {
                     if (t.children[ci]!=0) {
-                        const qttree_item& c = tree->at(t.children[ci]);
+                        const QtTree::Item& c = tree->at(t.children[ci]);
                         if (c.total<minsize) {
                             p++;
                             v+=c.total;
@@ -172,13 +172,13 @@ void tree_rollup(std::shared_ptr<qttree> tree, int64 minsize) {
 }
 
 
-std::shared_ptr<qttree> tree_round_copy(std::shared_ptr<qttree> tree, int64 maxlevel) {
+std::shared_ptr<QtTree> tree_round_copy(std::shared_ptr<QtTree> tree, int64 maxlevel) {
     auto result = make_tree_empty();
         
     size_t i =0;
     size_t max=tree->size();
     while (i<max) {
-        const qttree_item& t = tree->at(i);
+        const QtTree::Item& t = tree->at(i);
         
         if (t.total==0) {
             i = tree->next(i,4);
@@ -197,7 +197,7 @@ std::shared_ptr<qttree> tree_round_copy(std::shared_ptr<qttree> tree, int64 maxl
         
 }
 
-std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 target, int64 minsize) {
+std::shared_ptr<QtTree> find_groups_copy(std::shared_ptr<QtTree> tree, int64 target, int64 minsize) {
 
 
 
@@ -211,9 +211,9 @@ std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 tar
     while ((tree->at(0).total > result->at(0).total)) {
 
         while (true) {
-            const qttree_item& t0 = tree->at(0);
+            const QtTree::Item& t0 = tree->at(0);
 
-            const qttree_item& r0 = result->at(0);
+            const QtTree::Item& r0 = result->at(0);
             
 
             if (t0.total == r0.total) {
@@ -248,7 +248,7 @@ std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 tar
     size_t i=0;
     int64 qt=-1;
     while (i < result->size() ) {
-        qttree_item& t = result->at(i);
+        QtTree::Item& t = result->at(i);
         if (t.qt <= qt) {
             Logger::Message() << "???" << idx << " " << i << " " << quadtree::string(qt) << "<=" << quadtree::string(t.qt) << "[ " << t.weight << ", " << t.total << "]";
         }

@@ -304,7 +304,7 @@ IdSetPtr make_idset(typeid_element_map_ptr em) {
     return ids;
 }
 
-std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check_index_files(const std::string& prfx, const std::vector<std::string>& fls, IdSetPtr ids) {
+std::tuple<std::shared_ptr<QtTree>,std::vector<std::string>, src_locs_map> check_index_files(const std::string& prfx, const std::vector<std::string>& fls, IdSetPtr ids) {
     
     src_locs_map locs_all;
     std::set<int64> passed;
@@ -341,11 +341,11 @@ std::tuple<std::shared_ptr<qttree>,std::vector<std::string>, src_locs_map> check
     return std::make_tuple(tree, outfl, locs);
 }
 
-std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>> add_orig_elements_alt(
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>> add_orig_elements_alt(
     typeid_element_map_ptr em, const std::string& prfx, const std::vector<std::string>& fls) {
     
     auto ids = make_idset(em);
-    std::shared_ptr<qttree> tree; std::vector<std::string> fl; src_locs_map locs;
+    std::shared_ptr<QtTree> tree; std::vector<std::string> fl; src_locs_map locs;
     std::tie(tree, fl, locs) = check_index_files(prfx, fls, ids);
     
     auto allocs = make_qtstore_map();
@@ -374,7 +374,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qtt
     
 
 
-std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>> add_orig_elements(
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>> add_orig_elements(
     typeid_element_map_ptr em, const std::string& prfx, const std::vector<std::string>& fls) {
 
 
@@ -561,7 +561,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
 
 std::vector<PrimitiveBlockPtr> find_change_tiles(
     typeid_element_map_ptr em, std::shared_ptr<QtStore> orig_allocs,
-    std::shared_ptr<qttree> tree, int64 ss, int64 ee) {
+    std::shared_ptr<QtTree> tree, int64 ss, int64 ee) {
 
     std::map<int64, PrimitiveBlockPtr> tiles;
     auto check_tile = [&tiles,ss,ee](int64 a) {
@@ -611,7 +611,7 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
     gzstream::igzstream src_fl(src.c_str());
     read_xml_change_file_em(&src_fl, objs, true);
     std::shared_ptr<QtStore> qts, orig_allocs;
-    std::shared_ptr<qttree> tree;
+    std::shared_ptr<QtTree> tree;
     std::tie(orig_allocs,qts,tree) =  add_orig_elements(objs, prfx, fls);
     calc_change_qts(objs, qts);
     auto tiles = find_change_tiles(objs, orig_allocs, tree, st, et);

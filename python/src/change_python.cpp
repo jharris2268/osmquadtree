@@ -68,20 +68,20 @@ void read_xml_change_file_em_py(std::string fn, bool isgzip, element_map& em, bo
     return read_xml_change_file_em(&f,em.u, allow_missing_users);
 }
 
-std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>>
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>>
     add_orig_elements_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
     py::gil_scoped_release r;
     return add_orig_elements(em.u,prfx,fls);
 }
 
-std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<qttree>>
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>>
     add_orig_elements_alt_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
     py::gil_scoped_release r;
     return add_orig_elements_alt(em.u,prfx,fls);
 }
 
 std::vector<PrimitiveBlockPtr> find_change_tiles_py(element_map& em, std::shared_ptr<QtStore> orig_allocs,
-    std::shared_ptr<qttree> tree,
+    std::shared_ptr<QtTree> tree,
     int64 startdate,
     int64 enddate){
 

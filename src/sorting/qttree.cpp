@@ -34,7 +34,7 @@
 #include <deque>
 
 namespace oqt {
-std::string item_string(size_t i, const qttree_item& t) {
+std::string item_string(size_t i, const QtTree::Item& t) {
     std::stringstream ss;
     ss  << std::right << std::setw(12) << i
         << std::setw(22) << t.qt
@@ -45,12 +45,12 @@ std::string item_string(size_t i, const qttree_item& t) {
     return ss.str();
 }
 
-struct qttree_tile {
-    std::vector<qttree_item> vals;
+struct QtTreeItemArray {
+    std::vector<QtTree::Item> vals;
     size_t len;
 
-    qttree_tile() : vals(1<<16),len(0) {}
-    qttree_item& at(size_t i) {
+    QtTreeItemArray() : vals(1<<16),len(0) {}
+    QtTree::Item& at(size_t i) {
         if (i>=len) {
             throw std::domain_error("out of range");
         }
@@ -70,18 +70,18 @@ struct qttree_tile {
 };
 
 
-class qttree_impl : public qttree {
-    std::deque<qttree_tile> tiles;
+class QtTreeImpl : public QtTree {
+    std::deque<QtTreeItemArray> tiles;
     uint32_t idx;
 
     public:
 
-        qttree_impl() {
+        QtTreeImpl() {
             idx=1;
             push_back(0,0);
         }
 
-        qttree_item& at(size_t i) {
+        QtTree::Item& at(size_t i) {
             size_t t = i>>16;
             if (t>=tiles.size()) {
                 throw std::domain_error("out of range");
@@ -98,7 +98,7 @@ class qttree_impl : public qttree {
 
         size_t push_back(int64 qt, size_t parent) {
             if (tiles.empty() || (tiles.back().len==65536)) {
-                tiles.push_back(qttree_tile());
+                tiles.push_back(QtTreeItemArray());
             }
             size_t r=size();
 
@@ -112,7 +112,7 @@ class qttree_impl : public qttree {
         }
 
         size_t find_int(int64 qt, size_t curr) {
-            qttree_item& t = at(curr);
+            QtTree::Item& t = at(curr);
             if (t.qt==qt) {
                 return curr;
             }
@@ -129,7 +129,7 @@ class qttree_impl : public qttree {
         }
 
         size_t add_int(int64 qt, int64 val, size_t curr) {
-            qttree_item& t = at(curr);
+            QtTree::Item& t = at(curr);
             t.total+=val;
             if (t.qt==qt) {
                 if (t.idx==0) {
@@ -148,7 +148,7 @@ class qttree_impl : public qttree {
         }
 
         size_t next(size_t curr, size_t c=0) {
-            const qttree_item& t=at(curr);
+            const QtTree::Item& t=at(curr);
             for ( ; c<4; c++) {
                 if (t.children[c]!=0) {
                     return t.children[c];
@@ -161,7 +161,7 @@ class qttree_impl : public qttree {
         }
 
         void rollup(size_t curr) {
-            qttree_item& t=at(curr);
+            QtTree::Item& t=at(curr);
             t.weight=t.total;
             for (size_t i=0; i < 4; i++) {
                 t.children[i]=0;
@@ -169,12 +169,12 @@ class qttree_impl : public qttree {
         }
         
         void rollup_child(size_t curr, size_t ci) {
-            qttree_item& t=at(curr);
+            QtTree::Item& t=at(curr);
             if (t.children[ci]==0) {
                 Logger::Message() << "rollup empty child??" << curr << " " << t.qt << " " << t.weight << " " << t.total << " " << ci;;
                 return;
             }
-            qttree_item& ct=at(t.children[ci]);
+            QtTree::Item& ct=at(t.children[ci]);
             t.weight += ct.total;
             t.children[ci] = 0;
         }
@@ -183,27 +183,27 @@ class qttree_impl : public qttree {
             
 
         size_t clip(size_t curr) {
-            const qttree_item t=at(curr);
+            const QtTree::Item t=at(curr);
             size_t p=curr;
             int64 tt=t.total;
 
             size_t tp=t.parent;
 
             while (tp != p) {
-                qttree_item& s = at(tp);
+                QtTree::Item& s = at(tp);
                 p=tp;
                 tp=s.parent;
                 s.total -= tt;
             }
 
-            qttree_item& s2 = at(t.parent);
+            QtTree::Item& s2 = at(t.parent);
             size_t pc = (t.qt>>(63-2*(t.qt&31)))&3;
             s2.children[pc]=0;
             return next(t.parent,pc+1);
         }
 
-        qttree_item find_tile(int64 qt) {
-            qttree_item t=at(find(qt));
+        QtTree::Item find_tile(int64 qt) {
+            QtTree::Item t=at(find(qt));
             while ((t.weight==0) && (t.qt!=0)) {
                 t=at(t.parent);
             }
@@ -233,13 +233,13 @@ void collect_block(std::shared_ptr<count_map> res, minimal::BlockPtr block) {
 
 }
 
-std::shared_ptr<qttree> make_tree_empty() {
-    return std::make_shared<qttree_impl>();
+std::shared_ptr<QtTree> make_tree_empty() {
+    return std::make_shared<QtTreeImpl>();
 }
 
 class AddCountMapTree {
     public:
-        AddCountMapTree(std::shared_ptr<qttree> tree_, size_t maxlevel_) : 
+        AddCountMapTree(std::shared_ptr<QtTree> tree_, size_t maxlevel_) : 
             tree(tree_), maxlevel(maxlevel_), tb(0) {}
         
         void call(std::shared_ptr<count_map> fb) {
@@ -260,13 +260,13 @@ class AddCountMapTree {
             Logger::Progress(100) << "finished totals: [" << tree->size() << " " << tb << "]        ";
         }
     private:
-        std::shared_ptr<qttree> tree;
+        std::shared_ptr<QtTree> tree;
         size_t maxlevel;
         int64 tb;
 };
 
 
-std::function<void(std::shared_ptr<count_map>)> make_addcountmaptree(std::shared_ptr<qttree> tree, size_t maxlevel) {
+std::function<void(std::shared_ptr<count_map>)> make_addcountmaptree(std::shared_ptr<QtTree> tree, size_t maxlevel) {
     
     auto acmt = std::make_shared<AddCountMapTree>(tree, maxlevel);
     

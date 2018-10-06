@@ -91,7 +91,7 @@ class CollectQts {
 
 
 
-std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t numchan, size_t maxlevel) {
+std::shared_ptr<QtTree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t numchan, size_t maxlevel) {
     
     auto tree = make_tree_empty();
     
@@ -108,7 +108,7 @@ std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
 };
            
 
-std::shared_ptr<qttree> make_qts_tree(const std::string& qtsfn, size_t numchan) {
+std::shared_ptr<QtTree> make_qts_tree(const std::string& qtsfn, size_t numchan) {
     return make_qts_tree_maxlevel(qtsfn, numchan, 17);
 }
 
@@ -239,7 +239,7 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
 
 
 int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups) {
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups) {
         
     
     
@@ -317,7 +317,7 @@ PrimitiveBlockPtr convert_primblock(std::shared_ptr<FileBlock> bl) {
 
 class SortBlocksImpl : public SortBlocks {
     public:
-        SortBlocksImpl(int64 orig_file_size_, std::shared_ptr<qttree> groups_, const std::string& tempfn_,
+        SortBlocksImpl(int64 orig_file_size_, std::shared_ptr<QtTree> groups_, const std::string& tempfn_,
             size_t blocksplit_, size_t numchan_)
         : orig_file_size(orig_file_size_), groups(groups_), tempfn(tempfn_),  blocksplit(blocksplit_), numchan(numchan_) {
             
@@ -369,7 +369,7 @@ class SortBlocksImpl : public SortBlocks {
 
     private:
         int64 orig_file_size;
-        std::shared_ptr<qttree> groups;
+        std::shared_ptr<QtTree> groups;
         std::string tempfn;
         size_t blocksplit;
         size_t numchan;
@@ -378,14 +378,14 @@ class SortBlocksImpl : public SortBlocks {
         size_t group_split;
         std::shared_ptr<TempObjs> tempobjs;
 };
-std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<qttree> groups,
+std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<QtTree> groups,
     const std::string& tempfn, size_t blocksplit, size_t numchan) {
     return std::make_shared<SortBlocksImpl>(orig_file_size,groups,tempfn,blocksplit,numchan  );
 }
 
 
 int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups,
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
     const std::string& tempfn, size_t blocksplit) {
     
    

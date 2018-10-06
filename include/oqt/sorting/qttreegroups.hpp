@@ -26,9 +26,9 @@
 #include "oqt/sorting/qttree.hpp"
 
 namespace oqt {
-std::shared_ptr<qttree> find_groups_copy(std::shared_ptr<qttree> tree, int64 target, int64 minsize);
-void tree_rollup(std::shared_ptr<qttree> tree, int64 minsize);
-std::shared_ptr<qttree> tree_round_copy(std::shared_ptr<qttree> tree, int64 maxlevel);
+std::shared_ptr<QtTree> find_groups_copy(std::shared_ptr<QtTree> tree, int64 target, int64 minsize);
+void tree_rollup(std::shared_ptr<QtTree> tree, int64 minsize);
+std::shared_ptr<QtTree> tree_round_copy(std::shared_ptr<QtTree> tree, int64 maxlevel);
 
 }
 #endif

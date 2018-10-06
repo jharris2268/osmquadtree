@@ -43,21 +43,21 @@ class SortBlocks {
         virtual ~SortBlocks() {}
 };
 
-std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<qttree> groups,
+std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<QtTree> groups,
     const std::string& tempfn, size_t blocksplit, size_t numchan);
 
 int run_sortblocks(
     const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups,
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
     const std::string& tempfn, size_t grptiles);
 
 int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<qttree> groups);
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups);
 
 
 
-std::shared_ptr<qttree> make_qts_tree(const std::string& qtsfn, size_t numchan);
-std::shared_ptr<qttree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t numchan, size_t maxlevel);
+std::shared_ptr<QtTree> make_qts_tree(const std::string& qtsfn, size_t numchan);
+std::shared_ptr<QtTree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t numchan, size_t maxlevel);
 }
 #endif 
 

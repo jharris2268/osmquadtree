@@ -37,7 +37,7 @@ namespace oqt {
 class SortGroup : public SplitBlocks {
     public:
         SortGroup(primitiveblock_callback callback, 
-             std::shared_ptr<qttree> tree_, size_t blocksplit_, size_t writeat) :
+             std::shared_ptr<QtTree> tree_, size_t blocksplit_, size_t writeat) :
              SplitBlocks(callback,blocksplit_,writeat,true),
              tree(tree_), blocksplit(blocksplit_) {
             
@@ -50,11 +50,11 @@ class SortGroup : public SplitBlocks {
         }
         virtual size_t max_tile() { return mxt; }
     private:
-        std::shared_ptr<qttree> tree;
+        std::shared_ptr<QtTree> tree;
         size_t blocksplit;
         size_t mxt;
 };
-primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<qttree> groups, size_t blocksplit, size_t writeat) {
+primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<QtTree> groups, size_t blocksplit, size_t writeat) {
     auto sg = std::make_shared<SortGroup>(packers,groups,blocksplit,writeat);
     return [sg](PrimitiveBlockPtr bl) {
         sg->call(bl);

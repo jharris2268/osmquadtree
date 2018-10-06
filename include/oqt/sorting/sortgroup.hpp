@@ -28,7 +28,7 @@ namespace oqt {
 
 
 
-primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<qttree> groups, size_t blocksplit, size_t writeat);
+primitiveblock_callback make_sortgroup_callback(primitiveblock_callback packers, std::shared_ptr<QtTree> groups, size_t blocksplit, size_t writeat);
 }
 
 #endif //SORTING_SORTGROUP_HPP

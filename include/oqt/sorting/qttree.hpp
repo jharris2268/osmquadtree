@@ -26,21 +26,24 @@
 #include "oqt/common.hpp"
 #include <map>
 namespace oqt {
-struct qttree_item {
 
-    int64  qt;
-    uint32_t idx;
-    uint32_t parent;
-    int64 weight;
-    int64 total;
-    uint32_t children[4];
 
-    qttree_item() : qt(0),idx(0),parent(0),weight(0),total(0),children{0,0,0,0} {}
-};
-
-class qttree {
+class QtTree {
     public:
-        virtual qttree_item& at(size_t i)=0;
+        struct Item {
+
+            int64  qt;
+            uint32_t idx;
+            uint32_t parent;
+            int64 weight;
+            int64 total;
+            uint32_t children[4];
+
+            Item() : qt(0),idx(0),parent(0),weight(0),total(0),children{0,0,0,0} {}
+        };
+    
+    
+        virtual Item& at(size_t i)=0;
         virtual size_t size()=0;
 
         virtual size_t find(int64 qt)=0;
@@ -51,17 +54,18 @@ class qttree {
         virtual size_t clip(size_t curr)=0;
         virtual size_t add(int64 qt, int64 val)=0;
 
-        virtual qttree_item find_tile(int64 qt)=0;
-        virtual ~qttree() {}
+        virtual Item find_tile(int64 qt)=0;
+        virtual ~QtTree() {}
+
 };
+
 
 typedef std::map<int64,int64> count_map;
 
-//void collect_block(std::shared_ptr<count_map> res, std::shared_ptr<minimalblock> block);
 
-std::shared_ptr<qttree> make_tree_empty();
+std::shared_ptr<QtTree> make_tree_empty();
 
-std::function<void(std::shared_ptr<count_map>)> make_addcountmaptree(std::shared_ptr<qttree> tree, size_t maxlevel);
-//std::shared_ptr<CallFinish<count_map,void>> make_addcountmaptree(std::shared_ptr<qttree> tree, size_t maxlevel);
+std::function<void(std::shared_ptr<count_map>)> make_addcountmaptree(std::shared_ptr<QtTree> tree, size_t maxlevel);
+
 }
 #endif

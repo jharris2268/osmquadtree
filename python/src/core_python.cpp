@@ -74,7 +74,7 @@ void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool 
 
 }
 /*
-std::shared_ptr<qttree> run_findgroups_py(const std::string& qtsfn, size_t numchan,
+std::shared_ptr<QtTree> run_findgroups_py(const std::string& qtsfn, size_t numchan,
     bool rollup, int64 targetsize, int64 minsize, std::shared_ptr<logger> lg) {
 
     lg->reset_timing();
@@ -84,7 +84,7 @@ std::shared_ptr<qttree> run_findgroups_py(const std::string& qtsfn, size_t numch
     return tree;
 }*/
 
-std::shared_ptr<qttree> find_groups_copy_py(std::shared_ptr<qttree> tree, 
+std::shared_ptr<QtTree> find_groups_copy_py(std::shared_ptr<QtTree> tree, 
         int64 target, int64 minsize) {
     if (!tree) { throw std::domain_error("no tree!"); }
     py::gil_scoped_release release;
@@ -92,18 +92,18 @@ std::shared_ptr<qttree> find_groups_copy_py(std::shared_ptr<qttree> tree,
 }
     
 
-std::shared_ptr<qttree> make_qts_tree_py(const std::string& qtsfn, size_t numchan) {
+std::shared_ptr<QtTree> make_qts_tree_py(const std::string& qtsfn, size_t numchan) {
     py::gil_scoped_release release;
     return make_qts_tree(qtsfn, numchan);
 }
 
-void tree_rollup_py(std::shared_ptr<qttree> tree, int64 minsize) {
+void tree_rollup_py(std::shared_ptr<QtTree> tree, int64 minsize) {
     if (!tree) { throw std::domain_error("no tree!"); }
     py::gil_scoped_release release;
     tree_rollup(tree, minsize);
 }
 
-std::shared_ptr<qttree> tree_round_copy_py(std::shared_ptr<qttree> tree, int64 minsize) {
+std::shared_ptr<QtTree> tree_round_copy_py(std::shared_ptr<QtTree> tree, int64 minsize) {
     if (!tree) { throw std::domain_error("no tree!"); }
     py::gil_scoped_release release;
     return tree_round_copy(tree, minsize);
@@ -113,7 +113,7 @@ std::shared_ptr<qttree> tree_round_copy_py(std::shared_ptr<qttree> tree, int64 m
     
 
 int run_sortblocks_py(
-    std::string origfn, std::shared_ptr<qttree> tree,
+    std::string origfn, std::shared_ptr<QtTree> tree,
     std::string qtsfn, std::string outfn,
     int64 timestamp, size_t numchan,
     std::string tempfn, size_t blocksplit) {
@@ -515,11 +515,10 @@ void core_defs(py::module& m) {
 
     );
 
-    py::class_<qttree,std::shared_ptr<qttree>>(m,"qttree")
-        //.def("__init__", [](qttree&) { return make_tree_empty(); })
-        .def("add", &qttree::add, py::arg("qt"), py::arg("val"))
-        .def("find", &qttree::find_tile, py::arg("qt"))
-        .def("at", &qttree::at)
+    py::class_<QtTree,std::shared_ptr<QtTree>>(m,"QtTree")
+        .def("add", &QtTree::add, py::arg("qt"), py::arg("val"))
+        .def("find", &QtTree::find_tile, py::arg("qt"))
+        .def("at", &QtTree::at)
     ;
     m.def("make_tree_empty",&make_tree_empty);
     m.def("make_qts_tree", &make_qts_tree_py);
@@ -527,13 +526,13 @@ void core_defs(py::module& m) {
     m.def("find_groups_copy", &find_groups_copy_py);
     m.def("tree_round_copy", &tree_round_copy_py);
 
-    py::class_<qttree_item>(m,"qttree_item")
-        .def_readonly("qt", &qttree_item::qt)
-        .def_readonly("parent", &qttree_item::parent)
-        .def_readonly("idx", &qttree_item::idx)
-        .def_readonly("weight", &qttree_item::weight)
-        .def_readonly("total", &qttree_item::total)
-        .def("children", [](const qttree_item& q, int i) {
+    py::class_<QtTree::Item>(m,"QtTreeItem")
+        .def_readonly("qt", &QtTree::Item::qt)
+        .def_readonly("parent", &QtTree::Item::parent)
+        .def_readonly("idx", &QtTree::Item::idx)
+        .def_readonly("weight", &QtTree::Item::weight)
+        .def_readonly("total", &QtTree::Item::total)
+        .def("children", [](const QtTree::Item& q, int i) {
             if ((i<0) || (i>3)) { throw std::range_error("children len 4"); };
             return q.children[i];
         });

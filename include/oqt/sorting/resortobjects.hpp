@@ -28,7 +28,7 @@
 
 namespace oqt {
 
-primitiveblock_callback make_resortobjects_callback(primitiveblock_callback callback, std::shared_ptr<qttree> groups, int64 blocksize, bool sortobjs);
+primitiveblock_callback make_resortobjects_callback(primitiveblock_callback callback, std::shared_ptr<QtTree> groups, int64 blocksize, bool sortobjs);
 
 
 }

@@ -25,8 +25,7 @@
 
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
-//PYBIND11_DECLARE_HOLDER_TYPE(qttree, std::shared_ptr<qttree>);
-//PYBIND11_DECLARE_HOLDER_TYPE(logger_python, std::shared_ptr<logger_python>);
+
 
 PYBIND11_PLUGIN(_oqt) {
     py::module m("_oqt", "pybind11 example plugin");

@@ -1058,7 +1058,7 @@ struct geometry_parameters {
     std::string connstring;
     std::string tableprfx;
     geometry::pack_csvblocks::tagspec coltags;
-    std::shared_ptr<qttree> groups;
+    std::shared_ptr<QtTree> groups;
     std::function<void(std::shared_ptr<geometry::csv_block>)> csvblock_callback;
 };
     
