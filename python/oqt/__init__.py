@@ -71,8 +71,8 @@ def iter_tree(tree, i=0):
             for x in iter_tree(tree,t.children(i)):
                 yield x
 
-_oqt.qttree.__iter__ = iter_tree
-_oqt.qttree_item.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.idx,repr(quadtree(t.qt))+",", t.total, t.weight)
+_oqt.QtTree.__iter__ = iter_tree
+_oqt.QtTreeItem.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.idx,repr(quadtree(t.qt))+",", t.total, t.weight)
 
 
 
