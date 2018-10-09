@@ -334,7 +334,7 @@ void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> min
             }
             if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<Point>(ele)->SetMinZoom(mz); }
             if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<SimplePolygon>(ele)->SetMinZoom(mz); }
             if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<ComplicatedPolygon>(ele)->SetMinZoom(mz); }
             
         }

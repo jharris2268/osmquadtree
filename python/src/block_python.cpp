@@ -228,16 +228,16 @@ void block_defs(py::module& m) {
         .value("Create", changetype::Create)
         .export_values();
     py::enum_<ElementType>(m, "ElementType")
-        .value("ElementTypeNode", ElementType::Node)
-        .value("ElementTypeWay", ElementType::Way)
-        .value("ElementTypeRelation", ElementType::Relation)
-        .value("ElementTypePoint", ElementType::Point)
-        .value("ElementTypeLinestring", ElementType::Linestring)
-        .value("ElementTypeSimplePolygon", ElementType::SimplePolygon)
-        .value("ElementTypeComplicatedPolygon", ElementType::ComplicatedPolygon)
-        .value("ElementTypeWayWithNodes", ElementType::WayWithNodes)
-        .value("ElementTypeUnknown", ElementType::Unknown)
-        .export_values();
+        .value("Node", ElementType::Node)
+        .value("Way", ElementType::Way)
+        .value("Relation", ElementType::Relation)
+        .value("Point", ElementType::Point)
+        .value("Linestring", ElementType::Linestring)
+        .value("SimplePolygon", ElementType::SimplePolygon)
+        .value("ComplicatedPolygon", ElementType::ComplicatedPolygon)
+        .value("WayWithNodes", ElementType::WayWithNodes)
+        .value("Unknown", ElementType::Unknown);
+        //.export_values();
         
 
     py::class_<bbox>(m,"bbox")

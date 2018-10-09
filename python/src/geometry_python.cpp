@@ -584,15 +584,21 @@ class findminzoom_onetag : public geometry::findminzoom {
         
             
             if ((ele->Type()==ElementType::Linestring) && (minlen>0)) {
-                double len = std::dynamic_pointer_cast<geometry::Linestring>(ele)->Length();
+                auto ls=std::dynamic_pointer_cast<geometry::Linestring>(ele);
+                if (!ls) { throw std::domain_error("not a Linestring"); }
+                double len = ls->Length();
                 return length_zoom(len, minlen);
             }
             if ((ele->Type()==ElementType::SimplePolygon) && (minarea>0)) {
-                double area = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele)->Area();
+                auto sp = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele);
+                if (!sp) { throw std::domain_error("not a SimplePolygon"); }
+                double area = sp->Area();
                 return area_zoom(area, minarea);
             }
             if ((ele->Type()==ElementType::ComplicatedPolygon) && (minarea>0)) {
-                double area = std::dynamic_pointer_cast<geometry::ComplicatedPolygon>(ele)->Area();
+                auto cp=std::dynamic_pointer_cast<geometry::ComplicatedPolygon>(ele);
+                if (!cp) { throw std::domain_error("not a ComplicatedPolygon"); }
+                double area = cp->Area();
                 return area_zoom(area, minarea);
             }
             return 0;

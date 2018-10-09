@@ -61,16 +61,16 @@ class Prog:
         self.nb+=len(bls)
         for bl in bls:
             for o in bl:
-                if o.Type==3: self.npt+=1
-                elif o.Type==4: self.nln+=1
-                elif o.Type==5: self.nsp+=1
-                elif o.Type==6: self.ncp+=1
+                if o.Type==oq.ElementType.Point: self.npt+=1
+                elif o.Type==oq.ElementType.Linestring: self.nln+=1
+                elif o.Type==oq.ElementType.SimplePolygon: self.nsp+=1
+                elif o.Type==oq.ElementType.ComplicatedPolygon: self.ncp+=1
         lc=''
         if self.locs:
-            maxq=max(b.quadtree for b in bls)
+            maxq=max(b.Quadtree for b in bls)
             if maxq in self.locs:
                 lc = "%6.1f%% " % self.locs[maxq]
-        print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),oq.quadtree_string(max(b.quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
+        print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),oq.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
         sys.stdout.flush()
         return True
 
@@ -274,9 +274,9 @@ def get_locs(prfx,box_in=None, lastdate=None):
     if lastdate is not None:
         print("using %d of %d files: %s => %s" % (len(fns),sk+len(fns),fns[0],fns[-1]))
     #fns = [prfx+f['Filename'] for f in json.load(open(fl_path))]
-    locs = dict((a,[(0,b)]) for a,b,c in oq.getHeaderBlock(fns[0]).index if box is None or boxtest(a))
+    locs = dict((a,[(0,b)]) for a,b,c in oq.getHeaderBlock(fns[0]).Index if box is None or boxtest(a))
     for i,f in enumerate(fns[1:]):
-        for a,b,c in oq.getHeaderBlock(f).index:
+        for a,b,c in oq.getHeaderBlock(f).Index:
             if a in locs:
                 locs[a].append((i+1,b))
     return fns, locs, box

@@ -253,23 +253,23 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
     print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
     if mergetiles and collect:
-        for l in locs:
-            tiles[l]=oq.primitiveblock(0,0)
-            tiles[l].quadtree=l
+        for l in params.locs:
+            tiles[l]=oq.PrimitiveBlock(0,0)
+            tiles[l].Quadtree=l
     
     params.style = read_style(stylefn)
-    print("%d styles" % len(style))
+    print("%d styles" % len(params.style))
     
-    if 'minzoom' in style and minzoomfn is not None:
+    if 'minzoom' in params.style and minzoomfn is not None:
         params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen=minlen,minarea=minarea)
         print ('findmz', params.findmz)
     cnt,errs=None,None
     
     
     
-    if len(locs) > 2500 and outfn is not None:
+    if len(params.locs) > 2500 and outfn is not None:
         collect=False
-    params.result = Prog((addto_merge(tiles, minzoomfn!=None) if mergetiles else addto(tiles)), locs) if collect else None
+    params.callback = Prog((addto_merge(tiles, minzoomfn is not None) if mergetiles else addto(tiles)), params.locs) if collect else None
     
     if nothread:
         cnt, errs = oq.process_geometry_nothread(params)
@@ -330,28 +330,28 @@ def collect_bbox(bboxes):
 
 def make_json_feat(obj):
     res = {'type':'Feature',}
-    if obj.Type==6:
+    if obj.Type==oq.ElementType.ComplicatedPolygon:
         res['id'] = -1*obj.Id
     else:
         res['id'] = obj.Id
     res['quadtree'] = oq.quadtree_tuple(obj.Quadtree)
     res['minzoom']  = obj.MinZoom
     res['properties'] = dict((t.key,t.val) for t in obj.Tags)
-    if obj.Type==3:
+    if obj.Type==oq.ElementType.Point:
         res['geometry'] = {'type':'Point','coordinates':coord_json(obj.LonLat)}
         res['bbox'] = res['geometry']['coordinates']*2
-    elif obj.Type==4:
+    elif obj.Type==oq.ElementType.Linestring:
         res['geometry'] = {'type':'LineString', 'coordinates': map(coord_json, obj.LonLats)}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'])
         res['properties']['way_length'] = obj.Length
         res['properties']['z_order'] = obj.ZOrder
-    elif obj.Type==5:
+    elif obj.Type==oq.ElementType.SimplePolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.LonLats)]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         res['properties']['way_area'] = obj.Area
         res['properties']['z_order'] = obj.ZOrder
 
-    elif obj.Type==6:
+    elif obj.Type==oq.ElementType.ComplicatedPolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.OuterLonLats)]+[map(coord_json,ii) for ii in obj.InnerLonLats]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         res['properties']['way_area'] = obj.Area
