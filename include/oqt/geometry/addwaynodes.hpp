@@ -30,57 +30,12 @@
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
-
+#include "oqt/geometry/utils.hpp"
 namespace oqt {
 namespace geometry {
 
 
 
-struct xy {
-    xy() : x(0), y(0) {}
-    xy(double x_, double y_) : x(x_), y(y_) {}
-    double x, y;
-};
-
-
-
-xy forward_transform(int64 ln, int64 lt);
-lonlat inverse_transform(double x, double y);
-
-
-
-class way_withnodes : public Element {
-    public:
-        way_withnodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_)
-            : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
-            for (auto& l : lonlats) {
-                bounds.expand_point(l.lon,l.lat);
-            }
-        }
-        way_withnodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const refvector& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
-            : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
-
-
-        const refvector& Refs() { return refs; }
-
-        const lonlatvec& LonLats() { return lonlats; }
-        const bbox& Bounds() { return bounds; }
-        bool IsRing() {
-            return (Refs().size()>3) && (Refs().front()==Refs().back());
-        }
-
-        virtual std::list<PbfTag> pack_extras() const;
-        virtual ~way_withnodes() {}
-        virtual ElementPtr copy() { return std::make_shared<way_withnodes>(Id(),Quadtree(),Info(),Tags(),refs,lonlats,bounds); }
-    private:
-        way_withnodes(const way_withnodes&)=delete;
-        way_withnodes operator=(const way_withnodes&)=delete;
-
-        refvector refs;
-        lonlatvec lonlats;
-        bbox bounds;
-
-};
 
 
 class lonlatstore {

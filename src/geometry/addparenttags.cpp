@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/geometry/addparenttags.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 #include "oqt/utils/logger.hpp"
 namespace oqt {
 namespace geometry {
@@ -164,7 +165,7 @@ class AddParentTags : public BlockHandler {
             for (auto o : tempobjs) {
 
                 if (o->Type()==ElementType::WayWithNodes) {
-                    auto w = std::dynamic_pointer_cast<way_withnodes>(o);
+                    auto w = std::dynamic_pointer_cast<WayWithNodes>(o);
                     
                     for (auto i : w->Refs()) {
                         size_t oi=i;

@@ -21,6 +21,12 @@
  *****************************************************************************/
 
 #include "oqt/geometry/makegeometries.hpp"
+#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/geometry/elements/point.hpp"
+#include "oqt/geometry/elements/linestring.hpp"
+#include "oqt/geometry/elements/simplepolygon.hpp"
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 #include <algorithm>
 
 namespace oqt {
@@ -257,11 +263,11 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
             if (!tgs.empty()) {
                 auto n = std::dynamic_pointer_cast<Node>(e);
                 if (contains_point(box, n->Lon(),n->Lat())) {
-                    result->add(std::make_shared<point>(n, tgs,ly,-1));
+                    result->add(std::make_shared<Point>(n, tgs,ly,-1));
                 }
             }
         } else if (e->Type()==ElementType::WayWithNodes) {
-            auto w = std::dynamic_pointer_cast<way_withnodes>(e);
+            auto w = std::dynamic_pointer_cast<WayWithNodes>(e);
             if (w->Refs().size()<2) {
                 continue;
             }
@@ -273,9 +279,9 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
             std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
             if (!tgs.empty()) {
                 if (ispoly) {
-                    result->add(std::make_shared<simplepolygon>(w, tgs,zo,ly,-1));
+                    result->add(std::make_shared<SimplePolygon>(w, tgs,zo,ly,-1));
                 } else {
-                    result->add(std::make_shared<linestring>(w, tgs,zo,ly,-1));
+                    result->add(std::make_shared<Linestring>(w, tgs,zo,ly,-1));
                 }
             }
         } else if (e->Type()==ElementType::Relation) {
@@ -326,10 +332,10 @@ void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> min
             if ((ele->Quadtree()&31) > mz) {
                 ele->SetQuadtree(quadtree::round(ele->Quadtree(),mz));
             }
-            if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<point>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<linestring>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<simplepolygon>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<complicatedpolygon>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<Point>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<ComplicatedPolygon>(ele)->SetMinZoom(mz); }
             
         }
     }

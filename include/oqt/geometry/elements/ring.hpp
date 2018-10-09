@@ -20,28 +20,40 @@
  *
  *****************************************************************************/
 
-#ifndef ADDPARENTTAGS_HPP
-#define ADDPARENTTAGS_HPP
+#ifndef GEOMETRY_ELEMENTS_RING_HPP
+#define GEOMETRY_ELEMENTS_RING_HPP
 
-#include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/geometry/utils.hpp"
-#include <map>
 
 namespace oqt {
 namespace geometry {
 
-struct parenttag_spec {
-    std::string node_tag;
-    std::string out_tag;
-    std::string way_tag;
-    std::map<std::string,int> priority;
-    parenttag_spec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
-        : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
+
+struct Ring {
+    struct Part {
+        int64 orig_id;
+        refvector refs;
+        lonlatvec lonlats;
+        bool reversed;
+    };
+    
+    std::vector<Part> parts;
 };
-typedef std::map<std::string,parenttag_spec> parenttag_spec_map;
-
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
 
 
-}}
-#endif //ADDPARENTTAGS_HPP
+double calc_ring_area(const Ring& ring);
+
+lonlatvec ringpart_lonlats(const Ring& ring);
+refvector ringpart_refs(const Ring& ring);
+
+void reverse_ring(Ring& ring);
+
+
+std::string pack_ring(const Ring& rps);
+size_t ringpart_numpoints(const Ring& rpv);
+size_t write_ringpart_ring(std::string& data, size_t pos, const Ring& rpv, size_t r, bool transform);
+
+
+}
+}
+#endif

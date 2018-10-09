@@ -22,6 +22,14 @@
 
 #include "oqt_python.hpp"
 #include "oqt/utils/splitcallback.hpp"
+
+#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/geometry/elements/point.hpp"
+#include "oqt/geometry/elements/linestring.hpp"
+#include "oqt/geometry/elements/simplepolygon.hpp"
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
+
 #include <cmath> 
 using namespace oqt;
 std::string join_strs(const std::vector<std::string>& strs, std::string jj) {
@@ -61,15 +69,15 @@ class find_network {
                                     check_nodes(w->Refs(),{});
                                     a++;
                                 } else if (o->Type()==ElementType::Linestring) {
-                                    auto ls = std::dynamic_pointer_cast<geometry::linestring>(o);
+                                    auto ls = std::dynamic_pointer_cast<geometry::Linestring>(o);
                                     check_nodes(ls->Refs(),ls->LonLats());
                                     a++;
                                 } else if (o->Type()==ElementType::SimplePolygon) {
-                                    auto sp = std::dynamic_pointer_cast<geometry::simplepolygon>(o);
+                                    auto sp = std::dynamic_pointer_cast<geometry::SimplePolygon>(o);
                                     check_nodes(sp->Refs(),sp->LonLats());
                                     a++;
                                 } else if (o->Type()==ElementType::WayWithNodes) {
-                                    auto ls = std::dynamic_pointer_cast<geometry::way_withnodes>(o);
+                                    auto ls = std::dynamic_pointer_cast<geometry::WayWithNodes>(o);
                                     check_nodes(ls->Refs(),ls->LonLats());
                                     a++;
                                 }
@@ -164,18 +172,18 @@ class find_network {
 
 refvector element_refs(ElementPtr ele) {
     if (ele->Type()==ElementType::Linestring) {
-        auto ls = std::dynamic_pointer_cast<geometry::linestring>(ele);
+        auto ls = std::dynamic_pointer_cast<geometry::Linestring>(ele);
         if (!ele) { throw std::domain_error("not a linestring"); }
         return ls->Refs();
     }
     if (ele->Type()==ElementType::SimplePolygon) {
-        auto ls = std::dynamic_pointer_cast<geometry::simplepolygon>(ele);
+        auto ls = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele);
         if (!ele) { throw std::domain_error("not a simplepolygon"); }
         return ls->Refs();
     }
     if (ele->Type()==ElementType::WayWithNodes) {
-        auto ls = std::dynamic_pointer_cast<geometry::way_withnodes>(ele);
-        if (!ele) { throw std::domain_error("not a way_withnodes"); }
+        auto ls = std::dynamic_pointer_cast<geometry::WayWithNodes>(ele);
+        if (!ele) { throw std::domain_error("not a WayWithNodes"); }
         return ls->Refs();
     }
     throw std::domain_error("no refs");
@@ -184,18 +192,18 @@ refvector element_refs(ElementPtr ele) {
 
 lonlatvec element_lonlats(ElementPtr ele) {
     if (ele->Type()==ElementType::Linestring) {
-        auto ls = std::dynamic_pointer_cast<geometry::linestring>(ele);
+        auto ls = std::dynamic_pointer_cast<geometry::Linestring>(ele);
         if (!ele) { throw std::domain_error("not a linestring"); }
         return ls->LonLats();
     }
     if (ele->Type()==ElementType::SimplePolygon) {
-        auto ls = std::dynamic_pointer_cast<geometry::simplepolygon>(ele);
+        auto ls = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele);
         if (!ele) { throw std::domain_error("not a simplepolygon"); }
         return ls->LonLats();
     }
     if (ele->Type()==ElementType::WayWithNodes) {
-        auto ls = std::dynamic_pointer_cast<geometry::way_withnodes>(ele);
-        if (!ele) { throw std::domain_error("not a way_withnodes"); }
+        auto ls = std::dynamic_pointer_cast<geometry::WayWithNodes>(ele);
+        if (!ele) { throw std::domain_error("not a WayWithNodes"); }
         return ls->LonLats();
     }
     throw std::domain_error("no refs");
@@ -293,11 +301,11 @@ class lines_graph : public std::enable_shared_from_this<lines_graph> {
             size_t cc=0;
             for (auto ele: block->Objects()) {
                 if (ele->Type()==ElementType::Linestring) {
-                    auto ls = std::dynamic_pointer_cast<geometry::linestring>(ele);
+                    auto ls = std::dynamic_pointer_cast<geometry::Linestring>(ele);
                     if (!ls) { throw std::domain_error("?? not a line"); }
                     cc += add_line(key, ele, ls->Refs());
                 } else if (incpolys&& (ele->Type()==ElementType::SimplePolygon)) {
-                    auto sp = std::dynamic_pointer_cast<geometry::simplepolygon>(ele);
+                    auto sp = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele);
                     if (!sp) { throw std::domain_error("?? not a line"); }
                     cc += add_line(key, ele, sp->Refs());
                 }
@@ -472,13 +480,13 @@ class lines_graph : public std::enable_shared_from_this<lines_graph> {
 
 
 ElementPtr make_point(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, int64 lon, int64 lat, int64 layer, int64 minzoom) {
-    return std::make_shared<geometry::point>(id, qt, inf, tags, lon, lat, layer, minzoom);
+    return std::make_shared<geometry::Point>(id, qt, inf, tags, lon, lat, layer, minzoom);
 }
 
 ElementPtr make_linestring(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
     double ln = geometry::calc_line_length(lonlats);
     bbox bounds = geometry::lonlats_bounds(lonlats);
-    return std::make_shared<geometry::linestring>(id, qt, inf, tags, refs, lonlats, zorder, layer, ln, bounds, minzoom);
+    return std::make_shared<geometry::Linestring>(id, qt, inf, tags, refs, lonlats, zorder, layer, ln, bounds, minzoom);
 }
 
 ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
@@ -489,11 +497,11 @@ ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, 
         reversed=true;
     }
     bbox bounds = geometry::lonlats_bounds(lonlats);
-    return std::make_shared<geometry::simplepolygon>(id, qt, inf, tags, refs, lonlats, zorder, layer, ar, bounds, minzoom,reversed);
+    return std::make_shared<geometry::SimplePolygon>(id, qt, inf, tags, refs, lonlats, zorder, layer, ar, bounds, minzoom,reversed);
 }
 
 ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt,
-    int64 part, geometry::ringpartvec exterior, std::vector<geometry::ringpartvec> interiors, int64 zorder, int64 layer, int64 minzoom) {
+    int64 part, geometry::Ring exterior, std::vector<geometry::Ring> interiors, int64 zorder, int64 layer, int64 minzoom) {
     double ar = geometry::calc_ring_area(exterior);
     if (!interiors.empty()) {
         for (const auto& ii : interiors) {
@@ -501,7 +509,7 @@ ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> t
         }
     }
     bbox bounds = geometry::lonlats_bounds(geometry::ringpart_lonlats(exterior));
-    return std::make_shared<geometry::complicatedpolygon>(id, qt, inf, tags, part, exterior, interiors, zorder, layer, ar, bounds, minzoom);
+    return std::make_shared<geometry::ComplicatedPolygon>(id, qt, inf, tags, part, exterior, interiors, zorder, layer, ar, bounds, minzoom);
 }
 
 
@@ -576,15 +584,15 @@ class findminzoom_onetag : public geometry::findminzoom {
         
             
             if ((ele->Type()==ElementType::Linestring) && (minlen>0)) {
-                double len = std::dynamic_pointer_cast<geometry::linestring>(ele)->Length();
+                double len = std::dynamic_pointer_cast<geometry::Linestring>(ele)->Length();
                 return length_zoom(len, minlen);
             }
             if ((ele->Type()==ElementType::SimplePolygon) && (minarea>0)) {
-                double area = std::dynamic_pointer_cast<geometry::simplepolygon>(ele)->Area();
+                double area = std::dynamic_pointer_cast<geometry::SimplePolygon>(ele)->Area();
                 return area_zoom(area, minarea);
             }
             if ((ele->Type()==ElementType::ComplicatedPolygon) && (minarea>0)) {
-                double area = std::dynamic_pointer_cast<geometry::complicatedpolygon>(ele)->Area();
+                double area = std::dynamic_pointer_cast<geometry::ComplicatedPolygon>(ele)->Area();
                 return area_zoom(area, minarea);
             }
             return 0;
@@ -1281,13 +1289,13 @@ void geometry_defs(py::module& m) {
    
 
 
-    py::class_<geometry::way_withnodes, Element, std::shared_ptr<geometry::way_withnodes>>(m, "way_withnodes")
-        .def_property_readonly("Refs", &geometry::way_withnodes::Refs)
-        .def_property_readonly("LonLats", &geometry::way_withnodes::LonLats)
-        .def_property_readonly("Bounds", &geometry::way_withnodes::Bounds)
+    py::class_<geometry::WayWithNodes, Element, std::shared_ptr<geometry::WayWithNodes>>(m, "WayWithNodes")
+        .def_property_readonly("Refs", &geometry::WayWithNodes::Refs)
+        .def_property_readonly("LonLats", &geometry::WayWithNodes::LonLats)
+        .def_property_readonly("Bounds", &geometry::WayWithNodes::Bounds)
         
     ;
-    py::class_<BaseGeometry, Element, std::shared_ptr<BaseGeometry>>(m, "geometry")
+    py::class_<BaseGeometry, Element, std::shared_ptr<BaseGeometry>>(m, "BaseGeometry")
         .def_property_readonly("OriginalType", &BaseGeometry::OriginalType)
         .def_property_readonly("Bounds", &BaseGeometry::Bounds)
         .def_property_readonly("MinZoom", &BaseGeometry::MinZoom)
@@ -1295,46 +1303,46 @@ void geometry_defs(py::module& m) {
         .def("Wkb", [](BaseGeometry& p,  bool transform, bool srid) { return py::bytes(p.Wkb(transform,srid)); }, py::arg("transform")=true, py::arg("srid")=true)
     ;
     
-    py::class_<GeometryPacked, BaseGeometry, std::shared_ptr<GeometryPacked>>(m,"geometry_packed")
+    py::class_<GeometryPacked, BaseGeometry, std::shared_ptr<GeometryPacked>>(m,"GeometryPacked")
         .def("unpack_geometry", [](const GeometryPacked& pp) { throw std::domain_error("not implemented"); })
     ;
     
-    py::class_<geometry::point, BaseGeometry, std::shared_ptr<geometry::point>>(m, "point")
-        .def_property_readonly("LonLat", &geometry::point::LonLat)
-        .def_property_readonly("Layer", &geometry::point::Layer)
+    py::class_<geometry::Point, BaseGeometry, std::shared_ptr<geometry::Point>>(m, "Point")
+        .def_property_readonly("LonLat", &geometry::Point::LonLat)
+        .def_property_readonly("Layer", &geometry::Point::Layer)
         
         
     ;
 
-    py::class_<geometry::linestring, BaseGeometry, std::shared_ptr<geometry::linestring>>(m, "linestring")
-    .def_property_readonly("Refs", &geometry::linestring::Refs)
-        .def_property_readonly("LonLats", &geometry::linestring::LonLats)
+    py::class_<geometry::Linestring, BaseGeometry, std::shared_ptr<geometry::Linestring>>(m, "Linestring")
+        .def_property_readonly("Refs", &geometry::Linestring::Refs)
+        .def_property_readonly("LonLats", &geometry::Linestring::LonLats)
         
-        .def_property_readonly("ZOrder", &geometry::linestring::ZOrder)
-        .def_property_readonly("Layer", &geometry::linestring::Layer)
-        .def_property_readonly("Length", &geometry::linestring::Length)
-        
-    ;
-
-    py::class_<geometry::simplepolygon, BaseGeometry, std::shared_ptr<geometry::simplepolygon>>(m, "simplepolygon")
-        .def_property_readonly("Refs", &geometry::simplepolygon::Refs)
-        .def_property_readonly("LonLats", &geometry::simplepolygon::LonLats)
-        
-        .def_property_readonly("Area", &geometry::simplepolygon::Area)
-        .def_property_readonly("ZOrder", &geometry::simplepolygon::ZOrder)
-        .def_property_readonly("Layer", &geometry::simplepolygon::Layer)
-        .def_property_readonly("Reversed", &geometry::simplepolygon::Reversed)
+        .def_property_readonly("ZOrder", &geometry::Linestring::ZOrder)
+        .def_property_readonly("Layer", &geometry::Linestring::Layer)
+        .def_property_readonly("Length", &geometry::Linestring::Length)
         
     ;
 
-    py::class_<geometry::complicatedpolygon, BaseGeometry, std::shared_ptr<geometry::complicatedpolygon>>(m, "complicatedpolygon")
-    .def_property_readonly("Part", &geometry::complicatedpolygon::Part)
-        .def_property_readonly("Inners", &geometry::complicatedpolygon::Inners)
-        .def_property_readonly("Outers", &geometry::complicatedpolygon::Outers)
+    py::class_<geometry::SimplePolygon, BaseGeometry, std::shared_ptr<geometry::SimplePolygon>>(m, "SimplePolygon")
+        .def_property_readonly("Refs", &geometry::SimplePolygon::Refs)
+        .def_property_readonly("LonLats", &geometry::SimplePolygon::LonLats)
+        
+        .def_property_readonly("Area", &geometry::SimplePolygon::Area)
+        .def_property_readonly("ZOrder", &geometry::SimplePolygon::ZOrder)
+        .def_property_readonly("Layer", &geometry::SimplePolygon::Layer)
+        .def_property_readonly("Reversed", &geometry::SimplePolygon::Reversed)
+        
+    ;
+
+    py::class_<geometry::ComplicatedPolygon, BaseGeometry, std::shared_ptr<geometry::ComplicatedPolygon>>(m, "ComplicatedPolygon")
+    .def_property_readonly("Part", &geometry::ComplicatedPolygon::Part)
+        .def_property_readonly("InnerRings", &geometry::ComplicatedPolygon::InnerRings)
+        .def_property_readonly("OuterRing", &geometry::ComplicatedPolygon::OuterRing)
        
-        .def_property_readonly("Area", &geometry::complicatedpolygon::Area)
-        .def_property_readonly("ZOrder", &geometry::complicatedpolygon::ZOrder)
-        .def_property_readonly("Layer", &geometry::complicatedpolygon::Layer)
+        .def_property_readonly("Area", &geometry::ComplicatedPolygon::Area)
+        .def_property_readonly("ZOrder", &geometry::ComplicatedPolygon::ZOrder)
+        .def_property_readonly("Layer", &geometry::ComplicatedPolygon::Layer)
         
     ;
 
@@ -1378,17 +1386,21 @@ void geometry_defs(py::module& m) {
         .def_readwrite("priority", &geometry::parenttag_spec::priority)
     ;
 
-    py::class_<geometry::ringpart>(m,"ringpart")
+    py::class_<geometry::Ring::Part>(m,"RingPart")
         .def(py::init<int64,const refvector&,const lonlatvec&,bool>())
-        .def_readonly("orig_id", &geometry::ringpart::orig_id)
-        .def_readonly("refs", &geometry::ringpart::refs)
-        .def_readonly("lonlats", &geometry::ringpart::lonlats)
-        .def_readonly("reversed", &geometry::ringpart::reversed)
+        .def_readonly("orig_id", &geometry::Ring::Part::orig_id)
+        .def_readonly("refs", &geometry::Ring::Part::refs)
+        .def_readonly("lonlats", &geometry::Ring::Part::lonlats)
+        .def_readonly("reversed", &geometry::Ring::Part::reversed)
     ;
-
+    py::class_<geometry::Ring>(m,"Ring")
+        .def(py::init<std::vector<geometry::Ring::Part>>())
+        .def_readonly("parts", &geometry::Ring::parts)
+    ;
+    
     m.def("lonlats_bounds", &geometry::lonlats_bounds);
     m.def("calc_ring_area", [](lonlatvec ll) { return geometry::calc_ring_area(ll); });
-    m.def("calc_ring_area", [](geometry::ringpartvec rp) { return geometry::calc_ring_area(rp); });
+    m.def("calc_ring_area", [](geometry::Ring rp) { return geometry::calc_ring_area(rp); });
     m.def("ringpart_refs", &geometry::ringpart_refs);
     m.def("ringpart_lonlats", &geometry::ringpart_lonlats);
 

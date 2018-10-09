@@ -23,7 +23,7 @@
 #ifndef MAKEGEOMETRIES_HPP
 #define MAKEGEOMETRIES_HPP
 
-#include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/geometry/utils.hpp"
 #include <map>
 namespace oqt {
 namespace geometry {

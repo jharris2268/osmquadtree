@@ -21,7 +21,13 @@
  *****************************************************************************/
 
 #include "oqt/geometry/postgiswriter.hpp"
-#include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/geometry/utils.hpp"
+#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/geometry/elements/point.hpp"
+#include "oqt/geometry/elements/linestring.hpp"
+#include "oqt/geometry/elements/simplepolygon.hpp"
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 #include "oqt/utils/logger.hpp"
 
 #include "oqt/utils/pbf/protobuf.hpp"
@@ -267,7 +273,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                 if (o->Type()==ElementType::Point) {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
-                    auto pt = std::dynamic_pointer_cast<point>(o);
+                    auto pt = std::dynamic_pointer_cast<Point>(o);
                     auto other = prep_tags(ss,point_tags,o, other_tags, asjson);
                     
                     
@@ -300,7 +306,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                 } else if (o->Type()==ElementType::Linestring) {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
-                    auto ln = std::dynamic_pointer_cast<linestring>(o);
+                    auto ln = std::dynamic_pointer_cast<Linestring>(o);
                     auto other = prep_tags(ss,line_tags,o, other_tags, asjson);
                     
                     if (other_tags) {
@@ -333,7 +339,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                     std::stringstream ss;
                     ss << std::dec << o->Id() << delim << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     
-                    auto py = std::dynamic_pointer_cast<simplepolygon>(o);
+                    auto py = std::dynamic_pointer_cast<SimplePolygon>(o);
                     auto other = prep_tags(ss,poly_tags,o, other_tags, asjson);
                     
                     if (other_tags) {
@@ -364,7 +370,7 @@ class pack_csvblocks_impl : public pack_csvblocks {
                     res->polygons.add(ss.str());
                 } else if (o->Type()==ElementType::ComplicatedPolygon) {
                     std::stringstream ss;
-                    auto py = std::dynamic_pointer_cast<complicatedpolygon>(o);
+                    auto py = std::dynamic_pointer_cast<ComplicatedPolygon>(o);
                     ss << std::dec << (-1ll * o->Id()) << delim << py->Part() << delim << bl->Quadtree() << delim << o->Quadtree() << delim;
                     auto other = prep_tags(ss,poly_tags,o, other_tags, asjson);
                     if (other_tags) {

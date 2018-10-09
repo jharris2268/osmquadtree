@@ -146,21 +146,21 @@ def find_tag(obj, idx):
 _oqt.Node.find_tag = find_tag
 _oqt.Way.find_tag = find_tag
 _oqt.Relation.find_tag = find_tag
-_oqt.point.find_tag = find_tag
-_oqt.linestring.find_tag = find_tag
-_oqt.simplepolygon.find_tag = find_tag
-_oqt.complicatedpolygon.find_tag = find_tag
+_oqt.Point.find_tag = find_tag
+_oqt.Linestring.find_tag = find_tag
+_oqt.SimplePolygon.find_tag = find_tag
+_oqt.ComplicatedPolygon.find_tag = find_tag
 
-_oqt.complicatedpolygon.OuterRefs = property(lambda cp: _oqt.ringpart_refs(cp.Outers))
-_oqt.complicatedpolygon.OuterLonLats = property(lambda cp: _oqt.ringpart_lonlats(cp.Outers))
-_oqt.complicatedpolygon.InnerRefs = property(lambda cp: [_oqt.ringpart_refs(ii) for ii in cp.Inners])
-_oqt.complicatedpolygon.InnerLonLats = property(lambda cp: [_oqt.ringpart_lonlats(ii) for ii in cp.Inners])
+_oqt.ComplicatedPolygon.OuterRefs = property(lambda cp: _oqt.ringpart_refs(cp.OuterRing))
+_oqt.ComplicatedPolygon.OuterLonLats = property(lambda cp: _oqt.ringpart_lonlats(cp.OuterRing))
+_oqt.ComplicatedPolygon.InnerRefs = property(lambda cp: [_oqt.ringpart_refs(ii) for ii in cp.InnerRings])
+_oqt.ComplicatedPolygon.InnerLonLats = property(lambda cp: [_oqt.ringpart_lonlats(ii) for ii in cp.InnerRings])
 
 
-_oqt.point.__repr__ = lambda p: "Point(%10d %.50s %-18s [% 8d % 8d] )" % (p.Id,p.Tags,p.Quadtree,p.LonLat.lon,p.LonLat.lat)
-_oqt.linestring.__repr__ = lambda l: "LineString(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (l.Id,l.Tags,l.Quadtree,len(l.Refs),l.Length)
-_oqt.simplepolygon.__repr__ = lambda p: "SimplePolygon(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,len(p.Refs),p.Area)
-_oqt.complicatedpolygon.__repr__ = lambda p: "ComplicatedPolygon(%10d %.50s %-18s [P. %2d % 4d pts (%2d ints), %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,p.Part,len(p.OuterRefs),len(p.Inners),p.Area)
+_oqt.Point.__repr__ = lambda p: "Point(%10d %.50s %-18s [% 8d % 8d] )" % (p.Id,p.Tags,p.Quadtree,p.LonLat.lon,p.LonLat.lat)
+_oqt.Linestring.__repr__ = lambda l: "Linestring(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (l.Id,l.Tags,l.Quadtree,len(l.Refs),l.Length)
+_oqt.SimplePolygon.__repr__ = lambda p: "SimplePolygon(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,len(p.Refs),p.Area)
+_oqt.ComplicatedPolygon.__repr__ = lambda p: "ComplicatedPolygon(%10d %.50s %-18s [P. %2d % 4d pts (%2d ints), %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,p.Part,len(p.OuterRefs),len(p.InnerRings),p.Area)
 
 class minimalblock_nodes:
     def __init__(self, mb):

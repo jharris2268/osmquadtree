@@ -20,28 +20,30 @@
  *
  *****************************************************************************/
 
-#ifndef ADDPARENTTAGS_HPP
-#define ADDPARENTTAGS_HPP
+#include "oqt/geometry/elements/waywithnodes.hpp"
 
-#include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/geometry/utils.hpp"
-#include <map>
+#include "oqt/pbfformat/readblock.hpp"
+
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/pbf/fixedint.hpp"
+
+#include <algorithm>
+
+#include <picojson.h>
 
 namespace oqt {
 namespace geometry {
 
-struct parenttag_spec {
-    std::string node_tag;
-    std::string out_tag;
-    std::string way_tag;
-    std::map<std::string,int> priority;
-    parenttag_spec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
-        : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
-};
-typedef std::map<std::string,parenttag_spec> parenttag_spec_map;
 
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
+std::list<PbfTag> WayWithNodes::pack_extras() const {
+    
 
+    std::list<PbfTag> extras;
+    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
+    extras.push_back(PbfTag{12,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    return extras;
+}
 
-}}
-#endif //ADDPARENTTAGS_HPP
+}
+}

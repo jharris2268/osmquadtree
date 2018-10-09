@@ -24,13 +24,15 @@
 #define MULTIPOLYGONS_HPP
 
 #include "oqt/geometry/makegeometries.hpp"
-#include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/geometry/elements/ring.hpp"
+
+#include "oqt/geometry/utils.hpp"
 #include <map>
 namespace oqt {
 namespace geometry {
 
 
-typedef std::tuple<std::shared_ptr<Relation>,std::string,std::vector<ringpartvec>,std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> mperror;
+typedef std::tuple<std::shared_ptr<Relation>,std::string,std::vector<Ring>,std::vector<Ring>,std::vector<std::pair<bool,Ring>>> mperror;
 typedef std::vector<mperror> mperrorvec;
 std::shared_ptr<BlockHandler> make_multipolygons(
     std::shared_ptr<mperrorvec> multipolygon_errors,

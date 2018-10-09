@@ -20,28 +20,43 @@
  *
  *****************************************************************************/
 
-#ifndef ADDPARENTTAGS_HPP
-#define ADDPARENTTAGS_HPP
+#include "oqt/geometry/elements/point.hpp"
 
-#include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/geometry/utils.hpp"
-#include <map>
+#include "oqt/pbfformat/readblock.hpp"
+
+#include "oqt/utils/logger.hpp"
+#include "oqt/utils/pbf/fixedint.hpp"
+
+#include <algorithm>
+
+#include <picojson.h>
 
 namespace oqt {
 namespace geometry {
+std::string Point::Wkb(bool transform, bool srid) const {
+    std::string res(srid ? 25 : 21,'\0');
+    res[4]='\1';
+    size_t pos=5;
+    if (srid) {
+        res[1]=' ';
+        pos = write_uint32(res,pos,epsg_code(transform));
+    }
+    write_point(res, pos, LonLat(), transform);
+    return res;
+}
 
-struct parenttag_spec {
-    std::string node_tag;
-    std::string out_tag;
-    std::string way_tag;
-    std::map<std::string,int> priority;
-    parenttag_spec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
-        : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
-};
-typedef std::map<std::string,parenttag_spec> parenttag_spec_map;
+std::list<PbfTag> Point::pack_extras() const {
+    
+    std::list<PbfTag> extras{PbfTag{8,zigZag(lat),""}, PbfTag{9,zigZag(lon),""}};    
+    if (MinZoom()>=0) {
+        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
+    }
+    if (layer != 0) {
+        extras.push_back(PbfTag{24,zigZag(layer),""});
+    }
+    return extras;
+    
+}
 
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
-
-
-}}
-#endif //ADDPARENTTAGS_HPP
+}
+}

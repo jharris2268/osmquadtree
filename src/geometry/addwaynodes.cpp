@@ -22,6 +22,7 @@
 
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/elements/quadtree.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 
 #include "oqt/utils/logger.hpp"
 
@@ -32,16 +33,6 @@
 namespace oqt {
 namespace geometry {
 
-
-std::list<PbfTag> way_withnodes::pack_extras() const {
-    
-
-    std::list<PbfTag> extras;
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
-    return extras;
-}
 
 
 class lonlatstore_impl : public lonlatstore {
@@ -137,7 +128,7 @@ PrimitiveBlockPtr add_waynodes(std::shared_ptr<lonlatstore> lls, PrimitiveBlockP
             }
         } else if (o->Type()==ElementType::Way) {
             auto w = std::dynamic_pointer_cast<Way>(o);
-            auto wwn = std::make_shared<way_withnodes>(w, lls->get_lonlats(w));
+            auto wwn = std::make_shared<WayWithNodes>(w, lls->get_lonlats(w));
             out_bl->add(wwn);
         } else {
             out_bl->add(o);

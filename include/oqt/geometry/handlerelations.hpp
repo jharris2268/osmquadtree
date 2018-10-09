@@ -24,7 +24,7 @@
 #define HANDLERELATIONS_HPP
 
 #include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/geometry/utils.hpp"
 #include <set>
 
 namespace oqt {

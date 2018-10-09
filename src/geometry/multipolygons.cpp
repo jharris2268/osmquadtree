@@ -21,6 +21,12 @@
  *****************************************************************************/
 
 #include "oqt/geometry/multipolygons.hpp"
+#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/geometry/elements/point.hpp"
+#include "oqt/geometry/elements/linestring.hpp"
+#include "oqt/geometry/elements/simplepolygon.hpp"
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 #include "oqt/utils/logger.hpp"
 #include <deque>
 namespace oqt {
@@ -36,7 +42,7 @@ bool hasr(primblock_ptr p) {
 
 
 
-bool is_ring(std::shared_ptr<way_withnodes> w) {
+bool is_ring(std::shared_ptr<WayWithNodes> w) {
     return (w->Refs().size()>2) && (w->Refs().front()==w->Refs().back());
 }
 
@@ -44,7 +50,7 @@ bool is_ring(std::shared_ptr<way_withnodes> w) {
 
 template <class T>
 int64 first_point(const T& r) {
-    const ringpart& r0 = r.front();
+    const Ring::Part& r0 = r.front();
     if (r0.reversed) {
         return r0.refs.back();
     }
@@ -53,7 +59,7 @@ int64 first_point(const T& r) {
 
 template <class T>
 int64 last_point(const T& r) {
-    const ringpart& r1 = r.back();
+    const Ring::Part& r1 = r.back();
     if (r1.reversed) {
         return r1.refs.front();
     }
@@ -61,13 +67,13 @@ int64 last_point(const T& r) {
 }
 
 
-ringpart make_ringpart(std::shared_ptr<way_withnodes> w, bool d) {
-    return ringpart{w->Id(),w->Refs(),w->LonLats(), d};
+Ring::Part make_ringpart(std::shared_ptr<WayWithNodes> w, bool d) {
+    return Ring::Part{w->Id(),w->Refs(),w->LonLats(), d};
 }
 
-std::ostream& ringstr(std::ostream& strm, const ringpartvec& ring) {
-    strm << ring.size() << " parts, ";
-    for (const auto& p: ring) {
+std::ostream& ringstr(std::ostream& strm, const Ring& ring) {
+    strm << ring.parts.size() << " parts, ";
+    for (const auto& p: ring.parts) {
         strm << p.orig_id << " [" << p.refs.size() << "]";
         if (p.reversed) { strm << "r"; }
         strm << " ";
@@ -84,12 +90,12 @@ std::ostream& tagstr(std::ostream& strm, const tagvector& tgs) {
     }
     return strm;
 }
-typedef std::pair<bool,std::deque<ringpart>> tempring;
+typedef std::pair<bool,std::deque<Ring::Part>> tempring;
 typedef std::vector<tempring> tempringvec;
 
-void add_to_rings(tempringvec& rings, std::shared_ptr<way_withnodes> w) {
+void add_to_rings(tempringvec& rings, std::shared_ptr<WayWithNodes> w) {
     if (is_ring(w)) {
-        rings.push_back(std::make_pair(true,std::deque<ringpart>{make_ringpart(w,false)}));
+        rings.push_back(std::make_pair(true,std::deque<Ring::Part>{make_ringpart(w,false)}));
         return;
     }
     if (!rings.empty()) {
@@ -118,7 +124,7 @@ void add_to_rings(tempringvec& rings, std::shared_ptr<way_withnodes> w) {
             }
         }
     }
-    rings.push_back(std::make_pair(false,std::deque<ringpart>{make_ringpart(w,false)}));
+    rings.push_back(std::make_pair(false,std::deque<Ring::Part>{make_ringpart(w,false)}));
 }
 
 void extend_rings(tempringvec& rings, const tempring& rp) {
@@ -169,9 +175,9 @@ void extend_rings(tempringvec& rings, const tempring& rp) {
     rings.push_back(rp);
 }
 
-std::vector<std::pair<bool,std::deque<ringpart>>> merge_rings(const std::vector<std::pair<bool,std::deque<ringpart>>>& in) {
+std::vector<std::pair<bool,std::deque<Ring::Part>>> merge_rings(const std::vector<std::pair<bool,std::deque<Ring::Part>>>& in) {
 
-    std::vector<std::pair<bool,std::deque<ringpart>>> rings;
+    std::vector<std::pair<bool,std::deque<Ring::Part>>> rings;
     for (auto r : in) {
         extend_rings(rings, r);
     }
@@ -180,8 +186,8 @@ std::vector<std::pair<bool,std::deque<ringpart>>> merge_rings(const std::vector<
 
 
 
-std::pair<std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> make_rings(const std::vector<std::shared_ptr<way_withnodes>>& ways, const bbox& box) {
-    std::vector<std::pair<bool,std::deque<ringpart>>> rings;
+std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const std::vector<std::shared_ptr<WayWithNodes>>& ways, const bbox& box) {
+    std::vector<std::pair<bool,std::deque<Ring::Part>>> rings;
     for (auto w : ways) {
         add_to_rings(rings, w);
     }
@@ -193,8 +199,8 @@ std::pair<std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> mak
     }
 
 
-    std::vector<ringpartvec> result;
-    std::vector<std::pair<bool,ringpartvec>> passes;
+    std::vector<Ring> result;
+    std::vector<std::pair<bool,Ring>> passes;
     for (auto& r: rings) {
         bbox ringbox;
         for (auto p : r.second) {
@@ -204,12 +210,12 @@ std::pair<std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> mak
         }
         if (r.first) {
             if (overlaps(box, ringbox)) {
-                result.push_back(ringpartvec(r.second.begin(),r.second.end()));
+                result.push_back(Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())});
             } else {
-                passes.push_back(std::make_pair(true,ringpartvec(r.second.begin(),r.second.end())));
+                passes.push_back(std::make_pair(true,Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())}));
             }
         } else {
-            passes.push_back(std::make_pair(false,ringpartvec(r.second.begin(),r.second.end())));
+            passes.push_back(std::make_pair(false,Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())}));
         }
     }
     return std::make_pair(result,passes);
@@ -232,7 +238,7 @@ class MakeMultiPolygons : public BlockHandler {
 
     struct pendingway {
         int64 tile_quadtree;
-        std::shared_ptr<way_withnodes> wy;
+        std::shared_ptr<WayWithNodes> wy;
         //std::set<int64> rels;
         int rels;
         //std::set<std::string> finished_tags;
@@ -311,7 +317,7 @@ class MakeMultiPolygons : public BlockHandler {
             for (auto& o: tempobjs) {
                 if ((o->Type()==ElementType::WayWithNodes) && (pendingways.count(o->Id())>0)) {
                     pendingways[o->Id()].tile_quadtree=in->Quadtree();
-                    pendingways[o->Id()].wy = std::dynamic_pointer_cast<way_withnodes>(o);
+                    pendingways[o->Id()].wy = std::dynamic_pointer_cast<WayWithNodes>(o);
 
                 }
             }
@@ -337,8 +343,8 @@ class MakeMultiPolygons : public BlockHandler {
             
             auto r=pr.rel;
             bool is_bp = get_tag(r,"type")=="boundary";
-            std::vector<ringpartvec> outers,inners;
-            std::vector<std::pair<bool,ringpartvec>> passes;
+            std::vector<Ring> outers,inners;
+            std::vector<std::pair<bool,Ring>> passes;
             std::tie(outers,inners,passes) = collect_rings(r);
 
             std::string err="";
@@ -362,9 +368,9 @@ class MakeMultiPolygons : public BlockHandler {
                 if (!tgs.empty() && isring) {
 
 
-                    std::map<size_t,std::pair<lonlatvec,std::vector<ringpartvec>>> parts;
+                    std::map<size_t,std::pair<lonlatvec,std::vector<Ring>>> parts;
                     for (size_t i=0; i < outers.size(); i++) {
-                        parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<ringpartvec>(0));
+                        parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<Ring>(0));
                     }
                     if (!inners.empty()) {
                         for (const auto& r : inners) {
@@ -384,7 +390,7 @@ class MakeMultiPolygons : public BlockHandler {
                     }
 
                     for (const auto& pp : parts) {
-                        auto cp = std::make_shared<complicatedpolygon>(r, pp.first, outers[pp.first], pp.second.second,tgs,zorder,layer,-1);
+                        auto cp = std::make_shared<ComplicatedPolygon>(r, pp.first, outers[pp.first], pp.second.second,tgs,zorder,layer,-1);
                         finished[tq]->add(cp);
 
                         
@@ -480,8 +486,8 @@ class MakeMultiPolygons : public BlockHandler {
             return result;
         }
 
-        std::tuple<std::vector<ringpartvec>, std::vector<ringpartvec>,std::vector<std::pair<bool,ringpartvec>>> collect_rings(std::shared_ptr<Relation> rel) {
-            std::vector<std::shared_ptr<way_withnodes>> outers, inners;
+        std::tuple<std::vector<Ring>, std::vector<Ring>,std::vector<std::pair<bool,Ring>>> collect_rings(std::shared_ptr<Relation> rel) {
+            std::vector<std::shared_ptr<WayWithNodes>> outers, inners;
             for (const auto& m: rel->Members()) {
                 if ((m.type==ElementType::Way)) {
                     auto w = pendingways[m.ref].wy;

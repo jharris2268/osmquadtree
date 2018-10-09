@@ -8,7 +8,7 @@ PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writ
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/baseelement.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/timing.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
-GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/geometrytypes.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o
+GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/utils.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o geometry/elements/point.o geometry/elements/linestring.o geometry/elements/simplepolygon.o geometry/elements/complicatedpolygon.o geometry/elements/waywithnodes.o  geometry/elements/ring.o
 SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o sorting/qttree.o sorting/qttreegroups.o
 CALCQTS_OBJS = calcqts/qtstore.o calcqts/qtstoresplit.o calcqts/calculaterelations.o calcqts/waynodes.o calcqts/waynodesfile.o calcqts/writewaynodes.o calcqts/writeqts.o calcqts/calcqtsinmem.o calcqts/calcqts.o calcqts/wayqts.o
 OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS) $(CALCQTS_OBJS)
@@ -31,8 +31,8 @@ oqt_main.o: ../src/oqt_main.cpp $(HEADERS)
 geometry/addparenttags.o: ../src/geometry/addparenttags.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/addparenttags.cpp -o geometry/addparenttags.o
 
-geometry/geometrytypes.o: ../src/geometry/geometrytypes.cpp $(HEADERS)
-	$(CC) $(CFLAGS) -c ../src/geometry/geometrytypes.cpp -o geometry/geometrytypes.o
+geometry/utils.o: ../src/geometry/utils.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/utils.cpp -o geometry/utils.o
 geometry/handlerelations.o: ../src/geometry/handlerelations.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/handlerelations.cpp -o geometry/handlerelations.o
 geometry/makegeometries.o: ../src/geometry/makegeometries.cpp $(HEADERS)
@@ -43,6 +43,21 @@ geometry/addwaynodes.o: ../src/geometry/addwaynodes.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/addwaynodes.cpp -o geometry/addwaynodes.o
 geometry/postgiswriter.o: ../src/geometry/postgiswriter.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/postgiswriter.cpp -o geometry/postgiswriter.o
+
+geometry/elements/ring.o: ../src/geometry/elements/ring.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/ring.cpp -o geometry/elements/ring.o
+
+geometry/elements/point.o: ../src/geometry/elements/point.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/point.cpp -o geometry/elements/point.o
+geometry/elements/linestring.o: ../src/geometry/elements/linestring.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/linestring.cpp -o geometry/elements/linestring.o
+geometry/elements/simplepolygon.o: ../src/geometry/elements/simplepolygon.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/simplepolygon.cpp -o geometry/elements/simplepolygon.o
+geometry/elements/complicatedpolygon.o: ../src/geometry/elements/complicatedpolygon.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/complicatedpolygon.cpp -o geometry/elements/complicatedpolygon.o
+geometry/elements/waywithnodes.o: ../src/geometry/elements/waywithnodes.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/elements/waywithnodes.cpp -o geometry/elements/waywithnodes.o	
+
 
 pbfformat/objsidset.o: ../src/pbfformat/objsidset.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/pbfformat/objsidset.cpp -o pbfformat/objsidset.o
@@ -207,5 +222,5 @@ calcqts/calcqtsinmem.o: ../src/calcqts/calcqtsinmem.cpp $(HEADERS)
 
 
 clean:
-	$(RM) liboqt.so.0.0 oqt *.o update/*.o utils/*.o utils/pbf/*.o sorting/*.o pbfformat/*.o calcqts/*.o elements/*.o geometry/*.o
+	$(RM) liboqt.so.0.0 oqt *.o update/*.o utils/*.o utils/pbf/*.o sorting/*.o pbfformat/*.o calcqts/*.o elements/*.o geometry/*.o geometry/elements/*.o
 

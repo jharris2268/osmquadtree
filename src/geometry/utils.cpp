@@ -20,7 +20,17 @@
  *
  *****************************************************************************/
 
-#include "oqt/geometry/geometrytypes.hpp"
+#include "oqt/geometry/utils.hpp"
+
+#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/geometry/elements/point.hpp"
+#include "oqt/geometry/elements/linestring.hpp"
+#include "oqt/geometry/elements/simplepolygon.hpp"
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
+
+
+
 
 #include "oqt/pbfformat/readblock.hpp"
 
@@ -33,10 +43,10 @@
 
 namespace oqt {
 namespace geometry {
-
-    
-static uint32_t web_merc_epsg = 3857;
-static uint32_t lat_long_epsg = 4326;
+uint32_t epsg_code(bool transform) {
+    if (transform) { return 3857; }
+    return 4326;
+}
     
 
 double pythag(const xy& p, const xy& q) {
@@ -89,69 +99,6 @@ bbox lonlats_bounds(const lonlatvec& llv) {
     return r;
 }
 
-lonlatvec ringpart_lonlats(const ringpartvec& ring) {
-    size_t np=1;
-    for (const auto& r : ring) { np += (r.lonlats.size()-1); };
-    lonlatvec ll = ring[0].lonlats;
-    ll.reserve(np);
-
-    if (ring[0].reversed) {
-        std::reverse(ll.begin(),ll.end());
-    }
-
-    for (size_t i=1; i < ring.size(); i++) {
-        //size_t cl = ll.size()-1;
-        ll.pop_back();
-        if (ring[i].reversed) {
-            std::copy(ring[i].lonlats.rbegin(),ring[i].lonlats.rend(), std::back_inserter(ll));
-        } else {
-            std::copy(ring[i].lonlats.begin(),ring[i].lonlats.end(), std::back_inserter(ll));
-        }
-    }
-    return ll;
-}
-
-refvector ringpart_refs(const ringpartvec& ring) {
-    size_t np=1;
-    for (const auto& r : ring) { np += (r.refs.size()-1); };
-
-    refvector ll = ring[0].refs;
-    ll.reserve(np);
-
-    if (ring[0].reversed) {
-        std::reverse(ll.begin(),ll.end());
-    }
-
-    for (size_t i=1; i < ring.size(); i++) {
-        //size_t cl = ll.size()-1;
-        ll.pop_back();
-        if (ring[i].reversed) {
-            std::copy(ring[i].refs.rbegin(),ring[i].refs.rend(), std::back_inserter(ll));
-        } else {
-            std::copy(ring[i].refs.begin(),ring[i].refs.end(), std::back_inserter(ll));
-        }
-    }
-    return ll;
-}
-
-void reverse_ring(ringpartvec& ring) {
-    for (auto& rp: ring) {
-        rp.reversed = !rp.reversed;
-    }
-    std::reverse(ring.begin(), ring.end());
-}
-
-
-double calc_ring_area(const ringpartvec& ring) {
-    if (ring.empty()) { return 0; }
-    if (ring.size()==1) {
-        return calc_ring_area(ring[0].lonlats);
-    }
-    auto ll = ringpart_lonlats(ring);
-    return calc_ring_area(ll);
-}
-
-
 
 size_t write_point(std::string& data, size_t pos, lonlat ll, bool transform) {
     xy x;
@@ -165,32 +112,7 @@ size_t write_point(std::string& data, size_t pos, lonlat ll, bool transform) {
     write_double(data,pos+8,x.y);
     return pos+16;
 }
-
-std::string point::Wkb(bool transform, bool srid) const {
-    std::string res(srid ? 25 : 21,'\0');
-    res[4]='\1';
-    size_t pos=5;
-    if (srid) {
-        res[1]=' ';
-        pos = write_uint32(res,pos,(transform ? web_merc_epsg : lat_long_epsg));
-    }
-    write_point(res, pos, LonLat(), transform);
-    return res;
-}
-
-std::list<PbfTag> point::pack_extras() const {
-    
-    std::list<PbfTag> extras{PbfTag{8,zigZag(lat),""}, PbfTag{9,zigZag(lon),""}};    
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
-    }
-    if (layer != 0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
-    }
-    return extras;
-    
-}
-
+/*
 uint64 double_bytes(double f) {
     union {double sf; uint64 si;};
     sf=f;
@@ -202,7 +124,7 @@ double un_double_bytes(uint64 i) {
     si=i;
     return sf;
 }
-
+*/
 
 int64 getlon(const lonlat& l) { return l.lon; }
 int64 getlat(const lonlat& l) { return l.lat; }
@@ -231,228 +153,8 @@ bbox unpack_bounds(const std::string& data) {
     return bounds;
 }
 
-size_t write_ring(std::string& data, size_t pos, const lonlatvec& lonlats, bool transform) {
-    write_uint32(data,pos,lonlats.size());
-    pos+=4;
-
-    for (const auto& l : lonlats) {
-        write_point(data,pos,l, transform);
-        pos+=16;
-    }
-    return pos;
-}
-
-std::string linestring::Wkb(bool transform, bool srid) const {
-
-    std::string res((srid?13:9)+16*lonlats.size(),'\0');
-    //res[0]='\1';
-    res[4]='\2';
-    size_t pos=5;
-    if (srid) {
-        res[1]=' ';
-        pos = write_uint32(res,pos,(transform ? web_merc_epsg : lat_long_epsg));
-    }
-    write_ring(res,pos,lonlats, transform);
-    return res;
-}
-int64 to_int(double v) {
-    if (v<0) {
-        return (int64) (v-0.5);
-    }
-    return (int64) (v+0.5);
-}
-std::list<PbfTag> linestring::pack_extras() const {
-    std::list<PbfTag> extras;
-    
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
-    extras.push_back(PbfTag{15,zigZag(to_int(length*100)),""});
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
-    }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
-    }
-    return extras;
-}
-
-std::string simplepolygon::Wkb(bool transform, bool srid) const {
-
-    std::string res((srid?17:13)+16*lonlats.size(),'\0');
-    //res[0]='\1';
-    res[4]='\3';
-    size_t pos=5;
-    if (srid) {
-        res[1]=' ';
-        pos = write_uint32(res,pos,(transform ? web_merc_epsg: lat_long_epsg));
-    }
-    pos=write_uint32(res,pos, 1);
-    if (reversed) {
-        lonlatvec ll = lonlats;
-        std::reverse(ll.begin(),ll.end());
-        write_ring(res, pos,ll, transform);
-    } else {
-        write_ring(res, pos,lonlats, transform);
-    }
-    return res;
-}
 
 
-std::list<PbfTag> simplepolygon::pack_extras() const {
-    std::list<PbfTag> extras;
-    
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
-    extras.push_back(PbfTag{16,zigZag(to_int(area*100)),""});
-    
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
-    }
-    if (reversed) {
-        extras.push_back(PbfTag{23,1,""});
-    }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
-    }
-    return extras;
-}
-
-std::string pack_ringpart(const ringpart& rp) {
-    std::string refsp = writePackedDelta(rp.refs);
-    std::string lonsp = writePackedDeltaFunc<lonlat>(rp.lonlats, getlon);
-    std::string latsp = writePackedDeltaFunc<lonlat>(rp.lonlats, getlat);
-    std::string res;
-    res.resize(40+refsp.size()+lonsp.size()+latsp.size());
-    size_t pos=writePbfValue(res,0,1,rp.orig_id);
-    pos = writePbfData(res,pos,2,refsp);
-    pos = writePbfData(res,pos,3,lonsp);
-    pos = writePbfData(res,pos,4,latsp);
-    if (rp.reversed) {
-        pos = writePbfValue(res,pos,5,1);
-    }
-    res.resize(pos);
-    return res;
-}
-
-
-
-
-std::string pack_ringparts(const std::vector<ringpart>& rps) {
-    std::list<PbfTag> rr;
-    for (const auto& rp : rps) {
-        rr.push_back(PbfTag{1,0,pack_ringpart(rp)});
-    }
-    return packPbfTags(rr);
-}
-
-size_t ringpart_numpoints(const ringpartvec& rpv) {
-    size_t r=1;
-    for (const auto& rp : rpv) {
-        r += (rp.refs.size()-1);
-    }
-    return r;
-}
-
-size_t write_ringpart_ring(std::string& data, size_t pos, const ringpartvec& rpv, size_t r, bool transform) {
-    pos = write_uint32(data, pos, r);
-    bool first=true;
-    for (const auto& rp : rpv) {
-        size_t rps=rp.lonlats.size();
-        for (size_t i=(first?0:1); i < rps; i++) {
-            pos=write_point(data,pos,rp.lonlats[rp.reversed ? (rps-i-1) : i], transform);
-        }
-        first=false;
-    }
-    return pos;
-}
-
-
-
-
-std::string complicatedpolygon::Wkb(bool transform, bool srid) const {
-    size_t sz=13;
-    if (srid) { sz+=4; }
-    size_t outer_len = ringpart_numpoints(outers);
-
-    sz += 4+16*outer_len;
-    std::vector<size_t> inners_lens;
-
-    for (const auto& inner : inners) {
-        size_t l=ringpart_numpoints(inner);
-        inners_lens.push_back(l);
-        sz += 4+16*l;
-    }
-
-
-    std::string res(sz,'\0');
-    //res[0]='\1';
-    res[4]='\3';
-    size_t pos=5;
-    if (srid) {
-        res[1]=' ';
-        pos = write_uint32(res,pos,(transform ? web_merc_epsg : lat_long_epsg));
-    }
-    pos = write_uint32(res,pos, 1+inners.size());
-
-    pos = write_ringpart_ring(res, pos, outers, outer_len,transform);
-    if (!inners.empty()) {
-        for (size_t i=0; i < inners.size(); i++) {
-            pos = write_ringpart_ring(res,pos,inners[i],inners_lens[i],transform);
-        }
-    }
-    return res;
-}
-
-
-std::list<PbfTag> complicatedpolygon::pack_extras() const {
-    
-
-    std::list<PbfTag> extras;
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{16,zigZag(to_int(area*100)),""});
-
-    extras.push_back(PbfTag{17,0,pack_ringparts(outers)});
-    for (const auto& ii : inners) {
-        extras.push_back(PbfTag{18,0,pack_ringparts(ii)});
-    }
-    extras.push_back(PbfTag{19,zigZag(part),""});
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
-    }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
-    }
-    return extras;
-}
-/*
-void process_all(std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
-    std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
-    std::shared_ptr<BlockHandler> handler) {
-
-    size_t in_idx=0;
-    size_t out_idx=0;
-
-    for (auto bl = in[in_idx%in.size()]->wait_and_pop(); bl; bl=in[in_idx%in.size()]->wait_and_pop()) {
-        for (auto rr : handler->process(bl)) {
-            out[out_idx % out.size()]->wait_and_push(rr);
-            out_idx++;
-        }
-        in_idx++;
-    }
-    for (auto rr : handler->finish()) {
-        out[out_idx % out.size()]->wait_and_push(rr);
-        out_idx++;
-    }
-
-    for (auto o : out) {
-        o->wait_and_finish();
-    }
-}
-*/
 
 std::string get_tag(ElementPtr e, const std::string& k) {
     for (const auto& t : e->Tags()) {
@@ -463,7 +165,12 @@ std::string get_tag(ElementPtr e, const std::string& k) {
     return "";
 }
 
-
+int64 to_int(double v) {
+    if (v<0) {
+        return (int64) (v-0.5);
+    }
+    return (int64) (v+0.5);
+}
 
 void read_lonlats_lons(lonlatvec& lonlats, const std::string& data) {
     auto lons = readPackedDelta(data);
@@ -490,9 +197,9 @@ void read_lonlats_lats(lonlatvec& lonlats, const std::string& data) {
     }
 }
 
-ringpart unpack_ringpart(const std::string& data) {
+Ring::Part unpack_ringpart(const std::string& data) {
     size_t pos=0;
-    ringpart res{0,{},{},false};
+    Ring::Part res{0,{},{},false};
     for (auto tag=readPbfTag(data,pos); tag.tag>0; tag=readPbfTag(data,pos)) {
         if (tag.tag==1) { res.orig_id = tag.value; }
         if (tag.tag==2) { res.refs = readPackedDelta(tag.data); }
@@ -511,11 +218,11 @@ void expand_bbox(bbox& bx, const lonlatvec& llv) {
     }
 }
 
-ringpartvec unpack_ringpart_vec(const std::string& data) {
-    ringpartvec res;
+Ring unpack_ringpart_vec(const std::string& data) {
+    Ring res;
     size_t pos=0;
     for (auto tag=readPbfTag(data,pos); tag.tag>0; tag=readPbfTag(data,pos)) {
-        if (tag.tag==1) { res.push_back(unpack_ringpart(tag.data)); }
+        if (tag.tag==1) { res.parts.push_back(unpack_ringpart(tag.data)); }
     }
     return res;
 }
@@ -530,7 +237,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
             if (t.tag==22) { minzoom = (int64) t.value; }
             if (t.tag==24) { layer = unZigZag(t.value); }
         }
-        return std::make_shared<point>(id,qt,inf,tgs,lon,lat,layer,minzoom);
+        return std::make_shared<Point>(id,qt,inf,tgs,lon,lat,layer,minzoom);
     } else if ((ty==ElementType::Linestring) || (ty==ElementType::SimplePolygon)) {
         refvector rfs;
         lonlatvec lonlats;
@@ -554,21 +261,21 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         expand_bbox(bounds,lonlats);
 
         if (ty==ElementType::Linestring) {
-            return std::make_shared<linestring>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,length,bounds,minzoom);
+            return std::make_shared<Linestring>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,length,bounds,minzoom);
         } else if (ty==ElementType::SimplePolygon) {
-            return std::make_shared<simplepolygon>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,area,bounds,minzoom,rev);
+            return std::make_shared<SimplePolygon>(id,qt,inf,tgs,rfs, lonlats, zorder, layer,area,bounds,minzoom,rev);
         }
     } else if ((ty==ElementType::ComplicatedPolygon)) {
         int64 minzoom=-1;
         int64 zorder=0, layer=0, part=0; double area=0;
-        ringpartvec outer;
-        std::vector<ringpartvec> inners;
+        Ring outer;
+        std::vector<Ring> inners;
 
         for (const auto& t : pbftags) {
             if (t.tag==12) { zorder=unZigZag(t.value); }
             if (t.tag==16) { area=unZigZag(t.value)*0.01; }
             if (t.tag==17) {
-                if (!outer.empty()) {
+                if (!outer.parts.empty()) {
                     throw std::domain_error("multiple outers??");
                 }
                 outer = unpack_ringpart_vec(t.data);
@@ -581,12 +288,12 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
             //if (t.tag==20) { bounds=unpack_bounds(t.data); }
         }
         bbox bounds;
-        for (const auto& rp : outer) {
+        for (const auto& rp : outer.parts) {
             expand_bbox(bounds,rp.lonlats);
         }
 
 
-        return std::make_shared<complicatedpolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
+        return std::make_shared<ComplicatedPolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
     } else if ((ty==ElementType::WayWithNodes)) {
         refvector refs;
         lonlatvec lonlats;
@@ -597,7 +304,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         }
         bbox bounds;
         for (const auto& l : lonlats) { bounds.expand_point(l.lon,l.lat); }
-        return std::make_shared<way_withnodes>(id,qt,inf,tgs,refs,lonlats,bounds);
+        return std::make_shared<WayWithNodes>(id,qt,inf,tgs,refs,lonlats,bounds);
     }
     return ElementPtr();
 }
