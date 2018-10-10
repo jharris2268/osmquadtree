@@ -33,6 +33,33 @@
 
 namespace oqt {
 namespace geometry {
+    
+
+Point::Point(std::shared_ptr<Node> nd) :
+    BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),nd->Tags(),-1),
+    lon(nd->Lon()), lat(nd->Lat()) {}
+Point::Point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, int64 layer_, int64 minzoom_) :
+    BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),tgs,minzoom_),
+    lon(nd->Lon()), lat(nd->Lat()),layer(layer_) {}
+
+Point::Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, int64 layer_, int64 minzoom_) :
+    BaseGeometry(ElementType::Point,changetype::Normal,id,qt,inf,tags,minzoom_), lon(lon_), lat(lat_),layer(layer_){}
+
+ElementType Point::OriginalType() const { return ElementType::Node; }
+
+lonlat Point::LonLat() const { return lonlat{lon,lat}; };
+int64 Point::Layer() const { return layer; }
+
+ElementPtr Point::copy() {
+    return std::make_shared<Point>(//*this);
+        Id(),Quadtree(),Info(),Tags(),lon,lat,layer,MinZoom());
+}
+
+bbox Point::Bounds() const { return bbox{lon,lat,lon,lat}; }
+
+    
+    
+    
 std::string Point::Wkb(bool transform, bool srid) const {
     std::string res(srid ? 25 : 21,'\0');
     res[4]='\1';

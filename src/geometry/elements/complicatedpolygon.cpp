@@ -34,6 +34,73 @@
 namespace oqt {
 namespace geometry {
 
+
+double fix_ring_direction(Ring& outers, std::vector<Ring>& inners) {
+    double area = calc_ring_area(outers);
+    if (area<0) {
+        reverse_ring(outers);
+        area *= -1;
+    }
+        
+    for (auto& ii : inners) {
+        double a = calc_ring_area(ii);
+        if (a>0) {
+            reverse_ring(ii);
+            a *= -1;
+        }
+        area += a;
+    }
+    if (area < 0) {
+        area = 0;
+    }
+    return area;
+}
+
+ComplicatedPolygon::ComplicatedPolygon(
+    std::shared_ptr<Relation> rel, int64 part_,
+    const Ring& outers_, const std::vector<Ring>& inners_,
+    const std::vector<Tag>& tags, int64 zorder_,
+    int64 layer_, int64 minzoom_) :
+    
+    BaseGeometry(ElementType::ComplicatedPolygon, changetype::Normal, rel->Id(), rel->Quadtree(), rel->Info(), tags,minzoom_),
+    part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_) {
+
+    area = fix_ring_direction(outers, inners);
+    
+    for (const auto& o : outers.parts) {
+        for (const auto& ll : o.lonlats) {
+            bounds.expand_point(ll.lon,ll.lat);
+        }
+    }
+
+}
+
+ComplicatedPolygon::ComplicatedPolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 part_, const Ring& outers_, const std::vector<Ring>& inners_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_)
+    : BaseGeometry(ElementType::ComplicatedPolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
+    part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_), area(area_), bounds(bounds_) {}
+
+
+uint64 ComplicatedPolygon::InternalId() const {
+    return (6ull<<61) | (((uint64) Id()) << 16) | ((uint64) part);
+}   
+        
+
+ElementType ComplicatedPolygon::OriginalType() const { return ElementType::Relation; }
+const Ring& ComplicatedPolygon::OuterRing() const { return outers; }
+const std::vector<Ring>& ComplicatedPolygon::InnerRings() const { return inners; }
+int64 ComplicatedPolygon::ZOrder() const { return zorder; }
+int64 ComplicatedPolygon::Layer() const { return layer; }
+double ComplicatedPolygon::Area() const { return area; }
+int64 ComplicatedPolygon::Part() const { return part; }
+ElementPtr ComplicatedPolygon::copy() { return std::make_shared<ComplicatedPolygon>(
+    Id(),Quadtree(),Info(),Tags(),part,outers,inners,zorder,layer,area,bounds,MinZoom()); }
+
+bbox ComplicatedPolygon::Bounds() const { return bounds; }
+
+
+
+
+
 std::string ComplicatedPolygon::Wkb(bool transform, bool srid) const {
     size_t sz=13;
     if (srid) { sz+=4; }

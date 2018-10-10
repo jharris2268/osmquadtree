@@ -34,6 +34,26 @@
 namespace oqt {
 namespace geometry {
 
+WayWithNodes::WayWithNodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_)
+    : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
+    for (auto& l : lonlats) {
+        bounds.expand_point(l.lon,l.lat);
+    }
+}
+WayWithNodes:: WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
+    : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
+
+
+const std::vector<int64>& WayWithNodes::Refs() const { return refs; }
+
+const lonlatvec& WayWithNodes::LonLats() const { return lonlats; }
+const bbox& WayWithNodes::Bounds() const { return bounds; }
+bool WayWithNodes::IsRing() const {
+    return (Refs().size()>3) && (Refs().front()==Refs().back());
+}
+
+
+ElementPtr WayWithNodes::copy() { return std::make_shared<WayWithNodes>(Id(),Quadtree(),Info(),Tags(),refs,lonlats,bounds); }
 
 std::list<PbfTag> WayWithNodes::pack_extras() const {
     

@@ -37,30 +37,20 @@ namespace geometry {
 
 class WayWithNodes : public Element {
     public:
-        WayWithNodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_)
-            : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
-            for (auto& l : lonlats) {
-                bounds.expand_point(l.lon,l.lat);
-            }
-        }
-        WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
-            : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
+        WayWithNodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_);
+        WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const lonlatvec& lonlats_, const bbox& bounds_);
 
-
-        const std::vector<int64>& Refs() { return refs; }
-
-        const lonlatvec& LonLats() { return lonlats; }
-        const bbox& Bounds() { return bounds; }
-        bool IsRing() {
-            return (Refs().size()>3) && (Refs().front()==Refs().back());
-        }
+        const std::vector<int64>& Refs() const;
+        const lonlatvec& LonLats() const;
+        const bbox& Bounds() const;
+        bool IsRing() const;
 
         virtual std::list<PbfTag> pack_extras() const;
         virtual ~WayWithNodes() {}
-        virtual ElementPtr copy() { return std::make_shared<WayWithNodes>(Id(),Quadtree(),Info(),Tags(),refs,lonlats,bounds); }
+        virtual ElementPtr copy();
     private:
-        WayWithNodes(const WayWithNodes&)=delete;
-        WayWithNodes operator=(const WayWithNodes&)=delete;
+        //WayWithNodes(const WayWithNodes&)=delete;
+        //WayWithNodes operator=(const WayWithNodes&)=delete;
 
         refvector refs;
         lonlatvec lonlats;

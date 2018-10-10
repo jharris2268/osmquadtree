@@ -34,60 +34,40 @@ namespace geometry {
 
 class ComplicatedPolygon : public BaseGeometry {
     public:
-        ComplicatedPolygon(std::shared_ptr<Relation> rel, int64 part_, const Ring& outers_, const std::vector<Ring>& inners_, const std::vector<Tag>& tags, int64 zorder_, int64 layer_, int64 minzoom_) :
-            BaseGeometry(ElementType::ComplicatedPolygon, changetype::Normal, rel->Id(), rel->Quadtree(), rel->Info(), tags,minzoom_),
-            part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_) {
+        ComplicatedPolygon(
+            std::shared_ptr<Relation> rel, int64 part_,
+            const Ring& outers_, const std::vector<Ring>& inners_,
+            const std::vector<Tag>& tags, int64 zorder_,
+            int64 layer_, int64 minzoom_);
+        
+        
+        ComplicatedPolygon(
+            int64 id, int64 qt, const ElementInfo& inf,
+            const std::vector<Tag>& tags, int64 part_,
+            const Ring& outers_, const std::vector<Ring>& inners_,
+            int64 zorder_, int64 layer_, double area_,
+            const bbox& bounds_, int64 minzoom_);
 
-            area = calc_ring_area(outers);
-            if (area<0) {
-                reverse_ring(outers);
-                area *= -1;
-            }
-                
-            for (auto& ii : inners) {
-                double a = calc_ring_area(ii);
-                if (a>0) {
-                    reverse_ring(ii);
-                    a *= -1;
-                }
-                area += a;
-            }
-            if (area < 0) {
-                area = 0;
-            }
-            for (const auto& o : outers.parts) {
-                for (const auto& ll : o.lonlats) {
-                    bounds.expand_point(ll.lon,ll.lat);
-                }
-            }
-
-        }
-        ComplicatedPolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 part_, const Ring& outers_, const std::vector<Ring>& inners_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_)
-            : BaseGeometry(ElementType::ComplicatedPolygon,changetype::Normal,id,qt,inf,tags,minzoom_), part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_), area(area_), bounds(bounds_){}
-
-
-        uint64 InternalId() const {
-            return (6ull<<61) | (((uint64) Id()) << 16) | ((uint64) part);
-        }   
+        uint64 InternalId() const;
         virtual ~ComplicatedPolygon() {}
 
-        virtual ElementType OriginalType() const { return ElementType::Relation; }
-        const Ring& OuterRing() const { return outers; }
-        const std::vector<Ring>& InnerRings() const { return inners; }
-        int64 ZOrder() const { return zorder; }
-        int64 Layer() const { return layer; }
-        double Area() const { return area; }
-        int64 Part() const { return part; }
-        virtual ElementPtr copy() { return std::make_shared<ComplicatedPolygon>(
-            Id(),Quadtree(),Info(),Tags(),part,outers,inners,zorder,layer,area,bounds,MinZoom()); }
+        virtual ElementType OriginalType() const;
+        const Ring& OuterRing() const;
+        const std::vector<Ring>& InnerRings() const;
+        int64 ZOrder() const;
+        int64 Layer() const;
+        double Area() const;
+        int64 Part() const;
+        virtual ElementPtr copy();
         virtual std::list<PbfTag> pack_extras() const;
-        virtual bbox Bounds() const { return bounds; }
+        virtual bbox Bounds() const;
 
         virtual std::string Wkb(bool transform, bool srid) const;
         
     private:
-        //complicatedpolygon(const complicatedpolygon& p) :
-        //    element(p), part(p.part), outers(p.outers), inners(p.inners), area(p.area),bounds(p.bounds) {}
+        
+        
+        
         int64 part;
         Ring outers;
         std::vector<Ring> inners;

@@ -36,39 +36,35 @@ namespace geometry {
 
 class Linestring : public BaseGeometry {
     public:
-        Linestring(std::shared_ptr<WayWithNodes> wy) :
-            BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags(),-1),
-            refs(wy->Refs()), lonlats(wy->LonLats()), zorder(0), layer(0), bounds(wy->Bounds()) {
-                length=calc_line_length(lonlats);
-            }
+        Linestring(std::shared_ptr<WayWithNodes> wy);
 
-        Linestring(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
-            BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
-            refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()){
-                length=calc_line_length(lonlats);
-            }
-        Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
-            BaseGeometry(ElementType::Linestring,changetype::Normal,id,qt,inf,tags,minzoom_), refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), length(length_), bounds(bounds_) {}
-
+        Linestring(std::shared_ptr<WayWithNodes> wy,
+            const std::vector<Tag>& tgs, int64 zorder_,
+            int64 layer_, int64 minzoom_);
+            
+        Linestring(int64 id, int64 qt, const ElementInfo& inf,
+            const std::vector<Tag>& tags,
+            const refvector& refs_, const lonlatvec& lonlats_,
+            int64 zorder_, int64 layer_, double length_,
+            const bbox& bounds_, int64 minzoom_);
 
         virtual ~Linestring() {}
 
 
-        virtual ElementType OriginalType() const { return ElementType::Way; }
-        const refvector& Refs() const { return refs; }
-        const lonlatvec& LonLats() const { return lonlats; }
-        double Length() const { return length; }
-        int64 ZOrder() const { return zorder; }
-        int64 Layer() const { return layer; }
-        virtual ElementPtr copy() { return std::make_shared<Linestring>(//*this); }
-            Id(),Quadtree(),Info(),Tags(),refs,lonlats,zorder,layer,length,bounds,MinZoom()); }
+        virtual ElementType OriginalType() const;
+        const refvector& Refs() const;
+        const lonlatvec& LonLats() const;
+        double Length() const;
+        int64 ZOrder() const;
+        int64 Layer() const;
+        virtual ElementPtr copy();
         virtual std::list<PbfTag> pack_extras() const;
-        virtual bbox Bounds() const { return bounds; }
+        virtual bbox Bounds() const;
 
         virtual std::string Wkb(bool transform, bool srid) const;
         
     private:
-        //linestring(const linestring& l) : element(l), refs(l.refs), lonlats(l.lonlats), zorder(l.zorder), length(l.length), bounds(l.bounds) {}
+        
         refvector refs;
         lonlatvec lonlats;
         int64 zorder;

@@ -33,7 +33,34 @@
 
 namespace oqt {
 namespace geometry {
+Linestring::Linestring(std::shared_ptr<WayWithNodes> wy) :
+    BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags(),-1),
+    refs(wy->Refs()), lonlats(wy->LonLats()), zorder(0), layer(0), bounds(wy->Bounds()) {
+        length=calc_line_length(lonlats);
+    }
 
+Linestring::Linestring(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
+    BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
+    refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()){
+        length=calc_line_length(lonlats);
+    }
+Linestring::Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
+    BaseGeometry(ElementType::Linestring,changetype::Normal,id,qt,inf,tags,minzoom_), refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), length(length_), bounds(bounds_) {}
+
+
+
+ElementType Linestring::OriginalType() const { return ElementType::Way; }
+const refvector& Linestring::Refs() const { return refs; }
+const lonlatvec& Linestring::LonLats() const { return lonlats; }
+double Linestring::Length() const { return length; }
+int64 Linestring::ZOrder() const { return zorder; }
+int64 Linestring::Layer() const { return layer; }
+ElementPtr Linestring::copy() { return std::make_shared<Linestring>(//*this); }
+    Id(),Quadtree(),Info(),Tags(),refs,lonlats,zorder,layer,length,bounds,MinZoom()); }
+
+bbox Linestring::Bounds() const { return bounds; }
+
+       
 std::string Linestring::Wkb(bool transform, bool srid) const {
 
     std::string res((srid?13:9)+16*lonlats.size(),'\0');
