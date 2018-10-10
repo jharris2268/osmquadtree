@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef POSTGISWRITER_HPP
-#define POSTGISWRITER_HPP
+#ifndef GEOMETRY_POSTGISWRITER_HPP
+#define GEOMETRY_POSTGISWRITER_HPP
 
 #include "oqt/elements/block.hpp"
 namespace oqt {

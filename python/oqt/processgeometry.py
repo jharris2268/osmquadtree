@@ -261,7 +261,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     print("%d styles" % len(params.style))
     
     if 'minzoom' in params.style and minzoomfn is not None:
-        params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen=minlen,minarea=minarea)
+        params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen,minarea)
         print ('findmz', params.findmz)
     cnt,errs=None,None
     
@@ -269,14 +269,14 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     
     if len(params.locs) > 2500 and outfn is not None:
         collect=False
-    params.callback = Prog((addto_merge(tiles, minzoomfn is not None) if mergetiles else addto(tiles)), params.locs) if collect else None
+    callback = Prog((addto_merge(tiles, minzoomfn is not None) if mergetiles else addto(tiles)), params.locs) if collect else None
     
     if nothread:
-        cnt, errs = oq.process_geometry_nothread(params)
+        cnt, errs = oq.process_geometry_nothread(params, callback)
     elif groups is not None:
-        cnt, errs = oq.process_geometry_sortblocks(params)
+        cnt, errs = oq.process_geometry_sortblocks(params, callback)
     else:
-        cnt, errs = oq.process_geometry(params)
+        cnt, errs = oq.process_geometry(params, callback)
     
     if collect:
         if mergetiles:

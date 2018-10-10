@@ -24,6 +24,7 @@
 #define MAKEGEOMETRIES_HPP
 
 #include "oqt/geometry/utils.hpp"
+#include "oqt/geometry/findminzoom.hpp"
 #include <map>
 namespace oqt {
 namespace geometry {
@@ -50,18 +51,9 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
 
 
 size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf);
+void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> minzoom);
 
-class findminzoom {
-    public:
-        virtual int64 calculate(ElementPtr ele)=0;
-        virtual ~findminzoom() {}
-};
-    
-
-
-void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> minzoom);
-
-std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<findminzoom> fmz);
+std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<FindMinZoom> fmz);
 
 }}
 

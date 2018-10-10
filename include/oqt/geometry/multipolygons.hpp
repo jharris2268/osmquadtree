@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef MULTIPOLYGONS_HPP
-#define MULTIPOLYGONS_HPP
+#ifndef GEOMETRY_MULTIPOLYGONS_HPP
+#define GEOMETRY_MULTIPOLYGONS_HPP
 
 #include "oqt/geometry/makegeometries.hpp"
 #include "oqt/geometry/elements/ring.hpp"

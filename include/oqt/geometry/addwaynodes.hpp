@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef ADDWAYNODES_HPP
-#define ADDWAYNODES_HPP
+#ifndef GEOMETRY_ADDWAYNODES_HPP
+#define GEOMETRY_ADDWAYNODES_HPP
 
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/utils/geometry.hpp"

@@ -298,7 +298,7 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
 
 class GeometryProcess : public BlockHandler {
     public:
-        GeometryProcess(const style_info_map& style_, const bbox& box_, bool recalc_, std::shared_ptr<findminzoom> fmz_)
+        GeometryProcess(const style_info_map& style_, const bbox& box_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
             : style(style_), box(box_), recalc(recalc_), fmz(fmz_) {}
 
         virtual primblock_vec process(primblock_ptr bl) {
@@ -317,15 +317,15 @@ class GeometryProcess : public BlockHandler {
         bbox box;
         
         bool recalc;
-        std::shared_ptr<findminzoom> fmz;
+        std::shared_ptr<FindMinZoom> fmz;
 };
-std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<findminzoom> fmz) {
+std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<FindMinZoom> fmz) {
     return std::make_shared<GeometryProcess>(style,box,recalc,fmz);
 }
 
     
 
-void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<findminzoom> minzoom) {
+void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> minzoom) {
     for (auto ele: block->Objects()) {
         int64 mz = minzoom->calculate(ele);
         if (mz>=0) {

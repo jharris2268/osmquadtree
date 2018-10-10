@@ -20,28 +20,28 @@
  *
  *****************************************************************************/
 
-#ifndef GEOMETRY_ADDPARENTTAGS_HPP
-#define GEOMETRY_ADDPARENTTAGS_HPP
+#ifndef GEOMETRY_FINDMINZOOM_HPP
+#define GEOMETRY_FINDMINZOOM_HPP
 
-#include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/geometry/utils.hpp"
-#include <map>
+#include "oqt/elements/element.hpp"
 
 namespace oqt {
 namespace geometry {
 
-struct parenttag_spec {
-    std::string node_tag;
-    std::string out_tag;
-    std::string way_tag;
-    std::map<std::string,int> priority;
-    parenttag_spec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
-        : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
+
+class FindMinZoom {
+    public:
+        virtual int64 calculate(ElementPtr ele)=0;
+        virtual ~FindMinZoom() {}
 };
-typedef std::map<std::string,parenttag_spec> parenttag_spec_map;
-
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
 
 
-}}
-#endif //ADDPARENTTAGS_HPP
+double res_zoom(double res);
+
+typedef std::vector<std::tuple<int64,std::string,std::string,int64>> tag_spec;
+std::shared_ptr<FindMinZoom> make_findminzoom_onetag(const tag_spec& spec, double minlen, double minarea);
+
+}
+}
+
+#endif

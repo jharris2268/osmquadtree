@@ -8,7 +8,7 @@ PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writ
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/baseelement.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
 UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/timing.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
-GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/utils.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o geometry/elements/point.o geometry/elements/linestring.o geometry/elements/simplepolygon.o geometry/elements/complicatedpolygon.o geometry/elements/waywithnodes.o  geometry/elements/ring.o
+GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/utils.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o geometry/findminzoom.o geometry/process.o geometry/elements/point.o geometry/elements/linestring.o geometry/elements/simplepolygon.o geometry/elements/complicatedpolygon.o geometry/elements/waywithnodes.o  geometry/elements/ring.o
 SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o sorting/qttree.o sorting/qttreegroups.o
 CALCQTS_OBJS = calcqts/qtstore.o calcqts/qtstoresplit.o calcqts/calculaterelations.o calcqts/waynodes.o calcqts/waynodesfile.o calcqts/writewaynodes.o calcqts/writeqts.o calcqts/calcqtsinmem.o calcqts/calcqts.o calcqts/wayqts.o
 OBJS = $(ROOT_OBJS) $(GEOM_OBJS) $(PBFFORMAT_OBJS) $(ELEMENT_OBJS) $(UTILS_OBJS) $(UPDATE_OBJS) $(SORTING_OBJS) $(CALCQTS_OBJS)
@@ -43,6 +43,12 @@ geometry/addwaynodes.o: ../src/geometry/addwaynodes.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/addwaynodes.cpp -o geometry/addwaynodes.o
 geometry/postgiswriter.o: ../src/geometry/postgiswriter.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/postgiswriter.cpp -o geometry/postgiswriter.o
+
+geometry/findminzoom.o: ../src/geometry/findminzoom.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/findminzoom.cpp -o geometry/findminzoom.o
+
+geometry/process.o: ../src/geometry/process.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/geometry/process.cpp -o geometry/process.o
 
 geometry/elements/ring.o: ../src/geometry/elements/ring.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/geometry/elements/ring.cpp -o geometry/elements/ring.o

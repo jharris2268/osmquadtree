@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef HANDLERELATIONS_HPP
-#define HANDLERELATIONS_HPP
+#ifndef GEOMETRY_HANDLERELATIONS_HPP
+#define GEOMETRY_HANDLERELATIONS_HPP
 
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/geometry/utils.hpp"
