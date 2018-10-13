@@ -38,17 +38,17 @@ namespace geometry {
 
 
 
-class lonlatstore {
+class LonLatStore {
     public:
         virtual void add_tile(PrimitiveBlockPtr block)=0;
         virtual lonlatvec get_lonlats(std::shared_ptr<Way> way)=0;
         virtual void finish()=0;
-        virtual ~lonlatstore() {}
+        virtual ~LonLatStore() {}
 };
 
-std::shared_ptr<lonlatstore> make_lonlatstore();
+std::shared_ptr<LonLatStore> make_lonlatstore();
 
-PrimitiveBlockPtr add_waynodes(std::shared_ptr<lonlatstore> lls, PrimitiveBlockPtr bl);
+PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockPtr bl);
 /*
 void add_waynodes_process(
     std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,

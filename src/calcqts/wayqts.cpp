@@ -45,40 +45,39 @@
 namespace oqt {
     
 
-struct wnl {
+struct WayNodeLocation {
     int64 ref;
     int32 lon;
     int32 lat;
 };
 
-struct wnls {
+struct WayNodeLocationBlock {
     int64 key;
-    std::vector<wnl> vals;
+    std::vector<WayNodeLocation> vals;
 };
-std::shared_ptr<wnls> make_wnls(int64 key, size_t sz) {
-    auto r = std::make_shared<wnls>();
+std::shared_ptr<WayNodeLocationBlock> make_waynodelocationblock(int64 key, size_t sz) {
+    auto r = std::make_shared<WayNodeLocationBlock>();
     r->key=key;
     r->vals.reserve(sz);
     return r;
 };
 
 
-struct wb {
+struct WayBBox {
     int32 minx;
     int32 miny;
     int32 maxx;
     int32 maxy;
 };
 
-template <size_t SIZE>
-class wbtile {
+class WayBBoxTile {
     public:
-        wbtile(int64 key_) :
-                key(key_), size(1ull<<SIZE), boxes(size, wb{2000000000,1000000000,-2000000000,-1000000000})  {
-                //key(key_), size(1ull<<SIZE) {
+        WayBBoxTile(int64 key_, size_t size_) :
+                key(key_), size(size_), boxes(size_, WayBBox{2000000000,1000000000,-2000000000,-1000000000})  {
+                
             min = key*size;
             max = (key+1)*size;
-            //boxes.fill(wb{2000000000,1000000000,-2000000000,-1000000000});
+            
         }
         
                 
@@ -86,7 +85,7 @@ class wbtile {
             if ((id<min) || (id>= max)) { throw std::domain_error("wtf"); }
             
             size_t i = id-min;
-            wb& box = boxes[i];
+            WayBBox& box = boxes[i];
             if (x < box.minx) { box.minx=x; }
             if (y < box.miny) { box.miny=y; }
             if (x > box.maxx) { box.maxx=x; }
@@ -95,7 +94,7 @@ class wbtile {
         }
         void reset() {
             boxes.clear();
-            std::vector<wb> empty;
+            std::vector<WayBBox> empty;
             boxes.swap(empty);
         }
         
@@ -104,7 +103,7 @@ class wbtile {
             std::vector<int64> qts(size,-1);
             size_t count=0;
             for (size_t i=0; i < size; i++) {
-                const wb& box = boxes[i];
+                const WayBBox& box = boxes[i];
                 if (box.minx < 2000000000) {
                     count++;
                     qts[i] = quadtree::calculate(box.minx, box.miny, box.maxx, box.maxy, buffer, maxdepth);
@@ -120,8 +119,8 @@ class wbtile {
         size_t size;
         int64 min;
         int64 max;
-        std::vector<wb> boxes;
-        //std::array<wb,1<<SIZE> boxes;
+        std::vector<WayBBox> boxes;
+        
                 
 };
 
@@ -129,9 +128,9 @@ std::string getmem(size_t);
 int64 getmemval(size_t);        
         
         
-class WayNodeLocs {
+class AddLocationsToWayNodes {
     public:
-        WayNodeLocs(std::shared_ptr<WayNodesFile> wnf, std::function<void(std::shared_ptr<wnls>)> expand_all_, int64 minway, int64 maxway) :
+        AddLocationsToWayNodes(std::shared_ptr<WayNodesFile> wnf, std::function<void(std::shared_ptr<WayNodeLocationBlock>)> expand_all_, int64 minway, int64 maxway) :
             expand_all(expand_all_), missing(0), atend(0) {
         
             next_block = inverted_callback<WayNodes>::make([wnf,minway,maxway](std::function<void(std::shared_ptr<WayNodes>)> ww) {
@@ -150,7 +149,7 @@ class WayNodeLocs {
             pos=0;
             w= block->way_at(0); n=block->node_at(0);
             
-            curr = make_wnls(block->key(), block->size());
+            curr = make_waynodelocationblock(block->key(), block->size());
             
             
         }
@@ -198,7 +197,7 @@ class WayNodeLocs {
                     
                     while (nd.id == n) {
                     
-                        curr->vals.push_back(std::move(wnl{w, nd.lon, nd.lat}));
+                        curr->vals.push_back(std::move(WayNodeLocation{w, nd.lon, nd.lat}));
                         next_wn();
                     }
                 }
@@ -206,13 +205,13 @@ class WayNodeLocs {
             }
         }
     private:
-        std::function<void(std::shared_ptr<wnls>)> expand_all;
+        std::function<void(std::shared_ptr<WayNodeLocationBlock>)> expand_all;
         size_t missing;
         size_t atend;
         std::function<std::shared_ptr<WayNodes>()> next_block;
         std::shared_ptr<WayNodes> block;
         size_t pos;
-        std::shared_ptr<wnls> curr;
+        std::shared_ptr<WayNodeLocationBlock> curr;
         
         int64 w,n;
         
@@ -222,7 +221,7 @@ class WayNodeLocs {
                 if (! curr->vals.empty()) { expand_all(curr); }
                 block = next_block();
                 if (block) {
-                    curr = make_wnls(block->key(), block->size());
+                    curr = make_waynodelocationblock(block->key(), block->size());
                 }
                 pos=0;
             }
@@ -241,15 +240,15 @@ class WayNodeLocs {
 };
         
 
-class ExpandBoxes {
+class ExpandWayBBoxes {
     public:
-        ExpandBoxes(size_t split_, size_t nt) : split(split_), tiles(nt) {
+        ExpandWayBBoxes(size_t split_, size_t nt) : split(split_), tiles(nt) {
             pid = getpid();
             cc=0;
             mn=1ll<<61; mx=0;
         }
         
-        virtual ~ExpandBoxes() { Logger::Message() << "~ExpandBoxes"; }
+        virtual ~ExpandWayBBoxes() { Logger::Message() << "~ExpandBoxes"; }
         
         void expand(int64 w, int32 x, int32 y) {
             if (w<0) { throw std::domain_error("wtf"); }
@@ -264,10 +263,10 @@ class ExpandBoxes {
                 
                 cc++;
                 try {
-                    tiles[k] = std::make_unique<wbtile<20>>(k);
-                    //Logger::Message() << "ExpandBoxes added tile " << k << " [have " << cc << "], RSS=" << getmemval(getpid())/1024.0/1024;
+                    tiles[k] = std::make_unique<WayBBoxTile>(k, split);
+                    
                 } catch(std::exception& ex) {
-                    Logger::Message() << "ExpandBoxes addin tile " << k << " failed, RSS=" << getmemval(getpid())/1024.0/1024;
+                    Logger::Message() << "ExpandBoxes adding tile " << k << " failed, RSS=" << getmemval(getpid())/1024.0/1024;
                     throw ex;
                 }
                 
@@ -276,7 +275,7 @@ class ExpandBoxes {
             tiles[k]->expand(w,x,y);
         }
         
-        void expand_all(std::shared_ptr<wnls> ww) {
+        void expand_all(std::shared_ptr<WayNodeLocationBlock> ww) {
             if (!ww) { return; }
             bool mm=false;
             for (const auto& w: ww->vals) {
@@ -325,7 +324,7 @@ class ExpandBoxes {
         size_t split;
         size_t pid;
         
-        std::vector<std::unique_ptr<wbtile<20>>> tiles;
+        std::vector<std::unique_ptr<WayBBoxTile>> tiles;
         size_t cc;
         
         int64 mn, mx;
@@ -346,11 +345,11 @@ void find_way_quadtrees(
     size_t nb=580;
     
     Logger::Message() << "find way qts " << minway << " to " << maxway << ", RSS=" << getmemval(getpid())/1024.0/1024;
-    auto expand=std::make_shared<ExpandBoxes>(1<<20, nb);
-    auto expand_all = [expand](std::shared_ptr<wnls> ww) { expand->expand_all(ww); };
+    auto expand=std::make_shared<ExpandWayBBoxes>(1<<20, nb);
+    auto expand_all = [expand](std::shared_ptr<WayNodeLocationBlock> ww) { expand->expand_all(ww); };
     
     
-    auto wnla = std::make_shared<WayNodeLocs>(wns, expand_all, minway, maxway);
+    auto wnla = std::make_shared<AddLocationsToWayNodes>(wns, expand_all, minway, maxway);
     read_blocks_minimalblock(source_filename, [wnla](minimal::BlockPtr mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
     
     

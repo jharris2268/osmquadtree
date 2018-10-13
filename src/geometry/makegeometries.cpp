@@ -206,30 +206,8 @@ std::tuple<std::vector<Tag>, bool,int64, int64> filter_way_tags(const style_info
     return std::make_tuple(res,hasarea,zorder,layer);
 }
 
-bbox get_bound(ElementPtr o) {
-    
-    auto gg = std::dynamic_pointer_cast<BaseGeometry>(o);
-    if (gg) {
-        return gg->Bounds();
-    }
-
-    return bbox{0,0,0,0};
-}
 
 
-size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf) {
-    if (!block || block->Objects().empty()) { return 0; }
-    size_t c=0;
-    for (auto o : block->Objects()) {
-        auto b = get_bound(o);
-        int64 q = quadtree::calculate(b.minx,b.miny,b.maxx,b.maxy,buf,maxdepth);
-        if (q!=o->Quadtree()) {
-            c++;
-            o->SetQuadtree(q);
-        }
-    }
-    return c;
-}
 
 void copy_metadata(PrimitiveBlockPtr into, PrimitiveBlockPtr from) {
     into->SetQuadtree(from->Quadtree());
@@ -238,6 +216,89 @@ void copy_metadata(PrimitiveBlockPtr into, PrimitiveBlockPtr from) {
     into->SetFilePosition(from->FilePosition());
     into->SetFileProgress(from->FileProgress());
 }
+
+
+class MakeGeometry {
+    public:
+        MakeGeometry(const style_info_map& style_, const bbox& box_) : 
+            style(style_), box(box_) {
+        
+            for (const auto& st: style) {
+                if (st.second.IsOtherTags) {
+                    extra_tag_key=st.first;
+                }
+            }
+        }
+        
+        
+        PrimitiveBlockPtr process_block(PrimitiveBlockPtr in) {
+            
+            auto result = std::make_shared<PrimitiveBlock>(in->Index(),0);
+            copy_metadata(result, in);
+
+            for (auto e : in->Objects()) {
+                if(e->Type()==ElementType::Node) {
+                    auto pt = process_node(std::dynamic_pointer_cast<Node>(e));
+                    if (pt) {
+                        result->add(pt);
+                    }
+                } else if (e->Type()==ElementType::WayWithNodes) {
+                    auto geom = process_way(std::dynamic_pointer_cast<WayWithNodes>(e));
+                    if (geom) {
+                        result->add(geom);
+                    }
+                } else if (e->Type()==ElementType::Relation) {
+                    //pass;
+                } else {
+                    result->add(e);
+                }
+            }
+            return result;
+            
+        }
+                
+        ElementPtr process_node(std::shared_ptr<Node> nd) {
+            if (!nd) { return nullptr; }
+            if (!contains_point(box, nd->Lon(),nd->Lat())) {
+                return nullptr;
+            }
+            
+            std::vector<Tag> tgs; int64 ly;
+            
+            std::tie(tgs,ly) = filter_node_tags(style, nd->Tags(), extra_tag_key);
+            if (tgs.empty()) {
+                return nullptr;
+            }
+            
+            return std::make_shared<Point>(nd, tgs,ly,-1);
+        }
+    
+        ElementPtr process_way(std::shared_ptr<WayWithNodes> w) {
+            if (!w) { return nullptr; }
+            if (w->Refs().size()<2) { return nullptr; }
+            if (!overlaps(box, w->Bounds())) { return nullptr; }
+            
+            std::vector<Tag> tgs; bool ispoly; int64 zo, ly;
+            std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
+            if (!tgs.empty()) {
+                if (ispoly) {
+                    return std::make_shared<SimplePolygon>(w, tgs,zo,ly,-1);
+                } else {
+                    return std::make_shared<Linestring>(w, tgs,zo,ly,-1);
+                }
+            }
+            return nullptr;
+        }
+        
+    private:
+        style_info_map style;
+        bbox box;
+        std::string extra_tag_key;
+};
+
+
+
+
 
 PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, PrimitiveBlockPtr in) {
 
@@ -296,13 +357,53 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
     return result;
 }
 
+
+
+
+
+
+bbox get_bound(ElementPtr o) {
+    
+    auto gg = std::dynamic_pointer_cast<BaseGeometry>(o);
+    if (gg) {
+        return gg->Bounds();
+    }
+
+    return bbox{0,0,0,0};
+}
+
+
+size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf) {
+    if (!block || block->Objects().empty()) { return 0; }
+    size_t c=0;
+    for (auto o : block->Objects()) {
+        auto b = get_bound(o);
+        int64 q = quadtree::calculate(b.minx,b.miny,b.maxx,b.maxy,buf,maxdepth);
+        if (q!=o->Quadtree()) {
+            c++;
+            o->SetQuadtree(q);
+        }
+    }
+    return c;
+}
+
+
+
+
+
+
 class GeometryProcess : public BlockHandler {
     public:
-        GeometryProcess(const style_info_map& style_, const bbox& box_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
-            : style(style_), box(box_), recalc(recalc_), fmz(fmz_) {}
+        /*GeometryProcess(const style_info_map& style_, const bbox& box_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
+            : style(style_), box(box_),makegeometry(makegeometry_), recalc(recalc_), fmz(fmz_) {}*/
+            
+        GeometryProcess(std::shared_ptr<MakeGeometry> makegeometry_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
+            : makegeometry(makegeometry_), recalc(recalc_), fmz(fmz_) {}
+            
 
         virtual primblock_vec process(primblock_ptr bl) {
-            auto res = make_geometries(style,box,bl);
+            //auto res = make_geometries(style,box,bl);
+            auto res = makegeometry->process_block(bl);
             if (recalc) {
                 recalculate_quadtree(res, 18, fmz ? 0 : 0.05);
             }
@@ -313,14 +414,16 @@ class GeometryProcess : public BlockHandler {
         }
         virtual ~GeometryProcess() {}
     private:
-        style_info_map style;
-        bbox box;
+        //style_info_map style;
+        //bbox box;
+        std::shared_ptr<MakeGeometry> makegeometry;
         
         bool recalc;
         std::shared_ptr<FindMinZoom> fmz;
 };
 std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<FindMinZoom> fmz) {
-    return std::make_shared<GeometryProcess>(style,box,recalc,fmz);
+    auto mg=std::make_shared<MakeGeometry>(style,box);
+    return std::make_shared<GeometryProcess>(mg,recalc,fmz);
 }
 
     

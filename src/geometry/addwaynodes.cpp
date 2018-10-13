@@ -35,7 +35,7 @@ namespace geometry {
 
 
 
-class lonlatstore_impl : public lonlatstore {
+class LonLatStoreImpl : public LonLatStore {
     //typedef std::unordered_map<int64,lonlat> loctile;
     typedef std::pair<int64,lonlat> llp;
     typedef std::vector<llp> loctile;
@@ -58,8 +58,8 @@ class lonlatstore_impl : public lonlatstore {
 
 
     public:
-        lonlatstore_impl() {}
-
+        LonLatStoreImpl() {}
+        virtual ~LonLatStoreImpl() {}
         virtual void add_tile(PrimitiveBlockPtr block) {
 
             /*
@@ -109,12 +109,12 @@ class lonlatstore_impl : public lonlatstore {
         }
 };
 
-std::shared_ptr<lonlatstore> make_lonlatstore() {
-    return std::make_shared<lonlatstore_impl>();
+std::shared_ptr<LonLatStore> make_lonlatstore() {
+    return std::make_shared<LonLatStoreImpl>();
 }
 
 
-PrimitiveBlockPtr add_waynodes(std::shared_ptr<lonlatstore> lls, PrimitiveBlockPtr in_bl) {
+PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockPtr in_bl) {
     lls->add_tile(in_bl);
     auto out_bl = std::make_shared<PrimitiveBlock>(in_bl->Index(), in_bl->size());
     out_bl->SetQuadtree(in_bl->Quadtree());
