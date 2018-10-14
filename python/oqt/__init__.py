@@ -103,7 +103,7 @@ _oqt.set_logger(_logger)
 sortblocks = _oqt.sortblocks
 calcqts = _oqt.calcqts
 mergechanges = _oqt.mergechanges
-count = _oqt.count
+run_count = _oqt.run_count
 
 #_oqt.Node._Quadtree=_oqt.Node.Quadtree
 #_oqt.Node.Quadtree=property(lambda q: quadtree(q._Quadtree))

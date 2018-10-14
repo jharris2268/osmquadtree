@@ -17,9 +17,9 @@ highway_prio = {
     'motorway':8,'motorway_link':8}
 
 add_highway = {
-    'highway': oq.parenttag_spec('highway','parent_highway','highway',highway_prio),
-    'service': oq.parenttag_spec('highway','parent_service','service',{}),
-    'railway': oq.parenttag_spec('railway','parent_highway','highway',highway_prio),
+    'highway': oq.ParentTagSpec('highway','parent_highway','highway',highway_prio),
+    'service': oq.ParentTagSpec('highway','parent_service','service',{}),
+    'railway': oq.ParentTagSpec('railway','parent_highway','highway',highway_prio),
 }
 def has_mem(ct,k):
     for a,b,c,d in ct:
@@ -224,7 +224,7 @@ def read_blocks(prfx, box_in, lastdate=None, objflags=7, numchan=4):
     oq.read_blocks_merge_primitive(fns, result, locs, numchan=numchan, objflags=objflags)
     return tiles
 
-read_style = lambda stylefn: dict((t['Tag'], oq.style_info(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
+read_style = lambda stylefn: dict((t['Tag'], oq.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
 read_minzoom = lambda minzoomfn: [(int(a),b,c,int(d)) for a,b,c,d,e in (r[:5] for r in csv.reader(open(minzoomfn)) if len(r)>=5)]
 def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoomfn=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
     tiles={} if mergetiles else []
