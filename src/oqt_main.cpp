@@ -305,7 +305,8 @@ int main(int argc, char** argv) {
     int resp=0;
     if (operation == "count") {
         auto res = run_count(origfn, numchan,false, countgeom, countflags);
-        Logger::Message() << "\n"<<res.long_str();
+        if (!res) { return; }
+        Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "calcqts") {
         if (inmem) {
             run_calcqts_inmem(origfn, qtsfn, numchan, true);

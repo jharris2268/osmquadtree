@@ -29,7 +29,7 @@
 
 
 namespace oqt {
-Count run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {
+std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {
     
     
     auto& lg=Logger::Get();
@@ -37,28 +37,28 @@ Count run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, si
     std::ifstream infile(fn, std::ifstream::in | std::ifstream::binary);
     if (!infile.good()) {
         Logger::Message() << "failed to open " << fn;
-        return Count(0,false,false,false);
+        return nullptr;
     }
     bool change = EndsWith(fn, "pbfc");
     
-    Count result(0,tiles,geom,change);
+    auto result = std::make_shared<Count>(0,tiles,geom,change);
     
     
     size_t step = 14000000;
     size_t nexttot = step/2;
     
     
-    auto cb = [&result,&nexttot,&step](minimal::BlockPtr mb) {
+    auto cb = [result,&nexttot,&step](minimal::BlockPtr mb) {
         if (!mb) {
-            Logger::Progress(100) << "\r" << result.short_str();
+            Logger::Progress(100) << "\r" << result->short_str();
             return;
         }
-        size_t total = std::get<3>(result.summary());
+        size_t total = std::get<3>(result->summary());
         if (total > nexttot) {
-            Logger::Progress(mb->file_progress) << result.short_str();
+            Logger::Progress(mb->file_progress) << result->short_str();
             nexttot = total + step;
         }
-        result.add(mb->index, mb);
+        result->add(mb->index, mb);
     };
     
 
