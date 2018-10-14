@@ -69,7 +69,7 @@ ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> t
 typedef std::function<bool(std::vector<PrimitiveBlockPtr>)> external_callback;
 typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_py(const geometry::geometry_parameters& params, external_callback cb) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_py(const geometry::GeometryParameters& params, external_callback cb) {
     
     py::gil_scoped_release r;
     block_callback wrapped;
@@ -80,7 +80,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_py(const geometry::geome
     return std::make_pair(collect->total(), process_geometry(params, wrapped));
 }
     
-std::pair<size_t,geometry::mperrorvec> process_geometry_nothread_py(const geometry::geometry_parameters& params, external_callback callback) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_nothread_py(const geometry::GeometryParameters& params, external_callback callback) {
     
     py::gil_scoped_release r;
     block_callback wrapped;
@@ -90,7 +90,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_nothread_py(const geomet
     return std::make_pair(collect->total(), process_geometry_nothread(params, wrapped));
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks_py(const geometry::geometry_parameters& params, external_callback callback) {
+std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks_py(const geometry::GeometryParameters& params, external_callback callback) {
     py::gil_scoped_release r;
 
     block_callback wrapped;
@@ -100,9 +100,9 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks_py(const geom
     return std::make_pair(collect->total(), process_geometry_sortblocks(params, wrapped));
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread_py(const geometry::geometry_parameters& params,
+std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread_py(const geometry::GeometryParameters& params,
     external_callback callback,
-    std::function<void(std::shared_ptr<geometry::csv_block>)> csvblock_callback) {
+    std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
 
     py::gil_scoped_release r;
     
@@ -121,7 +121,7 @@ PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
 
 std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec_py(
     std::vector<PrimitiveBlockPtr> blocks,
-    const geometry::geometry_parameters& params,
+    const geometry::GeometryParameters& params,
     external_callback callback) {
 
     py::gil_scoped_release r;
@@ -256,25 +256,25 @@ void geometry_defs(py::module& m) {
         .def_readonly("y", &geometry::xy::y)
         .def_property_readonly("transform", [](const geometry::xy& ll) { return geometry::inverse_transform(ll.x,ll.y); })
     ;
-    py::class_<geometry::style_info>(m,"style_info")
+    py::class_<geometry::StyleInfo>(m,"StyleInfo")
         .def(py::init<bool,bool,bool,bool,bool>(),py::arg("IsFeature"),py::arg("IsArea"),py::arg("IsWay"),py::arg("IsNode"),py::arg("IsOtherTags"))
-        .def_readwrite("IsFeature",&geometry::style_info::IsFeature)
-        .def_readwrite("IsNode",&geometry::style_info::IsNode)
-        .def_readwrite("IsWay",&geometry::style_info::IsWay)
-        .def_readwrite("IsArea",&geometry::style_info::IsArea)
-        .def_readwrite("OnlyArea",&geometry::style_info::OnlyArea)
-        .def_readwrite("IsOtherTags", &geometry::style_info::IsOtherTags)
-        .def_readwrite("ValueList", &geometry::style_info::ValueList)
-        .def("addValue", [](geometry::style_info& s, std::string v) { s.ValueList.insert(v); })
-        .def("removeValue", [](geometry::style_info& s, std::string v) { s.ValueList.erase(v); })
+        .def_readwrite("IsFeature",&geometry::StyleInfo::IsFeature)
+        .def_readwrite("IsNode",&geometry::StyleInfo::IsNode)
+        .def_readwrite("IsWay",&geometry::StyleInfo::IsWay)
+        .def_readwrite("IsArea",&geometry::StyleInfo::IsArea)
+        .def_readwrite("OnlyArea",&geometry::StyleInfo::OnlyArea)
+        .def_readwrite("IsOtherTags", &geometry::StyleInfo::IsOtherTags)
+        .def_readwrite("ValueList", &geometry::StyleInfo::ValueList)
+        .def("addValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.insert(v); })
+        .def("removeValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.erase(v); })
     ;
 
-    py::class_<geometry::parenttag_spec>(m,"parenttag_spec")
+    py::class_<geometry::ParentTagSpec>(m,"ParentTagSpec")
         .def(py::init<std::string,std::string,std::string,std::map<std::string,int>>())
-        .def_readwrite("node_tag", &geometry::parenttag_spec::node_tag)
-        .def_readwrite("out_tag", &geometry::parenttag_spec::out_tag)
-        .def_readwrite("way_tag", &geometry::parenttag_spec::way_tag)
-        .def_readwrite("priority", &geometry::parenttag_spec::priority)
+        .def_readwrite("node_tag", &geometry::ParentTagSpec::node_tag)
+        .def_readwrite("out_tag", &geometry::ParentTagSpec::out_tag)
+        .def_readwrite("way_tag", &geometry::ParentTagSpec::way_tag)
+        .def_readwrite("priority", &geometry::ParentTagSpec::priority)
     ;
 
     py::class_<geometry::Ring::Part>(m,"RingPart")
@@ -299,15 +299,15 @@ void geometry_defs(py::module& m) {
     m.def("unpack_geometry_primitiveblock", &geometry::unpack_geometry_primitiveblock);
 
     
-    py::class_<geometry::csv_block, std::shared_ptr<geometry::csv_block>>(m,"csv_block")
-        .def_readonly("points", &geometry::csv_block::points)
-        .def_readonly("lines", &geometry::csv_block::lines)
-        .def_readonly("polygons", &geometry::csv_block::polygons)
+    py::class_<geometry::CsvBlock, std::shared_ptr<geometry::CsvBlock>>(m,"CsvBlock")
+        .def_readonly("points", &geometry::CsvBlock::points)
+        .def_readonly("lines", &geometry::CsvBlock::lines)
+        .def_readonly("polygons", &geometry::CsvBlock::polygons)
     ;
-    py::class_<geometry::csv_rows>(m, "csv_rows")
-        .def("__getitem__", &geometry::csv_rows::at)
-        .def("__len__", &geometry::csv_rows::size)
-        .def("data", [](const geometry::csv_rows& c) { return py::bytes(c.data); })
+    py::class_<geometry::CsvRows>(m, "CsvRows")
+        .def("__getitem__", &geometry::CsvRows::at)
+        .def("__len__", &geometry::CsvRows::size)
+        .def("data", [](const geometry::CsvRows& c) { return py::bytes(c.data_blob()); })
     ;
     
     py::class_<geometry::FindMinZoom, std::shared_ptr<geometry::FindMinZoom>>(m,"FindMinZoom")
@@ -336,26 +336,26 @@ void geometry_defs(py::module& m) {
     m.def("convert_packed_tags_to_json", &geometry::convert_packed_tags_to_json);
 
 
-    py::class_<geometry::geometry_parameters>(m, "geometry_parameters")
+    py::class_<geometry::GeometryParameters>(m, "geometry_parameters")
         .def(py::init<>())
-        .def_readwrite("filenames", &geometry::geometry_parameters::filenames)
+        .def_readwrite("filenames", &geometry::GeometryParameters::filenames)
         //.def_readwrite("callback", &geometry_parameters::callback)
-        .def_readwrite("locs", &geometry::geometry_parameters::locs)
-        .def_readwrite("numchan", &geometry::geometry_parameters::numchan)
-        .def_readwrite("numblocks", &geometry::geometry_parameters::numblocks)
-        .def_readwrite("style", &geometry::geometry_parameters::style)
-        .def_readwrite("box", &geometry::geometry_parameters::box)
-        .def_readwrite("apt_spec", &geometry::geometry_parameters::apt_spec)
-        .def_readwrite("add_rels", &geometry::geometry_parameters::add_rels)
-        .def_readwrite("add_mps", &geometry::geometry_parameters::add_mps)
-        .def_readwrite("recalcqts", &geometry::geometry_parameters::recalcqts)
-        .def_readwrite("findmz", &geometry::geometry_parameters::findmz)
-        .def_readwrite("outfn", &geometry::geometry_parameters::outfn)
-        .def_readwrite("indexed", &geometry::geometry_parameters::indexed)
-        .def_readwrite("connstring", &geometry::geometry_parameters::connstring)
-        .def_readwrite("tableprfx", &geometry::geometry_parameters::tableprfx)
-        .def_readwrite("coltags", &geometry::geometry_parameters::coltags)
-        .def_readwrite("groups", &geometry::geometry_parameters::groups)
+        .def_readwrite("locs", &geometry::GeometryParameters::locs)
+        .def_readwrite("numchan", &geometry::GeometryParameters::numchan)
+        .def_readwrite("numblocks", &geometry::GeometryParameters::numblocks)
+        .def_readwrite("style", &geometry::GeometryParameters::style)
+        .def_readwrite("box", &geometry::GeometryParameters::box)
+        .def_readwrite("apt_spec", &geometry::GeometryParameters::apt_spec)
+        .def_readwrite("add_rels", &geometry::GeometryParameters::add_rels)
+        .def_readwrite("add_mps", &geometry::GeometryParameters::add_mps)
+        .def_readwrite("recalcqts", &geometry::GeometryParameters::recalcqts)
+        .def_readwrite("findmz", &geometry::GeometryParameters::findmz)
+        .def_readwrite("outfn", &geometry::GeometryParameters::outfn)
+        .def_readwrite("indexed", &geometry::GeometryParameters::indexed)
+        .def_readwrite("connstring", &geometry::GeometryParameters::connstring)
+        .def_readwrite("tableprfx", &geometry::GeometryParameters::tableprfx)
+        .def_readwrite("coltags", &geometry::GeometryParameters::coltags)
+        .def_readwrite("groups", &geometry::GeometryParameters::groups)
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;
 
@@ -425,8 +425,8 @@ void geometry_defs(py::module& m) {
     ;
     m.def("make_postgiswriter", &geometry::make_postgiswriter);
     
-    py::class_<geometry::pack_csvblocks, std::shared_ptr<geometry::pack_csvblocks>>(m, "pack_csvblocks")
-        .def("call", &geometry::pack_csvblocks::call)
+    py::class_<geometry::PackCsvBlocks, std::shared_ptr<geometry::PackCsvBlocks>>(m, "PackCsvBlocks")
+        .def("call", &geometry::PackCsvBlocks::call)
     ;
     m.def("make_pack_csvblocks", &geometry::make_pack_csvblocks);
     

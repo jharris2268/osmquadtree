@@ -129,7 +129,7 @@ class BlobStoreFileSplit : public BlobStore {
             
             for (size_t i=0; i < convs.size(); i++) {
                 auto c = convs[i];
-                convs[i] = [prog_factor, c, &kk](std::shared_ptr<keyedblob> kb) {
+                convs[i] = [prog_factor, c, &kk](std::shared_ptr<KeyedBlob> kb) {
                     if (kb) {
                         try {
                             kb->file_progress = kk.at(kb->key);
@@ -196,8 +196,8 @@ std::shared_ptr<BlobStore> make_blobstore_filesplit(std::string tempfn, int64 sp
 
 
 
-std::function<void(std::shared_ptr<keyedblob>)> make_conv_keyedblob_primblock(primitiveblock_callback oo) {
-    return [oo](std::shared_ptr<keyedblob> kk) {
+std::function<void(std::shared_ptr<KeyedBlob>)> make_conv_keyedblob_primblock(primitiveblock_callback oo) {
+    return [oo](std::shared_ptr<KeyedBlob> kk) {
         if (!kk) { return oo(nullptr); }
         
         PrimitiveBlockPtr res = std::make_shared<PrimitiveBlock>(kk->key);
@@ -234,9 +234,9 @@ class TempObjsBlobstore: public TempObjs {
         virtual void read(std::vector<primitiveblock_callback> outs) {
                         
             
-            std::vector<std::function<void(std::shared_ptr<keyedblob> kk)>> convs;
+            std::vector<std::function<void(std::shared_ptr<KeyedBlob> kk)>> convs;
             for (auto oo:  outs) {
-                convs.push_back(threaded_callback<keyedblob>::make(make_conv_keyedblob_primblock(oo)));
+                convs.push_back(threaded_callback<KeyedBlob>::make(make_conv_keyedblob_primblock(oo)));
             }
             blobstore->read(convs);
         }

@@ -86,9 +86,9 @@ class IdSetFilterSet : public IdSetFilter {
         
 };
 
-class vecbool_set {
+class VecBoolSet {
     public:
-        vecbool_set(int64 max) : count(0) { 
+        VecBoolSet(int64 max) : count(0) { 
             vec.resize(max+1);
         }
         
@@ -151,9 +151,9 @@ class IdSetFilterVec : public IdSetFilter {
             if (ty==ElementType::Relation) { relations.insert(id); }
         }
     private:
-        vecbool_set nodes;
-        vecbool_set ways;
-        vecbool_set relations;
+        VecBoolSet nodes;
+        VecBoolSet ways;
+        VecBoolSet relations;
 };
 
 
@@ -395,9 +395,9 @@ class FilterRels {
 };
 
 
-class progress {
+class Progress {
     public:
-        progress(primitiveblock_callback cb_) : i(0), nt(1), cb(cb_) {}
+        Progress(primitiveblock_callback cb_) : i(0), nt(1), cb(cb_) {}
         
         void call(PrimitiveBlockPtr bl) {
             if (!bl) {
@@ -423,7 +423,7 @@ class progress {
 };
 
 primitiveblock_callback log_progress(primitiveblock_callback cb) {
-    auto pg = std::make_shared<progress>(cb);
+    auto pg = std::make_shared<Progress>(cb);
     
     return [pg](PrimitiveBlockPtr bl) { pg->call(bl); };
 }

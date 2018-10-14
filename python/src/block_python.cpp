@@ -405,7 +405,7 @@ void block_defs(py::module& m) {
 
     ;
     py::class_<minimal::Node>(m, "MinimalNode")
-        .def_readonly("id", &minimal::Node::id)
+        .def_property_readonly("id", [](const minimal::Node& mn) { return mn.id; })
         .def_property_readonly("timestamp", [](const minimal::Node& mn) { return mn.timestamp; })
         .def_property_readonly("version", [](const minimal::Node& mn) { return mn.version; })
         .def_property_readonly("changetype", [](const minimal::Node& mn) { return mn.changetype; })
@@ -416,7 +416,7 @@ void block_defs(py::module& m) {
     ;
 
     py::class_<minimal::Way>(m, "MinimalWay")
-        .def_readonly("id", &minimal::Way::id)
+        .def_property_readonly("id", [](const minimal::Way& mn) { return mn.id; })
         .def_property_readonly("timestamp", [](const minimal::Way& mn) { return mn.timestamp; })
         .def_property_readonly("version", [](const minimal::Way& mn) { return mn.version; })
         .def_property_readonly("changetype", [](const minimal::Way& mn) { return mn.changetype; })
@@ -425,7 +425,7 @@ void block_defs(py::module& m) {
     ;
 
     py::class_<minimal::Relation>(m, "MinimalRelation")
-        .def_readonly("id", &minimal::Relation::id)
+        .def_property_readonly("id", [](const minimal::Relation& mn) { return mn.id; })
         .def_property_readonly("timestamp", [](const minimal::Relation& mn) { return mn.timestamp; })
         .def_property_readonly("version", [](const minimal::Relation& mn) { return mn.version; })
         .def_property_readonly("changetype", [](const minimal::Relation& mn) { return mn.changetype; })

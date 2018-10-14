@@ -196,89 +196,16 @@ void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, 
 }
 
 
-py::object count_blocks_call(const std::string& fn, size_t numchan, size_t objflags) {
+std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, size_t objflags) {
 
     
     Logger::Get().reset_timing();
-    py::gil_scoped_release release;
+    py::gil_scoped_release r;
     auto res = run_count(fn,numchan,true,true,objflags);
-    //return py::cast(res.long_str());
-    //return res.long_str();
-    py::dict res_dict;
-    res_dict["index"]=py::cast(res.index);
-    res_dict["numblocks"]=py::cast(res.numblocks);
-    res_dict["progress"]=py::cast(res.progress);
-    res_dict["uncomp"]=py::cast(res.uncomp);
-    res_dict["long_str"]=py::cast(res.long_str());
-
-    py::list allnn;
-    for (auto nn: res.nn) {
-        py::dict nodes;
-        nodes["min_id"]=py::cast(nn.min_id);
-        nodes["max_id"]=py::cast(nn.max_id);
-        nodes["num_objects"]=py::cast(nn.num_objects);
-        nodes["min_timestamp"]=py::cast(nn.min_timestamp);
-        nodes["max_timestamp"]=py::cast(nn.max_timestamp);
-        nodes["minlon"]=py::cast(nn.minlon);
-        nodes["minlat"]=py::cast(nn.minlat);
-        nodes["maxlon"]=py::cast(nn.maxlon);
-        nodes["maxlat"]=py::cast(nn.maxlat);
-        allnn.append(nodes);
-    }
-
-
-    py::list allww;
-    for (auto ww: res.ww) {
-        py::dict ways;
-        ways["min_id"]=py::cast(ww.min_id);
-        ways["max_id"]=py::cast(ww.max_id);
-        ways["num_objects"]=py::cast(ww.num_objects);
-        ways["min_timestamp"]=py::cast(ww.min_timestamp);
-        ways["max_timestamp"]=py::cast(ww.max_timestamp);
-        ways["num_refs"]=py::cast(ww.num_refs);
-        ways["min_ref"]=py::cast(ww.min_ref);
-        ways["max_ref"]=py::cast(ww.max_ref);
-        ways["max_num_refs"]=py::cast(ww.max_num_refs);
-        allww.append(ways);
-    }
-
-    py::list allrr;
-    for (auto rr: res.rr) {
-        py::dict relations;
-        relations["min_id"]=py::cast(rr.min_id);
-        relations["max_id"]=py::cast(rr.max_id);
-        relations["num_objects"]=py::cast(rr.num_objects);
-        relations["min_timestamp"]=py::cast(rr.min_timestamp);
-        relations["max_timestamp"]=py::cast(rr.max_timestamp);
-        relations["num_nodes"]=py::cast(rr.num_nodes);
-        relations["num_ways"]=py::cast(rr.num_ways);
-        relations["num_rels"]=py::cast(rr.num_rels);
-        relations["num_empties"]=py::cast(rr.num_empties);
-        relations["max_len"]=py::cast(rr.max_len);
-        allrr.append(relations);
-    }
-    
-    py::list allgg;
-    for (auto gg: res.gg) {
-        py::dict geoms;
-        geoms["min_id"]=py::cast(gg.min_id);
-        geoms["max_id"]=py::cast(gg.max_id);
-        geoms["num_objects"]=py::cast(gg.num_objects);
-        geoms["min_timestamp"]=py::cast(gg.min_timestamp);
-        geoms["max_timestamp"]=py::cast(gg.max_timestamp);
-        allgg.append(geoms);
-    }
-    
-    res_dict["nodes"]=allnn;
-    res_dict["ways"]=allww;
-    res_dict["relations"]=allrr;
-    res_dict["geometries"]=allgg;
-    
-    res_dict["tiles"] = py::cast(res.tiles);
 
     Logger::Get().timing_messages();
 
-    return res_dict;
+    return res;
 }
 
 struct objdiff {
@@ -470,7 +397,60 @@ void core_defs(py::module& m) {
     m.def("set_logger", &Logger::Set);
 
 
-    m.def("count", &count_blocks_call, "count pbf file contents",
+    py::class_<CountElement>(m,"CountElement")
+        .def_readonly("min_id", &CountElement::min_id)
+        .def_readonly("max_id", &CountElement::max_id)
+        .def_readonly("num_objects", &CountElement::num_objects)
+        .def_readonly("min_timestamp", &CountElement::min_timestamp)
+        .def_readonly("max_timestamp", &CountElement::max_timestamp)
+    ;
+    
+    py::class_<CountNode, CountElement>(m,"CountNode")
+        .def_readonly("min_lon", &CountNode::min_lon)
+        .def_readonly("max_lon", &CountNode::max_lon)
+        .def_readonly("min_lat", &CountNode::min_lat)
+        .def_readonly("max_lat", &CountNode::max_lat)
+    ;
+    
+    py::class_<CountWay, CountElement>(m,"CountWay")
+        .def_readonly("num_refs", &CountWay::min_id)
+        .def_readonly("min_ref", &CountWay::min_ref)
+        .def_readonly("max_ref", &CountWay::max_ref)
+        .def_readonly("max_num_refs", &CountWay::max_num_refs)
+    ;
+    
+    py::class_<CountRelation, CountElement>(m,"CountRelation")
+        .def_readonly("num_nodes", &CountRelation::num_nodes)
+        .def_readonly("num_ways", &CountRelation::num_ways)
+        .def_readonly("num_rels", &CountRelation::num_rels)
+        .def_readonly("num_empties", &CountRelation::num_empties)
+        .def_readonly("max_len", &CountRelation::max_len)
+    ;
+    
+   py::class_<BlockSummary>(m,"BlockSummary")
+       .def_readonly("idx", &BlockSummary::idx)
+       .def_readonly("quadtree", &BlockSummary::quadtree)
+       .def_readonly("len", &BlockSummary::len)
+       .def_readonly("num_nodes", &BlockSummary::num_nodes)
+       .def_readonly("num_ways", &BlockSummary::num_ways)
+       .def_readonly("num_relations", &BlockSummary::num_relations)
+       .def_readonly("num_geometries", &BlockSummary::num_geometries)
+    ;
+    
+
+    py::class_<Count, std::shared_ptr<Count>>(m, "Count")
+        .def("nodes", &Count::nodes)
+        .def("ways", &Count::ways)
+        .def("relations", &Count::relations)
+        .def("geometries", &Count::geometries)
+        .def("blocks", &Count::blocks)
+        .def("summary", &Count::summary)
+        .def("short_str", &Count::short_str)
+        .def("short_str", &Count::long_str)
+    ;
+
+
+    m.def("run_count", &run_count_py, "count pbf file contents",
          py::arg("fn"),
          py::arg("numchan")=4,
          py::arg("objflags")=7
@@ -539,14 +519,7 @@ void core_defs(py::module& m) {
             //return py::make_tuple(q.children[0],q.children[1],q.children[2],q.children[3]);})
     ;
     
-    py::class_<count_tile>(m,"count_tile")
-        .def_readonly("idx", &count_tile::idx)
-        .def_readonly("quadtree", &count_tile::quadtree)
-        .def_readonly("len", &count_tile::len)
-        .def_readonly("num_nodes", &count_tile::num_nodes)
-        .def_readonly("num_ways", &count_tile::num_ways)
-        .def_readonly("num_relations", &count_tile::num_relations)
-    ;
+
     
     py::class_<objdiff>(m, "objdiff")
         .def_readonly("left_idx", &objdiff::left_idx)

@@ -110,7 +110,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
     
     
     auto nq = node_qts();
-    int64 nql = nq->ref_range().second;
+    size_t nql = nq->ref_range().second;
     
     auto calc_node_qts = threaded_callback<minimal::Block>::make([rels,out,buffer,max_depth](minimal::BlockPtr nds) {
         if (!nds) { return; }

@@ -28,44 +28,11 @@
 namespace oqt {
     
 namespace minimal {
-    
-    
-struct Node {
-    int64 id;
-    
-    size_t changetype : 4;
-    size_t version : 24;
-    size_t timestamp : 36;
-    int64 quadtree;
-    
-    int32 lon;
-    int32 lat;
-};
-    
-struct Way {
-    int64 id;
-    
-    size_t changetype : 4;
-    size_t version : 24;
-    size_t timestamp : 36;
-    int64 quadtree;
-    
-    std::string refs_data;
-};
 
-struct Relation {
-    int64 id;
-    
-    size_t changetype : 4;
-    size_t version : 24;
-    size_t timestamp : 36;
-    int64 quadtree;
-    
-    std::string tys_data;
-    std::string refs_data;
-};
 
-struct Geometry {
+struct Element {
+    Element() : ty(0),id(0),changetype(0),version(0),timestamp(0),quadtree(0) {}
+    
     size_t ty : 8;
     size_t id : 56;
     
@@ -74,6 +41,32 @@ struct Geometry {
     size_t timestamp : 36;
     int64 quadtree;
 };
+    
+struct Node : Element {
+    
+    Node() : Element(), lon(0), lat(0) {}
+    
+    int32 lon;
+    int32 lat;
+};
+    
+struct Way : Element {
+    
+    Way() : Element(), refs_data("") {}
+    
+    std::string refs_data;
+};
+
+struct Relation : Element {
+    
+    Relation() : Element(), tys_data(""), refs_data("") {}
+    
+    std::string tys_data;
+    std::string refs_data;
+};
+
+struct Geometry : Element {};
+
 
 struct Block {
     int64 index;

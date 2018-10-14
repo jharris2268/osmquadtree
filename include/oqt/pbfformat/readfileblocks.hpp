@@ -239,12 +239,12 @@ void read_blocks_split_qtvec(
 
 namespace readpbffile_detail {
     template <class BlockType>
-    std::shared_ptr<BlockType> merge_keyedblob(std::shared_ptr<keyedblob>, size_t, IdSetPtr);
+    std::shared_ptr<BlockType> merge_keyedblob(std::shared_ptr<KeyedBlob>, size_t, IdSetPtr);
 
 
     template <>
     inline PrimitiveBlockPtr merge_keyedblob<PrimitiveBlock>(
-        std::shared_ptr<keyedblob> bl,
+        std::shared_ptr<KeyedBlob> bl,
         size_t objflags, IdSetPtr ids) {
         
         std::vector<PrimitiveBlockPtr> changes;
@@ -270,7 +270,7 @@ namespace readpbffile_detail {
 
     template <>
     inline minimal::BlockPtr merge_keyedblob<minimal::Block>(
-        std::shared_ptr<keyedblob> bl,
+        std::shared_ptr<KeyedBlob> bl,
         size_t objflags, IdSetPtr ids) {
         
         std::vector<minimal::BlockPtr> changes;
@@ -310,8 +310,8 @@ void read_blocks_split_merge(
 
 
 
-    auto convblocks = wrap_callbacks<keyedblob, BlockType>(callbacks, 
-        [objflags, filter](std::shared_ptr<keyedblob> kb) {
+    auto convblocks = wrap_callbacks<KeyedBlob, BlockType>(callbacks, 
+        [objflags, filter](std::shared_ptr<KeyedBlob> kb) {
             return readpbffile_detail::merge_keyedblob<BlockType>(kb, objflags, filter);
         });
 
@@ -351,7 +351,7 @@ void read_blocks_merge_nothread(
     
     
     
-    auto cb = [filter,objflags,callback](std::shared_ptr<keyedblob> kb) {
+    auto cb = [filter,objflags,callback](std::shared_ptr<KeyedBlob> kb) {
         if (kb) {
             callback(readpbffile_detail::merge_keyedblob<BlockType>(kb, objflags, filter));
         } else {

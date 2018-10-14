@@ -54,9 +54,9 @@ void call_all(block_callback callback, primblock_vec bls) {
     }
 }
 
-class blockhandler_callback_time {
+class BlockhandlerCallbackTime {
     public:
-        blockhandler_callback_time(const std::string& name_, std::shared_ptr<BlockHandler> handler_, block_callback callback_)
+        BlockhandlerCallbackTime(const std::string& name_, std::shared_ptr<BlockHandler> handler_, block_callback callback_)
             : name(name_), handler(handler_), callback(callback_), wait(0), exec(0), cbb(0) {}
         
         void call(PrimitiveBlockPtr bl) {
@@ -79,7 +79,7 @@ class blockhandler_callback_time {
         }
         
         static block_callback make(const std::string& name, std::shared_ptr<BlockHandler> handler, block_callback callback) {
-            auto bct = std::make_shared<blockhandler_callback_time>(name,handler,callback);
+            auto bct = std::make_shared<BlockhandlerCallbackTime>(name,handler,callback);
             return [bct](PrimitiveBlockPtr bl) {
                 bct->call(bl);
             };
@@ -133,7 +133,7 @@ block_callback process_geometry_blocks(
         }
        
         makegeoms[i]  =threaded_callback<PrimitiveBlock>::make(
-            blockhandler_callback_time::make("MakeGeometries["+std::to_string(i)+"]",
+            BlockhandlerCallbackTime::make("MakeGeometries["+std::to_string(i)+"]",
                 make_geometryprocess(style,box,recalcqts,findmz),
                 finalcb
             )
@@ -160,7 +160,7 @@ block_callback process_geometry_blocks(
             }
         }
         make_mps = threaded_callback<PrimitiveBlock>::make(
-            blockhandler_callback_time::make("MultiPolygons", //blockhandler_callback(
+            BlockhandlerCallbackTime::make("MultiPolygons", //blockhandler_callback(
                 make_multipolygons(errs,style,box,bounds,mps),
                 makegeoms_split
             )
@@ -193,7 +193,7 @@ block_callback process_geometry_blocks(
         std::cout <<"})" <<std::endl;
         
         reltags = threaded_callback<PrimitiveBlock>::make(
-            blockhandler_callback_time::make("HandleRelations", //blockhandler_callback(
+            BlockhandlerCallbackTime::make("HandleRelations", //blockhandler_callback(
                 make_handlerelations(add_bounds, add_admin_levels, routes),
                 make_mps
             )
@@ -203,7 +203,7 @@ block_callback process_geometry_blocks(
     block_callback apt = reltags;
     if (!apt_spec.empty()) {
         apt = threaded_callback<PrimitiveBlock>::make(
-            blockhandler_callback_time::make("AddParentTags", //blockhandler_callback(
+            BlockhandlerCallbackTime::make("AddParentTags", //blockhandler_callback(
                 make_addparenttags(apt_spec),
                 reltags
             )
@@ -383,12 +383,12 @@ block_callback pack_and_write_callback_nothread(
     
 
 
-block_callback make_pack_csvblocks_callback(block_callback cb, std::function<void(std::shared_ptr<csv_block>)> wr, pack_csvblocks::tagspec tags,bool with_header) {
+block_callback make_pack_csvblocks_callback(block_callback cb, std::function<void(std::shared_ptr<CsvBlock>)> wr, PackCsvBlocks::tagspec tags,bool with_header) {
     auto pc = make_pack_csvblocks(tags,with_header);
     return [cb, wr, pc](PrimitiveBlockPtr bl) {
         if (!bl) {
             //std::cout << "pack_csvblocks done" << std::endl;
-            wr(std::shared_ptr<csv_block>());
+            wr(std::shared_ptr<CsvBlock>());
             if (cb) {
                 cb(bl);
             }
@@ -408,11 +408,11 @@ block_callback make_pack_csvblocks_callback(block_callback cb, std::function<voi
 std::vector<block_callback> write_to_postgis_callback(
     std::vector<block_callback> callbacks, size_t numchan,
     const std::string& connection_string, const std::string& table_prfx,
-    const pack_csvblocks::tagspec& coltags,
+    const PackCsvBlocks::tagspec& coltags,
     bool with_header) {
         
     
-    auto writers = multi_threaded_callback<csv_block>::make(make_postgiswriter_callback(connection_string, table_prfx, with_header), numchan);
+    auto writers = multi_threaded_callback<CsvBlock>::make(make_postgiswriter_callback(connection_string, table_prfx, with_header), numchan);
     
     std::vector<block_callback> res(numchan);
     
@@ -433,7 +433,7 @@ std::vector<block_callback> write_to_postgis_callback(
 block_callback write_to_postgis_callback_nothread(
     block_callback callback,
     const std::string& connection_string, const std::string& table_prfx,
-    const pack_csvblocks::tagspec& coltags,
+    const PackCsvBlocks::tagspec& coltags,
     bool with_header) {
         
     
@@ -441,9 +441,9 @@ block_callback write_to_postgis_callback_nothread(
     return make_pack_csvblocks_callback(callback,writer,coltags,with_header);
 }
     
-class geom_progress {
+class GeomProgress {
     public:
-        geom_progress(const src_locs_map& locs) : nb(0), npt(0), nln(0), nsp(0), ncp(0), maxqt(0) {
+        GeomProgress(const src_locs_map& locs) : nb(0), npt(0), nln(0), nsp(0), ncp(0), maxqt(0) {
             double p=100.0 / locs.size(); size_t i=0;
             for (const auto& l: locs) {
                 progs[l.first] = p*i;
@@ -482,14 +482,14 @@ class geom_progress {
 };
 
     
-//std::function<void(std::shared_ptr<csv_block>)> csvblock_callback;
+//std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback;
 
-mperrorvec process_geometry(const geometry_parameters& params, block_callback wrapped) {
+mperrorvec process_geometry(const GeometryParameters& params, block_callback wrapped) {
 
     mperrorvec errors_res;
     
     if (!wrapped) {
-        auto pp = std::make_shared<geom_progress>(params.locs);
+        auto pp = std::make_shared<GeomProgress>(params.locs);
         wrapped = [pp](PrimitiveBlockPtr bl) { pp->call(bl); };
     }
     std::vector<block_callback> writer = multi_threaded_callback<PrimitiveBlock>::make(wrapped,params.numchan);
@@ -519,7 +519,7 @@ mperrorvec process_geometry(const geometry_parameters& params, block_callback wr
 
 
 
-mperrorvec process_geometry_sortblocks(const geometry_parameters& params, block_callback cb) {
+mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_callback cb) {
 
 
     
@@ -561,7 +561,7 @@ mperrorvec process_geometry_sortblocks(const geometry_parameters& params, block_
 
 
 
-mperrorvec process_geometry_nothread(const geometry_parameters& params, block_callback callback) {
+mperrorvec process_geometry_nothread(const GeometryParameters& params, block_callback callback) {
 
 
     
@@ -592,9 +592,9 @@ mperrorvec process_geometry_nothread(const geometry_parameters& params, block_ca
 }
 
 
-mperrorvec process_geometry_csvcallback_nothread(const geometry_parameters& params,
+mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
     block_callback callback,
-    std::function<void(std::shared_ptr<csv_block>)> csvblock_callback) {
+    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback) {
         
     
     mperrorvec errors_res;
@@ -618,7 +618,7 @@ mperrorvec process_geometry_csvcallback_nothread(const geometry_parameters& para
 
 mperrorvec process_geometry_from_vec(
     std::vector<PrimitiveBlockPtr> blocks,
-    const geometry_parameters& params,
+    const GeometryParameters& params,
     block_callback callback) {
 
 

@@ -35,7 +35,7 @@ class TempObjs {
         virtual ~TempObjs() {}
 };
 
-typedef std::function<void(std::shared_ptr<keyedblob>)> keyedblob_callback;
+typedef std::function<void(std::shared_ptr<KeyedBlob>)> keyedblob_callback;
 
 class BlobStore {
     public:

@@ -80,7 +80,7 @@ std::shared_ptr<qtvec> read_as_qtvec(
 }
 
 PrimitiveBlockPtr merge_as_primitiveblock(
-    std::shared_ptr<keyedblob> bl,
+    std::shared_ptr<KeyedBlob> bl,
     size_t objflags, IdSetPtr ids) {
     
     std::vector<PrimitiveBlockPtr> changes;
@@ -107,7 +107,7 @@ PrimitiveBlockPtr merge_as_primitiveblock(
 }
 
 minimal::BlockPtr merge_as_minimalblock(
-    std::shared_ptr<keyedblob> bl,
+    std::shared_ptr<KeyedBlob> bl,
     size_t objflags, IdSetPtr ids) {
     
     std::vector<minimal::BlockPtr> changes;

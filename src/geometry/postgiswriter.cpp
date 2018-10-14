@@ -161,7 +161,7 @@ std::string as_hex(const std::string& str) {
 }
 
 
-void csv_rows::add(const std::string row) {
+void CsvRows::add(const std::string row) {
     if (poses.empty()) { poses.push_back(0); }
 
     data+=row;
@@ -169,7 +169,7 @@ void csv_rows::add(const std::string row) {
     poses.push_back(data.size());
 }
 
-std::string csv_rows::at(int i) {
+std::string CsvRows::at(int i) const {
     if (i<0) { i += size(); }
     if (i >= size()) { throw std::range_error("out of range"); }
     size_t p = poses[i];
@@ -177,7 +177,7 @@ std::string csv_rows::at(int i) {
     return data.substr(p,q-p);
 }
 
-int csv_rows::size() {
+int CsvRows::size() const {
     if (poses.empty()) { return 0; }
     return poses.size()-1;
 }
@@ -186,10 +186,10 @@ int csv_rows::size() {
 
 
 
-class pack_csvblocks_impl : public pack_csvblocks {
+class PackCsvBlocksImpl : public PackCsvBlocks {
     public:
-        pack_csvblocks_impl(
-            const pack_csvblocks::tagspec& tags, bool with_header_, bool asjson_) : with_header(with_header_), minzoom(false), other_tags(false), asjson(asjson_),layerint(false) {
+        PackCsvBlocksImpl(
+            const PackCsvBlocks::tagspec& tags, bool with_header_, bool asjson_) : with_header(with_header_), minzoom(false), other_tags(false), asjson(asjson_),layerint(false) {
                 
             std::stringstream point_ss, line_ss, poly_ss;
             if (with_header) {
@@ -264,7 +264,9 @@ class pack_csvblocks_impl : public pack_csvblocks {
             
         }
 
-        void add_to_csvblock(PrimitiveBlockPtr bl, std::shared_ptr<csv_block> res) {
+        virtual ~PackCsvBlocksImpl() {}
+
+        void add_to_csvblock(PrimitiveBlockPtr bl, std::shared_ptr<CsvBlock> res) {
             if (bl->size()==0) {
                 return;
             }
@@ -402,11 +404,11 @@ class pack_csvblocks_impl : public pack_csvblocks {
                 }
             }
         }
-        virtual ~pack_csvblocks_impl() {}
+       
         
-        std::shared_ptr<csv_block> call(PrimitiveBlockPtr block) {
+        std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr block) {
             if (!block) { return nullptr; }
-            auto res = std::make_shared<csv_block>();
+            auto res = std::make_shared<CsvBlock>();
             add_to_csvblock(block,res);
             return res;
         }
@@ -427,8 +429,8 @@ class pack_csvblocks_impl : public pack_csvblocks {
         std::string poly_header;
 };
 
-std::shared_ptr<pack_csvblocks> make_pack_csvblocks(const pack_csvblocks::tagspec& tags, bool with_header) {
-    return std::make_shared<pack_csvblocks_impl>(tags, with_header,false);
+std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header) {
+    return std::make_shared<PackCsvBlocksImpl>(tags, with_header,false);
 }
 
 
@@ -455,15 +457,15 @@ class PostgisWriterImpl : public PostgisWriter {
             }
         }
         
-        virtual void call(std::shared_ptr<csv_block> bl) {
+        virtual void call(std::shared_ptr<CsvBlock> bl) {
             if (bl->points.size()>0) {
-                copy_func(table_prfx+"point", bl->points.data);
+                copy_func(table_prfx+"point", bl->points.data_blob());
             }
             if (bl->lines.size()>0) {
-                copy_func(table_prfx+"line", bl->lines.data);
+                copy_func(table_prfx+"line", bl->lines.data_blob());
             }
             if (bl->polygons.size()>0) {
-                copy_func(table_prfx+"polygon", bl->polygons.data);
+                copy_func(table_prfx+"polygon", bl->polygons.data_blob());
             }
             ii++;
             if ((ii % 17731)==0) {
@@ -548,13 +550,13 @@ std::shared_ptr<PostgisWriter> make_postgiswriter(
 }
     
         
-std::function<void(std::shared_ptr<csv_block>)> make_postgiswriter_callback(
+std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
             const std::string& connection_string,
             const std::string& table_prfx,
             bool with_header) {
             
     auto pw = make_postgiswriter(connection_string,table_prfx, with_header);
-    return [pw](std::shared_ptr<csv_block> bl) {
+    return [pw](std::shared_ptr<CsvBlock> bl) {
         if (!bl) {
             Logger::Message() << "PostgisWriter done";
             pw->finish();

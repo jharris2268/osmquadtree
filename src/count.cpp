@@ -29,7 +29,7 @@
 
 
 namespace oqt {
-count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {
+Count run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags) {
     
     
     auto& lg=Logger::Get();
@@ -37,11 +37,11 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
     std::ifstream infile(fn, std::ifstream::in | std::ifstream::binary);
     if (!infile.good()) {
         Logger::Message() << "failed to open " << fn;
-        return count_block(0,false,false,false);
+        return Count(0,false,false,false);
     }
     bool change = EndsWith(fn, "pbfc");
     
-    count_block result(0,tiles,geom,change);
+    Count result(0,tiles,geom,change);
     
     
     size_t step = 14000000;
@@ -53,9 +53,10 @@ count_block run_count(const std::string& fn, size_t numchan, bool tiles, bool ge
             Logger::Progress(100) << "\r" << result.short_str();
             return;
         }
-        if (result.total > nexttot) {
+        size_t total = std::get<3>(result.summary());
+        if (total > nexttot) {
             Logger::Progress(mb->file_progress) << result.short_str();
-            nexttot = result.total + step;
+            nexttot = total + step;
         }
         result.add(mb->index, mb);
     };

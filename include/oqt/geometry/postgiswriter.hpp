@@ -29,35 +29,43 @@ namespace geometry {
 
 
 
-struct csv_rows {
-    std::string data;
-    std::vector<size_t> poses;
+class CsvRows {
     
-    void add(const std::string row);
-    std::string at(int i);
-    int size();
+    public:
+        CsvRows() {}
+        
+        void add(const std::string row);
+        std::string at(int i) const;
+        int size() const;
+        
+        const std::string data_blob() const { return data; }
+        
+    private:
+        
+        std::string data;
+        std::vector<size_t> poses;
 };
 
-struct csv_block {
-    csv_rows points;
-    csv_rows lines;
-    csv_rows polygons;
+struct CsvBlock {
+    CsvRows points;
+    CsvRows lines;
+    CsvRows polygons;
 };
 
-class pack_csvblocks {
+class PackCsvBlocks {
     public:
         typedef std::vector<std::tuple<std::string,bool,bool,bool>> tagspec;
-        virtual std::shared_ptr<csv_block> call(PrimitiveBlockPtr bl) = 0;
-        virtual ~pack_csvblocks() {}
+        virtual std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr bl) = 0;
+        virtual ~PackCsvBlocks() {}
 };
 
-std::shared_ptr<pack_csvblocks> make_pack_csvblocks(const pack_csvblocks::tagspec& tags, bool with_header);
+std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header);
 
 class PostgisWriter {
     public:
         
         virtual void finish()=0;
-        virtual void call(std::shared_ptr<csv_block> bl)=0;
+        virtual void call(std::shared_ptr<CsvBlock> bl)=0;
         virtual ~PostgisWriter() {}
 };
 
@@ -66,7 +74,7 @@ std::shared_ptr<PostgisWriter> make_postgiswriter(
     const std::string& table_prfx,
     bool with_header);
 
-std::function<void(std::shared_ptr<csv_block>)> make_postgiswriter_callback(
+std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
     const std::string& connection_string,
     const std::string& table_prfx,
     bool with_header);

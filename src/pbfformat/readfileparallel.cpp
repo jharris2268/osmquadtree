@@ -42,7 +42,7 @@ namespace oqt {
 
 void read_some_split_locs_parallel_callback(
     const std::vector<std::string>& filenames,
-    std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
+    std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks,
     const src_locs_map& src_locs) {
     
     size_t index=0;
@@ -55,7 +55,7 @@ void read_some_split_locs_parallel_callback(
         
         try {
             
-            auto res = std::make_shared<keyedblob>();
+            auto res = std::make_shared<KeyedBlob>();
             
             res->idx = index;
             res->key=src.first;
@@ -79,14 +79,14 @@ void read_some_split_locs_parallel_callback(
         } catch (std::exception& ex) {
             Logger::Message() << "read_some_split_locs_parallel_callback failed at index " << index;
             for (auto& cl : callbacks) {
-                cl(std::shared_ptr<keyedblob>());
+                cl(std::shared_ptr<KeyedBlob>());
             }
             throw ex;
         }
         index++;
     }
     for (auto& cl : callbacks) {
-        cl(std::shared_ptr<keyedblob>());
+        cl(std::shared_ptr<KeyedBlob>());
     }
     return;
 }
@@ -131,7 +131,7 @@ bool cmp_tup(const X& l, const X& r) {
     return std::get<F0>(l)<std::get<F0>(r);
 }
 
-typedef std::vector<std::shared_ptr<keyedblob>> keyedblob_vec;
+typedef std::vector<std::shared_ptr<KeyedBlob>> keyedblob_vec;
 typedef std::shared_ptr<keyedblob_vec> keyedblob_vec_ptr;
 typedef std::function<void(keyedblob_vec_ptr)> keyedblob_vec_callback;
 
@@ -172,7 +172,7 @@ void read_some_split_buffered_keyed_int(
     
     size_t i=0;
     for (const auto& xx: locs) {
-        auto kk = std::make_shared<keyedblob>();
+        auto kk = std::make_shared<KeyedBlob>();
         kk->idx=i;
         kk->key=xx.first;
         
@@ -197,7 +197,7 @@ void read_some_split_buffered_keyed_int(
     
 size_t read_some_split_buffered_keyed_callback(
         const std::vector<std::string>& filenames,
-        std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
+        std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks,
         size_t index_offset, const src_locs_map& locs, bool finish_callbacks) {
     
     //std::map<std::pair<int64,int64>,std::shared_ptr<FileBlock>> data;
@@ -265,7 +265,7 @@ void rssbkca_call(const std::vector<std::string>& filenames,
 }
         
 void read_some_split_buffered_keyed_callback_all_pp(const std::vector<std::string>& filenames,
-        std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
+        std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks,
         const src_locs_map& locs, size_t numblocks) {
     
     
@@ -277,14 +277,14 @@ void read_some_split_buffered_keyed_callback_all_pp(const std::vector<std::strin
             ii++;
         }
     };
-    auto callcbs = threaded_callback<std::vector<std::shared_ptr<keyedblob>>>::make(callcbs_ff);
+    auto callcbs = threaded_callback<std::vector<std::shared_ptr<KeyedBlob>>>::make(callcbs_ff);
     rssbkca_call(filenames,callcbs,locs,numblocks,false);
     for (auto& cb: callbacks) { cb(nullptr); }
 }    
 
 
 void read_some_split_buffered_keyed_callback_all(const std::vector<std::string>& filenames,
-        std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks,
+        std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks,
         const src_locs_map& locs, size_t numblocks) {
 
     

@@ -108,7 +108,7 @@ std::tuple<PbfTag,PbfTag,PbfTag> readMinimalCommon(const std::string& data, T& o
 }
 
 void readMinimalNode(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
-    minimal::Node node{0,0,0,0,0,0,0};
+    minimal::Node node;
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = readMinimalCommon(data, node, skipinfo);
     
@@ -122,7 +122,7 @@ void readMinimalNode(minimal::BlockPtr block, const std::string& data, bool skip
 }
 
 void readMinimalWay(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
-    minimal::Way way{0,0,0,0,0,""};
+    minimal::Way way;
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = std::move(readMinimalCommon(data,way, skipinfo));
     if (rem1.tag==8) {
@@ -134,7 +134,7 @@ void readMinimalWay(minimal::BlockPtr block, const std::string& data, bool skipi
 }
 
 void readMinimalRelation(minimal::BlockPtr block, const std::string& data, bool skipinfo) {
-    minimal::Relation rel{0,0,0,0,0,"",""};
+    minimal::Relation rel;
     PbfTag rem1,rem2,rem3;
 
     std::tie(rem1,rem2,rem3) = std::move(readMinimalCommon(data, rel, skipinfo));
@@ -152,7 +152,7 @@ void readMinimalRelation(minimal::BlockPtr block, const std::string& data, bool 
 }
 
 void readMinimalGeometry(minimal::BlockPtr block, const std::string& data, size_t ty) {
-    minimal::Geometry geom{0,0,0,0,0};
+    minimal::Geometry geom;
     //geom.ty=ty;
     PbfTag rem1,rem2,rem3;
     std::tie(rem1,rem2,rem3) = readMinimalCommon(data,geom, false);
@@ -476,7 +476,7 @@ void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, siz
     }
     size_t num_ids = numPacked(data,pos,vl);
     
-    block->nodes.resize(firstnd + num_ids, minimal::Node{0,0,0,0,0,0,0});
+    block->nodes.resize(firstnd + num_ids);
     
     pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; });
     /*int64 v=0;
@@ -544,7 +544,7 @@ size_t readMinimalInfo_alt(T& obj, const std::string& data, size_t pos, size_t l
 void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     //if (block->ways.capacity() == block->ways.size()) { block->ways.reserve(block->ways.size()+1000); }
     
-    minimal::Way w{0,0,0,0,0,""};
+    minimal::Way w;
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -574,7 +574,7 @@ void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_
 void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     //if (block->relations.capacity() == block->relations.size()) { block->relations.reserve(block->relations.size()+1000); }
     
-    minimal::Relation r{0,0,0,0,0,"",""};
+    minimal::Relation r;
     uint64 tg=0, vl=0;
     bool isdata=false;
     

@@ -28,7 +28,7 @@
 #include <deque>
 namespace oqt {
     
-struct keyedblob {
+struct KeyedBlob {
     size_t idx;
     int64 key;
     std::deque<std::pair<std::string,size_t> > blobs;
@@ -37,9 +37,9 @@ struct keyedblob {
 
 typedef std::map<int64,std::vector<std::pair<size_t,int64>>> src_locs_map;
 
-void read_some_split_locs_parallel_callback(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks, const src_locs_map& src_locs);
-size_t read_some_split_buffered_keyed_callback(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks, size_t index_offset, const src_locs_map& locs, bool finish_callbacks);
-void read_some_split_buffered_keyed_callback_all(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<keyedblob>)>> callbacks, const src_locs_map& locs, size_t numblocks);
+void read_some_split_locs_parallel_callback(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks, const src_locs_map& src_locs);
+size_t read_some_split_buffered_keyed_callback(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks, size_t index_offset, const src_locs_map& locs, bool finish_callbacks);
+void read_some_split_buffered_keyed_callback_all(const std::vector<std::string>& files, std::vector<std::function<void(std::shared_ptr<KeyedBlob>)>> callbacks, const src_locs_map& locs, size_t numblocks);
 
 }
 

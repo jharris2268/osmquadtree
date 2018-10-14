@@ -123,10 +123,10 @@ class WayBBoxTile {
         
                 
 };
-
+/*
 std::string getmem(size_t);
 int64 getmemval(size_t);        
-        
+  */      
         
 class AddLocationsToWayNodes {
     public:
@@ -185,17 +185,17 @@ class AddLocationsToWayNodes {
             }
             
             for (const auto& nd: mb->nodes) {
-                while ((n>0) && (nd.id > n)) {
+                while ((n>0) && ((int64) nd.id > n)) {
                     missing++;
                     next_wn();
                 }
                 if (n<0) {
                     atend++;
-                } else if (nd.id < n) {
+                } else if ((int64) nd.id < n) {
                     //pass
                 } else {
                     
-                    while (nd.id == n) {
+                    while ((int64) nd.id == n) {
                     
                         curr->vals.push_back(std::move(WayNodeLocation{w, nd.lon, nd.lat}));
                         next_wn();

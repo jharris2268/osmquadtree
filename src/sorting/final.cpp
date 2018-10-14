@@ -33,9 +33,9 @@
 namespace oqt {
     
 
-class packfinal {
+class PackFinal {
     public:
-        packfinal(write_file_callback cb_, int64 enddate_, bool writeqts_, size_t ii_, int complevel_) :
+        PackFinal(write_file_callback cb_, int64 enddate_, bool writeqts_, size_t ii_, int complevel_) :
             cb(cb_), enddate(enddate_), writeqts(writeqts_), ii(ii_), complevel(complevel_) {}//, nb(0),no(0),sort(0),pack(0),comp(0),writ(0) {}
         
         void call(PrimitiveBlockPtr oo) {
@@ -64,7 +64,7 @@ class packfinal {
 };
 
 primitiveblock_callback make_pack_final(write_file_callback cb, int64 enddate, bool writeqts, size_t ii, int complevel) {
-    auto pfu = std::make_shared<packfinal>(cb,enddate,writeqts,ii,complevel);
+    auto pfu = std::make_shared<PackFinal>(cb,enddate,writeqts,ii,complevel);
     return [pfu](PrimitiveBlockPtr oo) { pfu->call(oo); };
 }   
 

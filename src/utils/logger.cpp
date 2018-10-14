@@ -31,11 +31,11 @@ namespace oqt {
 
 
 
-class logger_impl : public Logger {
+class LoggerImpl : public Logger {
     public:
-        logger_impl() : msgw(0) {}
+        LoggerImpl() : msgw(0) {}
 
-        void message(const std::string& msg) {
+        virtual void message(const std::string& msg) {
             
             if (msgw!=0) {
                 std::cout << std::endl;
@@ -43,12 +43,12 @@ class logger_impl : public Logger {
             std::cout << msg << std::endl;
             msgw=0;
         }
-        void progress(double percent, const std::string& msg) {
+        virtual void progress(double percent, const std::string& msg) {
             if (msg.size()>msgw) { msgw=msg.size(); }
             std::cout << "\r" << std::fixed << std::setprecision(1) << std::setw(5) << percent << " " << std::setw(msgw) << msg << std::flush;
         }
 
-        ~logger_impl() {
+        virtual ~LoggerImpl() {
             if (msgw!=0) {
                 std::cout << std::endl;
             }
@@ -57,7 +57,7 @@ class logger_impl : public Logger {
         size_t msgw;
 };
 
-std::shared_ptr<Logger> make_default_logger() { return std::make_shared<logger_impl>(); }
+std::shared_ptr<Logger> make_default_logger() { return std::make_shared<LoggerImpl>(); }
 
 
 std::shared_ptr<Logger> logger_;
@@ -70,16 +70,6 @@ Logger& Logger::Get() {
 }
 void Logger::Set(std::shared_ptr<Logger> l) { logger_ = l; }
 
-/*std::shared_ptr<logger> get_logger() {
-    if (!logger_) {
-        logger_ = make_default_logger();
-    }
-    return logger_;
-}
 
-void set_logger(std::shared_ptr<logger> nlog) {
-    logger_ = nlog;
-}*/
-    
     
 }

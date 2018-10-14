@@ -30,15 +30,15 @@
 namespace oqt {
 namespace geometry {
 
-struct parenttag_spec {
+struct ParentTagSpec {
     std::string node_tag;
     std::string out_tag;
     std::string way_tag;
     std::map<std::string,int> priority;
-    parenttag_spec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
+    ParentTagSpec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
         : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
 };
-typedef std::map<std::string,parenttag_spec> parenttag_spec_map;
+typedef std::map<std::string,ParentTagSpec> parenttag_spec_map;
 
 std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
 

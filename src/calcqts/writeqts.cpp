@@ -38,14 +38,14 @@ namespace oqt {
 
     
     
-struct qtsblock {
+struct QtsBlock {
     size_t idx;
     int64 ty;
     std::vector<int64> refs;
     std::vector<int64> qts;
 };
 
-std::string pack_qtsblock_data(std::shared_ptr<qtsblock> bl) {
+std::string pack_qtsblock_data(std::shared_ptr<QtsBlock> bl) {
     std::list<PbfTag> mm;
     if (bl->ty==0) {
         std::string ids = writePackedDelta(bl->refs);
@@ -78,7 +78,7 @@ std::string pack_qtsblock_data(std::shared_ptr<qtsblock> bl) {
 }
 
 
-keystring_ptr pack_qtsblock(std::shared_ptr<qtsblock> qq) {
+keystring_ptr pack_qtsblock(std::shared_ptr<QtsBlock> qq) {
     
     if (!qq) { return nullptr; }
     
@@ -94,7 +94,7 @@ keystring_ptr pack_qtsblock(std::shared_ptr<qtsblock> qq) {
 
 class CollectQtsImpl : public CollectQts {
     public:
-        typedef std::shared_ptr<qtsblock> qtsblock_ptr;
+        typedef std::shared_ptr<QtsBlock> qtsblock_ptr;
         typedef std::function<void(qtsblock_ptr)> callback;
         
         CollectQtsImpl(std::vector<callback> callbacks_, size_t blocksize_) :
@@ -131,7 +131,7 @@ class CollectQtsImpl : public CollectQts {
         
     private:
         void resetcurr(int64 t) {
-            curr=std::make_shared<qtsblock>();
+            curr=std::make_shared<QtsBlock>();
             curr->idx=idx;
             curr->ty = t;
             curr->refs.reserve(blocksize);
@@ -161,11 +161,11 @@ std::shared_ptr<CollectQts> make_collectqts(const std::string& qtsfn, size_t num
             }
         }, numchan);
     
-    std::vector<std::function<void(std::shared_ptr<qtsblock>)>> packers;
+    std::vector<std::function<void(std::shared_ptr<QtsBlock>)>> packers;
     for (size_t i=0; i < numchan; i++) {
         auto wb = writeblocks[i];
-        packers.push_back(threaded_callback<qtsblock>::make(
-            [wb](std::shared_ptr<qtsblock> qv) {
+        packers.push_back(threaded_callback<QtsBlock>::make(
+            [wb](std::shared_ptr<QtsBlock> qv) {
                 if (!qv) {
                     wb(nullptr);
                 } else {

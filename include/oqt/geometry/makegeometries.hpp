@@ -30,7 +30,7 @@ namespace oqt {
 namespace geometry {
 
 
-struct style_info {
+struct StyleInfo {
     bool IsFeature;
     bool IsArea;
     bool IsWay;
@@ -38,10 +38,10 @@ struct style_info {
     bool OnlyArea;
     bool IsOtherTags;
     std::set<std::string> ValueList;
-    style_info(bool f, bool a, bool w, bool n, bool o) : IsFeature(f),IsArea(a),IsWay(w),IsNode(n),OnlyArea(false),IsOtherTags(o) {}
+    StyleInfo(bool f, bool a, bool w, bool n, bool o) : IsFeature(f),IsArea(a),IsWay(w),IsNode(n),OnlyArea(false),IsOtherTags(o) {}
 };
 
-typedef std::map<std::string,style_info> style_info_map;
+typedef std::map<std::string,StyleInfo> style_info_map;
 
 std::pair<tagvector,int64> filter_node_tags(const style_info_map& style, const tagvector& tags, const std::string& extra_tags_key);
 std::tuple<tagvector, bool, int64, int64> filter_way_tags(const style_info_map& style, const tagvector& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key);
