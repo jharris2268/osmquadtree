@@ -28,6 +28,8 @@
 #include <fstream>
 
 #include "oqt/calcqts/calcqts.hpp"
+#include "oqt/calcqts/calcqtsinmem.hpp"
+
 #include "oqt/update/applychange.hpp"
 #include "oqt/sorting/mergechanges.hpp"
 #include "oqt/sorting/sortblocks.hpp"
@@ -252,7 +254,7 @@ int main(int argc, char** argv) {
                     //leave as default
                 } else if (val=="nwkent") {
                     filter_box=bbox{750000,512000000,3000000,514000000};
-                } else if (EndsWith(val, ".poly")) {
+                } else if (ends_with(val, ".poly")) {
                     poly = read_poly_file(val);
                     filter_box = poly_bounds(poly);
                                         
@@ -359,12 +361,12 @@ int main(int argc, char** argv) {
         
         int64 idx=0;
         int64 tl=0;
-        auto bl = readFileBlock(idx, file);
+        auto bl = read_file_block(idx, file);
         while (bl) {
             auto dd = decompress(bl->data,bl->uncompressed_size);
             tl+=dd.size();
             idx++;
-            bl = readFileBlock(idx, file);
+            bl = read_file_block(idx, file);
         }
         file.close();
         Logger::Message() << "uncompressed size: " << tl;

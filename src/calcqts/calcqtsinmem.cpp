@@ -270,7 +270,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
                 ni.push_back(nodes.size());
             } else {
             
-                bx.expand_point(it->lon,it->lat);
+                expand_point(bx, it->lon,it->lat);
                 ni.push_back(it-nodes.begin());
             }
         }

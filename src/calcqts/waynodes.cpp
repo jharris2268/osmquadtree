@@ -152,7 +152,7 @@ keystring_ptr pack_waynodes_block(std::shared_ptr<WayNodes> tile) {
         throw std::domain_error("failed");
     }
     
-    return std::make_shared<keystring>(tile->key(), prepareFileBlock("WayNodes", buf, 1));
+    return std::make_shared<keystring>(tile->key(), prepare_file_block("WayNodes", buf, 1));
     
 }
     

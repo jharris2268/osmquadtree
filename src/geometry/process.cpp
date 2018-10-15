@@ -342,7 +342,7 @@ std::vector<block_callback> pack_and_write_callback(
                     return;
                 } else {
                     auto data = writePbfBlock(bl, writeqts, false, writeinfos, writerefs);
-                    auto packed = prepareFileBlock("OSMData", data);
+                    auto packed = prepare_file_block("OSMData", data);
                     write_i(std::make_shared<keystring>(bl->Quadtree(),packed));
                 }
             };
@@ -375,7 +375,7 @@ block_callback pack_and_write_callback_nothread(
         } else {
             auto data = writePbfBlock(bl, writeqts, false, writeinfos, writerefs);
             
-            auto packed = prepareFileBlock("OSMData", data);
+            auto packed = prepare_file_block("OSMData", data);
             write(std::make_shared<keystring>(bl->Quadtree(),packed));
         }
     };

@@ -94,7 +94,7 @@ double calc_ring_area(const lonlatvec& ll) {
 bbox lonlats_bounds(const lonlatvec& llv) {
     bbox r;
     for (const auto& p : llv) {
-        r.expand_point(p.lon,p.lat);
+        expand_point(r, p.lon,p.lat);
     }
     return r;
 }
@@ -214,7 +214,7 @@ Ring::Part unpack_ringpart(const std::string& data) {
 
 void expand_bbox(bbox& bx, const lonlatvec& llv) {
     for (const auto& l : llv) {
-        bx.expand_point(l.lon,l.lat);
+        expand_point(bx, l.lon,l.lat);
     }
 }
 
@@ -303,7 +303,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
             if (t.tag==14) { read_lonlats_lats(lonlats,t.data); }
         }
         bbox bounds;
-        for (const auto& l : lonlats) { bounds.expand_point(l.lon,l.lat); }
+        expand_bbox(bounds, lonlats);
         return std::make_shared<WayWithNodes>(id,qt,inf,tgs,refs,lonlats,bounds);
     }
     return ElementPtr();
@@ -334,7 +334,7 @@ size_t unpack_geometry_primitiveblock(primblock_ptr pb) {
     size_t cnt=0;
     for (size_t i=0; i<pb->size(); i++) {
         auto o = pb->at(i);
-        if (isGeometryType(o->Type())) {
+        if (is_geometry_type(o->Type())) {
             auto gp = std::dynamic_pointer_cast<BaseGeometry>(o);
             if (!gp) { throw std::domain_error("cast to geometry failed??"); }
             if (gp->OriginalType()==ElementType::Unknown) {

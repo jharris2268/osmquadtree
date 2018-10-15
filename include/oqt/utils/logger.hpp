@@ -25,25 +25,13 @@
 
 #include "oqt/common.hpp"
 
+
 #include "oqt/utils/timing.hpp"
 
 
 namespace oqt {
-    
 
-struct Percent {
-    double val;
-    int precision;
-};
 
-inline std::ostream& operator<<(std::ostream& os, const Percent& p) {
-    if (p.precision==0) {
-        os << std::setw(4) << (int) p.val << "%";
-        return os;
-    }
-    os << std::fixed << std::setprecision(p.precision) << std::setw(p.precision + 5) << p.val << "%";
-    return os;
-}
 /*
 class Logger;
 std::shared_ptr<Logger> get_logger();

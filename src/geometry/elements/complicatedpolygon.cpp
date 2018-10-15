@@ -69,7 +69,7 @@ ComplicatedPolygon::ComplicatedPolygon(
     
     for (const auto& o : outers.parts) {
         for (const auto& ll : o.lonlats) {
-            bounds.expand_point(ll.lon,ll.lat);
+            expand_point(bounds, ll.lon,ll.lat);
         }
     }
 

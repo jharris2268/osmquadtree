@@ -39,14 +39,14 @@ struct FileBlock {
     std::string get_data();
 };
 
-std::pair<std::string, bool> readBytes(std::istream& infile, int64 bytes);
-std::pair<size_t, bool> readBytesInto(std::istream& infile, std::string& dest, size_t place, int64 bytes);
+std::pair<std::string, bool> read_bytes(std::istream& infile, int64 bytes);
+std::pair<size_t, bool> read_bytes_into(std::istream& infile, std::string& dest, size_t place, int64 bytes);
 
 
-std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile);
+std::shared_ptr<FileBlock> read_file_block(int64 index, std::istream& infile);
 
 
-std::string prepareFileBlock(const std::string& blocktype, const std::string& data, int compress_level=-1);
+std::string prepare_file_block(const std::string& blocktype, const std::string& data, int compress_level=-1);
 
 }
 

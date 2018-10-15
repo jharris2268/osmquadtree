@@ -24,7 +24,7 @@
 #define UTILS_TIMING_HPP
 
 #include "oqt/common.hpp"
-
+#include "oqt/utils/string.hpp"
 #include <sstream>
 #include <chrono>
 #include <iomanip>
@@ -46,12 +46,7 @@ class TimeSingle {
         
 };
 
-struct TmStr {
-    double time;
-    int width;
-    int precision;
-};
-std::ostream& operator<<(std::ostream& os, const TmStr& t);
+
 
 std::ostream& operator<<(std::ostream& os, const TimeSingle& ts);
 

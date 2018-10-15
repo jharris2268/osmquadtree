@@ -104,14 +104,14 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     auto change_objs = std::make_shared<typeid_element_map>();
     
     for (const auto& fn: changes) {
-        if (EndsWith(fn,".osc.gz")) {
+        if (ends_with(fn,".osc.gz")) {
             gzstream::igzstream src_fl(fn.c_str());
             if (!src_fl.good()) {
                 throw std::domain_error("couldn't open "+fn);
             }
             read_xml_change_file_em(&src_fl, change_objs, false);
             src_fl.close();
-        } else if (EndsWith(fn,".osc")) {
+        } else if (ends_with(fn,".osc")) {
             std::ifstream src_fl(fn, std::ios::in);
             if (!src_fl.good()) {
                 throw std::domain_error("couldn't open "+fn);

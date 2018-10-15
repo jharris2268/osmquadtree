@@ -71,7 +71,7 @@ size_t sort_inmem(std::ifstream& inf, std::ofstream& outf, block_index& idx, siz
     std::map<int64,std::string> data;
     for (auto& ii : tmp) {
         inf.seekg(std::get<1>(ii));
-        auto bl = readBytes(inf,std::get<2>(ii));
+        auto bl = read_bytes(inf,std::get<2>(ii));
         if (!bl.second) {
             Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
             throw std::domain_error("??");
@@ -103,7 +103,7 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, Header
     if (head) {
         block_index idx_temp(idx.begin(),idx.end());
         head->Index().swap(idx_temp);
-        auto hb = prepareFileBlock("OSMHeader",writePbfHeader(head));
+        auto hb = prepare_file_block("OSMHeader",writePbfHeader(head));
         outfile.write(hb.data(),hb.size());
     }
 
@@ -123,7 +123,7 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, Header
         for (auto& ii : idx) {
             
             tempfile_read.seekg(std::get<1>(ii));
-            auto bl = readBytes(tempfile_read,std::get<2>(ii));
+            auto bl = read_bytes(tempfile_read,std::get<2>(ii));
             if (!bl.second) {
                 
                 Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
@@ -150,7 +150,7 @@ class PbfFileWriterImpl : public PbfFileWriter {
             
             if (!file.good()) { throw std::domain_error("can't open"); }
             if (head) {
-                auto hb = prepareFileBlock("OSMHeader",writePbfHeader(head));
+                auto hb = prepare_file_block("OSMHeader",writePbfHeader(head));
                 file.write(hb.data(),hb.size());
                 pos += hb.size();
             }
@@ -249,7 +249,7 @@ size_t sort_inmem_writer(std::ifstream& inf, std::shared_ptr<PbfFileWriter> ww, 
     std::map<int64,std::string> data;
     for (auto& ii : tmp) {
         inf.seekg(std::get<1>(ii));
-        auto bl = readBytes(inf,std::get<2>(ii));
+        auto bl = read_bytes(inf,std::get<2>(ii));
         if (!bl.second) {
             Logger::Message() << "!!! @ " << std::get<1>(ii) << "=>" << std::get<2>(ii) << " != " << bl.first.size();
             throw std::domain_error("??");
@@ -296,7 +296,7 @@ size_t sort_inmem_writer_alt(std::ifstream& inf, std::shared_ptr<PbfFileWriter> 
         
         locs.push_back(std::make_tuple(std::get<0>(ii), 0, pos, std::get<2>(ii)));
         bool suc;
-        std::tie(pos,suc) = readBytesInto(inf, data, pos, std::get<2>(ii));
+        std::tie(pos,suc) = read_bytes_into(inf, data, pos, std::get<2>(ii));
         
         
         if (!suc) {
@@ -533,7 +533,7 @@ std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string
 }
 
 HeaderPtr getHeaderBlock_file(std::ifstream& infile) {
-    auto fb = readFileBlock(0,infile);
+    auto fb = read_file_block(0,infile);
     if ((!fb) || (fb->blocktype!="OSMHeader")) {
         throw std::domain_error("first block not a header");
     }

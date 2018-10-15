@@ -6,7 +6,7 @@ ROOT_OBJS = count.o
 HEADERS = 
 PBFFORMAT_OBJS = pbfformat/objsidset.o pbfformat/readfileblocks.o pbfformat/writeblock.o pbfformat/fileblock.o pbfformat/readminimal.o pbfformat/writepbffile.o pbfformat/readblockscaller.o pbfformat/readfile.o pbfformat/readfileparallel.o pbfformat/readblock.o
 ELEMENT_OBJS = elements/combineblocks.o elements/element.o elements/baseelement.o elements/way.o elements/node.o elements/relation.o elements/geometry.o elements/quadtree.o
-UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/timing.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
+UTILS_OBJS = utils/bbox.o utils/compress.o utils/date.o utils/geometry.o utils/logger.o utils/operatingsystem.o utils/string.o utils/timing.o utils/pbf/packedint.o utils/pbf/protobuf.o utils/pbf/varint.o utils/pbf/fixedint.o
 UPDATE_OBJS = update/applychange.o update/xmlchange.o update/update.o
 GEOM_OBJS = geometry/addparenttags.o  geometry/addwaynodes.o  geometry/utils.o  geometry/handlerelations.o  geometry/makegeometries.o  geometry/multipolygons.o  geometry/postgiswriter.o geometry/findminzoom.o geometry/process.o geometry/elements/point.o geometry/elements/linestring.o geometry/elements/simplepolygon.o geometry/elements/complicatedpolygon.o geometry/elements/waywithnodes.o  geometry/elements/ring.o
 SORTING_OBJS = sorting/common.o sorting/splitbyid.o sorting/sortgroup.o sorting/sortblocks.o sorting/resortobjects.o sorting/final.o sorting/mergechanges.o sorting/tempobjs.o sorting/qttree.o sorting/qttreegroups.o
@@ -169,6 +169,9 @@ utils/logger.o: ../src/utils/logger.cpp $(HEADERS)
 
 utils/operatingsystem.o: ../src/utils/operatingsystem.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/operatingsystem.cpp -o utils/operatingsystem.o
+
+utils/string.o: ../src/utils/string.cpp $(HEADERS)
+	$(CC) $(CFLAGS) -c ../src/utils/string.cpp -o utils/string.o
 
 utils/timing.o: ../src/utils/timing.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c ../src/utils/timing.cpp -o utils/timing.o

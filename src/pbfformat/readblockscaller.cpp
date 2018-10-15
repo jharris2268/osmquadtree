@@ -183,7 +183,7 @@ std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
         const std::string& infile_name, 
         bbox& filter_box, const lonlatvec& poly, int64& enddate) {
    
-    if (EndsWith(infile_name, ".pbf")) {
+    if (ends_with(infile_name, ".pbf")) {
         auto hh = getHeaderBlock(infile_name);
         if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {
             filter_box = hh->BBox();

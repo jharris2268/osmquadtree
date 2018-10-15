@@ -19,25 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
+ 
+#ifndef CALCQTS_CALCQTSINMEM_HPP
+#define CALCQTS_CALCQTSINMEM_HPP
 
-
-#ifndef COMMON_HPP
-#define COMMON_HPP
-
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-#include <functional>
+#include "oqt/common.hpp"
 
 namespace oqt {
-typedef int64_t int64;
-typedef uint64_t uint64;
-typedef int32_t int32;
 
+int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort);
 
-
-
-
-}
 #endif
+
+

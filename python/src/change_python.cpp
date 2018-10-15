@@ -194,7 +194,7 @@ class WritePbfFileImpl : public WritePbfFile {
         
         keystring_ptr write_and_pack_pbfblock(PrimitiveBlockPtr bl) {
             auto data = writePbfBlock(bl, !dropqts, change, true, true);
-            auto block = prepareFileBlock("OSMData", data);
+            auto block = prepare_file_block("OSMData", data);
             return std::make_shared<keystring>(bl->Quadtree(), block);
         }
             

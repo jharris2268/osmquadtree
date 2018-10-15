@@ -39,7 +39,7 @@ std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool til
         Logger::Message() << "failed to open " << fn;
         return nullptr;
     }
-    bool change = EndsWith(fn, "pbfc");
+    bool change = ends_with(fn, "pbfc");
     
     auto result = std::make_shared<Count>(0,tiles,geom,change);
     

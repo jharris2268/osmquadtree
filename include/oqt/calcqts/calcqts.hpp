@@ -30,8 +30,6 @@
 namespace oqt {
 
 int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth);
-int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort);
-
 
 
 void find_way_quadtrees(

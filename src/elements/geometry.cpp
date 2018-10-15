@@ -48,7 +48,7 @@ std::list<PbfTag> GeometryPacked::pack_extras() const { return geom_messages; }
 ElementPtr GeometryPacked::copy() {
     return std::make_shared<GeometryPacked>(Type(),ChangeType(),Id(),Quadtree(),Info(),Tags(),MinZoom(),geom_messages);
 }
-bool isGeometryType(ElementType ty) {
+bool is_geometry_type(ElementType ty) {
     switch (ty) {
         case ElementType::Node: return false;
         case ElementType::Way: return false;

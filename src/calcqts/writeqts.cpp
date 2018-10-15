@@ -84,7 +84,7 @@ keystring_ptr pack_qtsblock(std::shared_ptr<QtsBlock> qq) {
     
     std::string bl = pack_qtsblock_data(qq);
     
-    auto fb = prepareFileBlock("OSMData", bl, -1);
+    auto fb = prepare_file_block("OSMData", bl, -1);
     return std::make_shared<keystring>(qq->idx,fb);
 }   
 

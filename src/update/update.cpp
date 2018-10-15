@@ -108,27 +108,8 @@ std::string pack_minimal_ids(const std::vector<T>& in) {
     return res.substr(0,p);
 }
 
-/*
-std::string makeIndexBlock(std::shared_ptr<minimalblock> in) {
 
-    std::list<PbfTag> mm;
-    mm.push_back(PbfTag{1,zigZag(in->quadtree),""});
-    if (!in->nodes.empty()) {
-        mm.push_back(PbfTag{2,0,pack_minimal_ids(in->nodes)});
-    }
-    if (!in->ways.empty()) {
-        mm.push_back(PbfTag{3,0,pack_minimal_ids(in->ways)});
-    }
-    if (!in->relations.empty()) {
-        mm.push_back(PbfTag{4,0,pack_minimal_ids(in->relations)});
-    }
-    std::string dd = packPbfTags(mm);
-
-
-    return prepareFileBlock("IndexBlock", dd);
-}
-*/
-std::string makeIndexBlock2(PrimitiveBlockPtr in) {
+std::string makeIndexBlock(PrimitiveBlockPtr in) {
     std::vector<int64> n,w,r;
     for (auto o : in->Objects()) {
         if (o->Type()==ElementType::Node) { n.push_back(o->Id());}
@@ -149,7 +130,7 @@ std::string makeIndexBlock2(PrimitiveBlockPtr in) {
     }
     std::string dd = packPbfTags(mm);
 
-    return prepareFileBlock("IndexBlock", dd);
+    return prepare_file_block("IndexBlock", dd);
 }
 
 size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& outfn_in) {
@@ -185,7 +166,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
                 if (!mb) {
                     return oo(nullptr);
                 }
-                oo(std::make_shared<keystring>(mb->Quadtree(), makeIndexBlock2(mb)));
+                oo(std::make_shared<keystring>(mb->Quadtree(), makeIndexBlock(mb)));
             }
         ));
     }           
@@ -462,7 +443,7 @@ void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
                 auto it=em->find(std::make_pair(ElementType::Node,n));
                 if (it==em->end()) { throw std::domain_error("node not present"); }
                 auto no = std::dynamic_pointer_cast<Node>(it->second);
-                bx.expand_point(no->Lon(),no->Lat());
+                expand_point(bx, no->Lon(),no->Lat());
             }
             int64 k = pp.second->InternalId();//(1ll<<61) | pp.first.second;
             qts->expand(k, -1);
@@ -623,28 +604,10 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
     auto out = make_pbffilewriter_indexedinmem(outfn, head);
     for (auto bl: tiles) {
         auto dd = writePbfBlock(bl, true, true, true, true);
-        auto p = prepareFileBlock("OSMData",dd);
+        auto p = prepare_file_block("OSMData",dd);
         out->writeBlock(bl->Quadtree(),p);
     }
-/*
-    std::vector<std::string> packed;
-    packed.reserve(tiles.size());
-    int64 pos=0;
-    for (auto bl: tiles) {
-        auto dd = writePbfBlock(bl, true, true, true, true);
-        auto p = prepareFileBlock("OSMData",dd);
-        int64 sz=dd.size();
-        head->index.push_back(std::make_tuple(bl->quadtree, pos, sz));
-        pos+=sz;
-        packed.push_back(p);
-    }
-    
 
-
-    auto out = make_pbffilewriter(outfn, head, false);
-    for (const auto& p: packed) {
-        out->writeBlock(0, p);
-    }*/
     auto xx=out->finish();
     int64 gp = std::get<1>(xx.back())+std::get<2>(xx.back());
     

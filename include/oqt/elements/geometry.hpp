@@ -29,7 +29,7 @@
 #include "oqt/utils/pbf/protobuf.hpp"
 
 namespace oqt {
-bool isGeometryType(ElementType ty);
+bool is_geometry_type(ElementType ty);
 
 class BaseGeometry : public Element {
     public:

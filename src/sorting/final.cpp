@@ -49,7 +49,7 @@ class PackFinal {
             }
             std::sort(oo->Objects().begin(), oo->Objects().end(), element_cmp);
             auto p = writePbfBlock(oo, writeqts, false, true, true);
-            auto q = std::make_shared<keystring>(writeqts ? oo->Quadtree() : oo->Index(), prepareFileBlock("OSMData", p,complevel));
+            auto q = std::make_shared<keystring>(writeqts ? oo->Quadtree() : oo->Index(), prepare_file_block("OSMData", p,complevel));
             
             cb(q);
             

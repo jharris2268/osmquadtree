@@ -44,10 +44,6 @@ double TimeSingle::since_reset() {
 }
     
 
-std::ostream& operator<<(std::ostream& os, const TmStr& t) {
-    os << std::fixed << std::setprecision(t.precision) << std::setw(t.width) << t.time << "s";
-    return os;
-}
 
 std::ostream& operator<<(std::ostream& os, const TimeSingle& ts) {
     os << TmStr{ts.since(), 6, 1};

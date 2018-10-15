@@ -30,7 +30,7 @@
 namespace oqt {
     
     
-std::pair<std::string, bool> readBytes(std::istream& infile, int64 bytes) {
+std::pair<std::string, bool> read_bytes(std::istream& infile, int64 bytes) {
     std::string res(bytes,0);
     infile.read(&res[0], bytes);
     if (infile.gcount()<bytes) {
@@ -42,7 +42,7 @@ std::pair<std::string, bool> readBytes(std::istream& infile, int64 bytes) {
 }
 
 
-std::pair<size_t, bool> readBytesInto(std::istream& infile, std::string& dest, size_t place, int64 bytes) {
+std::pair<size_t, bool> read_bytes_into(std::istream& infile, std::string& dest, size_t place, int64 bytes) {
     //std::string res(bytes,0);
     infile.read(&dest[place], bytes);
     if (infile.gcount()<bytes) {
@@ -61,11 +61,11 @@ std::string FileBlock::get_data() {
 };
 
 
-std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
+std::shared_ptr<FileBlock> read_file_block(int64 index, std::istream& infile) {
     int64 fpos = infile.tellg();
     
     uint32_t size;
-    std::pair<std::string, bool> r = readBytes(infile,4);
+    std::pair<std::string, bool> r = read_bytes(infile,4);
     if (!r.second) {
         return nullptr;
     }
@@ -77,7 +77,7 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
     ss[3] = r.first[0];
 
    
-    r = readBytes(infile,size);
+    r = read_bytes(infile,size);
     if (!r.second) {
         return nullptr;
     }
@@ -106,7 +106,7 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
     }
 
     
-    r = std::move(readBytes(infile, block_size));
+    r = std::move(read_bytes(infile, block_size));
     
     pos=0;
     tag = std::move(readPbfTag(r.first, pos));
@@ -138,7 +138,7 @@ std::shared_ptr<FileBlock> readFileBlock(int64 index, std::istream& infile) {
     
     
     
-std::string prepareFileBlock(const std::string& head, const std::string& data, int compress_level) {
+std::string prepare_file_block(const std::string& head, const std::string& data, int compress_level) {
     
     
     std::string comp;

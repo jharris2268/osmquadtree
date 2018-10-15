@@ -20,24 +20,30 @@
  *
  *****************************************************************************/
 
-
-#ifndef COMMON_HPP
-#define COMMON_HPP
-
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-#include <functional>
+#include "oqt/utils/string.hpp"
+#include <iostream>
+#include <iomanip>
 
 namespace oqt {
-typedef int64_t int64;
-typedef uint64_t uint64;
-typedef int32_t int32;
+
+bool ends_with(const std::string& a, const std::string& b) {
+    if (b.size() > a.size()) return false;
+    return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
+}    
 
 
+std::ostream& operator<<(std::ostream& os, const Percent& p) {
+    if (p.precision==0) {
+        os << std::setw(4) << (int) p.val << "%";
+        return os;
+    }
+    os << std::fixed << std::setprecision(p.precision) << std::setw(p.precision + 5) << p.val << "%";
+    return os;
+}
 
-
+std::ostream& operator<<(std::ostream& os, const TmStr& t) {
+    os << std::fixed << std::setprecision(t.precision) << std::setw(t.width) << t.time << "s";
+    return os;
+}
 
 }
-#endif

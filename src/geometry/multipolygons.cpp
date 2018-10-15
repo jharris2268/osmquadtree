@@ -205,7 +205,7 @@ std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const 
         bbox ringbox;
         for (auto p : r.second) {
             for (auto ll : p.lonlats) {
-                ringbox.expand_point(ll.lon,ll.lat);
+                expand_point(ringbox, ll.lon,ll.lat);
             }
         }
         if (r.first) {

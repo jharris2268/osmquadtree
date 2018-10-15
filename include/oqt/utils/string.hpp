@@ -20,23 +20,31 @@
  *
  *****************************************************************************/
 
+#ifndef UTILS_STRING_HPP
+#define UTILS_STRING_HPP
 
-#ifndef COMMON_HPP
-#define COMMON_HPP
+#include <iosfwd>
 
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-#include <functional>
+#include "oqt/common.hpp"
 
 namespace oqt {
-typedef int64_t int64;
-typedef uint64_t uint64;
-typedef int32_t int32;
 
 
+bool ends_with(const std::string& a, const std::string& b);
 
+struct Percent {
+    double val;
+    int precision;
+};
+
+std::ostream& operator<<(std::ostream& os, const Percent& p);
+
+struct TmStr {
+    double time;
+    int width;
+    int precision;
+};
+std::ostream& operator<<(std::ostream& os, const TmStr& t);
 
 
 }

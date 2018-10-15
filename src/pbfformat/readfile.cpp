@@ -53,7 +53,7 @@ class ReadFileImpl : public ReadFile {
             if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
                 size_t ii = index_offset+index;
                 ++index;
-                auto fb = readFileBlock(ii, infile);
+                auto fb = read_file_block(ii, infile);
                 fb->file_progress = 100.0*fb->file_position / file_size;
                 return fb;
             }
@@ -83,7 +83,7 @@ class ReadFileLocs : public ReadFile {
                 }
                 size_t ii = index_offset+index;
                 ++index;
-                auto fb = readFileBlock(ii,infile);
+                auto fb = read_file_block(ii,infile);
                 fb->file_progress = (100.0*index) / locs.size();
                 return fb;
                 
@@ -109,7 +109,7 @@ class ReadFileImplXX : public ReadFile {
             if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
                 size_t ii = index_offset+index;
                 ++index;
-                auto fb = readFileBlock(ii, infile);
+                auto fb = read_file_block(ii, infile);
                 fb->file_progress = 100.0*fb->file_position / file_size;
                 return fb;
             }

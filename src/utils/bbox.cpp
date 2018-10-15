@@ -26,6 +26,17 @@
 #include <iostream>
 namespace oqt {
 
+
+
+
+void expand_point(bbox& box, int64 x, int64 y) {
+    if (x<box.minx) { box.minx=x; }
+    if (y<box.miny) { box.miny=y; }
+    if (x>box.maxx) { box.maxx=x; }
+    if (y>box.maxy) { box.maxy=y; }
+}
+
+
 std::ostream& operator<<(std::ostream& os, const bbox& bb) {
     os  << "box{" << std::setw(10) << bb.minx
         << ", "   << std::setw(10) << bb.miny

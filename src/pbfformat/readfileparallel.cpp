@@ -70,7 +70,7 @@ void read_some_split_locs_parallel_callback(
                     throw std::domain_error("can't open "+filenames.at(lc.first));
                 }
                 infile.seekg(lc.second);
-                auto fb=readFileBlock(index,infile);
+                auto fb=read_file_block(index,infile);
                 res->blobs.push_back(std::make_pair(fb->data, fb->uncompressed_size));
             }
             res->file_progress = (100.0*index) / src_locs.size();
@@ -323,7 +323,7 @@ void read_some_split_buffered_keyed_callback_all(const std::vector<std::string>&
             
             //files.at(0)->seekg(f.second);
             firstfile.seekg(f.second);
-            auto fb = readFileBlock(idx, firstfile);//*files.at(0));
+            auto fb = read_file_block(idx, firstfile);//*files.at(0));
             oo->blobs.at(0).first = fb->data;
             oo->blobs.at(0).second = fb->uncompressed_size;
         }
