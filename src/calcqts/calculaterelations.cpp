@@ -57,8 +57,8 @@ class CalculateRelationsImpl : public CalculateRelations {
                 if (r.refs_data.empty()) {
                     empty_rels.push_back(r.id);
                 }
-                auto rfs = readPackedDelta(r.refs_data);
-                auto tys = readPackedInt(r.tys_data);
+                auto rfs = read_packed_delta(r.refs_data);
+                auto tys = read_packed_int(r.tys_data);
                 for (size_t i=0; i < tys.size(); i++) {
                     int64 rf=rfs[i];
                     if (tys[i]==0) {

@@ -74,12 +74,12 @@ std::string Point::Wkb(bool transform, bool srid) const {
 
 std::list<PbfTag> Point::pack_extras() const {
     
-    std::list<PbfTag> extras{PbfTag{8,zigZag(lat),""}, PbfTag{9,zigZag(lon),""}};    
+    std::list<PbfTag> extras{PbfTag{8,zig_zag(lat),""}, PbfTag{9,zig_zag(lon),""}};    
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});
     }
     if (layer != 0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
+        extras.push_back(PbfTag{24,zig_zag(layer),""});
     }
     return extras;
     

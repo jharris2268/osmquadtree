@@ -44,8 +44,8 @@ ElementInfo readInfo(const std::string& data,const std::vector<std::string>& str
 
     bool vv=true;
 
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag = readPbfTag(data,pos)) {
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
         if      (tag.tag==1) { ans.version = int64(tag.value); }
         else if (tag.tag==2) { ans.timestamp = int64(tag.value); }
         else if (tag.tag==3) { ans.changeset = int64(tag.value); }
@@ -76,7 +76,7 @@ std::vector<Tag> makeTags(
 
 
 std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
-    readCommon(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, IdSetPtr ids) {
+    read_common(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, IdSetPtr ids) {
 
 
     std::vector<uint64> keys,vals;
@@ -84,8 +84,8 @@ std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
     std::get<0>(r)=0; std::get<3>(r)=-1;
 
     size_t pos = 0;
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag = readPbfTag(data,pos)) {
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             int64 id = int64(tag.value);
             if (ids && (!ids->contains(ty,id))) {
@@ -93,13 +93,13 @@ std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
             }
             std::get<0>(r)=id;
         } else if (tag.tag==2) {
-            keys = readPackedInt(tag.data);
+            keys = read_packed_int(tag.data);
         } else if (tag.tag==3) {
-            vals = readPackedInt(tag.data);
+            vals = read_packed_int(tag.data);
         } else if (tag.tag==4) {
             std::get<1>(r) = readInfo(tag.data,stringtable);
         } else if (tag.tag==20) {
-            std::get<3>(r) = unZigZag(tag.value);
+            std::get<3>(r) = un_zig_zag(tag.value);
         } else {
             std::get<4>(r).push_back(tag);
         }
@@ -118,15 +118,15 @@ ElementPtr readNode(
     ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Node,data,stringtable,ids);
+    std::tie(id,inf,tags,qt,rem) = read_common(ElementType::Node,data,stringtable,ids);
     if (id==0) { return ElementPtr(); }
 
     int64 lon=0,lat=0;
     for (const auto& t : rem) {
         if (t.tag == 8) {
-            lat = unZigZag(t.value);
+            lat = un_zig_zag(t.value);
         } else if (t.tag == 9) {
-            lon = unZigZag(t.value);
+            lon = un_zig_zag(t.value);
         }
     }
     return std::make_shared<Node>(ct,id,qt,inf,tags, lon,lat);
@@ -141,14 +141,14 @@ std::tuple<std::vector<uint64>,std::vector<int64>,std::vector<int64>,std::vector
 
 
     size_t pos = 0;
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag = readPbfTag(data,pos)) {
-        if (tag.tag==1) { vs = readPackedInt(tag.data); }
-        if (tag.tag==2) { ts = readPackedDelta(tag.data); }
-        if (tag.tag==3) { cs = readPackedDelta(tag.data); }
-        if (tag.tag==4) { ui = readPackedDelta(tag.data); }
-        if (tag.tag==5) { us = readPackedDelta(tag.data); }
-        if (tag.tag==6) { vv = readPackedInt(tag.data); }
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
+        if (tag.tag==1) { vs = read_packed_int(tag.data); }
+        if (tag.tag==2) { ts = read_packed_delta(tag.data); }
+        if (tag.tag==3) { cs = read_packed_delta(tag.data); }
+        if (tag.tag==4) { ui = read_packed_delta(tag.data); }
+        if (tag.tag==5) { us = read_packed_delta(tag.data); }
+        if (tag.tag==6) { vv = read_packed_int(tag.data); }
     }
     return std::make_tuple(vs,ts,cs,ui,us,vv);
 }
@@ -173,19 +173,19 @@ int readDenseNodes(
 
 
     size_t pos = 0;
-    PbfTag pbfTag = readPbfTag(data,pos);
-    for ( ; pbfTag.tag>0; pbfTag = readPbfTag(data,pos)) {
+    PbfTag pbfTag = read_pbf_tag(data,pos);
+    for ( ; pbfTag.tag>0; pbfTag = read_pbf_tag(data,pos)) {
         if      (pbfTag.tag==1) {
-            ids = readPackedDelta(pbfTag.data);
+            ids = read_packed_delta(pbfTag.data);
             if (id_set && !has_an_id(id_set,ElementType::Node, ids)) {
                 return 0;
             }
         }
         else if (pbfTag.tag==5) { std::tie(vs,ts,cs,ui,us,vv) = readDenseInfo(pbfTag.data); }
-        else if (pbfTag.tag==8) { lats = readPackedDelta(pbfTag.data); }
-        else if (pbfTag.tag==9) { lons = readPackedDelta(pbfTag.data); }
-        else if (pbfTag.tag==10) { kvs = readPackedInt(pbfTag.data); }
-        else if (pbfTag.tag==20) { qts = readPackedDelta(pbfTag.data); }
+        else if (pbfTag.tag==8) { lats = read_packed_delta(pbfTag.data); }
+        else if (pbfTag.tag==9) { lons = read_packed_delta(pbfTag.data); }
+        else if (pbfTag.tag==10) { kvs = read_packed_int(pbfTag.data); }
+        else if (pbfTag.tag==20) { qts = read_packed_delta(pbfTag.data); }
     }
 
     size_t tagi = 0;
@@ -250,14 +250,14 @@ ElementPtr readWay(const std::string& data, const std::vector<std::string>& stri
     ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Way,data,stringtable,ids);
+    std::tie(id,inf,tags,qt,rem) = read_common(ElementType::Way,data,stringtable,ids);
     if (id==0) { return ElementPtr(); }
 
     std::vector<int64> refs;
     
     for (const auto& t : rem) {
         if (t.tag == 8) {
-            refs = readPackedDelta(t.data);
+            refs = read_packed_delta(t.data);
 
         }
     }
@@ -272,17 +272,17 @@ ElementPtr readRelation(const std::string& data, const std::vector<std::string>&
     ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(ElementType::Relation,data,stringtable,ids);
+    std::tie(id,inf,tags,qt,rem) = read_common(ElementType::Relation,data,stringtable,ids);
     if (id==0) { return ElementPtr(); }
     std::vector<uint64> ty, rl;
     std::vector<int64> rf;
     for (const auto& t : rem) {
         if (t.tag== 8) {
-            rl = readPackedInt(t.data);
+            rl = read_packed_int(t.data);
         } else if (t.tag == 9) {
-            rf = readPackedDelta(t.data);
+            rf = read_packed_delta(t.data);
         } else if (t.tag == 10) {
-            ty = readPackedInt(t.data);
+            ty = read_packed_int(t.data);
         }
     }
     std::vector<Member> mems(rf.size());
@@ -314,7 +314,7 @@ ElementPtr readGeometry_default(ElementType ty, const std::string& data, const s
     ElementInfo inf; std::vector<Tag> tags;
     std::list<PbfTag> rem;
 
-    std::tie(id,inf,tags,qt,rem) = readCommon(ty,data,stringtable,nullptr);
+    std::tie(id,inf,tags,qt,rem) = read_common(ty,data,stringtable,nullptr);
     int64 minzoom=-1;
     if ((!rem.empty()) && (rem.back().tag==22)) {
         minzoom=rem.back().value;        
@@ -335,8 +335,8 @@ void readPrimitiveGroupCommon(
 
     size_t pos=0;
 
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag = readPbfTag(data,pos)) {
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
 
         if ((tag.tag==1) && (objflags&1)) {
             auto o = readNode(tag.data, stringtable,ct,ids);
@@ -375,8 +375,8 @@ void readPrimitiveGroup(const std::string& data, const std::vector<std::string>&
 
     changetype ct=changetype::Normal;
 
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag = readPbfTag(data,pos)) {
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
         if (tag.tag==10) { ct=(changetype) tag.value; }
     }
     readPrimitiveGroupCommon(data,stringtable,objects, ct,objflags,ids,readGeometry);
@@ -385,13 +385,13 @@ void readPrimitiveGroup(const std::string& data, const std::vector<std::string>&
 
 
 
-std::vector<std::string> readStringTable(const std::string& data) {
+std::vector<std::string> read_string_table(const std::string& data) {
 
     size_t pos=0;
 
     std::vector<std::string> result;
-    PbfTag pbfTag = readPbfTag(data,pos);
-    for ( ; pbfTag.tag>0; pbfTag = readPbfTag(data,pos)) {
+    PbfTag pbfTag = read_pbf_tag(data,pos);
+    for ( ; pbfTag.tag>0; pbfTag = read_pbf_tag(data,pos)) {
         if (pbfTag.tag==1) {
             result.push_back(pbfTag.data);
         }
@@ -399,12 +399,12 @@ std::vector<std::string> readStringTable(const std::string& data) {
     return result;
 }
 
-int64 readQuadTree(const std::string& data) {
+int64 read_quadtree(const std::string& data) {
     uint64 x=0,y=0,z=0;
 
     size_t pos=0;
-    PbfTag pbfTag = readPbfTag(data,pos);
-    for ( ; pbfTag.tag>0; pbfTag = readPbfTag(data,pos)) {
+    PbfTag pbfTag = read_pbf_tag(data,pos);
+    for ( ; pbfTag.tag>0; pbfTag = read_pbf_tag(data,pos)) {
         if (pbfTag.tag==1) { x=pbfTag.value; }
         if (pbfTag.tag==2) { y=pbfTag.value; }
         if (pbfTag.tag==3) { z=pbfTag.value; }
@@ -426,12 +426,12 @@ int64 readQuadTree(const std::string& data) {
 
 void readHeaderBbox(const std::string& data, bbox& bb) {
     size_t pos=0;
-    for (PbfTag tg=readPbfTag(data,pos); tg.tag>0; tg=readPbfTag(data,pos)) {
+    for (PbfTag tg=read_pbf_tag(data,pos); tg.tag>0; tg=read_pbf_tag(data,pos)) {
         switch (tg.tag) {
-            case 1: bb.minx=unZigZag(tg.value)/100; break; //left
-            case 2: bb.maxx=unZigZag(tg.value)/100; break; //right
-            case 3: bb.maxy=unZigZag(tg.value)/100; break; //top
-            case 4: bb.miny=unZigZag(tg.value)/100; break; //bottom
+            case 1: bb.minx=un_zig_zag(tg.value)/100; break; //left
+            case 2: bb.maxx=un_zig_zag(tg.value)/100; break; //right
+            case 3: bb.maxy=un_zig_zag(tg.value)/100; break; //top
+            case 4: bb.miny=un_zig_zag(tg.value)/100; break; //bottom
         }
     }
     
@@ -443,12 +443,12 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
     int64 qt=0, len=0;
     bool isc=false;
     size_t pos=0;
-    for (PbfTag tg=readPbfTag(data,pos); tg.tag>0; tg=readPbfTag(data,pos)) {
+    for (PbfTag tg=read_pbf_tag(data,pos); tg.tag>0; tg=read_pbf_tag(data,pos)) {
         //switch (tg.tag) {
-        if (tg.tag==1) { qt=readQuadTree(tg.data);}
+        if (tg.tag==1) { qt=read_quadtree(tg.data);}
         else if (tg.tag==2) {isc=tg.value!=0;}
-        else if (tg.tag==3) {len=unZigZag(tg.value);}
-        else if (tg.tag==4) { qt = unZigZag(tg.value); }
+        else if (tg.tag==3) {len=un_zig_zag(tg.value);}
+        else if (tg.tag==4) { qt = un_zig_zag(tg.value); }
 
     }
 
@@ -458,7 +458,7 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
 
 
 
-PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
+PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
 
 
     std::vector<std::string> stringtable;
@@ -472,16 +472,16 @@ PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool ch
     size_t pos=0;
 
     std::vector<std::string> blocks;
-    PbfTag pbfTag = readPbfTag(data,pos);
-    for ( ; pbfTag.tag>0; pbfTag = readPbfTag(data,pos)) {
+    PbfTag pbfTag = read_pbf_tag(data,pos);
+    for ( ; pbfTag.tag>0; pbfTag = read_pbf_tag(data,pos)) {
         if (pbfTag.tag==1) {
-            stringtable = readStringTable(pbfTag.data);
+            stringtable = read_string_table(pbfTag.data);
         } else if (pbfTag.tag==2) {
             blocks.push_back(pbfTag.data);
         } else if (pbfTag.tag==31) {
-            primblock->SetQuadtree(readQuadTree(pbfTag.data));
+            primblock->SetQuadtree(read_quadtree(pbfTag.data));
         } else if (pbfTag.tag == 32) {
-            primblock->SetQuadtree(unZigZag(pbfTag.value));
+            primblock->SetQuadtree(un_zig_zag(pbfTag.value));
         } else if (pbfTag.tag==33) {
             primblock->SetStartDate(int64(pbfTag.value));
         } else if (pbfTag.tag==34) {
@@ -508,10 +508,10 @@ PrimitiveBlockPtr readPrimitiveBlock(int64 idx, const std::string& data, bool ch
 
 
 
-HeaderPtr readPbfHeader(const std::string& data, int64 fl) {
+HeaderPtr read_header_block(const std::string& data, int64 fl) {
     auto res=std::make_shared<Header>();
     size_t pos=0;
-    for (PbfTag tg=readPbfTag(data,pos); tg.tag>0; tg=readPbfTag(data,pos)) {
+    for (PbfTag tg=read_pbf_tag(data,pos); tg.tag>0; tg=read_pbf_tag(data,pos)) {
         switch (tg.tag) {
             case 1: {
                 bbox box;

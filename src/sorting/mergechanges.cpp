@@ -239,7 +239,7 @@ class CalculateIdSetFilter {
             }
         }
         void check_way(const minimal::Way& w,bool box_contains) {
-            auto wns = readPackedDelta(w.refs_data);
+            auto wns = read_packed_delta(w.refs_data);
             bool found=box_contains || [this, &wns]() {
                 for (const auto& r: wns) {
                     if (ids->contains(ElementType::Node,r)) {
@@ -263,8 +263,8 @@ class CalculateIdSetFilter {
             //if (box_contains) {
             //    ids->relations.insert(r.id);
            // }
-            auto tys = readPackedInt(r.tys_data);
-            auto rfs = readPackedDelta(r.refs_data);
+            auto tys = read_packed_int(r.tys_data);
+            auto rfs = read_packed_delta(r.refs_data);
             
             bool found=[&]() {
                 for (size_t i=0; i < tys.size(); i++) {

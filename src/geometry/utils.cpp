@@ -131,22 +131,22 @@ int64 getlat(const lonlat& l) { return l.lat; }
 
 std::string pack_bounds(const bbox& bounds) {
     std::list<PbfTag> mm;
-    mm.push_back(PbfTag{1,zigZag(bounds.minx),""});
-    mm.push_back(PbfTag{2,zigZag(bounds.miny),""});
-    mm.push_back(PbfTag{3,zigZag(bounds.maxx-bounds.minx),""});
-    mm.push_back(PbfTag{3,zigZag(bounds.maxy-bounds.miny),""});
-    return packPbfTags(mm);
+    mm.push_back(PbfTag{1,zig_zag(bounds.minx),""});
+    mm.push_back(PbfTag{2,zig_zag(bounds.miny),""});
+    mm.push_back(PbfTag{3,zig_zag(bounds.maxx-bounds.minx),""});
+    mm.push_back(PbfTag{3,zig_zag(bounds.maxy-bounds.miny),""});
+    return pack_pbf_tags(mm);
 }
 
 bbox unpack_bounds(const std::string& data) {
     bbox bounds;
     int64 w=0,h=0;
     size_t pos=0;
-    for (auto t=readPbfTag(data,pos); t.tag>0; t=readPbfTag(data,pos)) {
-        if (t.tag==1) { bounds.minx=unZigZag(t.value); }
-        if (t.tag==2) { bounds.miny=unZigZag(t.value); }
-        if (t.tag==3) { w=unZigZag(t.value); }
-        if (t.tag==4) { h=unZigZag(t.value); }
+    for (auto t=read_pbf_tag(data,pos); t.tag>0; t=read_pbf_tag(data,pos)) {
+        if (t.tag==1) { bounds.minx=un_zig_zag(t.value); }
+        if (t.tag==2) { bounds.miny=un_zig_zag(t.value); }
+        if (t.tag==3) { w=un_zig_zag(t.value); }
+        if (t.tag==4) { h=un_zig_zag(t.value); }
     }
     bounds.maxx = bounds.minx+w;
     bounds.maxy = bounds.miny+h;
@@ -173,7 +173,7 @@ int64 to_int(double v) {
 }
 
 void read_lonlats_lons(lonlatvec& lonlats, const std::string& data) {
-    auto lons = readPackedDelta(data);
+    auto lons = read_packed_delta(data);
     if (lonlats.empty()) {
         lonlats.resize(lons.size());
     }
@@ -185,7 +185,7 @@ void read_lonlats_lons(lonlatvec& lonlats, const std::string& data) {
     }
 }
 void read_lonlats_lats(lonlatvec& lonlats, const std::string& data) {
-    auto lats = readPackedDelta(data);
+    auto lats = read_packed_delta(data);
     if (lonlats.empty()) {
         lonlats.resize(lats.size());
     }
@@ -200,9 +200,9 @@ void read_lonlats_lats(lonlatvec& lonlats, const std::string& data) {
 Ring::Part unpack_ringpart(const std::string& data) {
     size_t pos=0;
     Ring::Part res{0,{},{},false};
-    for (auto tag=readPbfTag(data,pos); tag.tag>0; tag=readPbfTag(data,pos)) {
+    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) { res.orig_id = tag.value; }
-        if (tag.tag==2) { res.refs = readPackedDelta(tag.data); }
+        if (tag.tag==2) { res.refs = read_packed_delta(tag.data); }
         if (tag.tag==3) { read_lonlats_lons(res.lonlats, tag.data); }
         if (tag.tag==4) { read_lonlats_lats(res.lonlats, tag.data); }
         if (tag.tag==5) { res.reversed=(tag.value==1); }
@@ -221,7 +221,7 @@ void expand_bbox(bbox& bx, const lonlatvec& llv) {
 Ring unpack_ringpart_vec(const std::string& data) {
     Ring res;
     size_t pos=0;
-    for (auto tag=readPbfTag(data,pos); tag.tag>0; tag=readPbfTag(data,pos)) {
+    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) { res.parts.push_back(unpack_ringpart(tag.data)); }
     }
     return res;
@@ -232,10 +232,10 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
     if (ty==ElementType::Point) {
         int64 lon=0, lat=0, minzoom=-1; int64 layer=0;
         for (const auto& t : pbftags) {
-            if (t.tag==8) { lat=unZigZag(t.value); }
-            if (t.tag==9) { lon=unZigZag(t.value); }
+            if (t.tag==8) { lat=un_zig_zag(t.value); }
+            if (t.tag==9) { lon=un_zig_zag(t.value); }
             if (t.tag==22) { minzoom = (int64) t.value; }
-            if (t.tag==24) { layer = unZigZag(t.value); }
+            if (t.tag==24) { layer = un_zig_zag(t.value); }
         }
         return std::make_shared<Point>(id,qt,inf,tgs,lon,lat,layer,minzoom);
     } else if ((ty==ElementType::Linestring) || (ty==ElementType::SimplePolygon)) {
@@ -246,15 +246,15 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         bool rev=false;
 
         for (const auto& t : pbftags) {
-            if (t.tag==8) { rfs = readPackedDelta(t.data);}
-            if (t.tag==12) { zorder=unZigZag(t.value); }
+            if (t.tag==8) { rfs = read_packed_delta(t.data);}
+            if (t.tag==12) { zorder=un_zig_zag(t.value); }
             if (t.tag==13) { read_lonlats_lons(lonlats,t.data); }
             if (t.tag==14) { read_lonlats_lats(lonlats,t.data); }
-            if (t.tag==15) { length = unZigZag(t.value)*0.01; }
-            if (t.tag==16) { area = unZigZag(t.value)*0.01; }
+            if (t.tag==15) { length = un_zig_zag(t.value)*0.01; }
+            if (t.tag==16) { area = un_zig_zag(t.value)*0.01; }
             if (t.tag==22) { minzoom = (int64) t.value; }
             if (t.tag==23) { rev = t.value==1; }
-            if (t.tag==24) { layer=unZigZag(t.value); }
+            if (t.tag==24) { layer=un_zig_zag(t.value); }
             //if (t.tag==20) { bounds=unpack_bounds(t.data); }
         }
         bbox bounds;
@@ -272,8 +272,8 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         std::vector<Ring> inners;
 
         for (const auto& t : pbftags) {
-            if (t.tag==12) { zorder=unZigZag(t.value); }
-            if (t.tag==16) { area=unZigZag(t.value)*0.01; }
+            if (t.tag==12) { zorder=un_zig_zag(t.value); }
+            if (t.tag==16) { area=un_zig_zag(t.value)*0.01; }
             if (t.tag==17) {
                 if (!outer.parts.empty()) {
                     throw std::domain_error("multiple outers??");
@@ -282,9 +282,9 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
 
             }
             if (t.tag==18) { inners.push_back(unpack_ringpart_vec(t.data)); }
-            if (t.tag==19) { part = unZigZag(t.value); }
+            if (t.tag==19) { part = un_zig_zag(t.value); }
             if (t.tag==22) { minzoom = (int64) t.value; }
-            if (t.tag==24) { layer=unZigZag(t.value); }
+            if (t.tag==24) { layer=un_zig_zag(t.value); }
             //if (t.tag==20) { bounds=unpack_bounds(t.data); }
         }
         bbox bounds;
@@ -298,7 +298,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         refvector refs;
         lonlatvec lonlats;
         for (const auto& t: pbftags) {
-            if (t.tag==8) { refs=readPackedDelta(t.data); }
+            if (t.tag==8) { refs=read_packed_delta(t.data); }
             if (t.tag==13) { read_lonlats_lons(lonlats,t.data); }
             if (t.tag==14) { read_lonlats_lats(lonlats,t.data); }
         }
@@ -313,7 +313,7 @@ ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vect
     int64 id, qt;
     ElementInfo inf; std::vector<Tag> tgs;
     std::list<PbfTag> pbftags;
-    std::tie(id,inf,tgs,qt,pbftags)=readCommon(ty,data,st,nullptr);
+    std::tie(id,inf,tgs,qt,pbftags)=read_common(ty,data,st,nullptr);
     
     return readGeometry_int(ty,id,inf,tgs,qt,pbftags,ct);
 }

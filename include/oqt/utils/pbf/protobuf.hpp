@@ -36,27 +36,27 @@ struct PbfTag {
 };
 
 
-std::string readData(const std::string& data, size_t& pos);
+std::string read_data(const std::string& data, size_t& pos);
 
 //double toDouble(uint64 uv);
 
-PbfTag readPbfTag(const std::string& data, size_t& pos);
+PbfTag read_pbf_tag(const std::string& data, size_t& pos);
 
-std::list<PbfTag> readAllPbfTags(const std::string& data);
-
-
-size_t writePbfValue(std::string& data, size_t pos, uint64 t, uint64 v);
-size_t writePbfData(std::string& data, size_t pos, uint64 t, const std::string& v);
-
-size_t writePbfDataHeader(std::string& data, size_t pos, uint64 t, size_t ln);
-
-size_t pbfValueLength(uint64 t, uint64 val);
-size_t pbfDataLength(uint64 t, size_t len);
+std::list<PbfTag> read_all_pbf_tags(const std::string& data);
 
 
-void sortPbfTags(std::list<PbfTag>& msgs);
+size_t write_pbf_value(std::string& data, size_t pos, uint64 t, uint64 v);
+size_t write_pbf_data(std::string& data, size_t pos, uint64 t, const std::string& v);
 
-std::string packPbfTags(const std::list<PbfTag>& msgs, bool forceData=false);
+size_t write_pbf_data_header(std::string& data, size_t pos, uint64 t, size_t ln);
+
+size_t pbf_value_length(uint64 t, uint64 val);
+size_t pbf_data_length(uint64 t, size_t len);
+
+
+void sort_pbf_tags(std::list<PbfTag>& msgs);
+
+std::string pack_pbf_tags(const std::list<PbfTag>& msgs, bool forceData=false);
 
     
 }

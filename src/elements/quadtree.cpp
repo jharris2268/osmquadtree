@@ -93,8 +93,8 @@ int64 makeQuadTreeFloat(double mx, double my, double Mx, double My, double bf, u
     if (My == my) {
         My += 0.0000001;
     }
-    double mym = merc(my) / 90.0;
-    double Mym = merc(My) / 90.0;
+    double mym = latitude_mercator(my) / 90.0;
+    double Mym = latitude_mercator(My) / 90.0;
     double mxm = mx / 180.0;
     double Mxm = Mx / 180.0;
 
@@ -140,8 +140,8 @@ oqt::bbox bbox(int64 qt, double buffer) {
 
     }
 
-    my = unMerc(my);
-    My = unMerc(My);
+    my = latitude_un_mercator(my);
+    My = latitude_un_mercator(My);
 
     if (buffer > 0.0) {
         double xx = (Mx - mx) * buffer;
@@ -152,7 +152,9 @@ oqt::bbox bbox(int64 qt, double buffer) {
         My += yy;
     }
 
-    return oqt::bbox{toInt(mx), toInt(my), toInt(Mx), toInt(My)};
+    return oqt::bbox{
+            coordinate_as_integer(mx), coordinate_as_integer(my),
+            coordinate_as_integer(Mx), coordinate_as_integer(My)};
 
 }
 
@@ -213,8 +215,8 @@ int64 common(int64 qt, int64 other) {
 int64 calculate(int64 minx, int64 miny, int64 maxx, int64 maxy,
     double buffer, uint64 maxLevel) {
     return makeQuadTreeFloat(
-        toFloat(minx), toFloat(miny),
-        toFloat(maxx), toFloat(maxy),
+        coordinate_as_float(minx), coordinate_as_float(miny),
+        coordinate_as_float(maxx), coordinate_as_float(maxy),
         buffer, maxLevel);
 }
 

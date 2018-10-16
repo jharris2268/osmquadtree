@@ -28,8 +28,8 @@
 #include "oqt/elements/header.hpp"
 
 namespace oqt {
-std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
-std::string writePbfHeader(HeaderPtr head);
+std::string pack_primitive_block(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
+std::string pack_header_block(HeaderPtr head);
 }
 
 

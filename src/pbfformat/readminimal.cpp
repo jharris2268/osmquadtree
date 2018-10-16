@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "oqt/pbfformat/readminimal.hpp"
+#include "oqt/pbfformat/readblock.hpp"
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/utils/logger.hpp"
 #include <iostream>
@@ -29,13 +30,12 @@
 
 namespace oqt {
 
-int64 readQuadTree(const std::string& data);
 
 void readMinimalGroup(minimal::BlockPtr block, const std::string& group, size_t objflags);
 
 void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) noexcept;
 
-minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t objflags) {
+minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_t objflags) {
 
     auto result = std::make_shared<minimal::Block>();
     result->index = index;
@@ -45,14 +45,14 @@ minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t 
     } else {
 
         size_t pos=0;
-        PbfTag tag = std::move(readPbfTag(data,pos));
-        for ( ; tag.tag>0; tag=std::move(readPbfTag(data,pos))) {
+        PbfTag tag = std::move(read_pbf_tag(data,pos));
+        for ( ; tag.tag>0; tag=std::move(read_pbf_tag(data,pos))) {
             if (tag.tag == 2) {
                 readMinimalGroup(result, tag.data,objflags);
             } else if (tag.tag==31) {
-                result->quadtree = readQuadTree(tag.data);
+                result->quadtree = read_quadtree(tag.data);
             } else if (tag.tag == 32) {
-                result->quadtree = unZigZag(tag.value);
+                result->quadtree = un_zig_zag(tag.value);
             }
         }
     }
@@ -67,9 +67,9 @@ minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t 
 template <class T>
 void readMinimalInfo(const std::string& data, T& obj) {
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
 
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             obj.version = tag.value;
         } else if (tag.tag==2) {
@@ -85,9 +85,9 @@ std::tuple<PbfTag,PbfTag,PbfTag> readMinimalCommon(const std::string& data, T& o
     PbfTag other1,other2,other3;
 
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
 
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             obj.id=int64(tag.value);
         } else if ((tag.tag==4) && (!skipinfo)) {
@@ -100,7 +100,7 @@ std::tuple<PbfTag,PbfTag,PbfTag> readMinimalCommon(const std::string& data, T& o
             other3=std::move(tag);
 
         } else if (tag.tag==20) {
-            obj.quadtree=unZigZag(tag.value);
+            obj.quadtree=un_zig_zag(tag.value);
         }
     }
 
@@ -113,10 +113,10 @@ void readMinimalNode(minimal::BlockPtr block, const std::string& data, bool skip
     std::tie(rem1,rem2,rem3) = readMinimalCommon(data, node, skipinfo);
     
     if (rem1.tag==8) {
-        node.lat=unZigZag(rem1.value);
+        node.lat=un_zig_zag(rem1.value);
     }
     if (rem2.tag==9) {
-        node.lon=unZigZag(rem2.value);
+        node.lon=un_zig_zag(rem2.value);
     }
     block->nodes.push_back(std::move(node));
 }
@@ -170,17 +170,17 @@ void readMinimalDense(minimal::BlockPtr block, const std::string& data, bool ski
     
 
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
 
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             //id = readPackedDelta(tag.data);
             id=std::move(tag.data);
         } else if ((tag.tag==5) && (!skipinfo)) {
             //timestamp = [&tag]{
                 size_t p2=0;
-                PbfTag t2=readPbfTag(tag.data,p2);
-                for ( ; t2.tag>0; t2=readPbfTag(tag.data,p2)) {
+                PbfTag t2=read_pbf_tag(tag.data,p2);
+                for ( ; t2.tag>0; t2=read_pbf_tag(tag.data,p2)) {
                     if (t2.tag==1) {
                         version=std::move(t2.data);
                     }else if (t2.tag==2) {
@@ -212,21 +212,21 @@ void readMinimalDense(minimal::BlockPtr block, const std::string& data, bool ski
 
 
     while ( p0 < id.size()) {
-        c0 += readVarint(id,p0);
+        c0 += read_varint(id,p0);
         if (p1 < timestamp.size()) {
-            c1+=readVarint(timestamp,p1);
+            c1+=read_varint(timestamp,p1);
         }
         if (p2 < quadtree.size()) {
-            c2+=readVarint(quadtree,p2);
+            c2+=read_varint(quadtree,p2);
         }
         if (p3 < lon.size()) {
-            c3+=readVarint(lon,p3);
+            c3+=read_varint(lon,p3);
         }
         if (p4 < lat.size()) {
-            c4+=readVarint(lat,p4);
+            c4+=read_varint(lat,p4);
         }
         if (p5< version.size()) {
-            c5 = readUVarint(version,p5);
+            c5 = read_unsigned_varint(version,p5);
         }
         //nodes.push_back(minimalnode{c0,c1,c2,c3,c4});
         minimal::Node mn; mn.id = c0; mn.timestamp=c1; mn.quadtree=c2; mn.changetype=0; mn.lon=c3; mn.lat=c4;
@@ -242,12 +242,12 @@ void readMinimalDense(minimal::BlockPtr block, const std::string& data, bool ski
 
 void readMinimalGroup(minimal::BlockPtr block, const std::string& data, size_t objflags) {
     size_t pos=0;
-    PbfTag tag = std::move(readPbfTag(data,pos));
+    PbfTag tag = std::move(read_pbf_tag(data,pos));
     size_t np = block->nodes.size();
     size_t wp = block->ways.size();
     size_t rp = block->relations.size();
     
-    for ( ; tag.tag>0; tag=std::move(readPbfTag(data,pos))) {
+    for ( ; tag.tag>0; tag=std::move(read_pbf_tag(data,pos))) {
         if ((tag.tag==1) || (tag.tag==2)) { block->has_nodes=true; }
         
         if ((objflags&1) && (tag.tag==1)) {
@@ -284,29 +284,29 @@ void readMinimalGroup(minimal::BlockPtr block, const std::string& data, size_t o
 
 
 
-void readQtVecObj(std::shared_ptr<qtvec> block, const std::string& data, int64 off) {
+void readQtVecObj(std::shared_ptr<quadtree_vector> block, const std::string& data, int64 off) {
 
     int64 id=off<<61;
     int64 qt=-1;
 
     size_t pos=0;
-    PbfTag tag=readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    PbfTag tag=read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             id |= int64(tag.value);
         } else if (tag.tag==20) {
-            qt = unZigZag(tag.value);
+            qt = un_zig_zag(tag.value);
         }
     }
     block->push_back(std::make_pair(id,qt));
 }
 
-void readQtVecDense(std::shared_ptr<qtvec> block, const std::string& data) {
+void readQtVecDense(std::shared_ptr<quadtree_vector> block, const std::string& data) {
     std::string ids, qts;
 
     size_t pos=0;
-    PbfTag tag=readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    PbfTag tag=read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
             ids = tag.data;
         } else if (tag.tag==20) {
@@ -318,9 +318,9 @@ void readQtVecDense(std::shared_ptr<qtvec> block, const std::string& data) {
     size_t idp=0,qtp=0;
 
     while (idp < ids.size()) {
-        id += readVarint(ids, idp);
+        id += read_varint(ids, idp);
         if (qtp < qts.size()) {
-            qt += readVarint(qts,qtp);
+            qt += read_varint(qts,qtp);
             block->push_back(std::make_pair(id,qt));
         } else {
             block->push_back(std::make_pair(id,-1));
@@ -329,14 +329,14 @@ void readQtVecDense(std::shared_ptr<qtvec> block, const std::string& data) {
 }
 
 
-void readQtsVecGroup(std::shared_ptr<qtvec> block, const std::string& data, size_t objflags) {
+void readQtsVecGroup(std::shared_ptr<quadtree_vector> block, const std::string& data, size_t objflags) {
 
     block->reserve(8000);
 
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
 
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if ((objflags&1) && (tag.tag==1)) {
             readQtVecObj(block, tag.data, 0);
         } else if ((objflags&1) &&(tag.tag==2)) {
@@ -353,13 +353,13 @@ void readQtsVecGroup(std::shared_ptr<qtvec> block, const std::string& data, size
     return;
 }
 
-std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags) {
+std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& data, size_t objflags) {
 
-    auto result = std::make_shared<qtvec>();
+    auto result = std::make_shared<quadtree_vector>();
 
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    PbfTag tag = read_pbf_tag(data,pos);
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag == 2) {
             readQtsVecGroup(result, tag.data,objflags);
         }
@@ -375,8 +375,8 @@ std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags) 
 
 std::tuple<uint64,uint64,bool> read_pbf_tag_alt(const std::string& data, size_t& pos) {
     if (pos>=data.size()) { return std::make_tuple(0,0,false); }
-    uint64 a = readUVarint(data,pos);
-    uint64 b = readUVarint(data,pos);
+    uint64 a = read_unsigned_varint(data,pos);
+    uint64 b = read_unsigned_varint(data,pos);
     if ((a&7) == 0) {
         return std::make_tuple(a>>3,b,false);
     } else if ((a&7) == 2) {
@@ -392,7 +392,7 @@ size_t numPacked(const std::string& data, size_t pos, size_t len) {
     
     
     while (pp < (pos+len)) {
-        readUVarint(data,pp);
+        read_unsigned_varint(data,pp);
         c+=1;
     }
     if (pp != (pos+len)) {
@@ -407,7 +407,7 @@ size_t readPacked_altcb(const std::string& data, size_t pos, size_t len, std::fu
     
     size_t i=0;
     while (pp < (pos+len)) {
-        uint64 v = readUVarint(data,pp);
+        uint64 v = read_unsigned_varint(data,pp);
         cb(i, v);
         i+=1;
     }
@@ -424,7 +424,7 @@ size_t readPackedDelta_altcb(const std::string& data, size_t pos, size_t len, st
     int64 v=0;
     size_t i=0;
     while (pp < (pos+len)) {
-        v += readVarint(data,pp);
+        v += read_varint(data,pp);
         cb(i, v);
         i+=1;
     }
@@ -481,7 +481,7 @@ void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, siz
     pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; });
     /*int64 v=0;
     for (size_t i=0; i < num_ids; i++) {
-        v += readVarint(data,pos);
+        v += read_varint(data,pos);
         block->nodes[firstnd + i].id=v;
     }*/
     
@@ -496,21 +496,21 @@ void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, siz
             
             v=0;
             for (size_t i=0; i < num_ids; i++) {
-                v += readVarint(data,pos);
+                v += read_varint(data,pos);
                 block->nodes[firstnd + i].lat=v;
             }*/
         } else if (isdata && (tg==9)) {
             pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lon = v; });
             /*v=0;
             for (size_t i=0; i < num_ids; i++) {
-                v += readVarint(data,pos);
+                v += read_varint(data,pos);
                 block->nodes[firstnd + i].lon=v;
             }*/
         } else if (isdata && (tg==20)) {
             pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).quadtree = v; });
             /*v=0;
             for (size_t i=0; i < num_ids; i++) {
-                v += readVarint(data,pos);
+                v += read_varint(data,pos);
                 block->nodes[firstnd + i].quadtree=v;
             }*/
         } else if (isdata) {
@@ -562,7 +562,7 @@ void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_
             w.refs_data=std::move(data.substr(pos,vl));
             pos+=vl;
         } else if (tg==20) {
-            w.quadtree = unZigZag(vl);
+            w.quadtree = un_zig_zag(vl);
         } else if (isdata) {
             pos+=vl;
         }
@@ -592,7 +592,7 @@ void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, 
             r.tys_data=std::move(data.substr(pos,vl));
             pos+=vl;
         } else if (tg==20) {
-            r.quadtree = unZigZag(vl);
+            r.quadtree = un_zig_zag(vl);
         } else if (isdata) {
             pos+=vl;
         }
@@ -644,10 +644,10 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
             readMinimalGroup_alt(block, data, objflags, pos, pos+vl);
             pos+=vl;
         } else if (tg==31) {
-            block->quadtree = readQuadTree(data.substr(pos,vl));
+            block->quadtree = read_quadtree(data.substr(pos,vl));
             pos+=vl;
         } else if (tg == 32) {
-            block->quadtree = unZigZag(vl);
+            block->quadtree = un_zig_zag(vl);
         } else if (isdata) {
             pos+=vl;
         }

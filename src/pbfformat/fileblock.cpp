@@ -92,7 +92,7 @@ std::shared_ptr<FileBlock> read_file_block(int64 index, std::istream& infile) {
     
     auto result = std::make_shared<FileBlock>(index,"","",0,true);
     result->file_position = fpos;
-    tag = readPbfTag(r.first, pos);
+    tag = read_pbf_tag(r.first, pos);
     while (tag.tag!=0) {
 
         if (tag.tag==1) {
@@ -102,14 +102,14 @@ std::shared_ptr<FileBlock> read_file_block(int64 index, std::istream& infile) {
         } else {
             Logger::Message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
         }
-        tag = readPbfTag(r.first, pos);
+        tag = read_pbf_tag(r.first, pos);
     }
 
     
     r = std::move(read_bytes(infile, block_size));
     
     pos=0;
-    tag = std::move(readPbfTag(r.first, pos));
+    tag = std::move(read_pbf_tag(r.first, pos));
     while (tag.tag!=0) {
 
         if (tag.tag==1) {
@@ -126,7 +126,7 @@ std::shared_ptr<FileBlock> read_file_block(int64 index, std::istream& infile) {
             Logger::Message() << "??" << tag.tag << " " << tag.value << " " << tag.data;
         }
 
-        tag = std::move(readPbfTag(r.first, pos));
+        tag = std::move(read_pbf_tag(r.first, pos));
     }
     
     
@@ -148,12 +148,12 @@ std::string prepare_file_block(const std::string& head, const std::string& data,
     
     size_t data_blob_len = 0;
     if (compress_level != 0) {
-        data_blob_len = pbfValueLength(2, uint64(data.size())) + pbfDataLength(3, comp.size());
+        data_blob_len = pbf_value_length(2, uint64(data.size())) + pbf_data_length(3, comp.size());
     } else {
-        data_blob_len = pbfDataLength(1, data.size());
+        data_blob_len = pbf_data_length(1, data.size());
     }    
     
-    size_t head_blob_len = pbfDataLength(1, head.size()) + pbfValueLength(3, data_blob_len);
+    size_t head_blob_len = pbf_data_length(1, head.size()) + pbf_value_length(3, data_blob_len);
     
     std::string output(4+head_blob_len + data_blob_len,0);
     output[0]=(char)((head_blob_len>>24)&0xff);
@@ -162,16 +162,16 @@ std::string prepare_file_block(const std::string& head, const std::string& data,
     output[3]=(char)((head_blob_len)&0xff);
     
     size_t pos = 4;
-    pos = writePbfData(output, pos, 1, head);
-    pos = writePbfValue(output, pos, 3, data_blob_len);
+    pos = write_pbf_data(output, pos, 1, head);
+    pos = write_pbf_value(output, pos, 3, data_blob_len);
     
     if (pos != (4+head_blob_len)) { throw std::domain_error("wtf"); }
     
     if (compress_level != 0) {
-        pos = writePbfValue(output, pos, 2, uint64(data.size()));
-        pos = writePbfData(output, pos, 3, comp);
+        pos = write_pbf_value(output, pos, 2, uint64(data.size()));
+        pos = write_pbf_data(output, pos, 3, comp);
     } else {
-        pos = writePbfData(output, pos, 1, data);
+        pos = write_pbf_data(output, pos, 1, data);
     }
     
     if (pos != output.size()) { throw std::domain_error("wtf"); }

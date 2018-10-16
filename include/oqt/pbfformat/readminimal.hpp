@@ -33,10 +33,10 @@ namespace oqt {
 
 
 
-minimal::BlockPtr readMinimalBlock(int64 index, const std::string& data, size_t objflags=7);
+minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_t objflags=7);
 
-typedef std::vector<std::pair<uint64,int64> > qtvec;
-std::shared_ptr<qtvec> readQtVecBlock(const std::string& data, size_t objflags=7);
+typedef std::vector<std::pair<uint64,int64> > quadtree_vector;
+std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& data, size_t objflags=7);
 
 }
 

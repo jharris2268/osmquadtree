@@ -27,16 +27,16 @@
 
 namespace oqt {
 
-uint64 zigZag(int64 v);
-int64 unZigZag(uint64 uv);
+uint64 zig_zag(int64 v);
+int64 un_zig_zag(uint64 uv);
 
     
-uint64 readUVarint(const std::string& data, size_t& pos);
-int64 readVarint(const std::string& data, size_t& pos);
+uint64 read_unsigned_varint(const std::string& data, size_t& pos);
+int64 read_varint(const std::string& data, size_t& pos);
 
-size_t UVarintLength(uint64 value);
-size_t writeUVarint(std::string& data, size_t pos, uint64 uv);
-size_t writeVarint(std::string& data, size_t pos, int64 v);
+size_t unsigned_varint_length(uint64 value);
+size_t write_unsigned_varint(std::string& data, size_t pos, uint64 uv);
+size_t write_varint(std::string& data, size_t pos, int64 v);
 
 
 }

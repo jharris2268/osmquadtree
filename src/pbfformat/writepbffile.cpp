@@ -103,7 +103,7 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, Header
     if (head) {
         block_index idx_temp(idx.begin(),idx.end());
         head->Index().swap(idx_temp);
-        auto hb = prepare_file_block("OSMHeader",writePbfHeader(head));
+        auto hb = prepare_file_block("OSMHeader",pack_header_block(head));
         outfile.write(hb.data(),hb.size());
     }
 
@@ -150,7 +150,7 @@ class PbfFileWriterImpl : public PbfFileWriter {
             
             if (!file.good()) { throw std::domain_error("can't open"); }
             if (head) {
-                auto hb = prepare_file_block("OSMHeader",writePbfHeader(head));
+                auto hb = prepare_file_block("OSMHeader",pack_header_block(head));
                 file.write(hb.data(),hb.size());
                 pos += hb.size();
             }
@@ -539,7 +539,7 @@ HeaderPtr getHeaderBlock_file(std::ifstream& infile) {
     }
     int64 p = infile.tellg();
     
-    return readPbfHeader(fb->get_data(),p);
+    return read_header_block(fb->get_data(),p);
 }
 
 HeaderPtr getHeaderBlock(const std::string& fn) {

@@ -59,9 +59,9 @@ std::list<PbfTag> WayWithNodes::pack_extras() const {
     
 
     std::list<PbfTag> extras;
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
+    extras.push_back(PbfTag{12,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
     return extras;
 }
 

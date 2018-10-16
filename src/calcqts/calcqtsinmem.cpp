@@ -143,8 +143,8 @@ void calculate_relation_quadtrees(
     
     for (size_t i=0; i < relations.size(); i++) {
         auto& r = relations.at(i);
-        auto tys = readPackedInt(r.tys_data);
-        auto rfs = readPackedDelta(r.refs_data);
+        auto tys = read_packed_int(r.tys_data);
+        auto rfs = read_packed_delta(r.refs_data);
         if (tys.size()!=rfs.size()) {
             Logger::Message() << "??? relation " << r.id << " tys!=refs " << tys.size() << " " << rfs.size();
             throw std::domain_error("??? tys != refs");
@@ -254,7 +254,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
     Logger::Get().time("sort data");
     size_t nmissing=0;
     for (auto& w : ways) {
-        auto wns = readPackedDelta(w.refs_data);
+        auto wns = read_packed_delta(w.refs_data);
         std::vector<size_t> ni;
         ni.reserve(wns.size());
         bbox bx;

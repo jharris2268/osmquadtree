@@ -33,7 +33,7 @@ PrimitiveBlockPtr read_as_primitiveblock(
     
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();
-        auto r = readPrimitiveBlock(bl->idx, dd, isc, objflags, filter, nullptr);
+        auto r = read_primitive_block(bl->idx, dd, isc, objflags, filter, nullptr);
         r->SetFilePosition(bl->file_position);
         r->SetFileProgress(bl->file_progress);
         
@@ -53,7 +53,7 @@ minimal::BlockPtr read_as_minimalblock(
     
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();
-        auto r = readMinimalBlock(bl->idx, dd, objflags);
+        auto r = read_minimal_block(bl->idx, dd, objflags);
         r->file_progress = bl->file_progress;
         r->file_position = bl->file_position;
         return r;
@@ -66,15 +66,15 @@ minimal::BlockPtr read_as_minimalblock(
     return r;
 }
 
-std::shared_ptr<qtvec> read_as_qtvec(
+std::shared_ptr<quadtree_vector> read_as_quadtree_vector(
     std::shared_ptr<FileBlock> bl, size_t objflags) {
     
     std::string dd = bl->get_data();
     if ((bl->blocktype=="OSMData")) {
-        return readQtVecBlock(dd, objflags);
+        return read_quadtree_vector_block(dd, objflags);
         
     }
-    auto r=std::make_shared<qtvec>();
+    auto r=std::make_shared<quadtree_vector>();
     
     return r;
 }
@@ -88,9 +88,9 @@ PrimitiveBlockPtr merge_as_primitiveblock(
     for (auto& b: bl->blobs) {
         std::string dd = decompress(b.first,b.second);
         if (main) {
-            changes.push_back(readPrimitiveBlock(bl->idx, dd, true,objflags,ids));
+            changes.push_back(read_primitive_block(bl->idx, dd, true,objflags,ids));
         } else {
-            main = readPrimitiveBlock(bl->idx, dd, true,objflags,ids);
+            main = read_primitive_block(bl->idx, dd, true,objflags,ids);
         }
     }
     
@@ -116,9 +116,9 @@ minimal::BlockPtr merge_as_minimalblock(
     for (auto& b: bl->blobs) {
         std::string dd = decompress(b.first,b.second);
         if (main) {
-            changes.push_back(readMinimalBlock(bl->idx, dd, objflags));
+            changes.push_back(read_minimal_block(bl->idx, dd, objflags));
         } else {
-            main = readMinimalBlock(bl->idx, dd, objflags);
+            main = read_minimal_block(bl->idx, dd, objflags);
         }
         ts+=dd.size();
     }
@@ -255,14 +255,14 @@ void read_blocks_nothread_minimalblock(
 
 }
 
-void read_blocks_split_qtvec(
+void read_blocks_split_quadtree_vector(
     const std::string& filename,
-    std::vector<std::function<void(std::shared_ptr<qtvec>)>> callbacks,
+    std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> callbacks,
     std::vector<int64> locs, 
     size_t objflags)  {
         
         
-    return read_blocks_split_convfunc<qtvec>(filename, callbacks, locs,
+    return read_blocks_split_convfunc<quadtree_vector>(filename, callbacks, locs,
         [objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_qtvec(fb, objflags); });
 }  

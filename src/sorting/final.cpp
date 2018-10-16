@@ -48,7 +48,7 @@ class PackFinal {
                 oo->SetEndDate(enddate);
             }
             std::sort(oo->Objects().begin(), oo->Objects().end(), element_cmp);
-            auto p = writePbfBlock(oo, writeqts, false, true, true);
+            auto p = pack_primitive_block(oo, writeqts, false, true, true);
             auto q = std::make_shared<keystring>(writeqts ? oo->Quadtree() : oo->Index(), prepare_file_block("OSMData", p,complevel));
             
             cb(q);

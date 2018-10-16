@@ -56,7 +56,7 @@ minimal::BlockPtr read_as_minimalblock(
     size_t objflags);
 
 
-std::shared_ptr<qtvec> read_as_qtvec(
+std::shared_ptr<quadtree_vector> read_as_qtvec(
     std::shared_ptr<FileBlock> bl, 
     size_t objflags);
 
@@ -227,9 +227,9 @@ void read_blocks_nothread_minimalblock(
     std::vector<int64> locs, 
     size_t objflags);
 
-void read_blocks_split_qtvec(
+void read_blocks_split_quadtree_vector(
     const std::string& filename,
-    std::vector<std::function<void(std::shared_ptr<qtvec>)>> callbacks,
+    std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> callbacks,
     std::vector<int64> locs, 
     size_t objflags);   
 
@@ -252,9 +252,9 @@ namespace readpbffile_detail {
         for (auto& b: bl->blobs) {
             std::string dd = decompress(b.first,b.second);
             if (main) {
-                changes.push_back(readPrimitiveBlock(bl->idx, dd, true,objflags,ids));
+                changes.push_back(read_primitive_block(bl->idx, dd, true,objflags,ids));
             } else {
-                main = readPrimitiveBlock(bl->idx, dd, true,objflags,ids);
+                main = read_primitive_block(bl->idx, dd, true,objflags,ids);
             }
         }
         
@@ -279,9 +279,9 @@ namespace readpbffile_detail {
         for (auto& b: bl->blobs) {
             std::string dd = decompress(b.first,b.second);
             if (main) {
-                changes.push_back(readMinimalBlock(bl->idx, dd, objflags));
+                changes.push_back(read_minimal_block(bl->idx, dd, objflags));
             } else {
-                main = readMinimalBlock(bl->idx, dd, objflags);
+                main = read_minimal_block(bl->idx, dd, objflags);
             }
             ts+=dd.size();
         }

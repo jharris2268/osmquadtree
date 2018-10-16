@@ -55,7 +55,7 @@ class CollectQts {
     public:
         CollectQts(std::function<void(std::shared_ptr<count_map>)> cb_) : cb(cb_), lim(1000000) {}
         
-        void call(std::shared_ptr<qtvec> cc) {
+        void call(std::shared_ptr<quadtree_vector> cc) {
             if (!cc) {
                 if (curr) {
                     cb(curr);
@@ -76,9 +76,9 @@ class CollectQts {
                 curr.reset();
             }
         }
-        static std::function<void(std::shared_ptr<qtvec>)> make(std::function<void(std::shared_ptr<count_map>)> cb) {
+        static std::function<void(std::shared_ptr<quadtree_vector>)> make(std::function<void(std::shared_ptr<count_map>)> cb) {
             auto cq = std::make_shared<CollectQts>(cb);
-            return [cq](std::shared_ptr<qtvec> v) {
+            return [cq](std::shared_ptr<quadtree_vector> v) {
                 cq->call(v);
             };
         }
@@ -97,12 +97,12 @@ std::shared_ptr<QtTree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
     
     auto add_qts = threaded_callback<count_map>::make(make_addcountmaptree(tree, maxlevel),numchan);
     
-    std::vector<std::function<void(std::shared_ptr<qtvec>)>> make_addcounts;
+    std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> make_addcounts;
     for (size_t i=0; i < numchan; i++) {
         make_addcounts.push_back(CollectQts::make(add_qts));
     }
     
-    read_blocks_split_qtvec(qtsfn, make_addcounts, {}, 15);
+    read_blocks_split_quadtree_vector(qtsfn, make_addcounts, {}, 15);
     
     return tree;
 };
@@ -118,7 +118,7 @@ std::shared_ptr<QtTree> make_qts_tree(const std::string& qtsfn, size_t numchan) 
 class AddQuadtrees {
     public:
         
-        AddQuadtrees(std::function<std::shared_ptr<qtvec>(void)> next_qts_block_, bool msgs_) :
+        AddQuadtrees(std::function<std::shared_ptr<quadtree_vector>(void)> next_qts_block_, bool msgs_) :
             next_qts_block(next_qts_block_), msgs(msgs_), curr_idx(0), count(0) {
                 curr = next_qts_block();
                 if (!curr) {
@@ -178,9 +178,9 @@ class AddQuadtrees {
         
     private:
         
-        std::function<std::shared_ptr<qtvec>(void)> next_qts_block;
+        std::function<std::shared_ptr<quadtree_vector>(void)> next_qts_block;
         bool msgs;
-        std::shared_ptr<qtvec> curr;
+        std::shared_ptr<quadtree_vector> curr;
         size_t curr_idx;
         size_t count;
         
@@ -195,17 +195,17 @@ class ReadQtsVec {
             readfile = make_readfile(qtsfn,{},0, 128*1024*1024, fs);
         }
         
-        std::shared_ptr<qtvec> next() {
+        std::shared_ptr<quadtree_vector> next() {
             auto bl = readfile->next();
             if (!bl) { return nullptr; }
-            if (bl->blocktype != "OSMData") { return std::make_shared<qtvec>(); }
-            return readQtVecBlock(bl->get_data(), 7);
+            if (bl->blocktype != "OSMData") { return std::make_shared<quadtree_vector>(); }
+            return read_quadtree_vector_block(bl->get_data(), 7);
         }
         
-        static std::function<std::shared_ptr<qtvec>()> make(const std::string& qtsfn) {
+        static std::function<std::shared_ptr<quadtree_vector>()> make(const std::string& qtsfn) {
             auto readqtsvec = std::make_shared<ReadQtsVec>(qtsfn);
     
-            return [readqtsvec]() -> std::shared_ptr<qtvec> {
+            return [readqtsvec]() -> std::shared_ptr<quadtree_vector> {
                 return readqtsvec->next();
             };
         }
@@ -304,7 +304,7 @@ PrimitiveBlockPtr convert_primblock(std::shared_ptr<FileBlock> bl) {
     if (!bl) { return PrimitiveBlockPtr(); }
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();//decompress(std::get<2>(*bl), std::get<3>(*bl))
-        auto pb = readPrimitiveBlock(bl->idx, dd, false,15,nullptr,nullptr);
+        auto pb = read_primitive_block(bl->idx, dd, false,15,nullptr,nullptr);
         pb->SetFilePosition(bl->file_position);
         pb->SetFileProgress(bl->file_progress);
         return pb;

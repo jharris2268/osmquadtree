@@ -163,7 +163,7 @@ class CountWay : public CountElement {
             int64 curr=0;
             size_t pos=0;
             while ( pos < obj.refs_data.size()) {
-                curr += readVarint(obj.refs_data,pos);
+                curr += read_varint(obj.refs_data,pos);
                 nr++;
                 if ((min_ref==0) || (curr<min_ref)) {
                     min_ref=curr;
@@ -228,9 +228,9 @@ class CountRelation : public CountElement {
             size_t pos=0;
             size_t pos_ty=0;
             while ( pos < obj.refs_data.size()) {
-                uint64 ty=readUVarint(obj.tys_data, pos_ty);
+                uint64 ty=read_unsigned_varint(obj.tys_data, pos_ty);
 
-                curr += readVarint(obj.refs_data,pos);
+                curr += read_varint(obj.refs_data,pos);
                 nm++;
                 if (ty==0) { num_nodes++; }
                 if (ty==1) { num_ways++; }

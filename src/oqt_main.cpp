@@ -75,7 +75,7 @@ lonlat readpoly_coord(const std::string& line) {
     }
     double lat = std::stod(line.substr(p, line.size()-p));
     
-    return lonlat{toInt(lon),toInt(lat)};
+    return lonlat{coordinate_as_integer(lon),coordinate_as_integer(lat)};
 }
 
 lonlatvec read_poly_file(const std::string& fn) {

@@ -126,26 +126,26 @@ std::shared_ptr<WayNodesWrite> make_way_nodes_write(size_t cap, int64 key) {
 keystring_ptr pack_waynodes_block(std::shared_ptr<WayNodes> tile) {
     size_t sz=tile->size();
     
-    size_t node_len = packedDeltaLength_func([&tile](size_t i) { return tile->node_at(i); }, sz);
-    size_t way_len = packedDeltaLength_func([&tile](size_t i) { return tile->way_at(i); }, sz);
+    size_t node_len = packed_delta_length_func([&tile](size_t i) { return tile->node_at(i); }, sz);
+    size_t way_len = packed_delta_length_func([&tile](size_t i) { return tile->way_at(i); }, sz);
     
-    size_t len = pbfValueLength(1, zigZag(tile->key()))
-        + pbfDataLength(2, node_len)
-        + pbfDataLength(3, way_len)
-        + pbfValueLength(4, sz);
+    size_t len = pbf_value_length(1, zig_zag(tile->key()))
+        + pbf_data_length(2, node_len)
+        + pbf_data_length(3, way_len)
+        + pbf_value_length(4, sz);
     
     std::string buf(len,0);
     size_t pos=0;
     
-    pos = writePbfValue(buf, pos, 1, zigZag(tile->key()));
+    pos = write_pbf_value(buf, pos, 1, zig_zag(tile->key()));
     
-    pos = writePbfDataHeader(buf, pos, 2, node_len);
-    pos = writePackedDeltaInPlace_func(buf, pos, [&tile](size_t i) { return tile->node_at(i); }, sz);
+    pos = write_pbf_data_header(buf, pos, 2, node_len);
+    pos = write_packed_delta_in_place_func(buf, pos, [&tile](size_t i) { return tile->node_at(i); }, sz);
     
-    pos = writePbfDataHeader(buf, pos, 3, way_len);
-    pos = writePackedDeltaInPlace_func(buf, pos, [&tile](size_t i) { return tile->way_at(i); }, sz);
+    pos = write_pbf_data_header(buf, pos, 3, way_len);
+    pos = write_packed_delta_in_place_func(buf, pos, [&tile](size_t i) { return tile->way_at(i); }, sz);
     
-    pos = writePbfValue(buf, pos, 4, sz);
+    pos = write_pbf_value(buf, pos, 4, sz);
     
     if (pos!=len) {
         Logger::Message() << "pack_noderefs_try2 failed (key=" << tile->key() << ", sz=" << sz << " node_len=" << node_len << ", way_len=" << way_len << ", len=" << len << " != pos=" << pos;
@@ -155,15 +155,15 @@ keystring_ptr pack_waynodes_block(std::shared_ptr<WayNodes> tile) {
     return std::make_shared<keystring>(tile->key(), prepare_file_block("WayNodes", buf, 1));
     
 }
-    
+    /*
 void unpack_noderefs(const std::string& data, int64 key, WayNodesImpl& waynodes, int64 minway, int64 maxway) {
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
     std::string nn,ww;
 
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
-            if (unZigZag(tag.value)!=key) {
+            if (un_zig_zag(tag.value)!=key) {
                 throw std::domain_error("wrong key");
             }
         } else if (tag.tag==2) {
@@ -181,23 +181,23 @@ void unpack_noderefs(const std::string& data, int64 key, WayNodesImpl& waynodes,
     int64 nd=0,wy=0;
 
     while (np < nn.size()) {
-        nd += readVarint(nn,np);
-        wy += readVarint(ww,wp);
+        nd += read_varint(nn,np);
+        wy += read_varint(ww,wp);
         if ((wy>=minway) && ((maxway==0) || (wy<maxway))) {
             waynodes.add(wy,nd,true);
         }
    }
-}
+}*/
 
 std::shared_ptr<WayNodes> read_waynodes_block(const std::string& data, int64 minway, int64 maxway) {
     size_t pos=0;
-    PbfTag tag = readPbfTag(data,pos);
+    PbfTag tag = read_pbf_tag(data,pos);
     std::string nn,ww;
     int64 ky=-1;
     size_t sz=0;
-    for ( ; tag.tag>0; tag=readPbfTag(data,pos)) {
+    for ( ; tag.tag>0; tag=read_pbf_tag(data,pos)) {
         if (tag.tag==1) {
-            ky = unZigZag(tag.value);
+            ky = un_zig_zag(tag.value);
         } else if (tag.tag==2) {
             nn = tag.data;
         } else if (tag.tag==3) {
@@ -215,8 +215,8 @@ std::shared_ptr<WayNodes> read_waynodes_block(const std::string& data, int64 min
     auto res = std::make_shared<WayNodesImpl>(sz,ky);
     
     while (np < nn.size()) {
-        nd += readVarint(nn,np);
-        wy += readVarint(ww,wp);
+        nd += read_varint(nn,np);
+        wy += read_varint(ww,wp);
         if ((wy>=minway) && ((maxway==0) || (wy<maxway))) {
             res->add(wy,nd,true);
         }

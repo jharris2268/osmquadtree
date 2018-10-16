@@ -55,7 +55,7 @@ bool has_id(ElementType ty, const std::string& id_data, IdSetPtr ids) {
     size_t id_pos=0;
     int64 id=0;
     while ( (id_pos < id_data.size())) {
-        id += readVarint(id_data,id_pos);
+        id += read_varint(id_data,id_pos);
 
         if (ids->contains(ty, id)) {
             return true;
@@ -70,8 +70,8 @@ void checkIndexBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::s
 
     int64 qt =-1;
 
-    for (auto tg = readPbfTag(ss,pos); tg.tag>0; tg = readPbfTag(ss,pos)) {
-        if (tg.tag==1) { qt=unZigZag(tg.value); }
+    for (auto tg = read_pbf_tag(ss,pos); tg.tag>0; tg = read_pbf_tag(ss,pos)) {
+        if (tg.tag==1) { qt=un_zig_zag(tg.value); }
 
         //if ((tg.tag==2) || (tg.tag==3) || (tg.tag==4)) {
         if (tg.tag==2) {
@@ -101,7 +101,7 @@ std::string pack_minimal_ids(const std::vector<T>& in) {
     int64 i=0;
     for (auto o : in) {
         if ((p+10) > res.size()) { res.resize(res.size()+100); }
-        p = writeVarint(res,p,o.id-i);
+        p = write_varint(res,p,o.id-i);
         i=o.id;
 
     }
@@ -118,17 +118,17 @@ std::string makeIndexBlock(PrimitiveBlockPtr in) {
     }
 
     std::list<PbfTag> mm;
-    mm.push_back(PbfTag{1,zigZag(in->Quadtree()),""});
+    mm.push_back(PbfTag{1,zig_zag(in->Quadtree()),""});
     if (!n.empty()) {
-        mm.push_back(PbfTag{2,0,writePackedDelta(n)});
+        mm.push_back(PbfTag{2,0,write_packed_delta(n)});
     }
     if (!w.empty()) {
-        mm.push_back(PbfTag{3,0,writePackedDelta(w)});
+        mm.push_back(PbfTag{3,0,write_packed_delta(w)});
     }
     if (!r.empty()) {
-        mm.push_back(PbfTag{4,0,writePackedDelta(r)});
+        mm.push_back(PbfTag{4,0,write_packed_delta(r)});
     }
-    std::string dd = packPbfTags(mm);
+    std::string dd = pack_pbf_tags(mm);
 
     return prepare_file_block("IndexBlock", dd);
 }
@@ -187,15 +187,15 @@ void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set
     size_t pos=0;
     std::string id_data,bl_data;
 
-    for (auto tg = readPbfTag(ss,pos); tg.tag>0; tg = readPbfTag(ss,pos)) {
+    for (auto tg = read_pbf_tag(ss,pos); tg.tag>0; tg = read_pbf_tag(ss,pos)) {
         if (tg.tag==1) { id_data=tg.data; }
         if (tg.tag==2) { bl_data=tg.data; }
     }
     size_t id_pos=0, bl_pos=0;
     int64 id=0, bl=0;
     while ( (id_pos < id_data.size()) && (bl_pos < bl_data.size())) {
-        id += readVarint(id_data,id_pos);
-        bl += readVarint(bl_data,bl_pos);
+        id += read_varint(id_data,id_pos);
+        bl += read_varint(bl_data,bl_pos);
         ElementType t = (ElementType) (id>>59);
         if (ids->contains(t, id&0xffffffffffffll)) {
             blocks->insert(std::get<0>(head->Index().at(bl)));
@@ -603,7 +603,7 @@ std::pair<int64,int64> find_change_all(const std::string& src, const std::string
 
     auto out = make_pbffilewriter_indexedinmem(outfn, head);
     for (auto bl: tiles) {
-        auto dd = writePbfBlock(bl, true, true, true, true);
+        auto dd = pack_primitive_block(bl, true, true, true, true);
         auto p = prepare_file_block("OSMData",dd);
         out->writeBlock(bl->Quadtree(),p);
     }

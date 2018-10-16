@@ -193,7 +193,7 @@ class WritePbfFileImpl : public WritePbfFile {
         
         
         keystring_ptr write_and_pack_pbfblock(PrimitiveBlockPtr bl) {
-            auto data = writePbfBlock(bl, !dropqts, change, true, true);
+            auto data = pack_primitive_block(bl, !dropqts, change, true, true);
             auto block = prepare_file_block("OSMData", data);
             return std::make_shared<keystring>(bl->Quadtree(), block);
         }
@@ -210,9 +210,9 @@ void change_defs(py::module& m) {
     m.def("getHeaderBlock", &getHeaderBlock);
     m.def("checkIndexFile", &checkIndexFile_py);
     m.def("writeIndexFile", writeIndexFile_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
-    m.def("writePbfBlock", 
+    m.def("pack_primitive_block", 
         [](PrimitiveBlockPtr b, bool incQts, bool change, bool incInfo, bool incRefs) {
-                return py::bytes(writePbfBlock(b,incQts,change,incInfo,incRefs)); },
+                return py::bytes(pack_primitive_block(b,incQts,change,incInfo,incRefs)); },
         py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
     
 

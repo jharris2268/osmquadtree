@@ -100,11 +100,11 @@ std::string SimplePolygon::Wkb(bool transform, bool srid) const {
 std::list<PbfTag> SimplePolygon::pack_extras() const {
     std::list<PbfTag> extras;
     
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
-    extras.push_back(PbfTag{16,zigZag(to_int(area*100)),""});
+    extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
+    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{14,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
     
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});
@@ -113,7 +113,7 @@ std::list<PbfTag> SimplePolygon::pack_extras() const {
         extras.push_back(PbfTag{23,1,""});
     }
     if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
+        extras.push_back(PbfTag{24,zig_zag(layer),""});
     }
     return extras;
 }

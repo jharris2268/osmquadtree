@@ -34,21 +34,21 @@ namespace oqt {
 
 
 
-inline int64 toInt(double v) {
+inline int64 coordinate_as_integer(double v) {
     if (v>0) {
         return (v*10000000)+0.5;
     }
     return (v*10000000)-0.5;
 }
 
-inline double toFloat(int64 v) {
+inline double coordinate_as_float(int64 v) {
     return ((double)v) * 0.0000001;
 }
-inline double merc(double y, double scale=90.0) {
+inline double latitude_mercator(double y, double scale=90.0) {
     return log(tan(M_PI*(1.0+y/90.0)/4.0)) * scale / M_PI;
 }
 
-inline double unMerc(double d, double scale=90.0) {
+inline double latitude_un_mercator(double d, double scale=90.0) {
     return (atan(exp(d*M_PI/scale))*4/M_PI - 1.0) * 90.0;
 }
 

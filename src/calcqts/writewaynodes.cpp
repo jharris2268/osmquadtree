@@ -83,7 +83,7 @@ class WriteWayNodes {
                 int64 ndref=0;
                 size_t pos=0;
                 while ( pos < w.refs_data.size()) {
-                    ndref += readVarint(w.refs_data,pos);
+                    ndref += read_varint(w.refs_data,pos);
                     int64 ki = ndref/split_at;
                     if (ki<0) { throw std::domain_error("???"); }
                     size_t k = ki;

@@ -78,16 +78,16 @@ std::string Linestring::Wkb(bool transform, bool srid) const {
 std::list<PbfTag> Linestring::pack_extras() const {
     std::list<PbfTag> extras;
     
-    extras.push_back(PbfTag{8,0,writePackedDelta(refs)}); //refs
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{13,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,writePackedDeltaFunc<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
-    extras.push_back(PbfTag{15,zigZag(to_int(length*100)),""});
+    extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
+    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{14,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{15,zig_zag(to_int(length*100)),""});
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});
     }
     if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
+        extras.push_back(PbfTag{24,zig_zag(layer),""});
     }
     return extras;
 }

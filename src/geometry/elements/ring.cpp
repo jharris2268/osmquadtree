@@ -108,17 +108,17 @@ size_t write_ring(std::string& data, size_t pos, const lonlatvec& lonlats, bool 
 }
 
 std::string pack_ringpart(const Ring::Part& rp) {
-    std::string refsp = writePackedDelta(rp.refs);
-    std::string lonsp = writePackedDeltaFunc<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lon; });
-    std::string latsp = writePackedDeltaFunc<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lat; });
+    std::string refsp = write_packed_delta(rp.refs);
+    std::string lonsp = write_packed_delta_func<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lon; });
+    std::string latsp = write_packed_delta_func<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lat; });
     std::string res;
     res.resize(40+refsp.size()+lonsp.size()+latsp.size());
-    size_t pos=writePbfValue(res,0,1,rp.orig_id);
-    pos = writePbfData(res,pos,2,refsp);
-    pos = writePbfData(res,pos,3,lonsp);
-    pos = writePbfData(res,pos,4,latsp);
+    size_t pos=write_pbf_value(res,0,1,rp.orig_id);
+    pos = write_pbf_data(res,pos,2,refsp);
+    pos = write_pbf_data(res,pos,3,lonsp);
+    pos = write_pbf_data(res,pos,4,latsp);
     if (rp.reversed) {
-        pos = writePbfValue(res,pos,5,1);
+        pos = write_pbf_value(res,pos,5,1);
     }
     res.resize(pos);
     return res;
@@ -131,7 +131,7 @@ std::string pack_ring(const Ring& rps) {
     for (const auto& rp : rps.parts) {
         rr.push_back(PbfTag{1,0,pack_ringpart(rp)});
     }
-    return packPbfTags(rr);
+    return pack_pbf_tags(rr);
 }
 
 size_t ringpart_numpoints(const Ring& rpv) {

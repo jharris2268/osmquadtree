@@ -48,32 +48,32 @@ struct QtsBlock {
 std::string pack_qtsblock_data(std::shared_ptr<QtsBlock> bl) {
     std::list<PbfTag> mm;
     if (bl->ty==0) {
-        std::string ids = writePackedDelta(bl->refs);
-        std::string qts = writePackedDelta(bl->qts);
+        std::string ids = write_packed_delta(bl->refs);
+        std::string qts = write_packed_delta(bl->qts);
         std::string lns(bl->refs.size(),0);
         
         std::string result(ids.size()+qts.size()+2*lns.size()+40,0);
         size_t pos=0;
 
-        pos = writePbfData(result,pos,1,ids);
-        pos = writePbfData(result,pos,8,lns);
-        pos = writePbfData(result,pos,9,lns);
-        pos = writePbfData(result,pos,20,qts);
+        pos = write_pbf_data(result,pos,1,ids);
+        pos = write_pbf_data(result,pos,8,lns);
+        pos = write_pbf_data(result,pos,9,lns);
+        pos = write_pbf_data(result,pos,20,qts);
         result.resize(pos);
 
         mm.push_back(PbfTag{2,0,result});
     } else {
         for (size_t i=0; i < bl->refs.size(); i++) {
             std::string res(20,0);
-            size_t pos = writePbfValue(res,0,1,uint64(bl->refs.at(i)));
-            pos = writePbfValue(res,pos,20,zigZag(bl->qts.at(i)));
+            size_t pos = write_pbf_value(res,0,1,uint64(bl->refs.at(i)));
+            pos = write_pbf_value(res,pos,20,zig_zag(bl->qts.at(i)));
             res.resize(pos);
             size_t x = 2 + bl->ty;
             mm.push_back(PbfTag{x, 0, res});
         }       
     }
     
-    return packPbfTags({PbfTag{2,0,packPbfTags(mm)}});    
+    return pack_pbf_tags({PbfTag{2,0,pack_pbf_tags(mm)}});    
     
 }
 

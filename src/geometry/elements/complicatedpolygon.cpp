@@ -140,19 +140,19 @@ std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
     
 
     std::list<PbfTag> extras;
-    extras.push_back(PbfTag{12,zigZag(zorder),""});
-    extras.push_back(PbfTag{16,zigZag(to_int(area*100)),""});
+    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
 
     extras.push_back(PbfTag{17,0,pack_ring(outers)});
     for (const auto& ii : inners) {
         extras.push_back(PbfTag{18,0,pack_ring(ii)});
     }
-    extras.push_back(PbfTag{19,zigZag(part),""});
+    extras.push_back(PbfTag{19,zig_zag(part),""});
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});
     }
     if (layer!=0) {
-        extras.push_back(PbfTag{24,zigZag(layer),""});
+        extras.push_back(PbfTag{24,zig_zag(layer),""});
     }
     return extras;
 }

@@ -84,26 +84,26 @@ std::string packObject(
             throw std::domain_error("tags wrong");
         }
         
-        msgs.push_back(PbfTag{2,0,writePackedInt(kk)});
-        msgs.push_back(PbfTag{3,0,writePackedInt(vv)});
+        msgs.push_back(PbfTag{2,0,write_packed_int(kk)});
+        msgs.push_back(PbfTag{3,0,write_packed_int(vv)});
     }
     if (!infmsgs.empty() && includeInfos) {
-        msgs.push_back(PbfTag{4,0,packPbfTags(infmsgs)});
+        msgs.push_back(PbfTag{4,0,pack_pbf_tags(infmsgs)});
     }
     
     if (obj->Type()==ElementType::Node) {
         auto nd = std::dynamic_pointer_cast<Node>(obj);
-        msgs.push_back(PbfTag{8,zigZag(nd->Lat()),""});
-        msgs.push_back(PbfTag{9,zigZag(nd->Lon()),""});
+        msgs.push_back(PbfTag{8,zig_zag(nd->Lat()),""});
+        msgs.push_back(PbfTag{9,zig_zag(nd->Lon()),""});
     } else if (obj->Type()==ElementType::Way) {
         auto wy = std::dynamic_pointer_cast<Way>(obj);
-        msgs.push_back(PbfTag{8, 0, writePackedDelta(wy->Refs())});
+        msgs.push_back(PbfTag{8, 0, write_packed_delta(wy->Refs())});
     } else if (obj->Type()==ElementType::Relation) {
         auto rl = std::dynamic_pointer_cast<Relation>(obj);
         if (!rl->Members().empty()) {
-            msgs.push_back(PbfTag{8,0,writePackedIntFunc<Member>(rl->Members(), [&stringtable](const Member& m) { return getString(stringtable, m.role); })});
-            msgs.push_back(PbfTag{9,0,writePackedDeltaFunc<Member>(rl->Members(), [](const Member& m) { return m.ref; })});
-            msgs.push_back(PbfTag{10,0,writePackedIntFunc<Member>(rl->Members(), [](const Member& m) { return (uint64) m.type; })});
+            msgs.push_back(PbfTag{8,0,write_packed_int_func<Member>(rl->Members(), [&stringtable](const Member& m) { return getString(stringtable, m.role); })});
+            msgs.push_back(PbfTag{9,0,write_packed_delta_func<Member>(rl->Members(), [](const Member& m) { return m.ref; })});
+            msgs.push_back(PbfTag{10,0,write_packed_int_func<Member>(rl->Members(), [](const Member& m) { return (uint64) m.type; })});
         }
         
     } else {
@@ -118,12 +118,12 @@ std::string packObject(
         
 
     if (includeQts && (obj->Quadtree()>=0)) {
-        msgs.push_back(PbfTag{20,zigZag(obj->Quadtree())});
+        msgs.push_back(PbfTag{20,zig_zag(obj->Quadtree())});
     }
 
-    sortPbfTags(msgs);
+    sort_pbf_tags(msgs);
     
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
 }
 
 template <class Iter>
@@ -186,29 +186,29 @@ std::string packDenseNodes(
     }
     std::list<PbfTag> msgs;
 
-    msgs.push_back(PbfTag{1,0,writePackedDelta(ids)});
+    msgs.push_back(PbfTag{1,0,write_packed_delta(ids)});
     
     if (includeInfos && (!vs.empty())) {
         std::list<PbfTag> infmsgs;
-        infmsgs.push_back(PbfTag{1,0,writePackedInt(vs)});
-        infmsgs.push_back(PbfTag{2,0,writePackedDelta(ts)});
-        infmsgs.push_back(PbfTag{3,0,writePackedDelta(cs)});
-        infmsgs.push_back(PbfTag{4,0,writePackedDelta(ui)});
-        infmsgs.push_back(PbfTag{5,0,writePackedDelta(us)});
+        infmsgs.push_back(PbfTag{1,0,write_packed_int(vs)});
+        infmsgs.push_back(PbfTag{2,0,write_packed_delta(ts)});
+        infmsgs.push_back(PbfTag{3,0,write_packed_delta(cs)});
+        infmsgs.push_back(PbfTag{4,0,write_packed_delta(ui)});
+        infmsgs.push_back(PbfTag{5,0,write_packed_delta(us)});
         /*if (size_t(std::count(iv.begin(),iv.end(),1))!=iv.size()) {
-            infmsgs.push_back(PbfTag{6,0,writePackedInt(iv)});
+            infmsgs.push_back(PbfTag{6,0,write_packed_int(iv)});
         }*/        
-        msgs.push_back(PbfTag{5,0,packPbfTags(infmsgs)});
+        msgs.push_back(PbfTag{5,0,pack_pbf_tags(infmsgs)});
     }
 
-    msgs.push_back(PbfTag{8,0,writePackedDelta(lats)});
-    msgs.push_back(PbfTag{9,0,writePackedDelta(lons)});
-    msgs.push_back(PbfTag{10,0,writePackedInt(kvs)});
+    msgs.push_back(PbfTag{8,0,write_packed_delta(lats)});
+    msgs.push_back(PbfTag{9,0,write_packed_delta(lons)});
+    msgs.push_back(PbfTag{10,0,write_packed_int(kvs)});
     if (includeQts && (size_t(std::count(qts.begin(),qts.end(),-1))!=qts.size())) {
-        msgs.push_back(PbfTag{20,0,writePackedDelta(qts)});
+        msgs.push_back(PbfTag{20,0,write_packed_delta(qts)});
     }
 
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
 }
 
 
@@ -241,7 +241,7 @@ std::string packPrimitiveGroup(
         msgs.push_back(PbfTag{10,uint64(ct),""});
     }
 
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
 }
 
 
@@ -256,7 +256,7 @@ std::string packStringTable(const std::map<std::string,uint64>& stringtable) {
     for (const auto& s: st) {
         msgs.push_back(PbfTag{1,0,s});
     }
-    return packPbfTags(msgs,true);
+    return pack_pbf_tags(msgs,true);
 }
 
 std::string packQuadtree(int64 qt) {
@@ -270,7 +270,7 @@ std::string packQuadtree(int64 qt) {
     msgs.push_back(PbfTag{2,uint64(std::get<1>(t)),""});
     msgs.push_back(PbfTag{3,uint64(std::get<2>(t)),""});
     
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
 }
 
 
@@ -280,23 +280,23 @@ std::string packQuadtree(int64 qt) {
 
 std::string packHeaderBbox(const bbox& bb) {
     std::list<PbfTag> msgs;
-    msgs.push_back(PbfTag{1,zigZag(bb.minx*100),""}); //left
-    msgs.push_back(PbfTag{2,zigZag(bb.maxx*100),""}); //right
-    msgs.push_back(PbfTag{3,zigZag(bb.maxy*100),""}); //top
-    msgs.push_back(PbfTag{4,zigZag(bb.miny*100),""});//bottom
-    return packPbfTags(msgs);
+    msgs.push_back(PbfTag{1,zig_zag(bb.minx*100),""}); //left
+    msgs.push_back(PbfTag{2,zig_zag(bb.maxx*100),""}); //right
+    msgs.push_back(PbfTag{3,zig_zag(bb.maxy*100),""}); //top
+    msgs.push_back(PbfTag{4,zig_zag(bb.miny*100),""});//bottom
+    return pack_pbf_tags(msgs);
 }
 
 std::string packBlockIdx(int64 qt, bool isc, int64 len) {
     std::list<PbfTag> msgs;
     //msgs.push_back(PbfTag{1,0,writeblock_detail::packQuadtree(qt)});
     msgs.push_back(PbfTag{2,uint64(isc?1:0),""});
-    msgs.push_back(PbfTag{3,zigZag(len),""});
-    msgs.push_back(PbfTag{4,zigZag(qt),""});
-    return packPbfTags(msgs);
+    msgs.push_back(PbfTag{3,zig_zag(len),""});
+    msgs.push_back(PbfTag{4,zig_zag(qt),""});
+    return pack_pbf_tags(msgs);
 }
 }
-std::string writePbfHeader(HeaderPtr head) {
+std::string pack_header_block(HeaderPtr head) {
     std::list<PbfTag> msgs;
     msgs.push_back(PbfTag{1,0,writeblock_detail::packHeaderBbox(head->BBox())});
     if (head->Features().empty()) {
@@ -320,10 +320,10 @@ std::string writePbfHeader(HeaderPtr head) {
             msgs.push_back(PbfTag{22,0,writeblock_detail::packBlockIdx(qt,false,ln)});
         }
     }
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
 }
 
-std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs) {
+std::string pack_primitive_block(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs) {
     
     std::list<PbfTag> msgs;
 
@@ -349,7 +349,7 @@ std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change,
     msgs.push_front(PbfTag{1,0,writeblock_detail::packStringTable(stringtable)});
 
     if (block->Quadtree()>=0) {
-        msgs.push_back(PbfTag{32,zigZag(block->Quadtree()),""});
+        msgs.push_back(PbfTag{32,zig_zag(block->Quadtree()),""});
     }
     if (block->StartDate()>0) {
         msgs.push_back(PbfTag{33,uint64(block->StartDate()),""});
@@ -358,7 +358,7 @@ std::string writePbfBlock(PrimitiveBlockPtr block, bool includeQts, bool change,
         msgs.push_back(PbfTag{34,uint64(block->EndDate()),""});
     }
 
-    return packPbfTags(msgs);
+    return pack_pbf_tags(msgs);
     
     
 }

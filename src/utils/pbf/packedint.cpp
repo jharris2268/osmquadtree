@@ -29,7 +29,7 @@ namespace oqt {
 
 
 
-std::vector<int64> readPackedDelta(const std::string& data) {
+std::vector<int64> read_packed_delta(const std::string& data) {
     size_t pos = 0;
     std::vector<int64> ans;
 
@@ -43,14 +43,14 @@ std::vector<int64> readPackedDelta(const std::string& data) {
     ans.reserve(sz);
 
     while (pos<data.size()) {
-        curr += readVarint(data,pos);
+        curr += read_varint(data,pos);
         ans.push_back(curr);
     }
     return std::move(ans);
 }
 
 
-std::vector<uint64> readPackedInt(const std::string& data)
+std::vector<uint64> read_packed_int(const std::string& data)
 {
     size_t pos = 0;
     std::vector<uint64> ans;
@@ -63,7 +63,7 @@ std::vector<uint64> readPackedInt(const std::string& data)
     ans.reserve(sz);
 
     while (pos<data.size()) {
-        ans.push_back(readUVarint(data,pos));
+        ans.push_back(read_unsigned_varint(data,pos));
     }
     return std::move(ans);
 }
@@ -72,44 +72,44 @@ std::vector<uint64> readPackedInt(const std::string& data)
 
 
 
-size_t packedDeltaLength(const std::vector<int64>& vals, size_t last) {
+size_t packed_delta_length(const std::vector<int64>& vals, size_t last) {
     size_t l=0;
     int64 p =0;
     if (last == 0) { last = vals.size(); }
     for (size_t i=0; i < last; i++) {
-        l += UVarintLength(zigZag(vals[i]-p));
+        l += unsigned_varint_length(zig_zag(vals[i]-p));
         p=vals[i];
     }
     return l;
 }
 
 
-size_t writePackedDeltaInPlace(std::string& out, size_t pos, const std::vector<int64>& vals, size_t last) {
+size_t write_packed_delta_in_place(std::string& out, size_t pos, const std::vector<int64>& vals, size_t last) {
     int64 p=0;
     if (last == 0) { last = vals.size(); }
     for (size_t i=0; i < last; i++) {
-        pos=writeVarint(out,pos,vals[i]-p);
+        pos=write_varint(out,pos,vals[i]-p);
         p=vals[i];
     }
     return pos;
 }
 
-size_t packedDeltaLength_func(std::function<int64(size_t)> func, size_t len) {
+size_t packed_delta_length_func(std::function<int64(size_t)> func, size_t len) {
     size_t l=0;
     int64 p=0;
     for (size_t i=0; i < len; i++) {
         int64 q = func(i);
-        l += UVarintLength(zigZag(q-p));
+        l += unsigned_varint_length(zig_zag(q-p));
         p=q;
     }
     return l;
 }
     
-size_t writePackedDeltaInPlace_func(std::string& out, size_t pos, std::function<int64(size_t)> func, size_t len) {
+size_t write_packed_delta_in_place_func(std::string& out, size_t pos, std::function<int64(size_t)> func, size_t len) {
     int64 p=0;
     for (size_t i=0; i < len; i++) {
         int64 q=func(i);
-        pos=writeVarint(out,pos,q-p);
+        pos=write_varint(out,pos,q-p);
         p=q;
     }
     return pos;
@@ -117,20 +117,20 @@ size_t writePackedDeltaInPlace_func(std::string& out, size_t pos, std::function<
 
 
 
-std::string writePackedDelta(const std::vector<int64>& vals) {
+std::string write_packed_delta(const std::vector<int64>& vals) {
     std::string out(10*vals.size(),0);
-    size_t pos=writePackedDeltaInPlace(out,0,vals,0);
+    size_t pos=write_packed_delta_in_place(out,0,vals,0);
     out.resize(pos);
     return out;
 }
 
 
-std::string writePackedInt(const std::vector<uint64>& vals) {
+std::string write_packed_int(const std::vector<uint64>& vals) {
     std::string out(10*vals.size(),0);
     size_t pos=0;
 
     for (auto v: vals) {
-        pos=writeUVarint(out,pos,v);
+        pos=write_unsigned_varint(out,pos,v);
     }
     out.resize(pos);
     return out;

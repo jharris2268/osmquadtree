@@ -122,8 +122,8 @@ ElementPtr make_relation(int64 id, ElementInfo inf, std::vector<Tag> tags, std::
     return std::make_shared<Relation>(ct, id, qt, inf, tags, mems);
 }
 
-PrimitiveBlockPtr readPrimitiveBlock_py(int64 idx, py::bytes data, bool change) {
-    return readPrimitiveBlock(idx,data,change,15,nullptr,geometry::readGeometry);
+PrimitiveBlockPtr read_primitive_block_py(int64 idx, py::bytes data, bool change) {
+    return read_primitive_block(idx,data,change,15,nullptr,geometry::readGeometry);
 }
 
 class IdSetInvert : public IdSet {
@@ -173,7 +173,7 @@ void read_blocks_tempobjs(std::string fn, std::function<bool(py::list/*std::vect
         //std::cout << "\r" << fb->idx << " " << fb->filepos << std::flush;
         auto dd = fb->get_data();
         //std::cout << " unc " << dd.size() << std::flush;
-        auto mm = readAllPbfTags(dd);
+        auto mm = read_all_pbf_tags(dd);
         //std::cout << " with " << mm.size() << " tgs" << std::flush;
         size_t k=0;
         if (!mm.empty()) {
@@ -184,11 +184,11 @@ void read_blocks_tempobjs(std::string fn, std::function<bool(py::list/*std::vect
         if (mm.size()>1) {
             auto it=mm.begin(); it++;
             size_t p=0;
-            first = readPbfTag(it->data,p).value;
+            first = read_pbf_tag(it->data,p).value;
         }
         if (mm.size()>2) {
             size_t p=0;
-            last = readPbfTag(mm.back().data,p).value;
+            last = read_pbf_tag(mm.back().data,p).value;
         }
         //std::cout << " " << first << " " << last << std::flush;
         return std::make_shared<tempobjs_tup>(fb->idx,fb->file_position,k,mm.size()-1,first,last);
@@ -358,36 +358,9 @@ void block_defs(py::module& m) {
     ;
 
     
-    m.def("readPrimitiveBlock", &readPrimitiveBlock_py, py::arg("index"), py::arg("data"), py::arg("change"));
+    m.def("read_primitive_block", &read_primitive_block_py, py::arg("index"), py::arg("data"), py::arg("change"));
 
-    /*py::class_<packedobj, packedobj_ptr>(m, "packedobj")
-        .def_property_readonly("InternalId", &packedobj::InternalId)
-        .def_property_readonly("Type", &packedobj::Type)
-        .def_property_readonly("Id", &packedobj::Id)
-        .def_property_readonly("Quadtree", &packedobj::Quadtree)
-        .def_property_readonly("ChangeType", &packedobj::ChangeType)
-        .def("SetQuadtree", &packedobj::SetQuadtree)
-        .def("SetChangeType", &packedobj::SetChangeType)
-        
-        .def_property_readonly("Data", [](const packedobj& p) -> py::bytes {
-            return py::bytes(p.Data());
-        })
-        .def_property_readonly("Messages", [](const packedobj& p) -> std::list<PbfTag> {
-            return readAllPbfTags(p.Data());
-        })
-        .def("pack", [](const packedobj& p) -> py::bytes {
-            return py::bytes(p.pack());
-        })
-        .def("unpack", [](const packedobj& p) {
-            if ((int) p.Type()<3) {
-                return unpack_packedobj(p.Type(),p.Id(),p.ChangeType(),p.Quadtree(),p.Data());
-            } else {
-                return geometry::unpack_geometry(p.Type(),p.Id(),p.ChangeType(),p.Quadtree(),p.Data());
-            }
-        });
-    ;
-    m.def("read_packedobj", &read_packedobj);*/
-
+    
     py::class_<minimal::Block, std::shared_ptr<minimal::Block>>(m, "MinimalBlock")
         .def_readonly("index", &minimal::Block::index)
         .def_readonly("quadtree", &minimal::Block::quadtree)
@@ -444,7 +417,7 @@ void block_defs(py::module& m) {
     ;
 
     
-    m.def("readMinimalBlock", &readMinimalBlock);
+    m.def("read_minimal_block", &read_minimal_block);
 
     py::class_<PbfTag>(m,"PbfTag")
         .def_readonly("tag", &PbfTag::tag)
@@ -459,9 +432,9 @@ void block_defs(py::module& m) {
 
 
 
-    m.def("readAllPbfTags", &readAllPbfTags);
-    m.def("readPackedDelta", &readPackedDelta);
-    m.def("readPackedInt", &readPackedInt);
+    m.def("read_all_pbf_tags", &read_all_pbf_tags);
+    m.def("read_packed_delta", &read_packed_delta);
+    m.def("read_packed_int", &read_packed_int);
 
 
 

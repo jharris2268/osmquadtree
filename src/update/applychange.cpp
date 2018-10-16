@@ -170,7 +170,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
         if (!bl) { return PrimitiveBlockPtr(); }
         if ((bl->blocktype=="OSMData")) {
             std::string dd = bl->get_data();//decompress(std::get<2>(*bl), std::get<3>(*bl))
-            return readPrimitiveBlock(bl->idx, dd, false,7,nullptr,nullptr);
+            return read_primitive_block(bl->idx, dd, false,7,nullptr,nullptr);
             
         }
         return std::make_shared<PrimitiveBlock>(-1);

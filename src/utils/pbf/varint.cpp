@@ -26,7 +26,7 @@
 namespace oqt {
     
     
-uint64 readUVarint(const std::string& data, size_t& pos) {
+uint64 read_unsigned_varint(const std::string& data, size_t& pos) {
     uint64 result = 0;
     int count = 0;
     uint8_t b=0;
@@ -45,7 +45,7 @@ uint64 readUVarint(const std::string& data, size_t& pos) {
 
 
 
-int64 unZigZag(uint64 uv) {
+int64 un_zig_zag(uint64 uv) {
     int64 x = (int64) (uv>>1);
     if ((uv&1)!=0) {
         x = x^(-1);
@@ -53,25 +53,25 @@ int64 unZigZag(uint64 uv) {
     return x;
 }
 
-uint64 zigZag(int64 v) {
+uint64 zig_zag(int64 v) {
     return (static_cast<uint64>(v) << 1) ^ (v >> 63);
 
 }
 
 
-int64 readVarint(const std::string& data, size_t& pos) {
-    uint64_t uv = readUVarint(data,pos);
-    return unZigZag(uv);
+int64 read_varint(const std::string& data, size_t& pos) {
+    uint64_t uv = read_unsigned_varint(data,pos);
+    return un_zig_zag(uv);
 }
 
 
 
 
-size_t writeVarint(std::string& data, size_t pos, int64 v) {
+size_t write_varint(std::string& data, size_t pos, int64 v) {
 
-    return writeUVarint(data,pos,zigZag(v));
+    return write_unsigned_varint(data,pos,zig_zag(v));
 }
-size_t writeUVarint(std::string& data, size_t pos, uint64 value) {
+size_t write_unsigned_varint(std::string& data, size_t pos, uint64 value) {
     while (value > 0x7F) {
       data[pos++] = (static_cast<char>(value) & 0x7F) | 0x80;
       value >>= 7;
@@ -81,7 +81,7 @@ size_t writeUVarint(std::string& data, size_t pos, uint64 value) {
     return pos;
 }
 
-size_t UVarintLength(uint64 value) {
+size_t unsigned_varint_length(uint64 value) {
     for (size_t i=1; i < 11; i++) {
         if (value < (1ull << (7*i))) {
             return i;
