@@ -26,16 +26,16 @@
 #include "oqt/elements/element.hpp"
 
 namespace oqt {
-typedef std::vector<int64> refvector;
+
 class Way : public Element {
     public:
-        Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, refvector refs);
+        Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<int64> refs);
         virtual ~Way() {}
 
-        const refvector& Refs() const;
+        const std::vector<int64>& Refs() const;
         virtual ElementPtr copy();
     private:
-        refvector refs_;
+        std::vector<int64> refs_;
 };
 }
 

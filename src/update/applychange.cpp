@@ -125,7 +125,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     Logger::Get().time("read changes files");
     Logger::Message() << "have " << change_objs->size() << " change_objs";
     
-    auto head_orig = getHeaderBlock(origfn);
+    auto head_orig = get_header_block(origfn);
     if (!head_orig->Index().empty()) {
         throw std::domain_error("source file has file index");
     }

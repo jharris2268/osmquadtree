@@ -167,7 +167,7 @@ void write_qts_file_py(const std::string& qtsfn, const std::string& nodes_fn, si
     write_qts_file(qtsfn, nodes_fn, numchan, node_locs, way_qts, wns, rels, buffer, max_depth);
 }
 
-void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, bool sort_objs, bool filter_objs, py::object filter_box_in, lonlatvec poly, int64 enddate, std::string tempfn, size_t grptiles, bool sortfile, bool inmem) {
+void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, bool sort_objs, bool filter_objs, py::object filter_box_in, std::vector<LonLat> poly, int64 enddate, std::string tempfn, size_t grptiles, bool sortfile, bool inmem) {
     if (outfn=="") {
         outfn = origfn.substr(0,origfn.size()-4)+"-merged.pbf";
     }
@@ -240,7 +240,7 @@ class obj_iter2 {
         size_t ii;
         PrimitiveBlockPtr curr;
 };
-enum diffreason {
+enum class diffreason {
     Same,
     Object,
     Info,
@@ -293,7 +293,7 @@ diffreason compare_element(ElementPtr left, ElementPtr right) {
     return diffreason::Same;
 }
 
-std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2(const std::string& left_fn, const std::string& right_fn, size_t numchan, std::function<bool(std::vector<objdiff>)> callback) {
+std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_difference2(const std::string& left_fn, const std::string& right_fn, size_t numchan, std::function<bool(std::vector<objdiff>)> callback) {
     py::gil_scoped_release rel;
     
     auto callback_wrapped = wrap_callback(callback);
@@ -315,7 +315,7 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
     
     uint64 next_obj=0;
     std::map<std::string,std::string> users;
-    std::vector<int64> tot(7);
+    std::map<diffreason,size_t> tot;
     
     
     while (left.second || right.second) {
@@ -324,12 +324,12 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
             curr.push_back(objdiff{0,nullptr,right.first,right.second});
             
             right=right_obj.next();
-            tot[Object]++;
+            tot[diffreason::Object]++;
         } else if (!right.second || (left.second->InternalId() < right.second->InternalId())) {
             curr.push_back(objdiff{left.first,left.second,0,nullptr});
             
             left=left_obj.next();
-            tot[Object]++;
+            tot[diffreason::Object]++;
         } else  {
             if (left.second->InternalId()>next_obj) {
                 std::cout   << "\r[" << TmStr{ts.since(),7,1} <<"]"
@@ -337,12 +337,12 @@ std::pair<std::vector<int64>,std::map<std::string,std::string>> find_difference2
                             << " " << std::setw(10) << left.second->Id()
                             << " [" << std::setw(10) << left.first
                             << "//" << std::setw(10)  << right.first
-                            << ": " << std::setw(5) << tot[1]
-                            << " " << std::setw(5) << tot[2]
-                            << " " << std::setw(5) << tot[3]
-                            << " " << std::setw(5) << tot[4]
-                            << " " << std::setw(5) << tot[5]
-                            << " " << std::setw(5) << tot[6]
+                            << ": " << std::setw(5) << tot[diffreason::Object]
+                            << " " << std::setw(5) << tot[diffreason::Info]
+                            << " " << std::setw(5) << tot[diffreason::Tags]
+                            << " " << std::setw(5) << tot[diffreason::LonLat]
+                            << " " << std::setw(5) << tot[diffreason::Refs]
+                            << " " << std::setw(5) << tot[diffreason::Members]
                             << ", found " << std::setw(6) << users.size() << " changed users]" << std::flush;
                 if (left.second->Type()==ElementType::Node) {
                     next_obj = left.second->InternalId() + (1ll<<20);

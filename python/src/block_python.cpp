@@ -123,7 +123,7 @@ ElementPtr make_relation(int64 id, ElementInfo inf, std::vector<Tag> tags, std::
 }
 
 PrimitiveBlockPtr read_primitive_block_py(int64 idx, py::bytes data, bool change) {
-    return read_primitive_block(idx,data,change,15,nullptr,geometry::readGeometry);
+    return read_primitive_block(idx,data,change,15,nullptr,geometry::read_geometry);
 }
 
 class IdSetInvert : public IdSet {
@@ -463,7 +463,7 @@ void block_defs(py::module& m) {
     m.def("read_blocks_caller_read_minimal", &read_blocks_caller_read_minimal);
     m.def("make_read_blocks_caller", &make_read_blocks_caller);
 
-    m.def("calc_idset_filter", [](std::shared_ptr<ReadBlocksCaller> rbc, bbox bx, lonlatvec llv, size_t nc) {
+    m.def("calc_idset_filter", [](std::shared_ptr<ReadBlocksCaller> rbc, bbox bx, std::vector<LonLat> llv, size_t nc) {
         py::gil_scoped_release r;
         return calc_idset_filter(rbc,bx,llv,nc);
     });

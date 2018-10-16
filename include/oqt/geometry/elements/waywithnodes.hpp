@@ -37,11 +37,11 @@ namespace geometry {
 
 class WayWithNodes : public Element {
     public:
-        WayWithNodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_);
-        WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const lonlatvec& lonlats_, const bbox& bounds_);
+        WayWithNodes(std::shared_ptr<Way> wy, const std::vector<LonLat>& lonlats_);
+        WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, const bbox& bounds_);
 
         const std::vector<int64>& Refs() const;
-        const lonlatvec& LonLats() const;
+        const std::vector<LonLat>& LonLats() const;
         const bbox& Bounds() const;
         bool IsRing() const;
 
@@ -52,8 +52,8 @@ class WayWithNodes : public Element {
         //WayWithNodes(const WayWithNodes&)=delete;
         //WayWithNodes operator=(const WayWithNodes&)=delete;
 
-        refvector refs;
-        lonlatvec lonlats;
+        std::vector<int64> refs;
+        std::vector<LonLat> lonlats;
         bbox bounds;
 
 };

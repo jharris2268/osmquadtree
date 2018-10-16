@@ -24,9 +24,6 @@
 #define PBFFORMAT_READFILEBLOCKS_HPP
 
 
-
-
-
 #include "oqt/utils/pbf/protobuf.hpp"
 #include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/pbfformat/readblock.hpp"
@@ -56,7 +53,7 @@ minimal::BlockPtr read_as_minimalblock(
     size_t objflags);
 
 
-std::shared_ptr<quadtree_vector> read_as_qtvec(
+std::shared_ptr<quadtree_vector> read_as_quadtree_vector(
     std::shared_ptr<FileBlock> bl, 
     size_t objflags);
 

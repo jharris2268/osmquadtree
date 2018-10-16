@@ -32,13 +32,13 @@
 namespace oqt {
 
 
-IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan);
+IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const std::vector<LonLat>& poly, size_t numchan);
 
 void run_mergechanges(
     const std::string& infile_name,
     const std::string& outfn,
     size_t numchan, bool sort_objs, bool filter_objs,
-    bbox filter_box, const lonlatvec& poly, int64 enddate,
+    bbox filter_box, const std::vector<LonLat>& poly, int64 enddate,
     const std::string& tempfn, size_t blocksize, bool sortfile, bool inmem);
 
 }

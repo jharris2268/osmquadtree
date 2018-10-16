@@ -85,9 +85,9 @@ std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx
 
 class ReadBlocksSingle : public ReadBlocksCaller {
     public:
-        ReadBlocksSingle(const std::string& fn_, bbox filter_box, const lonlatvec& poly) : fn(fn_) {
+        ReadBlocksSingle(const std::string& fn_, bbox filter_box, const std::vector<LonLat>& poly) : fn(fn_) {
             if (!box_empty(filter_box)) {
-                auto head = getHeaderBlock(fn);
+                auto head = get_header_block(fn);
                 if (head && (!head->Index().empty())) {
                     for (const auto& l : head->Index()) {
                         if (overlaps_quadtree(filter_box,std::get<0>(l))) {
@@ -120,14 +120,14 @@ class ReadBlocksSingle : public ReadBlocksCaller {
         
 class ReadBlocksMerged : public ReadBlocksCaller {
     public:
-        ReadBlocksMerged(const std::string& prfx, bbox filter_box_, const lonlatvec& poly, int64 enddate_) : enddate(enddate_),filter_box(filter_box_)  {
+        ReadBlocksMerged(const std::string& prfx, bbox filter_box_, const std::vector<LonLat>& poly, int64 enddate_) : enddate(enddate_),filter_box(filter_box_)  {
             std::tie(filenames,enddate) = read_filenames(prfx, enddate);
             if (filenames.empty()) { throw std::domain_error("no filenames!"); }
             bbox top_box;
             bool empty_box = box_empty(filter_box);
             for (size_t file_idx=0; file_idx < filenames.size(); file_idx++) {
                 const auto& fn = filenames.at(file_idx);
-                auto head = getHeaderBlock(fn);
+                auto head = get_header_block(fn);
                 if (!head) { throw std::domain_error("file "+fn+" has no header"); }
                 if (file_idx==0) { top_box=head->BBox(); }
                 if (head->Index().empty()) { throw std::domain_error("file "+fn+" has no tile index"); }
@@ -181,10 +181,10 @@ class ReadBlocksMerged : public ReadBlocksCaller {
         
 std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
         const std::string& infile_name, 
-        bbox& filter_box, const lonlatvec& poly, int64& enddate) {
+        bbox& filter_box, const std::vector<LonLat>& poly, int64& enddate) {
    
     if (ends_with(infile_name, ".pbf")) {
-        auto hh = getHeaderBlock(infile_name);
+        auto hh = get_header_block(infile_name);
         if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {
             filter_box = hh->BBox();
         }

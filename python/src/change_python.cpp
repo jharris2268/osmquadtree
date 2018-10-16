@@ -102,14 +102,14 @@ std::pair<int64,int64> find_change_all_py(const std::string& src, const std::str
     return find_change_all(src,prfx,fls,st,et,outfn);
 }
 
-size_t writeIndexFile_py(const std::string& fn, size_t numchan, const std::string& outfn) {
+size_t write_index_file_py(const std::string& fn, size_t numchan, const std::string& outfn) {
     py::gil_scoped_release r;
-    return writeIndexFile(fn,numchan,outfn);
+    return write_index_file(fn,numchan,outfn);
 }
 
-std::set<int64> checkIndexFile_py(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
+std::set<int64> check_index_file_py(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
     py::gil_scoped_release r;
-    return checkIndexFile(idxfn,head,numchan,ids);
+    return check_index_file(idxfn,head,numchan,ids);
 }
 
 class WritePbfFile {
@@ -207,9 +207,9 @@ std::shared_ptr<WritePbfFile> make_WritePbfFile(const std::string& fn, bbox boun
 }
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void change_defs(py::module& m) {
-    m.def("getHeaderBlock", &getHeaderBlock);
-    m.def("checkIndexFile", &checkIndexFile_py);
-    m.def("writeIndexFile", writeIndexFile_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
+    m.def("get_header_block", &get_header_block);
+    m.def("check_index_file", &check_index_file_py);
+    m.def("write_index_file", &write_index_file_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
     m.def("pack_primitive_block", 
         [](PrimitiveBlockPtr b, bool incQts, bool change, bool incInfo, bool incRefs) {
                 return py::bytes(pack_primitive_block(b,incQts,change,incInfo,incRefs)); },

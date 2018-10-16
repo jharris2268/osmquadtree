@@ -25,11 +25,12 @@
 #include "oqt/sorting/qttreegroups.hpp"
 #include <regex>
 
-#include <fstream>
+
 
 #include "oqt/calcqts/calcqts.hpp"
-#include "oqt/calcqts/calcqtsinmem.hpp"
 
+#include "oqt/calcqts/calcqtsinmem.hpp"
+#include <fstream>
 #include "oqt/update/applychange.hpp"
 #include "oqt/sorting/mergechanges.hpp"
 #include "oqt/sorting/sortblocks.hpp"
@@ -65,7 +66,7 @@ bbox read_bbox(const std::string& str) {
 
 
 
-lonlat readpoly_coord(const std::string& line) {
+LonLat readpoly_coord(const std::string& line) {
 
     size_t p=0;
     double lon = std::stod(line, &p);
@@ -75,12 +76,12 @@ lonlat readpoly_coord(const std::string& line) {
     }
     double lat = std::stod(line.substr(p, line.size()-p));
     
-    return lonlat{coordinate_as_integer(lon),coordinate_as_integer(lat)};
+    return LonLat{coordinate_as_integer(lon),coordinate_as_integer(lat)};
 }
 
-lonlatvec read_poly_file(const std::string& fn) {
+std::vector<LonLat> read_poly_file(const std::string& fn) {
     
-    lonlatvec poly;
+    std::vector<LonLat> poly;
     std::ifstream file(fn, std::ios::in);
     if (!file.good()) {
         throw std::domain_error("can't open file");
@@ -119,7 +120,7 @@ lonlatvec read_poly_file(const std::string& fn) {
     return poly;
 }
 
-bbox poly_bounds(const lonlatvec& poly) {
+bbox poly_bounds(const std::vector<LonLat>& poly) {
     bbox res{1800000000,900000000,-1800000000,-900000000};
     for (const auto& ll: poly) {
         if (ll.lon < res.minx) { res.minx=ll.lon; }
@@ -206,7 +207,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> changes;
     bool countgeom=false;
     bool splitways=true;
-    lonlatvec poly;
+    std::vector<LonLat> poly;
     size_t countflags=15;
     bool use_tree=false;
     //bool usefindgroupscopy=false;

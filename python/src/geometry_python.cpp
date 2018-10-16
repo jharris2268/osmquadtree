@@ -38,13 +38,13 @@ ElementPtr make_point(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt
     return std::make_shared<geometry::Point>(id, qt, inf, tags, lon, lat, layer, minzoom);
 }
 
-ElementPtr make_linestring(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
+ElementPtr make_linestring(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, std::vector<int64> refs, std::vector<LonLat> lonlats, int64 zorder, int64 layer, int64 minzoom) {
     double ln = geometry::calc_line_length(lonlats);
     bbox bounds = geometry::lonlats_bounds(lonlats);
     return std::make_shared<geometry::Linestring>(id, qt, inf, tags, refs, lonlats, zorder, layer, ln, bounds, minzoom);
 }
 
-ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, refvector refs, lonlatvec lonlats, int64 zorder, int64 layer, int64 minzoom) {
+ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt, std::vector<int64> refs, std::vector<LonLat> lonlats, int64 zorder, int64 layer, int64 minzoom) {
     bool reversed=false;
     double ar = geometry::calc_ring_area(lonlats);
     if (ar < 0) {
@@ -116,7 +116,7 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread_py(
 PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
     if (!fb) { return PrimitiveBlockPtr(); }
     if (fb->blocktype!="OSMData") { return std::make_shared<PrimitiveBlock>(fb->idx,0); }
-    return readPrimitiveBlock(fb->idx,fb->get_data(),false,15,nullptr,geometry::readGeometry);
+    return read_primitive_block(fb->idx,fb->get_data(),false,15,nullptr,geometry::read_geometry);
 }
 
 std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec_py(
@@ -243,18 +243,18 @@ void geometry_defs(py::module& m) {
     m.def("make_complicatedpolygon", &make_complicatedpolygon, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("part"), py::arg("exterior"), py::arg("interiors"), py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
 
 
-    py::class_<lonlat>(m,"lonlat")
+    py::class_<LonLat>(m,"LonLat")
         .def(py::init<int64,int64>())
-        .def_readonly("lon", &lonlat::lon)
-        .def_readonly("lat", &lonlat::lat)
-        .def_property_readonly("transform", [](const lonlat& ll) { return geometry::forward_transform(ll.lon,ll.lat); })
+        .def_readonly("lon", &LonLat::lon)
+        .def_readonly("lat", &LonLat::lat)
+        .def_property_readonly("transform", [](const LonLat& ll) { return geometry::forward_transform(ll.lon,ll.lat); })
     ;
 
-    py::class_<geometry::xy>(m,"xy")
+    py::class_<geometry::XY>(m,"XY")
         .def(py::init<double,double>())
-        .def_readonly("x", &geometry::xy::x)
-        .def_readonly("y", &geometry::xy::y)
-        .def_property_readonly("transform", [](const geometry::xy& ll) { return geometry::inverse_transform(ll.x,ll.y); })
+        .def_readonly("x", &geometry::XY::x)
+        .def_readonly("y", &geometry::XY::y)
+        .def_property_readonly("transform", [](const geometry::XY& ll) { return geometry::inverse_transform(ll.x,ll.y); })
     ;
     py::class_<geometry::StyleInfo>(m,"StyleInfo")
         .def(py::init<bool,bool,bool,bool,bool>(),py::arg("IsFeature"),py::arg("IsArea"),py::arg("IsWay"),py::arg("IsNode"),py::arg("IsOtherTags"))
@@ -278,7 +278,7 @@ void geometry_defs(py::module& m) {
     ;
 
     py::class_<geometry::Ring::Part>(m,"RingPart")
-        .def(py::init<int64,const refvector&,const lonlatvec&,bool>())
+        .def(py::init<int64,const std::vector<int64>&,const std::vector<LonLat>&,bool>())
         .def_readonly("orig_id", &geometry::Ring::Part::orig_id)
         .def_readonly("refs", &geometry::Ring::Part::refs)
         .def_readonly("lonlats", &geometry::Ring::Part::lonlats)
@@ -290,7 +290,7 @@ void geometry_defs(py::module& m) {
     ;
     
     m.def("lonlats_bounds", &geometry::lonlats_bounds);
-    m.def("calc_ring_area", [](lonlatvec ll) { return geometry::calc_ring_area(ll); });
+    m.def("calc_ring_area", [](std::vector<LonLat> ll) { return geometry::calc_ring_area(ll); });
     m.def("calc_ring_area", [](geometry::Ring rp) { return geometry::calc_ring_area(rp); });
     m.def("ringpart_refs", &geometry::ringpart_refs);
     m.def("ringpart_lonlats", &geometry::ringpart_lonlats);

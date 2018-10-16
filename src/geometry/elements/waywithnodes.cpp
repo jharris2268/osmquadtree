@@ -34,19 +34,19 @@
 namespace oqt {
 namespace geometry {
 
-WayWithNodes::WayWithNodes(std::shared_ptr<Way> wy, const lonlatvec& lonlats_)
+WayWithNodes::WayWithNodes(std::shared_ptr<Way> wy, const std::vector<LonLat>& lonlats_)
     : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
     for (auto& l : lonlats) {
         expand_point(bounds, l.lon,l.lat);
     }
 }
-WayWithNodes:: WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const lonlatvec& lonlats_, const bbox& bounds_)
+WayWithNodes:: WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, const bbox& bounds_)
     : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
 
 
 const std::vector<int64>& WayWithNodes::Refs() const { return refs; }
 
-const lonlatvec& WayWithNodes::LonLats() const { return lonlats; }
+const std::vector<LonLat>& WayWithNodes::LonLats() const { return lonlats; }
 const bbox& WayWithNodes::Bounds() const { return bounds; }
 bool WayWithNodes::IsRing() const {
     return (Refs().size()>3) && (Refs().front()==Refs().back());
@@ -60,8 +60,8 @@ std::list<PbfTag> WayWithNodes::pack_extras() const {
 
     std::list<PbfTag> extras;
     extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
-    extras.push_back(PbfTag{12,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{12,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lat; })}); //lats
     return extras;
 }
 

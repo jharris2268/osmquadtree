@@ -52,6 +52,6 @@ void sort_block_index(block_index& index);
 std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string& fn, HeaderPtr head);
 std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedsplit(const std::string& fn, HeaderPtr head, size_t split);
 
-HeaderPtr getHeaderBlock(const std::string& fn);
+HeaderPtr get_header_block(const std::string& fn);
 }
 #endif //PBFFORMAT_WRITEPBFFILE_HPP

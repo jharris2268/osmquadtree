@@ -55,14 +55,14 @@ SimplePolygon::SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector
         }
     }
 
-SimplePolygon::SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_) :
+SimplePolygon::SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_) :
     BaseGeometry(ElementType::SimplePolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
     refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), area(area_), bounds(bounds_),reversed(reversed_) {}
 
 
 ElementType SimplePolygon::OriginalType() const { return ElementType::Way; }
-const refvector& SimplePolygon::Refs() const { return refs; }
-const lonlatvec& SimplePolygon::LonLats() const { return lonlats; }
+const std::vector<int64>& SimplePolygon::Refs() const { return refs; }
+const std::vector<LonLat>& SimplePolygon::LonLats() const { return lonlats; }
 bool SimplePolygon::Reversed() const { return reversed; }
 
 int64 SimplePolygon::ZOrder() const { return zorder; }
@@ -87,7 +87,7 @@ std::string SimplePolygon::Wkb(bool transform, bool srid) const {
     }
     pos=write_uint32(res,pos, 1);
     if (reversed) {
-        lonlatvec ll = lonlats;
+        std::vector<LonLat> ll = lonlats;
         std::reverse(ll.begin(),ll.end());
         write_ring(res, pos,ll, transform);
     } else {
@@ -102,8 +102,8 @@ std::list<PbfTag> SimplePolygon::pack_extras() const {
     
     extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
     extras.push_back(PbfTag{12,zig_zag(zorder),""});
-    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{14,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lat; })}); //lats
     extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
     
     if (MinZoom()>=0) {

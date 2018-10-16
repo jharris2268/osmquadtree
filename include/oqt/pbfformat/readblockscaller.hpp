@@ -44,7 +44,7 @@ class ReadBlocksCaller {
 
 std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
         const std::string& infile_name, 
-        bbox& filter_box, const lonlatvec& poly, int64& enddate);
+        bbox& filter_box, const std::vector<LonLat>& poly, int64& enddate);
 
 }
 

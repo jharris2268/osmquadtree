@@ -38,14 +38,14 @@ class SimplePolygon : public BaseGeometry {
 
         SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_);
 
-        SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_);
+        SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_);
 
         virtual ~SimplePolygon() {}
 
 
         virtual ElementType OriginalType() const;
-        const refvector& Refs() const;
-        const lonlatvec& LonLats() const;
+        const std::vector<int64>& Refs() const;
+        const std::vector<LonLat>& LonLats() const;
         bool Reversed() const;
         
         int64 ZOrder() const;
@@ -60,8 +60,8 @@ class SimplePolygon : public BaseGeometry {
         
     private:
         
-        refvector refs;
-        lonlatvec lonlats;
+        std::vector<int64> refs;
+        std::vector<LonLat> lonlats;
         int64 zorder;
         int64 layer;
         double area;

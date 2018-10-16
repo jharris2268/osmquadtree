@@ -276,7 +276,7 @@ def get_locs(prfx,box_in=None, lastdate=None):
     #fns = [prfx+f['Filename'] for f in json.load(open(fl_path))]
     locs = dict((a,[(0,b)]) for a,b,c in oq.getHeaderBlock(fns[0]).Index if box is None or boxtest(a))
     for i,f in enumerate(fns[1:]):
-        for a,b,c in oq.getHeaderBlock(f).Index:
+        for a,b,c in oq.get_header_block(f).Index:
             if a in locs:
                 locs[a].append((i+1,b))
     return fns, locs, box

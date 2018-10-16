@@ -133,7 +133,7 @@ std::string makeIndexBlock(PrimitiveBlockPtr in) {
     return prepare_file_block("IndexBlock", dd);
 }
 
-size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& outfn_in) {
+size_t write_index_file(const std::string& fn, size_t numchan, const std::string& outfn_in) {
     if ((numchan==0) || (numchan > 8)) {
         throw std::domain_error("numchan should be between 1 and 8");
     }
@@ -143,7 +143,7 @@ size_t writeIndexFile(const std::string& fn, size_t numchan, const std::string& 
     }
     
     std::vector<int64> locs;
-    auto hh = getHeaderBlock(fn);
+    auto hh = get_header_block(fn);
     if (hh && (!hh->Index().empty())) {
         for (auto& l : hh->Index()) {
             locs.push_back(std::get<1>(l));
@@ -203,7 +203,7 @@ void checkIdxBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::set
     }
 }
 
-std::set<int64> checkIndexFile(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
+std::set<int64> check_index_file(const std::string& idxfn, HeaderPtr head, size_t numchan, IdSetPtr ids) {
     if ((numchan==0) || (numchan > 8)) {
         throw std::domain_error("numchan should be between 1 and 8");
     }
@@ -296,7 +296,7 @@ std::tuple<std::shared_ptr<QtTree>,std::vector<std::string>, src_locs_map> check
     for (size_t i=0; i < fls.size(); i++) {
         std::string fn = prfx+fls[i];
         outfl.push_back(fn);
-        auto hh = getHeaderBlock(fn);
+        auto hh = get_header_block(fn);
         
         for (auto& q: hh->Index()) {
             if (i==0) {
@@ -307,7 +307,7 @@ std::tuple<std::shared_ptr<QtTree>,std::vector<std::string>, src_locs_map> check
         
         
         Logger::Progress(i*100.0/fls.size()) << "scan " << fn+"-index.pbf [" << passed.size() << " locs]";
-        auto p = checkIndexFile(fn+"-index.pbf", hh, 4, ids);
+        auto p = check_index_file(fn+"-index.pbf", hh, 4, ids);
         for (auto& q: p) {
             passed.insert(q);
         }
@@ -367,9 +367,9 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtT
     std::set<int64> tt;
     size_t fi=0;
     for (auto& f: fls) {
-        headers.push_back(getHeaderBlock(prfx+f));
+        headers.push_back(get_header_block(prfx+f));
         Logger::Progress(fi*100/fls.size()) << "scan " << f+"-index.pbf [" << tt.size() << " locs]";
-        auto p = checkIndexFile(prfx+f+"-index.pbf", headers.back(), (headers.back()->Index().size()>20000 ? 4 : 1), ids);
+        auto p = check_index_file(prfx+f+"-index.pbf", headers.back(), (headers.back()->Index().size()>20000 ? 4 : 1), ids);
         for (auto& q: p) { tt.insert(q); }
         ++fi;
     }

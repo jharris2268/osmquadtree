@@ -29,6 +29,7 @@ namespace oqt {
 
 int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool resort);
 
+}
 #endif
 
 

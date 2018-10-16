@@ -44,14 +44,14 @@ Linestring::Linestring(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>&
     refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()){
         length=calc_line_length(lonlats);
     }
-Linestring::Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const refvector& refs_, const lonlatvec& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
+Linestring::Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
     BaseGeometry(ElementType::Linestring,changetype::Normal,id,qt,inf,tags,minzoom_), refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), length(length_), bounds(bounds_) {}
 
 
 
 ElementType Linestring::OriginalType() const { return ElementType::Way; }
-const refvector& Linestring::Refs() const { return refs; }
-const lonlatvec& Linestring::LonLats() const { return lonlats; }
+const std::vector<int64>& Linestring::Refs() const { return refs; }
+const std::vector<LonLat>& Linestring::LonLats() const { return lonlats; }
 double Linestring::Length() const { return length; }
 int64 Linestring::ZOrder() const { return zorder; }
 int64 Linestring::Layer() const { return layer; }
@@ -80,8 +80,8 @@ std::list<PbfTag> Linestring::pack_extras() const {
     
     extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
     extras.push_back(PbfTag{12,zig_zag(zorder),""});
-    extras.push_back(PbfTag{13,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lon; })}); //lons
-    extras.push_back(PbfTag{14,0,write_packed_delta_func<lonlat>(lonlats,[](const lonlat& l)->int64 { return l.lat; })}); //lats
+    extras.push_back(PbfTag{13,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lon; })}); //lons
+    extras.push_back(PbfTag{14,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lat; })}); //lats
     extras.push_back(PbfTag{15,zig_zag(to_int(length*100)),""});
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});

@@ -42,7 +42,7 @@ class Point : public BaseGeometry {
 
         virtual ElementType OriginalType() const;
 
-        lonlat LonLat() const;
+        oqt::LonLat LonLat() const;
         int64 Layer() const;
 
         virtual ElementPtr copy();

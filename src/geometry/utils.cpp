@@ -48,12 +48,21 @@ uint32_t epsg_code(bool transform) {
     return 4326;
 }
     
+XY forward_transform(int64 ln, int64 lt) {
+    double x = coordinate_as_float(ln)*earth_width / 180; 
+    double y = latitude_mercator(coordinate_as_float(lt), earth_width);
+    return XY{round(x*100)/100, round(y*100)/100};
+}
 
-double pythag(const xy& p, const xy& q) {
+LonLat inverse_transform(double x, double y) {
+    return LonLat{coordinate_as_integer(x*180 /earth_width), coordinate_as_integer(latitude_un_mercator(y, earth_width))};
+}
+
+double pythag(const XY& p, const XY& q) {
     return sqrt(pow(p.x-q.x,2)+pow(p.y-q.y,2));
 }
 
-double calc_line_length(const lonlatvec& ll) {
+double calc_line_length(const std::vector<LonLat>& ll) {
     if (ll.size()<2) {
         return 0;
     }
@@ -69,7 +78,7 @@ double calc_line_length(const lonlatvec& ll) {
 }
 
 
-double calc_ring_area(const lonlatvec& ll) {
+double calc_ring_area(const std::vector<LonLat>& ll) {
 
 
     if (ll.size() < 3) {
@@ -77,11 +86,11 @@ double calc_ring_area(const lonlatvec& ll) {
     }
     double area=0;
 
-    xy lastpt = forward_transform(ll[0].lon,ll[0].lat);
+    XY lastpt = forward_transform(ll[0].lon,ll[0].lat);
 
     for (size_t i = 0; i < ll.size(); i++) {
         size_t j = (i == (ll.size()-1)) ? 0 : i+1;
-        xy nextpt = forward_transform(ll[j].lon, ll[j].lat);
+        XY nextpt = forward_transform(ll[j].lon, ll[j].lat);
 
         area += lastpt.x * nextpt.y;
         area -= lastpt.y * nextpt.x;
@@ -91,7 +100,7 @@ double calc_ring_area(const lonlatvec& ll) {
     return -1.0 * area / 2.0; //want polygon exteriors to be anti-clockwise
 }
 
-bbox lonlats_bounds(const lonlatvec& llv) {
+bbox lonlats_bounds(const std::vector<LonLat>& llv) {
     bbox r;
     for (const auto& p : llv) {
         expand_point(r, p.lon,p.lat);
@@ -100,8 +109,8 @@ bbox lonlats_bounds(const lonlatvec& llv) {
 }
 
 
-size_t write_point(std::string& data, size_t pos, lonlat ll, bool transform) {
-    xy x;
+size_t write_point(std::string& data, size_t pos, LonLat ll, bool transform) {
+    XY x;
     if (transform) {
         x = forward_transform(ll.lon, ll.lat);
     } else {
@@ -126,8 +135,8 @@ double un_double_bytes(uint64 i) {
 }
 */
 
-int64 getlon(const lonlat& l) { return l.lon; }
-int64 getlat(const lonlat& l) { return l.lat; }
+int64 getlon(const LonLat& l) { return l.lon; }
+int64 getlat(const LonLat& l) { return l.lat; }
 
 std::string pack_bounds(const bbox& bounds) {
     std::list<PbfTag> mm;
@@ -172,7 +181,7 @@ int64 to_int(double v) {
     return (int64) (v+0.5);
 }
 
-void read_lonlats_lons(lonlatvec& lonlats, const std::string& data) {
+void read_lonlats_lons(std::vector<LonLat>& lonlats, const std::string& data) {
     auto lons = read_packed_delta(data);
     if (lonlats.empty()) {
         lonlats.resize(lons.size());
@@ -184,7 +193,7 @@ void read_lonlats_lons(lonlatvec& lonlats, const std::string& data) {
         lonlats[i].lon=lons[i];
     }
 }
-void read_lonlats_lats(lonlatvec& lonlats, const std::string& data) {
+void read_lonlats_lats(std::vector<LonLat>& lonlats, const std::string& data) {
     auto lats = read_packed_delta(data);
     if (lonlats.empty()) {
         lonlats.resize(lats.size());
@@ -212,7 +221,7 @@ Ring::Part unpack_ringpart(const std::string& data) {
 }
 
 
-void expand_bbox(bbox& bx, const lonlatvec& llv) {
+void expand_bbox(bbox& bx, const std::vector<LonLat>& llv) {
     for (const auto& l : llv) {
         expand_point(bx, l.lon,l.lat);
     }
@@ -239,8 +248,8 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         }
         return std::make_shared<Point>(id,qt,inf,tgs,lon,lat,layer,minzoom);
     } else if ((ty==ElementType::Linestring) || (ty==ElementType::SimplePolygon)) {
-        refvector rfs;
-        lonlatvec lonlats;
+        std::vector<int64> rfs;
+        std::vector<LonLat> lonlats;
         int64 minzoom=-1;
         int64 zorder=0; int64 layer=0; double length=0, area=0;
         bool rev=false;
@@ -295,8 +304,8 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
 
         return std::make_shared<ComplicatedPolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
     } else if ((ty==ElementType::WayWithNodes)) {
-        refvector refs;
-        lonlatvec lonlats;
+        std::vector<int64> refs;
+        std::vector<LonLat> lonlats;
         for (const auto& t: pbftags) {
             if (t.tag==8) { refs=read_packed_delta(t.data); }
             if (t.tag==13) { read_lonlats_lons(lonlats,t.data); }
@@ -309,7 +318,7 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
     return ElementPtr();
 }
 
-ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vector<std::string>& st, changetype ct) {
+ElementPtr read_geometry(ElementType ty, const std::string& data, const std::vector<std::string>& st, changetype ct) {
     int64 id, qt;
     ElementInfo inf; std::vector<Tag> tgs;
     std::list<PbfTag> pbftags;

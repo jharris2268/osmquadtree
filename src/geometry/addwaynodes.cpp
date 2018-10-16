@@ -37,15 +37,15 @@ namespace geometry {
 
 class LonLatStoreImpl : public LonLatStore {
     //typedef std::unordered_map<int64,lonlat> loctile;
-    typedef std::pair<int64,lonlat> llp;
+    typedef std::pair<int64,LonLat> llp;
     typedef std::vector<llp> loctile;
     std::map<int64,loctile> tiles;
-    lonlat get_ll(int64 n) {
+    LonLat get_ll(int64 n) {
         for (auto& tile : tiles) {
             if (tile.second.empty()) {
                 continue;
             }
-            auto it = std::lower_bound(tile.second.begin(),tile.second.end(),std::make_pair(n,lonlat{0,0}),[](const llp& l, const llp& r)->bool { return l.first<r.first; });
+            auto it = std::lower_bound(tile.second.begin(),tile.second.end(),std::make_pair(n,LonLat{0,0}),[](const llp& l, const llp& r)->bool { return l.first<r.first; });
             if (it < tile.second.end()) {
                 if (it->first==n) {
                     return it->second;
@@ -53,7 +53,7 @@ class LonLatStoreImpl : public LonLatStore {
             }
         }
         throw std::range_error("ref not present");
-        return lonlat{0,0};
+        return LonLat{0,0};
     }
 
 
@@ -86,7 +86,7 @@ class LonLatStoreImpl : public LonLatStore {
                 if (o->Type()==ElementType::Node) {
                     auto n = std::dynamic_pointer_cast<Node>(o);
                     //lls.insert(std::make_pair(o->Id(), lonlat{n->Lon(),n->Lat()}));
-                    lls.push_back(std::make_pair(o->Id(), lonlat{n->Lon(),n->Lat()}));
+                    lls.push_back(std::make_pair(o->Id(), LonLat{n->Lon(),n->Lat()}));
                 }
             }
             if (!lls.empty()) {
@@ -94,8 +94,8 @@ class LonLatStoreImpl : public LonLatStore {
             }
         }
 
-        virtual lonlatvec get_lonlats(std::shared_ptr<Way> way) {
-            lonlatvec res;
+        virtual std::vector<LonLat> get_lonlats(std::shared_ptr<Way> way) {
+            std::vector<LonLat> res;
             res.reserve(way->Refs().size());
             for (auto& r : way->Refs()) {
                 res.push_back(get_ll(r));
@@ -149,43 +149,6 @@ block_callback make_addwaynodes_cb(block_callback cb) {
     };
 }
 
-/*
-void add_waynodes_process(
-    std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
-    std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
-    std::shared_ptr<lonlatstore> lls) {
-
-    size_t in_index=0;
-    size_t out_index=0;
-
-
-
-    for (
-        auto in_bl = in[in_index%in.size()]->wait_and_pop(); in_bl;
-             in_bl = in[in_index%in.size()]->wait_and_pop()) {
-
-        auto out_bl = add_waynodes(lls, in_bl);
-        out[out_index % out.size()]->wait_and_push(out_bl);
-        in_index++;
-        out_index++;
-    }
-
-    for (auto o:out) {
-        o->wait_and_finish();
-    }
-
-}
-*/
-
-xy forward_transform(int64 ln, int64 lt) {
-    double x = coordinate_as_float(ln)*earth_width / 180; 
-    double y = latitude_mercator(coordinate_as_float(lt), earth_width);
-    return xy{round(x*100)/100, round(y*100)/100};
-}
-
-lonlat inverse_transform(double x, double y) {
-    return lonlat{coordinate_as_integer(x*180 /earth_width), coordinate_as_integer(latitude_un_mercator(y, earth_width))};
-}
 
 }}
 

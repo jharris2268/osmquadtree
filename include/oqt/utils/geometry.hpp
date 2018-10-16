@@ -57,18 +57,18 @@ static const double earth_width = 20037508.342789244;
 
 
 
-struct lonlat {
-    lonlat() : lon(0), lat(0) {}
-    lonlat(int64 lon_,int64 lat_) : lon(lon_), lat(lat_) {}
+struct LonLat {
+    LonLat() : lon(0), lat(0) {}
+    LonLat(int64 lon_,int64 lat_) : lon(lon_), lat(lat_) {}
     int64 lon, lat;
 };
-typedef std::vector<lonlat> lonlatvec;
 
-bool point_in_poly(const lonlatvec& poly, const lonlat& test);
 
-bool segment_intersects(const lonlat& p1, const lonlat& p2, const lonlat& q1, const lonlat& q2);
-bool line_intersects(const lonlatvec& line1, const lonlatvec& line2);
-bool line_box_intersects(const lonlatvec& line, const bbox& box);
-bool polygon_box_intersects(const lonlatvec& line, const bbox& box);
+bool point_in_poly(const std::vector<LonLat>& poly, const LonLat& test);
+
+bool segment_intersects(const LonLat& p1, const LonLat& p2, const LonLat& q1, const LonLat& q2);
+bool line_intersects(const std::vector<LonLat>& line1, const std::vector<LonLat>& line2);
+bool line_box_intersects(const std::vector<LonLat>& line, const bbox& box);
+bool polygon_box_intersects(const std::vector<LonLat>& line, const bbox& box);
 }
 #endif

@@ -31,8 +31,8 @@
 #include <set>
 namespace oqt {
 
-size_t writeIndexFile(const std::string& srcfn, size_t numchan, const std::string& destfn);
-std::set<int64> checkIndexFile(const std::string& idxfn, HeaderPtr header, size_t numchan, IdSetPtr ids);
+size_t write_index_file(const std::string& srcfn, size_t numchan, const std::string& destfn);
+std::set<int64> check_index_file(const std::string& idxfn, HeaderPtr header, size_t numchan, IdSetPtr ids);
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,

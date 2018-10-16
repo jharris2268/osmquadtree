@@ -32,8 +32,8 @@ namespace geometry {
 struct Ring {
     struct Part {
         int64 orig_id;
-        refvector refs;
-        lonlatvec lonlats;
+        std::vector<int64> refs;
+        std::vector<LonLat> lonlats;
         bool reversed;
     };
     
@@ -43,8 +43,8 @@ struct Ring {
 
 double calc_ring_area(const Ring& ring);
 
-lonlatvec ringpart_lonlats(const Ring& ring);
-refvector ringpart_refs(const Ring& ring);
+std::vector<LonLat> ringpart_lonlats(const Ring& ring);
+std::vector<int64> ringpart_refs(const Ring& ring);
 
 void reverse_ring(Ring& ring);
 

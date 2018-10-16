@@ -38,24 +38,24 @@ uint32_t epsg_code(bool transform);
 
 
 
-struct xy {
-    xy() : x(0), y(0) {}
-    xy(double x_, double y_) : x(x_), y(y_) {}
+struct XY {
+    XY() : x(0), y(0) {}
+    XY(double x_, double y_) : x(x_), y(y_) {}
     double x, y;
 };
 
-xy forward_transform(int64 ln, int64 lt);
-lonlat inverse_transform(double x, double y);
+XY forward_transform(int64 ln, int64 lt);
+LonLat inverse_transform(double x, double y);
 
 
-double calc_line_length(const lonlatvec& ll);
-double calc_ring_area(const lonlatvec& ll);
-bbox lonlats_bounds(const lonlatvec& llv);
+double calc_line_length(const std::vector<LonLat>& ll);
+double calc_ring_area(const std::vector<LonLat>& ll);
+bbox lonlats_bounds(const std::vector<LonLat>& llv);
 
 
 
-size_t write_point(std::string& data, size_t pos, lonlat ll, bool transform);
-size_t write_ring(std::string& data, size_t pos, const lonlatvec& lonlats, bool transform);
+size_t write_point(std::string& data, size_t pos, LonLat ll, bool transform);
+size_t write_ring(std::string& data, size_t pos, const std::vector<LonLat>& lonlats, bool transform);
 int64 to_int(double v);
 
 std::string pack_bounds(const bbox& bounds);
@@ -73,7 +73,7 @@ class BlockHandler  {
 std::string get_tag(ElementPtr, const std::string&);
 
 
-ElementPtr readGeometry(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, changetype ct);
+ElementPtr read_geometry(ElementType ty, const std::string& data, const std::vector<std::string>& stringtable, changetype ct);
 ElementPtr unpack_geometry(ElementType ty, int64 id, changetype ct, int64 qt, const std::string& d);
 
 ElementPtr unpack_geometry_element(ElementPtr geom);

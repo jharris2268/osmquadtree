@@ -44,7 +44,7 @@ class Linestring : public BaseGeometry {
             
         Linestring(int64 id, int64 qt, const ElementInfo& inf,
             const std::vector<Tag>& tags,
-            const refvector& refs_, const lonlatvec& lonlats_,
+            const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_,
             int64 zorder_, int64 layer_, double length_,
             const bbox& bounds_, int64 minzoom_);
 
@@ -52,8 +52,8 @@ class Linestring : public BaseGeometry {
 
 
         virtual ElementType OriginalType() const;
-        const refvector& Refs() const;
-        const lonlatvec& LonLats() const;
+        const std::vector<int64>& Refs() const;
+        const std::vector<LonLat>& LonLats() const;
         double Length() const;
         int64 ZOrder() const;
         int64 Layer() const;
@@ -65,8 +65,8 @@ class Linestring : public BaseGeometry {
         
     private:
         
-        refvector refs;
-        lonlatvec lonlats;
+        std::vector<int64> refs;
+        std::vector<LonLat> lonlats;
         int64 zorder;
         int64 layer;
         double length;

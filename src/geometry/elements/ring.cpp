@@ -34,10 +34,10 @@
 namespace oqt {
 namespace geometry {
 
-lonlatvec ringpart_lonlats(const Ring& ring) {
+std::vector<LonLat> ringpart_lonlats(const Ring& ring) {
     size_t np=1;
     for (const auto& r : ring.parts) { np += (r.lonlats.size()-1); };
-    lonlatvec ll = ring.parts[0].lonlats;
+    std::vector<LonLat> ll = ring.parts[0].lonlats;
     ll.reserve(np);
 
     if (ring.parts[0].reversed) {
@@ -56,11 +56,11 @@ lonlatvec ringpart_lonlats(const Ring& ring) {
     return ll;
 }
 
-refvector ringpart_refs(const Ring& ring) {
+std::vector<int64> ringpart_refs(const Ring& ring) {
     size_t np=1;
     for (const auto& r : ring.parts) { np += (r.refs.size()-1); };
 
-    refvector ll = ring.parts[0].refs;
+    std::vector<int64> ll = ring.parts[0].refs;
     ll.reserve(np);
 
     if (ring.parts[0].reversed) {
@@ -96,7 +96,7 @@ double calc_ring_area(const Ring& ring) {
     return calc_ring_area(ll);
 }
 
-size_t write_ring(std::string& data, size_t pos, const lonlatvec& lonlats, bool transform) {
+size_t write_ring(std::string& data, size_t pos, const std::vector<LonLat>& lonlats, bool transform) {
     write_uint32(data,pos,lonlats.size());
     pos+=4;
 
@@ -109,8 +109,8 @@ size_t write_ring(std::string& data, size_t pos, const lonlatvec& lonlats, bool 
 
 std::string pack_ringpart(const Ring::Part& rp) {
     std::string refsp = write_packed_delta(rp.refs);
-    std::string lonsp = write_packed_delta_func<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lon; });
-    std::string latsp = write_packed_delta_func<lonlat>(rp.lonlats, [](const lonlat& l) { return l.lat; });
+    std::string lonsp = write_packed_delta_func<LonLat>(rp.lonlats, [](const LonLat& l) { return l.lon; });
+    std::string latsp = write_packed_delta_func<LonLat>(rp.lonlats, [](const LonLat& l) { return l.lat; });
     std::string res;
     res.resize(40+refsp.size()+lonsp.size()+latsp.size());
     size_t pos=write_pbf_value(res,0,1,rp.orig_id);

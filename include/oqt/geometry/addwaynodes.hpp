@@ -41,7 +41,7 @@ namespace geometry {
 class LonLatStore {
     public:
         virtual void add_tile(PrimitiveBlockPtr block)=0;
-        virtual lonlatvec get_lonlats(std::shared_ptr<Way> way)=0;
+        virtual std::vector<LonLat> get_lonlats(std::shared_ptr<Way> way)=0;
         virtual void finish()=0;
         virtual ~LonLatStore() {}
 };
@@ -49,13 +49,6 @@ class LonLatStore {
 std::shared_ptr<LonLatStore> make_lonlatstore();
 
 PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockPtr bl);
-/*
-void add_waynodes_process(
-    std::vector<std::shared_ptr<single_queue<primitiveblock>>> in,
-    std::vector<std::shared_ptr<single_queue<primitiveblock>>> out,
-    std::shared_ptr<lonlatstore> lls);
-*/
-
 
 typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 block_callback make_addwaynodes_cb(block_callback cb);

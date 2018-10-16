@@ -27,7 +27,7 @@ namespace oqt {
     
 
 
-bool point_in_poly(const std::vector<lonlat>& verts, const lonlat& test) {
+bool point_in_poly(const std::vector<LonLat>& verts, const LonLat& test) {
     /*
        from http://www.ecse.rpi.edu/~wrf/Research/Short_Notes/pnpoly.html
 
@@ -79,7 +79,7 @@ def pnpoly(vertx, verty, testx, testy):
     return c;
 }
 
-int segment_side(const lonlat& p1, const lonlat& p2, const lonlat& q) {
+int segment_side(const LonLat& p1, const LonLat& p2, const LonLat& q) {
     int64 side = (q.lon - p1.lon) * (p2.lat - p1.lat) - (p2.lon - p1.lon) * (q.lat - p1.lat);
     if (side>0) { return 1; }
     if (side<0) { return -1; }
@@ -87,7 +87,7 @@ int segment_side(const lonlat& p1, const lonlat& p2, const lonlat& q) {
 }
     
 
-bool segment_intersects(const lonlat& p1, const lonlat& p2, const lonlat& q1, const lonlat& q2) {
+bool segment_intersects(const LonLat& p1, const LonLat& p2, const LonLat& q1, const LonLat& q2) {
     int pq1 = segment_side(p1,p2,q1);
     int pq2 = segment_side(p1,p2,q2);
     if (pq1==pq2) { return false; }
@@ -99,7 +99,7 @@ bool segment_intersects(const lonlat& p1, const lonlat& p2, const lonlat& q1, co
 }
     
     
-bool line_intersects(const lonlatvec& line1, const lonlatvec& line2) {
+bool line_intersects(const std::vector<LonLat>& line1, const std::vector<LonLat>& line2) {
     if ((line1.size()<2) || (line2.size()<2)) { return false; }
     
     for (size_t i=0; i < (line1.size()-1); i++) {
@@ -113,13 +113,13 @@ bool line_intersects(const lonlatvec& line1, const lonlatvec& line2) {
 }
     
     
-bool line_box_intersects(const lonlatvec& line, const bbox& box) {
+bool line_box_intersects(const std::vector<LonLat>& line, const bbox& box) {
     if (line.size()<2) { return false; }
     
-    lonlat a{box.minx,box.miny};
-    lonlat b{box.maxx,box.miny};
-    lonlat c{box.maxx,box.maxy};
-    lonlat d{box.minx,box.maxy};
+    LonLat a{box.minx,box.miny};
+    LonLat b{box.maxx,box.miny};
+    LonLat c{box.maxx,box.maxy};
+    LonLat d{box.minx,box.maxy};
  
     
     for (size_t i=0; i < (line.size()-1); i++) {
@@ -141,7 +141,7 @@ bool line_box_intersects(const lonlatvec& line, const bbox& box) {
     return false;
 }
 
-bool polygon_box_intersects(const lonlatvec& line, const bbox& box) {
+bool polygon_box_intersects(const std::vector<LonLat>& line, const bbox& box) {
     if (line.size()<3) { return false; }
     if (box_empty(box)) { return false; }
     
@@ -151,7 +151,7 @@ bool polygon_box_intersects(const lonlatvec& line, const bbox& box) {
         return true;
     }
     
-    if (point_in_poly(line, lonlat{box.minx,box.miny})) {
+    if (point_in_poly(line, LonLat{box.minx,box.miny})) {
         return true;
     }
     

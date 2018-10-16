@@ -167,7 +167,7 @@ def run_initial(prfx, orig_fn, end_date, diffs_location, initial_state, **kw):
         settings['AllowMissingUsers']=True
     
     json.dump(settings, open(prfx+'settings.json','w'))
-    nt = _oqt.writeIndexFile(prfx+orig_fn)
+    nt = _oqt.write_index_file(prfx+orig_fn)
     filelist = [{'Filename': orig_fn, 'EndDate': end_date, 'NumTiles':nt, 'State': initial_state}]
     json.dump(filelist, open(prfx+'filelist.json','w'))
     

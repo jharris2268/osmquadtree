@@ -221,7 +221,7 @@ std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const 
     return std::make_pair(result,passes);
 }
 
-bool ring_contains(const std::vector<lonlat>& outer, const std::vector<lonlat>& inner) {
+bool ring_contains(const std::vector<LonLat>& outer, const std::vector<LonLat>& inner) {
     for (auto ll : inner) {
         if (!point_in_poly(outer,ll)) {
             return false;
@@ -368,7 +368,7 @@ class MakeMultiPolygons : public BlockHandler {
                 if (!tgs.empty() && isring) {
 
 
-                    std::map<size_t,std::pair<lonlatvec,std::vector<Ring>>> parts;
+                    std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
                     for (size_t i=0; i < outers.size(); i++) {
                         parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<Ring>(0));
                     }

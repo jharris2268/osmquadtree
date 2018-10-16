@@ -27,7 +27,7 @@
 
 #include <tuple>
 #include <list>
-#include <set>
+
 #include <functional>
 #include "oqt/utils/pbf/varint.hpp"
 

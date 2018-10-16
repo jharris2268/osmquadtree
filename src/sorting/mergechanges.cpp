@@ -162,7 +162,7 @@ class IdSetFilterVec : public IdSetFilter {
 
 class CalculateIdSetFilter {
     public:
-        CalculateIdSetFilter(std::shared_ptr<IdSetFilter> ids_, bbox box_, bool check_full_, const lonlatvec& poly_) : ids(ids_), box(box_), check_full(check_full_), poly(poly_) {
+        CalculateIdSetFilter(std::shared_ptr<IdSetFilter> ids_, bbox box_, bool check_full_, const std::vector<LonLat>& poly_) : ids(ids_), box(box_), check_full(check_full_), poly(poly_) {
             if (!poly.empty()) { Logger::Message() << "CalculateIdSetFilter with poly [" << poly.size() << " verts]"; }
             notinpoly=0;
         }
@@ -197,10 +197,10 @@ class CalculateIdSetFilter {
                 
                if (check_full && box_contains && (!poly.empty())) {
                     box_contains  =
-                        point_in_poly(poly, lonlat{qbx.minx,qbx.miny}) &&
-                        point_in_poly(poly, lonlat{qbx.minx,qbx.maxy}) &&
-                        point_in_poly(poly, lonlat{qbx.maxx,qbx.miny}) &&
-                        point_in_poly(poly, lonlat{qbx.maxx,qbx.maxy});
+                        point_in_poly(poly, LonLat{qbx.minx,qbx.miny}) &&
+                        point_in_poly(poly, LonLat{qbx.minx,qbx.maxy}) &&
+                        point_in_poly(poly, LonLat{qbx.maxx,qbx.miny}) &&
+                        point_in_poly(poly, LonLat{qbx.maxx,qbx.maxy});
                     
                 }
                 
@@ -222,7 +222,7 @@ class CalculateIdSetFilter {
         bool check_point(int64 lon, int64 lat) {
             if (contains_point(box, lon, lat)) {
                 if (poly.empty()) { return true; }
-                if (!point_in_poly(poly, lonlat{lon,lat})) {
+                if (!point_in_poly(poly, LonLat{lon,lat})) {
                     notinpoly++;
                     return false;
                 } else {
@@ -288,7 +288,7 @@ class CalculateIdSetFilter {
         std::shared_ptr<IdSetFilter> ids;
         bbox box;
         bool check_full;
-        lonlatvec poly;
+        std::vector<LonLat> poly;
         
         std::set<int64> extra_nodes;
         std::vector<std::tuple<ElementType,int64,int64>> relmems;
@@ -296,7 +296,7 @@ class CalculateIdSetFilter {
         size_t notinpoly;
 };
 
-IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const lonlatvec& poly, size_t numchan) {
+IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller, const bbox& filter_box, const std::vector<LonLat>& poly, size_t numchan) {
     double boxarea = (filter_box.maxx-filter_box.minx)*(filter_box.maxy-filter_box.miny) / 10000000.0 / 10000000.0;
     Logger::Message() << "filter_box=" << filter_box << ", area=" << boxarea;
     
@@ -435,7 +435,7 @@ void run_mergechanges(
     const std::string& infile_name,
     const std::string& outfn,
     size_t numchan, bool sort_objs, bool filter_objs,
-    bbox filter_box, const lonlatvec& poly, int64 enddate,
+    bbox filter_box, const std::vector<LonLat>& poly, int64 enddate,
     const std::string& tempfn, size_t blocksize, bool sortfile, bool inmem) {
     
     

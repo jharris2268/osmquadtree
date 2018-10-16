@@ -264,7 +264,7 @@ void read_blocks_split_quadtree_vector(
         
     return read_blocks_split_convfunc<quadtree_vector>(filename, callbacks, locs,
         [objflags](std::shared_ptr<FileBlock> fb) {
-            return read_as_qtvec(fb, objflags); });
+            return read_as_quadtree_vector(fb, objflags); });
 }  
 
 

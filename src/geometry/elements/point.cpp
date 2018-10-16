@@ -47,7 +47,7 @@ Point::Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>&
 
 ElementType Point::OriginalType() const { return ElementType::Node; }
 
-lonlat Point::LonLat() const { return lonlat{lon,lat}; };
+oqt::LonLat Point::LonLat() const { return oqt::LonLat{lon,lat}; };
 int64 Point::Layer() const { return layer; }
 
 ElementPtr Point::copy() {

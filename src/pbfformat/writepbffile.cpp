@@ -532,7 +532,7 @@ std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexedinmem(const std::string
     return std::make_shared<PbfFileWriterIndexedInmemAlt>(fn,head);
 }
 
-HeaderPtr getHeaderBlock_file(std::ifstream& infile) {
+HeaderPtr get_header_block_file(std::ifstream& infile) {
     auto fb = read_file_block(0,infile);
     if ((!fb) || (fb->blocktype!="OSMHeader")) {
         throw std::domain_error("first block not a header");
@@ -542,10 +542,10 @@ HeaderPtr getHeaderBlock_file(std::ifstream& infile) {
     return read_header_block(fb->get_data(),p);
 }
 
-HeaderPtr getHeaderBlock(const std::string& fn) {
+HeaderPtr get_header_block(const std::string& fn) {
     std::ifstream infile(fn, std::ios::binary | std::ios::in);
     if (!infile.good()) { throw std::domain_error("not a file?? "+fn); }
-    auto r= getHeaderBlock_file(infile);
+    auto r= get_header_block_file(infile);
     infile.close();
     return r;
 }
