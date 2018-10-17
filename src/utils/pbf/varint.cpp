@@ -82,12 +82,12 @@ size_t write_unsigned_varint(std::string& data, size_t pos, uint64 value) {
 }
 
 size_t unsigned_varint_length(uint64 value) {
-    for (size_t i=1; i < 11; i++) {
+    for (size_t i=1; i < 10; i++) {
         if (value < (1ull << (7*i))) {
             return i;
         }
     }
-    return 0xffffffffffffffffull;
+    return 10;
 }
 
 

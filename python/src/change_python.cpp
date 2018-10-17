@@ -139,7 +139,7 @@ class WritePbfFileImpl : public WritePbfFile {
             
             
             
-            if (blocks.size()<numchan) {
+            if ((numchan==0) || (blocks.size()<numchan)) {
                 for (auto bl: blocks) {
                     auto dd = write_and_pack_pbfblock(bl);
                     

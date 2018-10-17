@@ -72,8 +72,8 @@ def find_change(src, prfx, infiles, startdate, enddate, outfn, use_alt=False,all
     ln,nt = out.finish()
     del tiles, out
     tm("write pbfc")
-    print("calling _oqt.writeIndexFile")
-    _oqt.writeIndexFile(prfx+outfn)
+    print("calling _oqt.write_index_file")
+    _oqt.write_index_file(prfx+outfn)
     tm("write index")
     print("done")
 
