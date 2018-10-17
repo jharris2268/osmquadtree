@@ -60,7 +60,7 @@ class logger_python : public Logger {
 
 
 
-void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth) {
+void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth, bool use_48bit_quadtree) {
 
 
      if (qtsfn=="") {
@@ -69,7 +69,7 @@ void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool 
     //auto lg = get_logger(lg_in);
     Logger::Get().reset_timing();
     py::gil_scoped_release release;
-    run_calcqts(origfn, qtsfn, numchan, splitways, resort, buffer, max_depth);
+    run_calcqts(origfn, qtsfn, numchan, splitways, resort, buffer, max_depth, use_48bit_quadtree);
     Logger::Get().timing_messages();
 
 }
@@ -247,7 +247,8 @@ enum class diffreason {
     Tags,
     LonLat,
     Refs,
-    Members
+    Members,
+    Quadtree
 };
 diffreason compare_element(ElementPtr left, ElementPtr right) {
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
@@ -290,6 +291,11 @@ diffreason compare_element(ElementPtr left, ElementPtr right) {
             if ((lr[i].type!=rr[i].type) || (lr[i].ref!=rr[i].ref) || (lr[i].role!=rr[i].role)) { return diffreason::Members; }
         }
     }
+    
+    if (left->Quadtree()!=right->Quadtree()) {
+        return diffreason::Quadtree;
+    }
+    
     return diffreason::Same;
 }
 
@@ -463,7 +469,8 @@ void core_defs(py::module& m) {
         py::arg("splitways")=true,
         py::arg("resort") = true,
         py::arg("buffer") = 0.05,
-        py::arg("maxdepth") = 18
+        py::arg("maxdepth") = 18,
+        py::arg("use_48bit_quadtree")=false
     );
 
     m.def("sortblocks", &run_sortblocks_py, "sort into quadtree blocks",
@@ -519,8 +526,17 @@ void core_defs(py::module& m) {
             //return py::make_tuple(q.children[0],q.children[1],q.children[2],q.children[3]);})
     ;
     
-
-    
+ 
+    py::enum_<diffreason>(m, "diffreason")
+        .value("Same", diffreason::Same)
+        .value("Object", diffreason::Object)
+        .value("Info", diffreason::Info)
+        .value("Tags", diffreason::Tags)
+        .value("LonLat", diffreason::LonLat)
+        .value("Refs", diffreason::Refs)
+        .value("Members", diffreason::Members)
+        .value("Quadtree", diffreason::Quadtree)
+    ;
     py::class_<objdiff>(m, "objdiff")
         .def_readonly("left_idx", &objdiff::left_idx)
         .def_readonly("left", &objdiff::left)

@@ -43,6 +43,8 @@ class QtStore {
 
 std::shared_ptr<QtStore> make_qtstore_map();
 std::shared_ptr<QtStore> make_qtstore_vector(int64 min, int64 max, int64 key);
+std::shared_ptr<QtStore> make_qtstore_48bit(int64 min, int64 max, int64 key);
+
 std::shared_ptr<QtStore> make_qtstore_vector_move(std::vector<int64>&& pts, int64 min, size_t count, int64 k);
 }
 #endif

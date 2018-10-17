@@ -210,6 +210,9 @@ int main(int argc, char** argv) {
     std::vector<LonLat> poly;
     size_t countflags=15;
     bool use_tree=false;
+    bool use_48bit_quadtrees=false;
+    
+    
     //bool usefindgroupscopy=false;
     if (argc>3) {
         for (int i=3; i < argc; i++) {
@@ -288,6 +291,9 @@ int main(int argc, char** argv) {
                 countflags = std::stoull(val);  
             } else if (key=="usetree") {
                 use_tree=true;
+            } else if (key=="48bitqt") {
+                use_48bit_quadtrees=true;
+                Logger::Message() << "use_48bit_quadtrees=true";
             } else {
                Logger::Message() << "unrecongisned argument " << arg;
                return 1;
@@ -314,7 +320,7 @@ int main(int argc, char** argv) {
         if (inmem) {
             run_calcqts_inmem(origfn, qtsfn, numchan, true);
         } else {
-            run_calcqts(origfn, qtsfn, numchan, splitways, true, buffer, max_depth);
+            run_calcqts(origfn, qtsfn, numchan, splitways, true, buffer, max_depth, use_48bit_quadtrees);
         }
 
     } else if (operation=="sortblocks") {

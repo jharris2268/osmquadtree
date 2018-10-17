@@ -125,7 +125,8 @@ class QtStoreSplitImpl : public QtStoreSplit {
             }
             if (!create) { return std::shared_ptr<QtStore>(); }
             if (use_arr_) {
-                tiles[k] = make_qtstore_vector(k*splitat_, (k+1)*splitat_,k);
+                //tiles[k] = make_qtstore_vector(k*splitat_, (k+1)*splitat_,k);
+                tiles[k] = make_qtstore_48bit(k*splitat_, (k+1)*splitat_,k);
             } else {
                 tiles[k] = make_qtstore_map();
             }

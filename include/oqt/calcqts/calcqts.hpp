@@ -29,7 +29,7 @@
 
 namespace oqt {
 
-int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth);
+int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth, bool use_48bit_quadtrees);
 
 
 void find_way_quadtrees(
@@ -38,7 +38,8 @@ void find_way_quadtrees(
     size_t numchan,
     std::shared_ptr<QtStoreSplit> way_qts,
     std::shared_ptr<WayNodesFile> wns,
-    double buffer, size_t max_depth,int64 minway, int64 maxway);
+    double buffer, size_t max_depth,int64 minway, int64 maxway,
+    bool use_48bit_quadtrees);
 
 
 void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,

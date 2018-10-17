@@ -180,7 +180,7 @@ class CalculateIdSetFilter {
                 for (size_t i=0; i < 5; i++) {
                     for (const auto& rr : relmems) {
                         if ((i==0) || (std::get<0>(rr)==ElementType::Relation)) {
-                            if (ids->contains(ElementType::Relation,std::get<1>(rr))) {
+                            if (ids->contains(std::get<0>(rr),std::get<1>(rr))) {
                                 ids->insert(ElementType::Relation, std::get<2>(rr));
                             }
                         }

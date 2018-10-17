@@ -132,7 +132,7 @@ _oqt.Tag.__repr__ = lambda t: "Tag(%s,%.50s)" % (t.key,repr(t.val))
 _oqt.Tag.__unicode__ = lambda t: u"%s='%s'" % (t.key,t.val)
 _oqt.Tag.tuple = property(lambda t: (t.key,t.val))
 
-_oqt.Member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==0 else 'w' if m.type==1 else 'r', m.ref, " {%s}" % m.role if m.role else '')
+_oqt.Member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==_oqt.ElementType.Node else 'w' if m.type==_oqt.ElementType.Way else 'r', m.ref, " {%s}" % m.role if m.role else '')
 _oqt.Member.tuple = property(lambda m: (m.type,m.ref,m.role))
 
 _oqt.PbfTag.__repr__ = lambda p: "(%d, %d, %.20s)" % (p.tag, p.value, p.data)

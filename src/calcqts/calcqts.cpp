@@ -182,7 +182,7 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
 
 
 
-int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth) {
+int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth, bool use_48bit_quadtrees) {
     
 
     std::string waynodes_fn = qtsfn+"-waynodes";
@@ -207,20 +207,20 @@ int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numc
     
     if (splitways) {
         int64 midway = 320<<20;
-        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, midway); //find_way_quadtrees_test
+        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, midway, use_48bit_quadtrees); //find_way_quadtrees_test
         
         Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
         //Logger::Message() << "trim ? " << (trim_memory() ? "yes" : "no");
         //Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
         
-        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, midway, 0);
+        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, midway, 0, use_48bit_quadtrees);
         
         Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
         //Logger::Message() << "trim ? " << (trim_memory() ? "yes" : "no");
         //Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
         
     } else {
-        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, 0);
+        find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, 0, use_48bit_quadtrees);
         Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
         //Logger::Message() << "trim ? " << (trim_memory() ? "yes" : "no");
         //Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";
