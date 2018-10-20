@@ -16,11 +16,11 @@ highway_prio = {
     'trunk':7, 'trunk_link':7,
     'motorway':8,'motorway_link':8}
 
-add_highway = {
-    'highway': oq.ParentTagSpec('highway','parent_highway','highway',highway_prio),
-    'service': oq.ParentTagSpec('highway','parent_service','service',{}),
-    'railway': oq.ParentTagSpec('railway','parent_highway','highway',highway_prio),
-}
+add_highway = [
+    oq.ParentTagSpec('highway','parent_highway','highway',highway_prio),
+    oq.ParentTagSpec('highway','parent_service','service',{}),
+    oq.ParentTagSpec('railway','parent_highway','highway',highway_prio),
+]
 def has_mem(ct,k):
     for a,b,c,d in ct:
         if k==a:
@@ -232,7 +232,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     params = oq.geometry_parameters()
         
     params.numchan=numchan
-    params.apt_spec = add_highway
+    params.parent_tag_spec = add_highway
     params.add_rels=True
     params.add_mps=True
     params.recalcqts=True

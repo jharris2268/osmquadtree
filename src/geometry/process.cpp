@@ -113,7 +113,7 @@ block_callback blockhandler_callback(std::shared_ptr<BlockHandler> handler, bloc
 block_callback process_geometry_blocks(
     std::vector<block_callback> final_callbacks,
     const style_info_map& style, bbox box,
-    const parenttag_spec_map& apt_spec, bool add_rels, bool add_mps,
+    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
     bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
     std::function<void(mperrorvec&)> errors_callback) {
     
@@ -220,7 +220,7 @@ block_callback process_geometry_blocks(
 block_callback process_geometry_blocks_nothread(
     block_callback final_callback,
     const style_info_map& style, bbox box,
-    const parenttag_spec_map& apt_spec, bool add_rels, bool add_mps,
+    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
     bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
     std::function<void(mperrorvec&)> errors_callback) {
     
@@ -505,7 +505,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
     }
     
     auto addwns = process_geometry_blocks(
-            writer, params.style, params.box, params.apt_spec, params.add_rels,
+            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
@@ -529,7 +529,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     auto sb_callbacks = sb->make_addblocks_cb(false);
     
     auto addwns = process_geometry_blocks(
-            sb_callbacks, params.style, params.box, params.apt_spec, params.add_rels,
+            sb_callbacks, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
@@ -579,7 +579,7 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     }
     
     block_callback addwns = process_geometry_blocks_nothread(
-            postgis, params.style, params.box, params.apt_spec, params.add_rels,
+            postgis, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
@@ -602,7 +602,7 @@ mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& param
     block_callback csvcallback = make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true);
     
     block_callback addwns = process_geometry_blocks_nothread(
-            csvcallback, params.style, params.box, params.apt_spec, params.add_rels,
+            csvcallback, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
@@ -629,7 +629,7 @@ mperrorvec process_geometry_from_vec(
     
     
     auto addwns = process_geometry_blocks(
-            {callback}, params.style, params.box, params.apt_spec, params.add_rels,
+            {callback}, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );

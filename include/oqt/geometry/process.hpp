@@ -54,7 +54,7 @@ struct GeometryParameters {
     size_t numblocks;
     style_info_map style;
     bbox box;
-    parenttag_spec_map apt_spec;
+    std::vector<ParentTagSpec> parent_tag_spec;
     bool add_rels;
     bool add_mps;
     bool recalcqts;

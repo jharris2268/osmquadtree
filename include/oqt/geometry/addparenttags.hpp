@@ -38,9 +38,9 @@ struct ParentTagSpec {
     ParentTagSpec(const std::string& n, const std::string& o, const std::string& w, const std::map<std::string,int>& p)
         : node_tag(n),out_tag(o),way_tag(w),priority(p) {}
 };
-typedef std::map<std::string,ParentTagSpec> parenttag_spec_map;
 
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec);
+
+std::shared_ptr<BlockHandler> make_addparenttags(const std::vector<ParentTagSpec>& spec);
 
 
 }}

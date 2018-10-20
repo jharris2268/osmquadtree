@@ -345,7 +345,7 @@ void geometry_defs(py::module& m) {
         .def_readwrite("numblocks", &geometry::GeometryParameters::numblocks)
         .def_readwrite("style", &geometry::GeometryParameters::style)
         .def_readwrite("box", &geometry::GeometryParameters::box)
-        .def_readwrite("apt_spec", &geometry::GeometryParameters::apt_spec)
+        .def_readwrite("parent_tag_spec", &geometry::GeometryParameters::parent_tag_spec)
         .def_readwrite("add_rels", &geometry::GeometryParameters::add_rels)
         .def_readwrite("add_mps", &geometry::GeometryParameters::add_mps)
         .def_readwrite("recalcqts", &geometry::GeometryParameters::recalcqts)

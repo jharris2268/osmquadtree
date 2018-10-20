@@ -50,13 +50,13 @@ PrimitiveBlockPtr finish_tags(int64 qt, pending_objs_map& pending) {
 
 }
 
-void check_way_tags(const parenttag_spec_map& spec, temp_tags_map& node_tags, const tagvector& way_tags) {
+void check_way_tags(const std::vector<ParentTagSpec>& spec, temp_tags_map& node_tags, const tagvector& way_tags) {
 
     std::map<std::string,std::string> wtgs;
     for (auto& t: way_tags) { wtgs[t.key]=t.val; }
 
-    for (const auto& spp: spec) {
-        const auto& sp = spp.second;
+    for (const auto& sp: spec) {
+        
         auto nt_it = node_tags.find(sp.out_tag);
         if (nt_it!=node_tags.end()) {
 
@@ -68,6 +68,10 @@ void check_way_tags(const parenttag_spec_map& spec, temp_tags_map& node_tags, co
                     if (nt_it->second=="") {
                         nt_it->second=way_val;
                     } else if (w_prio_it->second > sp.priority.find(nt_it->second)->second) {
+                        nt_it->second=way_val;
+                    }
+                } else if (sp.priority.empty()) {
+                    if (nt_it->second=="") {
                         nt_it->second=way_val;
                     }
                 }
@@ -90,7 +94,12 @@ temp_tags_map* find_node_tags(pending_blocks_map& cache, int64 i) {
 
 class AddParentTags : public BlockHandler {
     public:
-        AddParentTags(const parenttag_spec_map& spec_) : spec(spec_), ncheck((1ull)<<32,false) {}
+        AddParentTags(const std::vector<ParentTagSpec>& spec_) : spec(spec_), ncheck((1ull)<<32,false) {
+            for (const auto& sp: spec) {
+                possibles.insert(sp.node_tag);
+            }
+            
+        }
         
         virtual ~AddParentTags() {}
         
@@ -134,13 +143,14 @@ class AddParentTags : public BlockHandler {
                 if (o->Type()==ElementType::Node) {
                     bool hast=false;
                     for (const auto& tt: o->Tags()) {
-                        if (spec.count(tt.key)>0) {
-                            auto it=spec.find(tt.key);
-
-
-                            nb[o->Id()].second[it->second.out_tag]="";
-                            hast=true;
-
+                        
+                        if (possibles.count(tt.key)>0) {
+                            for (const auto& sp: spec) {
+                                if (sp.node_tag==tt.key) {
+                                    nb[o->Id()].second[sp.out_tag]="";
+                                    hast=true;
+                                }
+                            }
                         }
                     }
                     if (hast) {
@@ -192,15 +202,16 @@ class AddParentTags : public BlockHandler {
                
                 
     private:
-        parenttag_spec_map spec;
+        std::vector<ParentTagSpec> spec;
         std::vector<bool> ncheck;
         pending_blocks_map cache;
+        std::set<std::string> possibles;
         
         
 
 };
 
-std::shared_ptr<BlockHandler> make_addparenttags(const parenttag_spec_map& spec) {
+std::shared_ptr<BlockHandler> make_addparenttags(const std::vector<ParentTagSpec>& spec) {
     return std::make_shared<AddParentTags>(spec);
 }
 

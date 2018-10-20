@@ -274,7 +274,7 @@ def get_locs(prfx,box_in=None, lastdate=None):
     if lastdate is not None:
         print("using %d of %d files: %s => %s" % (len(fns),sk+len(fns),fns[0],fns[-1]))
     #fns = [prfx+f['Filename'] for f in json.load(open(fl_path))]
-    locs = dict((a,[(0,b)]) for a,b,c in oq.getHeaderBlock(fns[0]).Index if box is None or boxtest(a))
+    locs = dict((a,[(0,b)]) for a,b,c in oq.get_header_block(fns[0]).Index if box is None or boxtest(a))
     for i,f in enumerate(fns[1:]):
         for a,b,c in oq.get_header_block(f).Index:
             if a in locs:

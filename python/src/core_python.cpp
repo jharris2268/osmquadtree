@@ -153,11 +153,12 @@ void find_way_quadtrees_py(
     size_t numchan,
     std::shared_ptr<QtStoreSplit> way_qts,
     std::shared_ptr<WayNodesFile> wns,
-    double buffer, size_t max_depth,int64 minway, int64 maxway) {
+    double buffer, size_t max_depth,int64 minway, int64 maxway,
+    bool use_48bit_quadtrees) {
     
     
     py::gil_scoped_release release;
-    find_way_quadtrees(source_filename, source_locs, numchan, way_qts, wns, buffer, max_depth, minway, maxway);
+    find_way_quadtrees(source_filename, source_locs, numchan, way_qts, wns, buffer, max_depth, minway, maxway,use_48bit_quadtrees);
 }
 void write_qts_file_py(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,
     const std::vector<int64>& node_locs, std::shared_ptr<QtStoreSplit> way_qts,
@@ -564,7 +565,7 @@ void core_defs(py::module& m) {
     m.def("find_way_quadtrees", &find_way_quadtrees_py, "find_way_quadtrees",
         py::arg("source_filename"), py::arg("source_locs"), py::arg("numchan"),
         py::arg("way_qts"), py::arg("wns"), py::arg("buffer"), py::arg("max_depth"),
-        py::arg("minway"), py::arg("maxway")
+        py::arg("minway"), py::arg("maxway"),py::arg("use_48bit_quadtrees")
     );
     m.def("write_qts_file", &write_qts_file_py, "write_qts_file", 
         py::arg("qtsfn"), py::arg("nodes_fn"), py::arg("numchan"),
