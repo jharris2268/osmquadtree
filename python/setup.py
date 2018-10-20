@@ -17,27 +17,9 @@ if not os.path.exists(os.path.join(postgresql_path, "libpq-fe.h")):
 srcs=['src/'+f for f in ("oqt_python.cpp","block_python.cpp", "core_python.cpp","change_python.cpp", "geometry_python.cpp")]
 
 
-src_path = os.path.abspath('../src')
-oqt_src = [os.path.join(src_path,t) for t in
-     """calcqts.cpp combineblocks.cpp count.cpp mergechanges.cpp
-        minimalblock.cpp packedblock.cpp primitivegroup.cpp quadtree.cpp
-        quadtreegroups.cpp readblock.cpp readfile.cpp simplepbf.cpp sortblocks.cpp
-        sortfile.cpp store.cpp tempobjs.cpp utils.cpp waynodes.cpp writeblock.cpp
-        writefile.cpp writepbffile.cpp xmlchange.cpp update.cpp
-        geometry/addwaynodes.cpp geometry/geometrytypes.cpp geometry/makegeometries.cpp
-        geometry/addparenttags.cpp geometry/handlerelations.cpp geometry/multipolygons.cpp
-        geometry/postgiswriter.cpp""".split()]
 
 
-ela = []
-libs=['z','pq','stdc++fs']
-
-if False:
-    srcs+=oqt_src
-else:
-    ela = ['-L/home/james/.local/lib']
-    libs.append('oqt')
-
+libs=['z','pq','stdc++fs', 'oqt']
 
 class my_build_ext(build_ext):
     def build_extensions(self):
@@ -63,7 +45,6 @@ ext_modules = [
         ],
         libraries=libs,
         extra_compile_args=['-std=c++14',],
-        extra_link_args=ela,
         
     ),
     

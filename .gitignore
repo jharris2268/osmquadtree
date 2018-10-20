@@ -2,16 +2,10 @@ html/
 latex/
 old/
 oqt-*.zip
-oqt/*.o
-oqt/*/*.o
-oqt/*/*/*.o
-oqt/oqt
+oldbuild/
 python/oqt.egg-info
 python/build
 python/dist
-oqt/liboqt.so.0.0
-oqt/geometry
-oqt/pbfformat
 build/
 xx.out
 xml/
