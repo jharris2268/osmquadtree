@@ -24,4 +24,4 @@ set (LIBS pq z stdc++fs)
 add_subdirectory(src)
 add_subdirectory(example)
 
-#install(DIRECTORY include/oqt DESTINATION /usr/local/include) 
+install(DIRECTORY include/oqt DESTINATION /usr/local/include) 
