@@ -212,7 +212,6 @@ int main(int argc, char** argv) {
     bool use_tree=false;
     bool use_48bit_quadtrees=false;
     
-    
     //bool usefindgroupscopy=false;
     if (argc>3) {
         for (int i=3; i < argc; i++) {
@@ -313,7 +312,11 @@ int main(int argc, char** argv) {
 
     int resp=0;
     if (operation == "count") {
-        auto res = run_count(origfn, numchan,false, countgeom, countflags);
+        auto res = run_count(origfn, numchan,false, countgeom, countflags, true);
+        if (!res) { return 1; }
+        Logger::Message() << "\n"<<res->long_str();
+    } else if (operation == "count_full") {
+        auto res = run_count(origfn, numchan,false, countgeom, countflags, false);
         if (!res) { return 1; }
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "calcqts") {
