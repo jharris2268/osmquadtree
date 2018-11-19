@@ -45,5 +45,9 @@ std::ostream& operator<<(std::ostream& os, const TmStr& t) {
     os << std::fixed << std::setprecision(t.precision) << std::setw(t.width) << t.time << "s";
     return os;
 }
+std::ostream& operator<<(std::ostream& os, const Mb& p) {
+    os << std::fixed << std::setprecision(p.precision) << std::setw(p.precision+8) << (p.val/1024.0/1024) << "mb";
+    return os;
+}
 
 }

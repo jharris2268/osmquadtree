@@ -40,7 +40,7 @@ minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_
     auto result = std::make_shared<minimal::Block>();
     result->index = index;
     
-    if (objflags&48) {
+    if (!(objflags&48)) {
         readMinimalBlock_alt(result, data, objflags);
     } else {
 

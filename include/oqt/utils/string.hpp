@@ -47,5 +47,12 @@ struct TmStr {
 std::ostream& operator<<(std::ostream& os, const TmStr& t);
 
 
+struct Mb {
+    int64 val;
+    int precision;
+};
+
+std::ostream& operator<<(std::ostream& os, const Mb& p);
+
 }
 #endif

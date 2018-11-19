@@ -85,7 +85,8 @@ void read_blocks_convfunc(
     std::function<std::shared_ptr<BlockType>(std::shared_ptr<FileBlock>)> conv_func) {
 
     auto cbs = multi_threaded_callback<BlockType>::make(callback, numchan);
-    return read_blocks_split_convfunc(filename, cbs, locs,/* buffer,*/ conv_func);
+    read_blocks_split_convfunc(filename, cbs, locs,/* buffer,*/ conv_func);
+    
 }
 
 
@@ -98,14 +99,14 @@ void read_blocks_split_convfunc(
     std::vector<int64> locs, std::function<std::shared_ptr<BlockType>(std::shared_ptr<FileBlock>)> conv_func) {
     
     
-    try {
+    //try {
         return read_block_split_internal(filename, 
             wrap_callbacks(callbacks, conv_func),
             locs);
-    } catch (std::exception& ex) {
+    /*} catch (std::exception& ex) {
         for (auto c: callbacks) { c(nullptr); }
         throw ex;
-    }
+    }*/
         
     
 }
@@ -177,6 +178,9 @@ void read_blocks_primitiveblock(
     std::vector<int64> locs, 
     size_t numchan,
     IdSetPtr filter, bool ischange, size_t objflags);
+
+
+
 
 void read_blocks_split_primitiveblock(
     const std::string& filename,

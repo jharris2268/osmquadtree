@@ -239,7 +239,7 @@ void rssbkca_call(const std::vector<std::string>& filenames,
                     ts+=x.first.size();
                 }
             }
-            Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
+            //Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
             callcbs(blbs);
             locs_temp.clear();
             aa=0;
@@ -255,7 +255,7 @@ void rssbkca_call(const std::vector<std::string>& filenames,
                 ts+=x.first.size();
             }
         }
-        Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
+        //Logger::Message() << "read " << aa << " blocks, in " << locs_temp.size() << " qts " << "[" << std::fixed << std::setprecision(1) << ts/1024./1024 << " mb]";
         callcbs(blbs);
         
     }

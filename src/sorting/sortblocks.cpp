@@ -37,6 +37,8 @@
 
 
 #include "oqt/elements/quadtree.hpp"
+#include "oqt/elements/relation.hpp"
+
 #include "oqt/pbfformat/readminimal.hpp"
 
 
@@ -239,7 +241,7 @@ primitiveblock_callback add_quadtreesup_callback(std::vector<primitiveblock_call
 
 
 int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups) {
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups, bool fix_strs) {
         
     
     
@@ -255,7 +257,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     std::vector<PrimitiveBlockPtr> outs;
     outs.resize(groups->size());
     
-    auto resort = [&outs,groups,timestamp](PrimitiveBlockPtr bl) {
+    auto resort = [&outs,groups,timestamp,fix_strs](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
         for (auto o: bl->Objects()) {
             auto tl = groups->find_tile(o->Quadtree());
@@ -265,6 +267,15 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
                 nbl->SetQuadtree(tl.qt);
                 outs.at(tl.idx) = nbl;
             }
+            
+            if (fix_strs) {
+                fix_tags(*o);
+                if (o->Type()==ElementType::Relation) {
+                    auto rel = std::dynamic_pointer_cast<Relation>(o);
+                    fix_members(*rel);
+                }
+            }
+            
             outs.at(tl.idx)->add(o);
         }
     };
@@ -386,26 +397,61 @@ std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_pt
 
 int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
     int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
-    const std::string& tempfn, size_t blocksplit) {
+    const std::string& tempfn, size_t blocksplit, bool fixstrs) {
     
    
     if (tempfn=="NONE") {
-        return run_sortblocks_inmem(origfn, qtsfn, outfn, timestamp, numchan, groups);
+        return run_sortblocks_inmem(origfn, qtsfn, outfn, timestamp, numchan, groups, fixstrs);
     }
     
     int64 orig_file_size = file_size(origfn) / 1024/1024;
     auto sb = make_sortblocks(orig_file_size, groups, tempfn, blocksplit,numchan);
     
+    
+    std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convert;
+    
+    std::atomic<size_t> numfixed;
+    numfixed=0;
+    
+    if (fixstrs) {
+        convert = [&numfixed](std::shared_ptr<FileBlock> fb) {
+            auto bl = convert_primblock(fb);
+            size_t nf=0;
+            if (bl) {
+                for (auto ele: bl->Objects()) {
+                    if (fix_tags(*ele)) {
+                        nf++;
+                    }
+                    if (ele->Type()==ElementType::Relation) {
+                        auto rel = std::dynamic_pointer_cast<Relation>(ele);
+                        if (fix_members(*rel)) {
+                            nf++;
+                        }
+                    }
+                }
+            }
+            if (nf>0) {
+                numfixed+=nf;
+            }
+            return bl;
+        };
+    } else {
+        convert = convert_primblock;
+    }
+            
+    
     auto sgg = sb->make_addblocks_cb(qtsfn!="NONE");
     if (qtsfn == "NONE") {
-        read_blocks_split_convfunc_primitiveblock(origfn, sgg, {}, convert_primblock);
+        read_blocks_split_convfunc_primitiveblock(origfn, sgg, {}, convert);
     } else { 
         auto add_quadtrees = add_quadtreesup_callback(sgg, qtsfn);
-        read_blocks_convfunc_primitiveblock(origfn, add_quadtrees, {}, numchan, convert_primblock);
+        read_blocks_convfunc_primitiveblock(origfn, add_quadtrees, {}, numchan, convert);
     }
     
     sb->finish();
-    
+    if (fixstrs) {
+        Logger::Message() << "fixed " << numfixed << " obj strings";
+    }
     
     Logger::Get().time("read data");
     

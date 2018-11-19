@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
     int64 minsize   =4000;
     size_t grptiles = 0;
     double buffer = 0.05;
-    size_t max_depth=18;
+    size_t max_depth=17;
 
     bool sort_objs=false;
     bool sortfile=true;
@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
     size_t countflags=15;
     bool use_tree=false;
     bool use_48bit_quadtrees=false;
-    
+    bool fixstrs=false;
     //bool usefindgroupscopy=false;
     if (argc>3) {
         for (int i=3; i < argc; i++) {
@@ -293,6 +293,8 @@ int main(int argc, char** argv) {
             } else if (key=="48bitqt") {
                 use_48bit_quadtrees=true;
                 Logger::Message() << "use_48bit_quadtrees=true";
+            } else if (key=="fixstrs") {
+                fixstrs=true;
             } else {
                Logger::Message() << "unrecongisned argument " << arg;
                return 1;
@@ -352,10 +354,10 @@ int main(int argc, char** argv) {
         
         checkstats();
         if (inmem) {
-            resp = run_sortblocks_inmem(origfn,qtsfn,outfn,timestamp, numchan, groups);
+            resp = run_sortblocks_inmem(origfn,qtsfn,outfn,timestamp, numchan, groups, fixstrs);
         } else {
             
-            resp = run_sortblocks(origfn,qtsfn,outfn,timestamp,  numchan, groups, tempfn, grptiles);
+            resp = run_sortblocks(origfn,qtsfn,outfn,timestamp,  numchan, groups, tempfn, grptiles, fixstrs);
         }
         
 

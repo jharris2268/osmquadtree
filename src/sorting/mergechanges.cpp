@@ -397,28 +397,34 @@ class FilterRels {
 
 class Progress {
     public:
-        Progress(primitiveblock_callback cb_) : i(0), nt(1), cb(cb_) {}
+        Progress(primitiveblock_callback cb_) : nexti(0), li(0),lq(0),cb(cb_) {}
         
         void call(PrimitiveBlockPtr bl) {
             if (!bl) {
-                Logger::Progress(100.0) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " ";
+                Logger::Progress(100.0) << "{" << ts << "}" << std::setw(6) << std::setw(18) << " "
+                    << " " << std::setw(6) << li
+                    << " " << std::setw(18) << lq;
                 
                 cb(bl);
                 return;
             }
-            //if ((i%100)==1 ) {
+            li=bl->Index();
+            lq=bl->Quadtree();
+            if (li>nexti) {
             
-            Logger::Progress(bl->FileProgress()) << "{" << ts << "}" << std::setw(6) << i << std::setw(18) << " "
-                << " " << std::setw(6) << bl->Index()
-                << " " << std::setw(18) << quadtree::string(bl->Quadtree());
-                
-            i=bl->Index();
+                Logger::Progress(bl->FileProgress()) << "{" << ts << "}" << std::setw(6) << std::setw(18) << " "
+                    << " " << std::setw(6) << li
+                    << " " << std::setw(18) << lq;
+                    
+                nexti=bl->Index()+100;
+            }
             cb(bl);
         }
     private:
-        size_t i;
+        int64 nexti;
+        int64 li; int64 lq;
         TimeSingle ts;
-        double nt;
+        
         primitiveblock_callback cb;
 };
 
@@ -499,7 +505,7 @@ void run_mergechanges(
         } else {
             
             auto blobs = (read_blocks_caller->num_tiles() > 50000)
-                ? make_blobstore_filesplit(tempfn, 8000/25)  //changed 32 to 50
+                ? make_blobstore_filesplit(tempfn, 8000/50)  //changed 32 to 50 // 25?
                 : make_blobstore_file(tempfn, sortfile);
             
             auto temps = make_tempobjs(blobs, numchan);

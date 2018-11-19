@@ -50,10 +50,11 @@ size_t read_blocks_primitiveblock_py(
     std::vector<int64> locs, size_t numchan, size_t numblocks,
     IdSetPtr filter, bool ischange, size_t objflags) {
 
-
+    
     py::gil_scoped_release r;
     auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
     primitiveblock_callback cbf = [cb](PrimitiveBlockPtr bl) { cb->call(bl); };
+
     read_blocks_primitiveblock(filename, cbf, locs, numchan, filter, ischange, objflags);
     return cb->total();
 }
@@ -197,7 +198,91 @@ void read_blocks_tempobjs(std::string fn, std::function<bool(py::list/*std::vect
     read_blocks_convfunc<tempobjs_tup>(fn, cbf, {}, numchan, convblock);
     //read_tempobjs_file(cb, fn, {}, numchan);
 };
+
+
+
+void read_some_blocks_primitiveblock(
+    std::shared_ptr<ReadFile> readfile, 
+    primitiveblock_callback callback,
+    size_t numblocks,
+    size_t numchan,
+    IdSetPtr filter, bool ischange, size_t objflags) {
+        
+    auto combine = multi_threaded_callback<PrimitiveBlock>::make(callback, numchan);
     
+                
+    std::vector<std::function<void(std::shared_ptr<FileBlock>)>> cbs;
+    for (auto c: combine) {
+        cbs.push_back(
+            threaded_callback<FileBlock>::make(
+                [c,filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
+                    if (!fb) {
+                        c(nullptr);
+                    } else {
+                        c(read_as_primitiveblock(fb, filter, ischange, objflags));
+                    }
+                }
+            )
+        );
+    }
+        
+                    
+    for (size_t i=0; i < numblocks; i++) {
+        auto fb = readfile->next();
+        if (!fb) { break; }
+        cbs[fb->idx%numchan](fb);
+    }
+    
+    
+    for (auto& c: cbs) {
+        c(nullptr);
+    }
+    
+}
+
+
+class ReadBlocksIter {
+    
+    public:
+        ReadBlocksIter(const std::string& fn, std::vector<int64> locs, size_t numchan_, size_t nb_, std::shared_ptr<IdSet> ids_,bool change_, size_t flags_)
+            : numchan(numchan_), change(change_), flags(flags_), ids(ids_), nb(nb_) {
+                
+            int64 fs = file_size(fn);
+            readfile = make_readfile(fn, locs, 0, 0, fs);
+                
+        }
+        
+        
+        
+        std::vector<PrimitiveBlockPtr> next() {
+            
+            py::gil_scoped_release r;
+
+            
+            
+            std::vector<PrimitiveBlockPtr> ans;
+            auto cb = [&ans,this](PrimitiveBlockPtr bl) {
+                if (bl && (bl->size()>0)) {
+                    ans.push_back(bl);
+                }
+            };
+            
+            read_some_blocks_primitiveblock(readfile, cb, nb, numchan, ids, change, flags);
+            
+            return ans;
+        }   
+    private:
+    
+        size_t numchan;
+        bool change;
+        size_t flags;
+        std::shared_ptr<IdSet> ids;
+        size_t nb;
+        
+        std::shared_ptr<ReadFile> readfile;
+            
+    
+};      
     
 
 
@@ -491,4 +576,14 @@ void block_defs(py::module& m) {
     
    
    m.def("read_blocks_tempobjs", &read_blocks_tempobjs);
+  
+   py::class_<ReadBlocksIter, std::shared_ptr<ReadBlocksIter>>(m, "ReadBlocksIter")
+        .def(py::init<std::string,std::vector<int64>,size_t,size_t,std::shared_ptr<IdSet>,bool,size_t>(),
+            py::arg("fn"), py::arg("locs")=std::vector<int64>(),
+            py::arg("numchan")=4,py::arg("numblocks")=256,
+            py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=7)
+     
+        .def("next", &ReadBlocksIter::next)
+    ;
+   
 }

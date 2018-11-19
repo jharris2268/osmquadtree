@@ -49,10 +49,10 @@ std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_pt
 int run_sortblocks(
     const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
     int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
-    const std::string& tempfn, size_t grptiles);
+    const std::string& tempfn, size_t grptiles, bool fixstrs);
 
 int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
-    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups);
+    int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups, bool fixstrs);
 
 
 

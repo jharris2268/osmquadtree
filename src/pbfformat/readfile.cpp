@@ -42,12 +42,16 @@ namespace oqt {
 
 class ReadFileImpl : public ReadFile {
     public:
-        ReadFileImpl(const std::string& filename, size_t index_offset_, int64 file_size_) : infile(filename, std::ios::in | std::ios::binary), index_offset(index_offset_), file_size(file_size_), index(0) {
+        ReadFileImpl(const std::string& filename, size_t index_offset_, int64 file_size_, int64 startpos) : infile(filename, std::ios::in | std::ios::binary), index_offset(index_offset_), file_size(file_size_), index(0) {
             if (!infile.good()) {
                 throw std::domain_error("can't open "+filename);
             }
+            if (startpos>0) {
+                infile.seekg(startpos);
+            }
             
         }
+        int64 file_position() { return infile.tellg(); }
         
         virtual std::shared_ptr<FileBlock> next() {
             if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
@@ -66,6 +70,10 @@ class ReadFileImpl : public ReadFile {
         size_t index;
             
 };
+
+std::shared_ptr<ReadFile> make_readfile_startpos(const std::string& filename, size_t index_offset, int64 file_size, int64 startpos) {
+    return std::make_shared<ReadFileImpl>(filename, index_offset, file_size, startpos);
+}
 
 class ReadFileLocs : public ReadFile {
     public:
@@ -166,7 +174,7 @@ std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector
     std::shared_ptr<ReadFile> res;
     
     if (locs.empty()) {
-        res = std::make_shared<ReadFileImpl>(filename,index_offset,file_size);
+        res = std::make_shared<ReadFileImpl>(filename,index_offset,file_size,0);
     } else {
         res = std::make_shared<ReadFileLocs>(filename,locs,index_offset);
     }
@@ -175,6 +183,8 @@ std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector
     }
     return std::make_shared<ReadFileBuffered>(res, buffer);
 }
+
+
 
 void read_some_split_locs_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer) {
     
@@ -193,6 +203,12 @@ void read_some_split_locs_callback(const std::string& filename, std::vector<std:
         c(std::shared_ptr<FileBlock>());
     }
 }
+
+
+
+        
+    
+    
 
 
 void read_some_split_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size) {

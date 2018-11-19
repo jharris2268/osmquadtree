@@ -92,9 +92,9 @@ std::shared_ptr<QtTree> find_groups_copy_py(std::shared_ptr<QtTree> tree,
 }
     
 
-std::shared_ptr<QtTree> make_qts_tree_py(const std::string& qtsfn, size_t numchan) {
+std::shared_ptr<QtTree> make_qts_tree_maxlevel_py(const std::string& qtsfn, size_t numchan, size_t maxlevel) {
     py::gil_scoped_release release;
-    return make_qts_tree(qtsfn, numchan);
+    return make_qts_tree_maxlevel(qtsfn, numchan, maxlevel);
 }
 
 void tree_rollup_py(std::shared_ptr<QtTree> tree, int64 minsize) {
@@ -116,7 +116,7 @@ int run_sortblocks_py(
     std::string origfn, std::shared_ptr<QtTree> tree,
     std::string qtsfn, std::string outfn,
     int64 timestamp, size_t numchan,
-    std::string tempfn, size_t blocksplit) {
+    std::string tempfn, size_t blocksplit,bool fixstrs) {
 
     if (!tree) { throw std::domain_error("no tree!"); }
     if (qtsfn=="") {
@@ -134,7 +134,7 @@ int run_sortblocks_py(
     Logger::Get().reset_timing();
     py::gil_scoped_release release;
     
-    int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit);
+    int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit, fixstrs);
     Logger::Get().timing_messages();
     return r;
 }
@@ -197,25 +197,17 @@ void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, 
 }
 
 
-std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, size_t objflags) {
+std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, size_t objflags, bool count_full) {
 
     
     Logger::Get().reset_timing();
     py::gil_scoped_release r;
-    auto res = run_count(fn,numchan,true,true,objflags);
+    auto res = run_count(fn,numchan,true,true,objflags, count_full);
 
     Logger::Get().timing_messages();
 
     return res;
 }
-
-struct objdiff {
-    size_t left_idx;
-    ElementPtr left;
-    
-    size_t right_idx;
-    ElementPtr right;
-};
 
 
 class obj_iter2 {
@@ -241,6 +233,7 @@ class obj_iter2 {
         size_t ii;
         PrimitiveBlockPtr curr;
 };
+
 enum class diffreason {
     Same,
     Object,
@@ -251,6 +244,19 @@ enum class diffreason {
     Members,
     Quadtree
 };
+
+
+struct objdiff {
+    diffreason reason;
+    size_t left_idx;
+    ElementPtr left;
+    
+    size_t right_idx;
+    ElementPtr right;
+};
+
+
+
 diffreason compare_element(ElementPtr left, ElementPtr right) {
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
     const ElementInfo& li = left->Info();
@@ -318,6 +324,10 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
     
     auto left = left_obj.next();
     auto right = right_obj.next();
+    
+    std::cout << "first left=" << left.first << ", " << left.second->Type() << ", " << left.second->Id() << std::endl;
+    std::cout << "first right=" << right.first << ", " << right.second->Type() << ", " << right.second->Id() << std::endl;
+    
     TimeSingle ts;
     
     uint64 next_obj=0;
@@ -328,12 +338,12 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
     while (left.second || right.second) {
         
         if (!left.second || (right.second->InternalId() < left.second->InternalId())) {
-            curr.push_back(objdiff{0,nullptr,right.first,right.second});
+            curr.push_back(objdiff{diffreason::Object,0,nullptr,right.first,right.second});
             
             right=right_obj.next();
             tot[diffreason::Object]++;
         } else if (!right.second || (left.second->InternalId() < right.second->InternalId())) {
-            curr.push_back(objdiff{left.first,left.second,0,nullptr});
+            curr.push_back(objdiff{diffreason::Object,left.first,left.second,0,nullptr});
             
             left=left_obj.next();
             tot[diffreason::Object]++;
@@ -363,7 +373,7 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
             }
             
             if (same!=diffreason::Same) {
-                curr.push_back(objdiff{left.first,left.second,right.first,right.second});
+                curr.push_back(objdiff{same,left.first,left.second,right.first,right.second});
                 
             }
             tot[same]++;
@@ -387,6 +397,48 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
     return std::make_pair(tot,users);
 };
 
+
+      
+            
+bool has_weird_string(ElementPtr ele) {
+    for (const auto& t: ele->Tags()) {
+        if (t.key.find(127)!=std::string::npos) {
+            return true;
+        }
+        if (t.val.find(127)!=std::string::npos) {
+            return true;
+        }
+    }
+    if (ele->Type()==ElementType::Relation) {
+        auto rel = std::dynamic_pointer_cast<Relation>(ele);
+        for (const auto& m: rel->Members()) {
+            if (!m.role.empty()) {
+                if (m.role.find(127)!=std::string::npos) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+        
+std::vector<std::pair<int64,ElementPtr>> filter_weird(std::vector<PrimitiveBlockPtr> bls, bool block_qts) {
+    std::vector<std::pair<int64,ElementPtr>> res;
+    for (auto bl: bls) {
+        for (auto ele: bl->Objects()) {
+            if (has_weird_string(ele)) {
+                res.push_back(
+                    std::make_pair(
+                        block_qts ? bl->Quadtree() : ((int64)bl->Index()),
+                        ele));
+            }
+        }
+    }
+    return res;
+}
+    
+            
+    
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void core_defs(py::module& m) {
@@ -446,6 +498,7 @@ void core_defs(py::module& m) {
     
 
     py::class_<Count, std::shared_ptr<Count>>(m, "Count")
+        .def(py::init<int,bool,bool,bool>(),py::arg("index"),py::arg("tiles"), py::arg("geom"), py::arg("change"))
         .def("nodes", &Count::nodes)
         .def("ways", &Count::ways)
         .def("relations", &Count::relations)
@@ -453,14 +506,17 @@ void core_defs(py::module& m) {
         .def("blocks", &Count::blocks)
         .def("summary", &Count::summary)
         .def("short_str", &Count::short_str)
-        .def("short_str", &Count::long_str)
+        .def("long_str", &Count::long_str)
+        
+        .def("add", [](Count& cnt, size_t i, minimal::BlockPtr block) { cnt.add(i,block); })
+        .def("add", [](Count& cnt, size_t i, PrimitiveBlockPtr block) { cnt.add(i,block); })
     ;
-
 
     m.def("run_count", &run_count_py, "count pbf file contents",
          py::arg("fn"),
          py::arg("numchan")=4,
-         py::arg("objflags")=7
+         py::arg("objflags")=8,
+         py::arg("count_full")=false
     );
 
     m.def("calcqts", &run_calcqts_py, "calculate quadtrees",
@@ -482,7 +538,8 @@ void core_defs(py::module& m) {
         py::arg("timestamp") = 0,
         py::arg("numchan") = 4,
         py::arg("tempfn") = "",
-        py::arg("blocksplit")=500
+        py::arg("blocksplit")=500,
+        py::arg("fixstrs")=false
     );
 
     
@@ -509,7 +566,7 @@ void core_defs(py::module& m) {
         .def("at", &QtTree::at)
     ;
     m.def("make_tree_empty",&make_tree_empty);
-    m.def("make_qts_tree", &make_qts_tree_py);
+    m.def("make_qts_tree_maxlevel", &make_qts_tree_maxlevel_py);
     m.def("tree_rollup", &tree_rollup_py);
     m.def("find_groups_copy", &find_groups_copy_py);
     m.def("tree_round_copy", &tree_round_copy_py);
@@ -539,6 +596,7 @@ void core_defs(py::module& m) {
         .value("Quadtree", diffreason::Quadtree)
     ;
     py::class_<objdiff>(m, "objdiff")
+        .def_readonly("reason", &objdiff::reason)
         .def_readonly("left_idx", &objdiff::left_idx)
         .def_readonly("left", &objdiff::left)
         .def_readonly("right_idx", &objdiff::right_idx)
@@ -546,6 +604,8 @@ void core_defs(py::module& m) {
     ;
     //m.def("find_difference", &find_difference);
     m.def("find_difference2", &find_difference2);
+    m.def("compare_element", &compare_element);
+    
     m.def("fix_str", [](const std::string& s) { return py::bytes(fix_str(s)); });
     
     
@@ -591,5 +651,8 @@ void core_defs(py::module& m) {
         return py::make_tuple(py::str(ii.first), ii.second, py::bytes(decompress_gzip(s)));
     });
    m.def("checkstats", &checkstats);
-
+   
+   m.def("has_weird_string", &has_weird_string);
+   m.def("filter_weird", &filter_weird);
+   m.def("file_size", &file_size);
 }

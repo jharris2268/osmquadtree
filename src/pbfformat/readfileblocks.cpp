@@ -142,15 +142,24 @@ void read_block_split_internal(const std::string& filename,
     std::vector<int64> locs) {
         
     
-    if (locs.empty()) {
-        int64 fs = file_size(filename);
-        read_some_split_callback(filename, convblocks, 0, 0, fs);
-    } else {
-        /*if (inmem) {
-            read_some_split_locs_buffered_callback(filename,convblocks,0,locs,0);
-        } else {*/
-            read_some_split_locs_callback(filename, convblocks, 0, locs, 0);
-        //}
+    try {
+    
+        if (locs.empty()) {
+            int64 fs = file_size(filename);
+            read_some_split_callback(filename, convblocks, 0, 0, fs);
+        } else {
+            /*if (inmem) {
+                read_some_split_locs_buffered_callback(filename,convblocks,0,locs,0);
+            } else {*/
+                read_some_split_locs_callback(filename, convblocks, 0, locs, 0);
+            //}
+        }
+    } catch (std::exception& ex) {
+        std::cout << "read_block_split_internal failed: " << ex.what() << std::endl;
+        for (auto c: convblocks) {
+            c(nullptr);
+        }
+        throw ex;
     }
     
 }
@@ -165,7 +174,8 @@ void read_blocks_primitiveblock(
     size_t numchan,
     IdSetPtr filter, bool ischange, size_t objflags) {
         
-        
+    
+    
     return read_blocks_convfunc<PrimitiveBlock>(filename, callback, locs, numchan,
         [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_primitiveblock(fb, filter, ischange, objflags); });
@@ -213,7 +223,11 @@ void read_blocks_nothread_primitiveblock(
     return read_blocks_nothread_convfunc<PrimitiveBlock>(filename,callback,locs,
         [filter,ischange,objflags](std::shared_ptr<FileBlock> fb) {
             return read_as_primitiveblock(fb, filter, ischange, objflags); });
-}       
+} 
+
+
+
+
 
 void read_blocks_minimalblock(
     const std::string& filename,

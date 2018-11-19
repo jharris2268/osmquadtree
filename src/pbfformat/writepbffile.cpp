@@ -66,8 +66,8 @@ size_t sort_inmem(std::ifstream& inf, std::ofstream& outf, block_index& idx, siz
         
     }
     std::sort(tmp.begin(),tmp.end(),cmp_idx_item<1,0>);
-    Logger::Message() << "read " << tmp.size() << " blocks, " << curr << " bytes {range "
-            << std::get<1>(tmp.front()) << " => " << std::get<1>(tmp.back())+std::get<2>(tmp.back()) << "}";
+    Logger::Progress(start*100.0/idx.size()) << "read " << tmp.size() << " blocks, " << Mb{curr,1} << " mb {range "
+            << Mb{std::get<1>(tmp.front()),1} << " => " << Mb{std::get<1>(tmp.back())+std::get<2>(tmp.back()),1} << "}";
     std::map<int64,std::string> data;
     for (auto& ii : tmp) {
         inf.seekg(std::get<1>(ii));
@@ -83,6 +83,8 @@ size_t sort_inmem(std::ifstream& inf, std::ofstream& outf, block_index& idx, siz
         std::get<1>(idx[bl.first]) = outf.tellp();
         outf.write(bl.second.data(),bl.second.size());
     }
+    
+    
     return pl;
 }
     
@@ -117,6 +119,7 @@ void rewrite_indexed_file(std::string filename, std::string tempfilename, Header
         while (pl < idx.size()) {
             pl = sort_inmem(tempfile_read, outfile, idx, pl, tot);
         }
+        Logger::Progress(100) << "done";
     } else {
 
 

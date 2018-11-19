@@ -34,7 +34,7 @@ class ReadFile {
         virtual ~ReadFile() {}
 };
 std::shared_ptr<ReadFile> make_readfile(const std::string& filename, std::vector<int64> locs, size_t index_offset, size_t buffer, int64 file_size);
-
+std::shared_ptr<ReadFile> make_readfile_startpos(const std::string& filename, size_t index_offset, int64 file_size, int64 startpos);
 
 void read_some_split_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, size_t buffer, int64 file_size);
 void read_some_split_locs_callback(const std::string& filename, std::vector<std::function<void(std::shared_ptr<FileBlock>)>> callbacks, size_t index_offset, const std::vector<int64>& locs, size_t buffer);
