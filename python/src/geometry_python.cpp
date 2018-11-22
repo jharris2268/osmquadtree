@@ -185,8 +185,59 @@ size_t read_blocks_geometry_py(
     read_blocks_convfunc_primitiveblock(filename, cbf, locs, numchan, make_read_blocks_geometry_convfunc_filter(filt));
     return cb->total();
 }
+
+
+class CsvWriter {
+    public:
+        CsvWriter(const std::string& prfx)
+            :   points((prfx+"-points.csv.gz").c_str()),
+                lines( (prfx+"-lines.csv.gz").c_str()),
+                polygons( (prfx+"-polygons.csv.gz").c_str())
+        {}
+        
+        void call(std::shared_ptr<oqt::geometry::CsvBlock> block) {
+            if (!block) {
+                points.close();
+                lines.close();
+                polygons.close();
+                return;
+            }
+            
+            if (block->points.size()>0) {
+                points << block->points.data_blob();
+            }
+            
+            if (block->lines.size()>0) {
+                lines << block->lines.data_blob();
+            }
+            
+            if (block->polygons.size()>0) {
+                polygons << block->polygons.data_blob();
+            }
+        
+        
+        }
+    private:
+        gzstream::ogzstream points;
+        gzstream::ogzstream lines;
+        gzstream::ogzstream polygons;
+};
+
+std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_write(const geometry::GeometryParameters& params,
+    external_callback callback,
+    const std::string& out_prfx) {
+
+    py::gil_scoped_release r;
     
-                
+    block_callback wrapped;
+    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
+    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    
+    auto writer=std::make_shared<CsvWriter>(out_prfx);
+    auto csvblock_callback = [writer](std::shared_ptr<oqt::geometry::CsvBlock> bl) { writer->call(bl); };
+    
+    return std::make_pair(collect->total(), process_geometry_csvcallback(params, wrapped, csvblock_callback));
+}
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void geometry_defs(py::module& m) {
@@ -408,6 +459,7 @@ void geometry_defs(py::module& m) {
         py::arg("findmz"), py::arg("coltags")*/
     );
     m.def("process_geometry_csvcallback", &process_geometry_csvcallback_py);
+    m.def("process_geometry_csvcallback_write", &process_geometry_csvcallback_write);
     
     m.def("process_geometry_from_vec", &process_geometry_from_vec_py/*,
         py::arg("blocks"), py::arg("callback"), py::arg("numblocks"),

@@ -24,7 +24,7 @@ from __future__ import print_function
 from . import _oqt as oq
 import json, psycopg2,csv
 from .utils import addto, Prog, get_locs, replace_ws, addto_merge
-import time,sys,re
+import time,sys,re, gzip
 
 
 highway_prio = {
@@ -426,23 +426,40 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
 class CsvWriter:
     
     def __init__(self, outfnprfx):
-        self.points = Gzip.open(outfnprfx+'-point.csv.gz','w')
-        self.lines = Gzip.open(outfnprfx+'-line.csv.gz','w')
-        self.polys = Gzip.open(outfnprfx+'-polygon.csv.gz','w')
+        self.storeblocks=outfnprfx is None
+        if not outfnprfx is None:
+            self.points = gzip.open(outfnprfx+'-point.csv.gz','w')
+            self.lines = gzip.open(outfnprfx+'-line.csv.gz','w')
+            self.polygons = gzip.open(outfnprfx+'-polygon.csv.gz','w')
+        else:
+            self.blocks=[]
+        
+        self.num_points, self.num_lines, self.num_polygons=0,0,0
         
     def __call__(self, block):
-        if not block:
-            self.points.close()
-            self.lines.close()
-            self.polys.close()
+        if self.storeblocks:
+            if block:
+                self.blocks.append(block)
             return
         
+        if not block :
+            self.points.close()
+            self.lines.close()
+            self.polygons.close()
+            print("written %d points, %d lines, %d polygons" % (self.num_points, self.num_lines, self.num_polygons))
+            return
+        
+        
+        
         if len(block.points):
-            self.points.write(block.points.data)
+            self.points.write(block.points.data())
+            self.num_points += len(block.points)
         if len(block.lines):
-            self.lines.write(block.lines.data)
+            self.lines.write(block.lines.data())
+            self.num_lines += len(block.lines)
         if len(block.polygons):
-            self.polygons.write(block.polygons.data)
+            self.polygons.write(block.polygons.data())
+            self.num_polygons += len(block.polygons)
     
     
 def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
@@ -461,16 +478,21 @@ def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True
     #create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
     
     
-    csvwriter=CsvWriter(outfnprfx)
+    
     cnt,errs=None,None
     if nothread:
-        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs), csvwriter)
+        csvwriter=CsvWriter(outfnprfx)
+        cnt, errs = oq.process_geometry_csvcallback_nothread(params, Prog(locs=params.locs), csvwriter)
         
     else:
-       
-        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs), csvwriter)
-        
+        if outfnprfx is None:
+            csvwriter=CsvWriter(outfnprfx)
+            cnt, errs = oq.process_geometry_csvcallback(params, Prog(locs=params.locs),csvwriter)
+        else:
+            cnt, errs = oq.process_geometry_csvcallback_write(params, Prog(locs=params.locs),outfnprfx)
     #if writeindices:
     #    create_indices(psycopg2.connect(params.connstring).cursor(), params.tableprfx, extraindices, extraindices)
 
-    return cnt, errs
+    if outfnprfx is None:
+        return cnt, errs, csvwriter.blocks
+    return cnt,errs
