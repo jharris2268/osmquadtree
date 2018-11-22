@@ -248,9 +248,9 @@ def read_blocks(prfx, box_in, lastdate=None, objflags=7, numchan=4):
 
 read_style = lambda stylefn: dict((t['Tag'], oq.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
 read_minzoom = lambda minzoomfn: [(int(a),b,c,int(d)) for a,b,c,d,e in (r[:5] for r in csv.reader(open(minzoomfn)) if len(r)>=5)]
-def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoomfn=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
-    tiles={} if mergetiles else []
-    
+
+
+def prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea):
     params = oq.geometry_parameters()
         
     params.numchan=numchan
@@ -258,13 +258,6 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     params.add_rels=True
     params.add_mps=True
     params.recalcqts=True
-    
-    if not groups is None:
-        params.groups=groups
-    
-    if outfn:
-        params.outfn=outfn
-    params.indexed=indexed
     
     if box_in is None:
         
@@ -274,10 +267,6 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     
     params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
     print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
-    if mergetiles and collect:
-        for l in params.locs:
-            tiles[l]=oq.PrimitiveBlock(0,0)
-            tiles[l].Quadtree=l
     
     params.style = read_style(stylefn)
     print("%d styles" % len(params.style))
@@ -285,6 +274,29 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     if 'minzoom' in params.style and minzoomfn is not None:
         params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen,minarea)
         print ('findmz', params.findmz)
+        
+    return params
+
+def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoomfn=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
+    tiles={} if mergetiles else []
+    
+    
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    
+    if not groups is None:
+        params.groups=groups
+    
+    if outfn:
+        params.outfn=outfn
+    params.indexed=indexed
+    
+    
+    if mergetiles and collect:
+        for l in params.locs:
+            tiles[l]=oq.PrimitiveBlock(0,0)
+            tiles[l].Quadtree=l
+    
+    
     cnt,errs=None,None
     
     
@@ -384,30 +396,81 @@ def make_json_feat(obj):
 
 
 
-def write_to_postgis(prfx, box_in, stylefn, connstr,tabprfx,lastdate=None,minzoomfn=None,nothread=False, numchan=4, extraindices=False):
-    fns,locs,box = get_locs(prfx,box_in,lastdate)
-    print("%d fns, %d qts, %d blocks" % (len(fns),len(locs),sum(len(v) for k,v in locs.items())))
-    style = read_style(stylefn)
-    print("%d styles" % len(style))
-    coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in style.items() if k not in ('z_order','way_area'))
+def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
+    
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    
+    
+    params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
+    
     if tabprfx and not tabprfx.endswith('_'):
         tabprfx = tabprfx+'_'
+    params.tableprfx = tabprfx + ('_' if tabprfx and not tabprfx.endswith('_') else '')
+    params.connstring = connstr
     
-    create_tables(psycopg2.connect(connstr).cursor(), tabprfx,coltags)
     
-    findmz=None
-    if 'minzoom' in style and minzoomfn is not None:
-        findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen=0,minarea=5)
-        print ('findmz', findmz)
+    create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
     
         
     cnt,errs=None,None
     if nothread:
-        cnt, errs = oq.process_geometry_nothread(fns, Prog(locs=locs), locs, 128, style, box, add_highway, True, True, True, findmz, "", False, connstr, tabprfx, coltags)
+        cnt, errs = oq.process_geometry_nothread(params, Prog(locs=params.locs))
     else:
-        cnt, errs = oq.process_geometry(fns, Prog(locs=locs), locs, numchan, 128, style, box, add_highway, True, True, True, findmz, "", False, connstr, tabprfx, coltags)
-    create_indices(psycopg2.connect(connstr).cursor(), tabprfx, extraindices, extraindices)
+        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs))
+        
+    if writeindices:
+        create_indices(psycopg2.connect(params.connstring).cursor(), params.tableprfx, extraindices, extraindices)
 
+    return cnt, errs
 
+class CsvWriter:
+    
+    def __init__(self, outfnprfx):
+        self.points = Gzip.open(outfnprfx+'-point.csv.gz','w')
+        self.lines = Gzip.open(outfnprfx+'-line.csv.gz','w')
+        self.polys = Gzip.open(outfnprfx+'-polygon.csv.gz','w')
+        
+    def __call__(self, block):
+        if not block:
+            self.points.close()
+            self.lines.close()
+            self.polys.close()
+            return
+        
+        if len(block.points):
+            self.points.write(block.points.data)
+        if len(block.lines):
+            self.lines.write(block.lines.data)
+        if len(block.polygons):
+            self.polygons.write(block.polygons.data)
+    
+    
+def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
+    
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    
+    
+    params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
+    
+    if tabprfx and not tabprfx.endswith('_'):
+        tabprfx = tabprfx+'_'
+    params.tableprfx = tabprfx + ('_' if tabprfx and not tabprfx.endswith('_') else '')
+    #params.connstring = connstr
+    
+    
+    #create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
+    
+    
+    csvwriter=CsvWriter(outfnprfx)
+    cnt,errs=None,None
+    if nothread:
+        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs), csvwriter)
+        
+    else:
+       
+        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs), csvwriter)
+        
+    #if writeindices:
+    #    create_indices(psycopg2.connect(params.connstring).cursor(), params.tableprfx, extraindices, extraindices)
 
-
+    return cnt, errs

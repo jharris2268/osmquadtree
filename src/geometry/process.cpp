@@ -590,7 +590,28 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     return errors_res;
 
 }
+mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
+    block_callback callback,
+    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback) {
+        
+    
+    mperrorvec errors_res;
+    
+    auto cb=make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true);
+    auto csvcallback = multi_threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
+       
+    
+    auto addwns = process_geometry_blocks(
+            csvcallback, params.style, params.box, params.parent_tag_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+    );
+    
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
+    
+    return errors_res;
 
+}
 
 mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
     block_callback callback,

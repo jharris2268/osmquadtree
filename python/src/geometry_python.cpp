@@ -100,6 +100,19 @@ std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks_py(const geom
     return std::make_pair(collect->total(), process_geometry_sortblocks(params, wrapped));
 }
 
+std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_py(const geometry::GeometryParameters& params,
+    external_callback callback,
+    std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
+
+    py::gil_scoped_release r;
+    
+    block_callback wrapped;
+    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
+    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    
+    return std::make_pair(collect->total(), process_geometry_csvcallback(params, wrapped, wrap_callback(csvblock_callback)));
+}
+
 std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread_py(const geometry::GeometryParameters& params,
     external_callback callback,
     std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
@@ -394,6 +407,7 @@ void geometry_defs(py::module& m) {
         py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
         py::arg("findmz"), py::arg("coltags")*/
     );
+    m.def("process_geometry_csvcallback", &process_geometry_csvcallback_py);
     
     m.def("process_geometry_from_vec", &process_geometry_from_vec_py/*,
         py::arg("blocks"), py::arg("callback"), py::arg("numblocks"),

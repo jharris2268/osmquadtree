@@ -71,6 +71,13 @@ struct GeometryParameters {
 mperrorvec process_geometry(const GeometryParameters& params, block_callback wrapped);
 mperrorvec process_geometry_nothread(const GeometryParameters& params, block_callback wrapped);
 mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_callback cb);
+
+
+mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
+    block_callback callback,
+    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
+
+
 mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
     block_callback callback,
     std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
