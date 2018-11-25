@@ -45,7 +45,7 @@ struct GeometryParameters {
     GeometryParameters() 
         : numchan(1), numblocks(512), box(), add_rels(false),
             add_mps(false), recalcqts(false), outfn(""), indexed(false),
-            connstring(""), tableprfx("") {}
+            connstring(""), tableprfx(""), use_binary(false) {}
     
     std::vector<std::string> filenames;
     
@@ -64,6 +64,7 @@ struct GeometryParameters {
     std::string connstring;
     std::string tableprfx;
     PackCsvBlocks::tagspec coltags;
+    bool use_binary;
     std::shared_ptr<QtTree> groups;
     
 };

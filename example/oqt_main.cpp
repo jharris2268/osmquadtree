@@ -314,7 +314,10 @@ int main(int argc, char** argv) {
 
     int resp=0;
     if (operation == "count") {
-        auto res = run_count(origfn, numchan,false, countgeom, countflags, true);
+        
+        bool useminimal = (countflags&32)==0;
+        Logger::Message() <<  "count fn=" << origfn << ", numchan=" << numchan << ", countgeom=" << countgeom << ", countflags=" << countflags << ", useminimal=" << useminimal;
+        auto res = run_count(origfn, numchan,false, countgeom, countflags, useminimal);
         if (!res) { return 1; }
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "count_full") {

@@ -599,12 +599,39 @@ void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, 
     }
     block->relations.push_back(std::move(r));
 }
+void readMinimalGeometry_alt(minimal::BlockPtr& block, size_t gm_type, const std::string& data, size_t pos, size_t lim) {
+    //if (block->relations.capacity() == block->relations.size()) { block->relations.reserve(block->relations.size()+1000); }
+    
+    minimal::Geometry r;
+    r.ty = gm_type;
+    
+    uint64 tg=0, vl=0;
+    bool isdata=false;
+    
+    while (pos < lim) {
+        std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
+    
+        if (!isdata && (tg==1)) {
+            r.id = vl;
+        } else if (isdata && (tg==4)) {
+          pos = readMinimalInfo_alt(r, data, pos, pos+vl);
+        } else if (tg==20) {
+            r.quadtree = un_zig_zag(vl);
+        } else if (isdata) {
+            pos+=vl;
+        }
+    }
+    block->geometries.push_back(std::move(r));
+}
 
 
 void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, size_t objflags, size_t pos, size_t lim) {
     uint64 tg=0, vl=0;
     bool isdata=false;
     
+    
+    size_t np=block->nodes.size(), wp=block->ways.size(), rp=block->relations.size(), gp=block->geometries.size();
+    size_t ct=0;
     while (pos < lim) {
         std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
     
@@ -621,11 +648,38 @@ void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, siz
         } else if (isdata && (tg==4) && (objflags&4)) {
             readMinimalRelation_alt(block, data, pos, pos+vl);
             pos+=vl;
-        } else if (isdata) {
+        } else if (isdata && (objflags&8) && (tg>=20) && (tg < 24)) {
+            readMinimalGeometry_alt(block, tg-17, data, pos, pos+vl);
             pos+=vl;
+        } else if (tg==10) {
+            ct=vl;
         }
     }
-            
+    
+    
+    if (ct!=0) {
+        if (block->nodes.size()>np) {
+            for (size_t i=np; i < block->nodes.size(); i++) {
+                block->nodes[i].changetype=ct;
+            }
+        }
+        if (block->ways.size()>wp) {
+            for (size_t i=wp; i < block->ways.size(); i++) {
+                block->ways[i].changetype=ct;
+            }
+        }
+        if (block->relations.size()>rp) {
+            for (size_t i=rp; i < block->relations.size(); i++) {
+                block->relations[i].changetype=ct;
+            }
+        }
+        if (block->geometries.size()>gp) {
+            for (size_t i=gp; i < block->geometries.size(); i++) {
+                block->geometries[i].changetype=ct;
+            }
+        }
+    }
+               
 }
     
 
@@ -637,21 +691,21 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
     bool isdata=false;
     
     try {
-    while (pos < lim) {
-        std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
-    
-        if (isdata && (tg == 2)) {
-            readMinimalGroup_alt(block, data, objflags, pos, pos+vl);
-            pos+=vl;
-        } else if (tg==31) {
-            block->quadtree = read_quadtree(data.substr(pos,vl));
-            pos+=vl;
-        } else if (tg == 32) {
-            block->quadtree = un_zig_zag(vl);
-        } else if (isdata) {
-            pos+=vl;
+        while (pos < lim) {
+            std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
+        
+            if (isdata && (tg == 2)) {
+                readMinimalGroup_alt(block, data, objflags, pos, pos+vl);
+                pos+=vl;
+            } else if (tg==31) {
+                block->quadtree = read_quadtree(data.substr(pos,vl));
+                pos+=vl;
+            } else if (tg == 32) {
+                block->quadtree = un_zig_zag(vl);
+            } else if (isdata) {
+                pos+=vl;
+            }
         }
-    }
     
     } catch (const std::out_of_range& e) {
         Logger::Message() << "?? " << block->index << " " << pos << "/" << lim << " [" << data.size() << "] {" << tg << ", " << vl << ", " << isdata << "}";

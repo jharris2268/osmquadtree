@@ -190,7 +190,8 @@ size_t read_blocks_geometry_py(
 class CsvWriter {
     public:
         CsvWriter(const std::string& prfx)
-            :   points((prfx+"-points.csv.gz").c_str()),
+            :   has_point(false), has_line(false), has_polygon(false),
+                points((prfx+"-points.csv.gz").c_str()),
                 lines( (prfx+"-lines.csv.gz").c_str()),
                 polygons( (prfx+"-polygons.csv.gz").c_str())
         {}
@@ -204,20 +205,44 @@ class CsvWriter {
             }
             
             if (block->points.size()>0) {
-                points << block->points.data_blob();
+                int64 i=0;
+                if (has_point) {
+                    i=1;
+                }
+                for ( ; i<block->points.size(); i++) {
+                    points << block->points.at(i);
+                }
+                has_point=true;
             }
             
             if (block->lines.size()>0) {
-                lines << block->lines.data_blob();
+                int64 i=0;
+                if (has_line) {
+                    i=1;
+                }
+                for ( ; i<block->lines.size(); i++) {
+                    lines << block->lines.at(i);
+                }
+                has_line=true;
+                //lines << block->lines.data_blob();
             }
             
             if (block->polygons.size()>0) {
-                polygons << block->polygons.data_blob();
+                int64 i=0;
+                if (has_polygon) {
+                    i=1;
+                }
+                for ( ; i<block->polygons.size(); i++) {
+                    polygons << block->polygons.at(i);
+                }
+                has_polygon=true;
+                //polygons << block->polygons.data_blob();
             }
         
         
         }
     private:
+        bool has_point, has_line, has_polygon;
         gzstream::ogzstream points;
         gzstream::ogzstream lines;
         gzstream::ogzstream polygons;
@@ -419,6 +444,7 @@ void geometry_defs(py::module& m) {
         .def_readwrite("connstring", &geometry::GeometryParameters::connstring)
         .def_readwrite("tableprfx", &geometry::GeometryParameters::tableprfx)
         .def_readwrite("coltags", &geometry::GeometryParameters::coltags)
+        .def_readwrite("use_binary", &geometry::GeometryParameters::use_binary)
         .def_readwrite("groups", &geometry::GeometryParameters::groups)
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;

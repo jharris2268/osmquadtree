@@ -98,4 +98,52 @@ size_t write_double_le(std::string& data, size_t pos, double d) {
     data[pos+7] = sc[7];
     return pos+8;
 }
+
+
+size_t write_int16(std::string& data, size_t pos, int64 i) {
+    union {
+        int16_t sd;
+        char sc[2];
+    };
+    sd=i;
+    data[pos+1] = sc[0];
+    data[pos]   = sc[1];
+    
+    return pos+2;
+}
+size_t write_int32(std::string& data, size_t pos, int64 i) {
+    union {
+        int32_t sd;
+        char sc[4];
+    };
+    sd=i;
+    data[pos+3] = sc[0];
+    data[pos+2] = sc[1];
+    data[pos+1] = sc[2];
+    data[pos]   = sc[3];
+    
+    return pos+4;
+}
+size_t write_int64(std::string& data, size_t pos, int64 i) {
+    union {
+        int64_t sd;
+        char sc[8];
+    };
+    sd=i;
+    data[pos+7] = sc[0];
+    data[pos+6] = sc[1];
+    data[pos+5] = sc[2];
+    data[pos+4] = sc[3];
+    data[pos+3] = sc[4];
+    data[pos+2] = sc[5];
+    data[pos+1] = sc[6];
+    data[pos] = sc[7];
+    return pos+8;
+}
+
+
+
+
+
+
 }

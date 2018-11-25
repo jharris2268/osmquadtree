@@ -33,6 +33,7 @@
 #include "oqt/sorting/tempobjs.hpp"
 #include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/utils/logger.hpp"
 
 #include "oqt/update/xmlchange.hpp"
 #include "gzstream.hpp"
@@ -58,6 +59,9 @@ namespace py = pybind11;
 
 template <class RetType, class ArgType>
 std::function<RetType(ArgType)> wrap_callback(std::function<RetType(ArgType)> callback) {
+    if (!callback) {
+        return nullptr;
+    }
     return [callback](ArgType arg) {
         py::gil_scoped_acquire aq;
         return callback(arg);
@@ -79,9 +83,7 @@ class collect_blocks {
             size_t numblocks_) : callback(callback_), numblocks(numblocks_), tot(0) {}
 
         void call(std::shared_ptr<BlockType> block) {
-            if (!block) {
-                
-            }
+            
             if (block) {
                 pending.push_back(block);
             }
@@ -90,9 +92,14 @@ class collect_blocks {
                 tosend.swap(pending);
                 tot+=tosend.size();
                 
-                bool r = callback(tosend);
-                if (!r) {
-                    throw std::domain_error("python callback failed");
+                if (!callback) {
+                    oqt::Logger::Message() << "None(" << tosend.size() << " blocks" << ")";
+                } else {
+                        
+                    bool r = callback(tosend);
+                    if (!r) {
+                        throw std::domain_error("python callback failed");
+                    }
                 }
 
             }

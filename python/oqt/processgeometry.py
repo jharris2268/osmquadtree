@@ -72,7 +72,7 @@ def make_tag_cols(coltags):
 
 def create_tables(curs, table_prfx,coltags):
     curs.execute("begin")
-    for t in ('point','line','polygon','roads'):
+    for t in ('point','line','polygon','roads','boundary'):
         curs.execute("drop table if exists "+table_prfx+t+" cascade" )
     
     point_cols,line_cols, poly_cols = make_tag_cols(coltags)
@@ -93,17 +93,26 @@ def create_tables(curs, table_prfx,coltags):
 
 
 
-def create_indices(curs, table_prfx, extraindices=False, planet=False):
+def create_indices(curs, table_prfx, extraindices=False, vacuum=False, planet=False):
     write_indices(curs,table_prfx,indices)
+    
+    if vacuum:
+        write_indices(curs,table_prfx,vacuums,False)
+    
     if extraindices:
-        write_indices(curs,table_prfx,extra)
+        write_indices(curs,table_prfx,extras)
+        if vacuum:
+            write_indices(curs,table_prfx,vacuums_extra,False)
+        
     if planet:
         write_indices(curs,table_prfx,planetosm)
         
+        
     
-def write_indices(curs,table_prfx, inds):
+def write_indices(curs,table_prfx, inds,in_transaction=False):
     ist=time.time()
-    curs.execute("begin")
+    if in_transaction:
+        curs.execute("begin")
     for ii in inds:
         qu=ii.replace("%ZZ%", table_prfx)
         sys.stdout.write("%-150.150s" % (replace_ws(qu),))
@@ -114,7 +123,8 @@ def write_indices(curs,table_prfx, inds):
         
         sys.stdout.write(" %7.1fs\n" % (time.time()-qst))
         sys.stdout.flush()
-    curs.execute('commit')
+    if in_transaction:
+        curs.execute('commit')
     print("created indices in %8.1fs" % (time.time()-ist))
 
 indices = [
@@ -137,6 +147,12 @@ indices = [
 "CREATE INDEX %ZZ%line_way          ON %ZZ%line     USING gist  (way)",
 "CREATE INDEX %ZZ%polygon_way       ON %ZZ%polygon  USING gist  (way)",
 "CREATE INDEX %ZZ%roads_way         ON %ZZ%roads    USING gist  (way)",]
+
+vacuums = [
+"vacuum analyze %ZZ%point",
+"vacuum analyze %ZZ%line",
+"vacuum analyze %ZZ%polygon",
+"vacuum analyze %ZZ%roads",]
 
 extras = [
 "CREATE INDEX %ZZ%point_osmid       ON %ZZ%point    USING btree (osm_id)",
@@ -162,6 +178,10 @@ extras = [
 "create index %ZZ%boundary_view on %ZZ%boundary using gist (way)",
 "create index %ZZ%building_view on %ZZ%polygon using gist (way) where building is not null and building != 'no'",
 
+
+]
+vacuums_extra = [
+'vacuum analyze %ZZ%boundary',
 ]
 
 planetosm = [
@@ -303,7 +323,17 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     
     if len(params.locs) > 2500 and outfn is not None:
         collect=False
-    callback = Prog((addto_merge(tiles, minzoomfn is not None) if mergetiles else addto(tiles)), params.locs) if collect else None
+        
+    callback = None
+    if collect:
+        if mergetiles:
+            callback=Prog(addto_merge(tiles, minzoomfn is not None),params.locs)
+        else:
+            callback=Prog(addto(tiles),params.locs)
+    else:
+        callback=Prog(locs=params.locs)
+            
+    
     
     if nothread:
         cnt, errs = oq.process_geometry_nothread(params, callback)
@@ -323,7 +353,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
         else:
             return tiles
     
-
+    return cnt, errs
 
 def to_json(tile,split=True):
     res = {}
@@ -396,7 +426,7 @@ def make_json_feat(obj):
 
 
 
-def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
+def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False,use_binary=False):
     
     params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
     
@@ -407,7 +437,7 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
         tabprfx = tabprfx+'_'
     params.tableprfx = tabprfx + ('_' if tabprfx and not tabprfx.endswith('_') else '')
     params.connstring = connstr
-    
+    params.use_binary=use_binary
     
     create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
     
@@ -425,12 +455,13 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
 
 class CsvWriter:
     
-    def __init__(self, outfnprfx):
+    def __init__(self, outfnprfx,toobig=False):
         self.storeblocks=outfnprfx is None
+        self.toobig=toobig
         if not outfnprfx is None:
-            self.points = gzip.open(outfnprfx+'-point.csv.gz','w')
-            self.lines = gzip.open(outfnprfx+'-line.csv.gz','w')
-            self.polygons = gzip.open(outfnprfx+'-polygon.csv.gz','w')
+            self.points = gzip.open(outfnprfx+'-point.csv.gz','w',5)
+            self.lines = gzip.open(outfnprfx+'-line.csv.gz','w',5)
+            self.polygons = gzip.open(outfnprfx+'-polygon.csv.gz','w',5)
         else:
             self.blocks=[]
         
@@ -439,7 +470,14 @@ class CsvWriter:
     def __call__(self, block):
         if self.storeblocks:
             if block:
-                self.blocks.append(block)
+                if self.toobig:
+                    self.blocks.append((
+                        len(block.points),len(block.points.data()),
+                        len(block.lines),len(block.lines.data()),
+                        len(block.polygons), len(block.polygons.data())
+                    ))
+                else:
+                    self.blocks.append(block)
             return
         
         if not block :
@@ -481,12 +519,13 @@ def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True
     
     cnt,errs=None,None
     if nothread:
-        csvwriter=CsvWriter(outfnprfx)
+        csvwriter=CsvWriter(outfnprfx,outfnprfx is None and len(params.locs)>100)
         cnt, errs = oq.process_geometry_csvcallback_nothread(params, Prog(locs=params.locs), csvwriter)
         
     else:
         if outfnprfx is None:
-            csvwriter=CsvWriter(outfnprfx)
+            
+            csvwriter=CsvWriter(outfnprfx,len(params.locs)>100)
             cnt, errs = oq.process_geometry_csvcallback(params, Prog(locs=params.locs),csvwriter)
         else:
             cnt, errs = oq.process_geometry_csvcallback_write(params, Prog(locs=params.locs),outfnprfx)

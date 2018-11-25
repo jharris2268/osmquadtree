@@ -32,8 +32,11 @@ namespace geometry {
 class CsvRows {
     
     public:
-        CsvRows() {}
+        CsvRows(bool is_binary_);
         
+        bool is_binary() { return _is_binary; }
+        
+        void finish();
         void add(const std::string row);
         std::string at(int i) const;
         int size() const;
@@ -41,12 +44,16 @@ class CsvRows {
         const std::string data_blob() const { return data; }
         
     private:
+        bool _is_binary;
         
         std::string data;
         std::vector<size_t> poses;
 };
 
 struct CsvBlock {
+    
+    CsvBlock(bool is_binary) : points(is_binary), lines(is_binary), polygons(is_binary) {}
+    
     CsvRows points;
     CsvRows lines;
     CsvRows polygons;
@@ -59,7 +66,7 @@ class PackCsvBlocks {
         virtual ~PackCsvBlocks() {}
 };
 
-std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header);
+std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header, bool binary_format);
 
 class PostgisWriter {
     public:
@@ -72,12 +79,12 @@ class PostgisWriter {
 std::shared_ptr<PostgisWriter> make_postgiswriter(
     const std::string& connection_string,
     const std::string& table_prfx,
-    bool with_header);
+    bool with_header, bool binary_format);
 
 std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
     const std::string& connection_string,
     const std::string& table_prfx,
-    bool with_header);
+    bool with_header, bool binary_format);
 
 }}  
 #endif 

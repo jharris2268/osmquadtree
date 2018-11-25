@@ -31,6 +31,7 @@
 #include "oqt/utils/logger.hpp"
 
 #include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/pbf/fixedint.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -114,6 +115,32 @@ std::string pack_hstoretags(const tagvector& tags) {
     return strm.str();
 }
 
+size_t _write_data(std::string& data, size_t pos, const std::string& v) {
+    std::copy(v.begin(),v.end(),data.begin()+pos);
+    pos+=v.size();
+    return pos;
+}
+
+std::string pack_hstoretags_binary(const tagvector& tags) {
+    size_t len=4 + tags.size()*8;
+    for (const auto& tg: tags) {
+        len += tg.key.size();
+        len += tg.val.size();
+    }
+    
+    std::string out(len,'\0');
+    size_t pos=0;
+    pos = write_int32(out,pos,tags.size());
+    
+    for (const auto& tg: tags) {
+        pos = write_int32(out,pos,tg.key.size());
+        pos = _write_data(out,pos,tg.key);
+        pos = write_int32(out,pos,tg.val.size());
+        pos = _write_data(out,pos,tg.val);
+    }
+    return out;
+}
+    
 
 std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t>& tags, ElementPtr obj, bool other_tags, bool asjson) {
     std::vector<std::string> tt(tags.size(),"");
@@ -150,6 +177,48 @@ std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t
     return std::string();            
 }
 
+std::pair<std::string,std::string> prep_tags_binary(const std::map<std::string,size_t>& tags, ElementPtr obj, bool other_tags) {
+    std::vector<std::string> tt(tags.size(),"");
+    
+    tagvector others;
+    size_t len=tags.size()*4;
+    
+    if (!obj->Tags().empty()) {
+        for (const auto& tg:obj->Tags()) {
+            auto it=tags.find(tg.key);
+            if (it!=tags.end()) {
+                if (it->second >= tags.size()) {
+                    Logger::Message() << "tag out of bounds?? " << tg.key << " " << tg.val << "=>" << it->second << "/" << tt.size();
+                    throw std::domain_error("tag out of bounds");
+                }
+                tt.at(it->second)=tg.val;
+                len+=tg.val.size();
+            } else if (other_tags) {
+                others.push_back(tg);
+            }
+        }
+    }
+    
+    std::string out(len,0);
+    size_t pos=0;
+    for (const auto& t:tt) {
+        if (t.empty()) {
+            pos=write_int32(out,pos,-1);
+        } else {
+            pos=write_int32(out,pos,t.size());
+            pos=_write_data(out,pos,t);
+        }
+    }
+    
+    std::string hstore;
+    if (other_tags && !others.empty()) {
+        hstore=pack_hstoretags_binary(others);
+    }
+    return std::make_pair(out,hstore);
+}
+        
+
+
 std::string as_hex(const std::string& str) {
     std::stringstream ss;
     for (unsigned char c : str) {
@@ -160,12 +229,22 @@ std::string as_hex(const std::string& str) {
 
 }
 
-
+CsvRows::CsvRows(bool is_binary_) : _is_binary(is_binary_) {
+    data.reserve(1024*1024);
+    if (_is_binary) {
+        data += std::string("PGCOPY\n\xff\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00",19);
+    }
+}
+    
 void CsvRows::add(const std::string row) {
-    if (poses.empty()) { poses.push_back(0); }
-
-    data+=row;
-    data+="\n";
+    if ((row.size() + data.size()) > data.capacity()) {
+        data.reserve(data.capacity()+1024*1024);
+    }    
+    
+    if (poses.empty()) { poses.push_back(data.size()); }
+    
+    //pos = _write_data(data, pos, row);
+    data += row;
     poses.push_back(data.size());
 }
 
@@ -175,6 +254,13 @@ std::string CsvRows::at(int i) const {
     size_t p = poses[i];
     size_t q = poses[i+1];
     return data.substr(p,q-p);
+}
+
+void CsvRows::finish() {
+    if (_is_binary) {
+        data += "\xff\xff";        
+    }
+    
 }
 
 int CsvRows::size() const {
@@ -252,9 +338,9 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                 line_ss << "length" << delim;
                 poly_ss << "way_area" << delim;
                 
-                point_ss << "way";
-                line_ss << "way";
-                poly_ss << "way";
+                point_ss << "way\n";
+                line_ss << "way\n";
+                poly_ss << "way\n";
                 
             
                 point_header = point_ss.str();
@@ -300,9 +386,11 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     }
                     
                     ss << as_hex(pt->Wkb(true, true));
+                    ss << "\n";
                     if (with_header && (res->points.size()==0)) {
                         res->points.add(point_header);
                     }
+                    
                     res->points.add(ss.str());
 
                 } else if (o->Type()==ElementType::Linestring) {
@@ -333,6 +421,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     ss << std::dec << ln->ZOrder() << delim;
                     ss << std::fixed << std::setprecision(1) << ln->Length() << delim;
                     ss << as_hex(ln->Wkb(true, true));
+                    ss << "\n";
                     if (with_header && (res->lines.size()==0)) {
                         res->lines.add(point_header);
                     }
@@ -365,7 +454,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     }
                     ss << std::dec << py->ZOrder() << delim << std::fixed << std::setprecision(1) << py->Area() << delim;
                     ss << as_hex(py->Wkb(true, true));
-                    
+                    ss << "\n";
                     if (with_header && (res->polygons.size()==0)) {
                         res->polygons.add(point_header);
                     }
@@ -396,7 +485,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     }
                     ss << std::dec << py->ZOrder() << delim << std::fixed << std::setprecision(1) << py->Area() << delim;
                     ss << as_hex(py->Wkb(true, true));
-                    
+                    ss << "\n";
                     if (with_header && (res->polygons.size()==0)) {
                         res->polygons.add(point_header);
                     }
@@ -408,8 +497,11 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
         
         std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr block) {
             if (!block) { return nullptr; }
-            auto res = std::make_shared<CsvBlock>();
+            auto res = std::make_shared<CsvBlock>(false);
             add_to_csvblock(block,res);
+            res->points.finish();
+            res->lines.finish();
+            res->polygons.finish();
             return res;
         }
         
@@ -429,7 +521,359 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
         std::string poly_header;
 };
 
-std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header) {
+
+
+class PackCsvBlocksBinaryImpl : public PackCsvBlocks {
+    public:
+        PackCsvBlocksBinaryImpl(
+            const PackCsvBlocks::tagspec& tags) : minzoom(false), other_tags(false),layerint(false) {
+                
+             
+            for (const auto& t: tags) {
+                if (std::get<0>(t)=="minzoom") {
+                    minzoom=true;
+                } else if ( (std::get<0>(t)=="*") || (std::get<0>(t)=="XXX") ){
+                    other_tags=true;
+                } else if ( (std::get<0>(t)=="layer") ) {
+                    layerint = true;
+                } else {
+                
+                    if (std::get<1>(t)) {
+                        point_tags.insert(std::make_pair(std::get<0>(t),point_tags.size()));
+                        
+                    }
+                    if (std::get<2>(t)) {
+                        line_tags.insert(std::make_pair(std::get<0>(t),line_tags.size()));
+                        
+                    }
+                    if (std::get<3>(t)) {
+                        poly_tags.insert(std::make_pair(std::get<0>(t),poly_tags.size()));
+                        
+                    }
+                }
+            }
+            
+            
+            
+        }
+
+        virtual ~PackCsvBlocksBinaryImpl() {}
+
+        
+        std::string pack_point(std::shared_ptr<Point> pt, int64 tileqt) {
+            std::string header(38,'\0');
+            size_t pos=0;
+            
+            size_t numfields=3 + point_tags.size() + (other_tags?1:0)+(layerint?1:0)+(minzoom?1:0)+ 1;
+            pos=write_int16(header, pos, numfields);
+
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,pt->Id());
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,tileqt);
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,pt->Quadtree());
+            
+            std::string tags,othertags;
+            std::tie(tags,othertags) = prep_tags_binary(point_tags, pt, other_tags);
+            
+            std::string wkb=pt->Wkb(true,true);
+            
+            std::string tail(4+othertags.size()+8+8+4, '\0');
+            
+            pos=0;
+            if (other_tags) {
+                if (othertags.size()>0) {
+                    pos=write_int32(tail,pos,othertags.size());
+                    pos=_write_data(tail,pos,othertags);
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            if (layerint) {
+                if (pt->Layer()!=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,pt->Layer());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (minzoom) {
+                if (pt->MinZoom()>=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,pt->MinZoom());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            pos=write_int32(tail,pos,wkb.size());
+            tail.resize(pos);
+            
+            return header + tags + tail + wkb;
+        }
+        
+        std::string pack_linestring(std::shared_ptr<Linestring> ln, int64 tileqt) {
+            std::string header(38,'\0');
+            size_t pos=0;
+            
+            size_t numfields=3 + line_tags.size() + (other_tags?1:0)+(layerint?1:0)+(minzoom?1:0)+ 3;
+            pos=write_int16(header, pos, numfields);
+
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,ln->Id());
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,tileqt);
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,ln->Quadtree());
+            
+            std::string tags,othertags;
+            std::tie(tags,othertags) = prep_tags_binary(line_tags, ln, other_tags);
+            
+            std::string wkb=ln->Wkb(true,true);
+            
+            std::string tail(4+othertags.size()+8+8+4+8+12, '\0');
+            
+            pos=0;
+            if (other_tags) {
+                if (othertags.size()>0) {
+                    pos=write_int32(tail,pos,othertags.size());
+                    pos=_write_data(tail,pos,othertags);
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            if (layerint) {
+                if (ln->Layer()!=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,ln->Layer());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (minzoom) {
+                if (ln->MinZoom()>=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,ln->MinZoom());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (ln->ZOrder()!=0) {
+                pos=write_int32(tail,pos,4);
+                pos=write_int32(tail,pos,ln->ZOrder());
+            } else {
+                pos=write_int32(tail,pos,-1);
+            }
+            
+            pos=write_int32(tail,pos,8);
+            pos=write_double(tail,pos,ln->Length());
+            
+            pos=write_int32(tail,pos,wkb.size());
+            tail.resize(pos);
+            
+            return header + tags + tail + wkb;
+        }
+        
+        std::string pack_simplepolygon(std::shared_ptr<SimplePolygon> py, int64 tileqt) {
+            std::string header(42,'\0');
+            size_t pos=0;
+            
+            size_t numfields=3 + poly_tags.size() + (other_tags?1:0)+(layerint?1:0)+(minzoom?1:0)+ 4;
+            pos=write_int16(header, pos, numfields);
+
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,py->Id());
+            
+            pos=write_int32(header,pos,-1);
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,tileqt);
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,py->Quadtree());
+            
+            std::string tags,othertags;
+            std::tie(tags,othertags) = prep_tags_binary(poly_tags, py, other_tags);
+            
+            std::string wkb=py->Wkb(true,true);
+            
+            std::string tail(4+othertags.size()+8+8+4+8+12, '\0');
+            
+            pos=0;
+            if (other_tags) {
+                if (othertags.size()>0) {
+                    pos=write_int32(tail,pos,othertags.size());
+                    pos=_write_data(tail,pos,othertags);
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            if (layerint) {
+                if (py->Layer()!=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,py->Layer());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (minzoom) {
+                if (py->MinZoom()>=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,py->MinZoom());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (py->ZOrder()!=0) {
+                pos=write_int32(tail,pos,4);
+                pos=write_int32(tail,pos,py->ZOrder());
+            } else {
+                pos=write_int32(tail,pos,-1);
+            }
+            
+            pos=write_int32(tail,pos,8);
+            pos=write_double(tail,pos,py->Area());
+            
+            pos=write_int32(tail,pos,wkb.size());
+            tail.resize(pos);
+            
+            return header + tags + tail + wkb;
+        }
+        
+        std::string pack_complicatedpolygon(std::shared_ptr<ComplicatedPolygon> py, int64 tileqt) {
+            std::string header(46,'\0');
+            size_t pos=0;
+            
+            size_t numfields=3 + poly_tags.size() + (other_tags?1:0)+(layerint?1:0)+(minzoom?1:0)+ 4;
+            pos=write_int16(header, pos, numfields);
+
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,py->Id());
+            
+            pos=write_int32(header,pos,4);
+            pos=write_int32(header,pos,py->Part());
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,tileqt);
+            
+            pos=write_int32(header,pos,8);
+            pos=write_int64(header,pos,py->Quadtree());
+            
+            std::string tags,othertags;
+            std::tie(tags,othertags) = prep_tags_binary(poly_tags, py, other_tags);
+            
+            std::string wkb=py->Wkb(true,true);
+            
+            std::string tail(4+othertags.size()+8+8+4+8+12, '\0');
+            
+            pos=0;
+            if (other_tags) {
+                if (othertags.size()>0) {
+                    pos=write_int32(tail,pos,othertags.size());
+                    pos=_write_data(tail,pos,othertags);
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            if (layerint) {
+                if (py->Layer()!=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,py->Layer());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (minzoom) {
+                if (py->MinZoom()>=0) {
+                    pos=write_int32(tail,pos,4);
+                    pos=write_int32(tail,pos,py->MinZoom());
+                } else {
+                    pos=write_int32(tail,pos,-1);
+                }
+            }
+            
+            if (py->ZOrder()!=0) {
+                pos=write_int32(tail,pos,4);
+                pos=write_int32(tail,pos,py->ZOrder());
+            } else {
+                pos=write_int32(tail,pos,-1);
+            }
+            
+            pos=write_int32(tail,pos,8);
+            pos=write_double(tail,pos,py->Area());
+            
+            pos=write_int32(tail,pos,wkb.size());
+            tail.resize(pos);
+            
+            return header + tags + tail + wkb;
+        }
+
+        void add_to_csvblock(PrimitiveBlockPtr bl, std::shared_ptr<CsvBlock> res) {
+            if (bl->size()==0) {
+                return;
+            }
+            for (auto o : bl->Objects()) {
+
+                if (o->Type()==ElementType::Point) {
+                    
+                    auto pt=std::dynamic_pointer_cast<Point>(o);
+                    res->points.add(pack_point(pt,bl->Quadtree()));
+
+                } else if (o->Type()==ElementType::Linestring) {
+                    auto ln = std::dynamic_pointer_cast<Linestring>(o);
+                    res->lines.add(pack_linestring(ln,bl->Quadtree()));
+                } else if (o->Type()==ElementType::SimplePolygon) {
+                    auto py = std::dynamic_pointer_cast<SimplePolygon>(o);
+                    res->polygons.add(pack_simplepolygon(py,bl->Quadtree()));
+                } else if (o->Type()==ElementType::ComplicatedPolygon) {
+                    auto py = std::dynamic_pointer_cast<ComplicatedPolygon>(o);
+                    res->polygons.add(pack_complicatedpolygon(py,bl->Quadtree()));
+                }
+            }
+        }
+       
+        
+        std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr block) {
+            if (!block) { return nullptr; }
+            auto res = std::make_shared<CsvBlock>(true);
+            add_to_csvblock(block,res);
+            res->points.finish();
+            res->lines.finish();
+            res->polygons.finish();
+            return res;
+        }
+        
+
+    private:
+
+        std::map<std::string,size_t> point_tags;
+        std::map<std::string,size_t> line_tags;
+        std::map<std::string,size_t> poly_tags;
+        bool with_header;
+        bool minzoom;
+        bool other_tags;
+        bool asjson;
+        bool layerint;
+        std::string point_header;
+        std::string line_header;
+        std::string poly_header;
+};
+
+std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header, bool binary_format) {
+    if (binary_format) {
+        //throw std::domain_error("not implmented");
+        return std::make_shared<PackCsvBlocksBinaryImpl>(tags);
+    }
     return std::make_shared<PackCsvBlocksImpl>(tags, with_header,false);
 }
 
@@ -439,8 +883,8 @@ class PostgisWriterImpl : public PostgisWriter {
         PostgisWriterImpl(
             const std::string& connection_string_,
             const std::string& table_prfx_,
-            bool with_header_)
-             : connection_string(connection_string_), table_prfx(table_prfx_), with_header(with_header_), init(false), ii(0) {
+            bool with_header_, bool as_binary_)
+             : connection_string(connection_string_), table_prfx(table_prfx_), with_header(with_header_), as_binary(as_binary_), init(false), ii(0) {
             
             
             
@@ -505,9 +949,15 @@ class PostgisWriterImpl : public PostgisWriter {
             }
             
             
-            std::string sql="COPY "+tab+" FROM STDIN csv QUOTE e'\x01' DELIMITER e'\x02'";
-            if (with_header) {
-                sql += " HEADER";
+            std::string sql="COPY "+tab+" FROM STDIN";
+            
+            if (as_binary) {
+                sql += " (FORMAT binary)";
+            } else {
+                sql += " csv QUOTE e'\x01' DELIMITER e'\x02'";
+                if (with_header) {
+                    sql += " HEADER";
+                }
             }
             
             auto res = PQexec(conn,sql.c_str());
@@ -536,6 +986,7 @@ class PostgisWriterImpl : public PostgisWriter {
         std::string connection_string;        
         std::string table_prfx;      
         bool with_header;  
+        bool as_binary;
         PGconn* conn;
         bool init;
         size_t ii;
@@ -544,18 +995,18 @@ class PostgisWriterImpl : public PostgisWriter {
 std::shared_ptr<PostgisWriter> make_postgiswriter(
     const std::string& connection_string,
     const std::string& table_prfx,
-    bool with_header) {
+    bool with_header, bool as_binary) {
     
-    return std::make_shared<PostgisWriterImpl>(connection_string, table_prfx, with_header);
+    return std::make_shared<PostgisWriterImpl>(connection_string, table_prfx, with_header, as_binary);
 }
     
         
 std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
             const std::string& connection_string,
             const std::string& table_prfx,
-            bool with_header) {
+            bool with_header, bool as_binary) {
             
-    auto pw = make_postgiswriter(connection_string,table_prfx, with_header);
+    auto pw = make_postgiswriter(connection_string,table_prfx, with_header, as_binary);
     return [pw](std::shared_ptr<CsvBlock> bl) {
         if (!bl) {
             Logger::Message() << "PostgisWriter done";
