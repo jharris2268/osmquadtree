@@ -71,7 +71,6 @@ def make_tag_cols(coltags):
 
 
 def create_tables(curs, table_prfx,coltags):
-    curs.execute("begin")
     for t in ('point','line','polygon','roads','boundary'):
         curs.execute("drop table if exists "+table_prfx+t+" cascade" )
     
@@ -88,7 +87,7 @@ def create_tables(curs, table_prfx,coltags):
     curs.execute(point_create)
     curs.execute(line_create)
     curs.execute(poly_create)
-    curs.execute("commit")
+    
 
 
 
@@ -97,22 +96,21 @@ def create_indices(curs, table_prfx, extraindices=False, vacuum=False, planet=Fa
     write_indices(curs,table_prfx,indices)
     
     if vacuum:
-        write_indices(curs,table_prfx,vacuums,False)
+        write_indices(curs,table_prfx,vacuums)
     
     if extraindices:
         write_indices(curs,table_prfx,extras)
         if vacuum:
-            write_indices(curs,table_prfx,vacuums_extra,False)
+            write_indices(curs,table_prfx,vacuums_extra)
         
     if planet:
         write_indices(curs,table_prfx,planetosm)
         
         
     
-def write_indices(curs,table_prfx, inds,in_transaction=False):
+def write_indices(curs,table_prfx, inds):
     ist=time.time()
-    if in_transaction:
-        curs.execute("begin")
+    
     for ii in inds:
         qu=ii.replace("%ZZ%", table_prfx)
         sys.stdout.write("%-150.150s" % (replace_ws(qu),))
@@ -123,8 +121,7 @@ def write_indices(curs,table_prfx, inds,in_transaction=False):
         
         sys.stdout.write(" %7.1fs\n" % (time.time()-qst))
         sys.stdout.flush()
-    if in_transaction:
-        curs.execute('commit')
+    
     print("created indices in %8.1fs" % (time.time()-ist))
 
 indices = [
@@ -439,7 +436,10 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
     params.connstring = connstr
     params.use_binary=use_binary
     
-    create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
+    
+    conn=psycopg2.connect(params.connstring)
+    conn.autocommit=True
+    create_tables(conn.cursor(), params.tableprfx, params.coltags)
     
         
     cnt,errs=None,None
@@ -449,7 +449,7 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
         cnt, errs = oq.process_geometry(params, Prog(locs=params.locs))
         
     if writeindices:
-        create_indices(psycopg2.connect(params.connstring).cursor(), params.tableprfx, extraindices, extraindices)
+        create_indices(conn.cursor(), params.tableprfx, extraindices, extraindices)
 
     return cnt, errs
 

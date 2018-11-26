@@ -37,6 +37,7 @@
 #include <iostream>
 #include <map>
 #include <postgresql/libpq-fe.h>
+#include "picojson.h"
 
 namespace oqt {
 namespace geometry {
@@ -66,17 +67,19 @@ std::ostream& writestring(std::ostream& strm, const std::string& val) {
     
     return strm;
 }
+
+
 void json_quotestring(std::ostream& strm, const std::string& val) {
     strm << '"';
     for (auto c : val) {
         if (c=='\n') {
-            strm << "\\n";
+            strm << "\\\n";
         } else if (c=='"') {
             strm << '\\' << '"';
         } else if (c=='\t') {
-            strm << '\\' << 't';
+            strm << "\\\t";
         } else if (c=='\r') {
-            strm << '\\' << 'r';
+            strm << "\\\r";
         } else if (c=='\\') {
             strm << "\\\\";
         } else {
@@ -85,6 +88,27 @@ void json_quotestring(std::ostream& strm, const std::string& val) {
     }
     strm << '"';
 }
+
+void hstore_quotestring(std::ostream& strm, const std::string& val) {
+    strm << '"';
+    for (auto c : val) {
+        if (c=='\n') {
+            strm << '\\' << 'n';
+        } else if (c=='"') {
+            strm << '\\' << '"';
+        } else if (c=='\t') {
+            strm << '\\' << 't';
+        } else if (c=='\r') {
+            strm << '\\' << 'r';
+        } else if (c=='\\') {
+            strm << '\\' << '\\';
+        } else {
+            strm << c;
+        }
+    }
+    strm << '"';
+}
+
 
 std::string pack_jsontags(const tagvector& tags) {
     std::stringstream strm;
@@ -107,13 +131,28 @@ std::string pack_hstoretags(const tagvector& tags) {
     bool isf=true;
     for (const auto& t: tags) {
         if (!isf) { strm << ", "; }
-        json_quotestring(strm, t.key);
+        hstore_quotestring(strm, t.key);
+        
+        //strm << picojson::value(t.key).serialize();
+        
         strm << "=>";
-        json_quotestring(strm, t.val);
+        hstore_quotestring(strm, t.val);
+        //strm << picojson::value(t.val).serialize();
+        
         isf=false;
     }
     return strm.str();
 }
+
+std::string pack_jsontags_picojson(const tagvector& tags) {
+    picojson::object p;
+    for (const auto& t: tags) {
+        p[t.key] = picojson::value(t.val);
+    }
+    return picojson::value(p).serialize();
+}
+    
+    
 
 size_t _write_data(std::string& data, size_t pos, const std::string& v) {
     std::copy(v.begin(),v.end(),data.begin()+pos);
@@ -169,7 +208,7 @@ std::string prep_tags(std::stringstream& strm, const std::map<std::string,size_t
     }
     if (other_tags && !others.empty()) {
         if (asjson) {
-            return pack_jsontags(others);
+            return pack_jsontags_picojson(others);
         } else {
             return pack_hstoretags(others);
         }
@@ -367,7 +406,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     
                     if (other_tags) {
                         if (!other.empty()) {
-                            quotestring(ss,other);
+                            ss << quote << other << quote;
                         }
                         ss <<delim;
                     }
@@ -665,15 +704,11 @@ class PackCsvBlocksBinaryImpl : public PackCsvBlocks {
                 }
             }
             
-            if (ln->ZOrder()!=0) {
-                pos=write_int32(tail,pos,4);
-                pos=write_int32(tail,pos,ln->ZOrder());
-            } else {
-                pos=write_int32(tail,pos,-1);
-            }
+            pos=write_int32(tail,pos,4);
+            pos=write_int32(tail,pos,ln->ZOrder());
             
             pos=write_int32(tail,pos,8);
-            pos=write_double(tail,pos,ln->Length());
+            pos=write_double(tail,pos,round(ln->Length()*10)/10);
             
             pos=write_int32(tail,pos,wkb.size());
             tail.resize(pos);
@@ -733,15 +768,11 @@ class PackCsvBlocksBinaryImpl : public PackCsvBlocks {
                 }
             }
             
-            if (py->ZOrder()!=0) {
-                pos=write_int32(tail,pos,4);
-                pos=write_int32(tail,pos,py->ZOrder());
-            } else {
-                pos=write_int32(tail,pos,-1);
-            }
+            pos=write_int32(tail,pos,4);
+            pos=write_int32(tail,pos,py->ZOrder());
             
             pos=write_int32(tail,pos,8);
-            pos=write_double(tail,pos,py->Area());
+            pos=write_double(tail,pos,round(10*py->Area())/10.0);
             
             pos=write_int32(tail,pos,wkb.size());
             tail.resize(pos);
@@ -757,7 +788,7 @@ class PackCsvBlocksBinaryImpl : public PackCsvBlocks {
             pos=write_int16(header, pos, numfields);
 
             pos=write_int32(header,pos,8);
-            pos=write_int64(header,pos,py->Id());
+            pos=write_int64(header,pos,py->Id()*-1);
             
             pos=write_int32(header,pos,4);
             pos=write_int32(header,pos,py->Part());
@@ -802,15 +833,11 @@ class PackCsvBlocksBinaryImpl : public PackCsvBlocks {
                 }
             }
             
-            if (py->ZOrder()!=0) {
-                pos=write_int32(tail,pos,4);
-                pos=write_int32(tail,pos,py->ZOrder());
-            } else {
-                pos=write_int32(tail,pos,-1);
-            }
+            pos=write_int32(tail,pos,4);
+            pos=write_int32(tail,pos,py->ZOrder());
             
             pos=write_int32(tail,pos,8);
-            pos=write_double(tail,pos,py->Area());
+            pos=write_double(tail,pos,round(10*py->Area())/10.0);
             
             pos=write_int32(tail,pos,wkb.size());
             tail.resize(pos);

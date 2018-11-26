@@ -522,5 +522,7 @@ void geometry_defs(py::module& m) {
     ;
     m.def("make_pack_csvblocks", &geometry::make_pack_csvblocks);
     
+    m.def("pack_hstoretags", &geometry::pack_hstoretags);
+    m.def("pack_jsontags_picojson", &geometry::pack_jsontags_picojson);
     
 }

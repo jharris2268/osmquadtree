@@ -65,6 +65,8 @@ class PackCsvBlocks {
         virtual std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr bl) = 0;
         virtual ~PackCsvBlocks() {}
 };
+std::string pack_hstoretags(const tagvector& tags);
+std::string pack_jsontags_picojson(const tagvector& tags);
 
 std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header, bool binary_format);
 
