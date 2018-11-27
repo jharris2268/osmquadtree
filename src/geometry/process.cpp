@@ -526,7 +526,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     
     mperrorvec errors_res;
     
-    auto sb = make_sortblocks(20000, params.groups, params.outfn+"-interim",200, params.numchan);
+    auto sb = make_sortblocks(1000, params.groups, params.outfn+"-interim",200, params.numchan);
     auto sb_callbacks = sb->make_addblocks_cb(false);
     
     auto addwns = process_geometry_blocks(
@@ -543,7 +543,12 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     
     std::vector<block_callback> writer;
     if (cb) {
-        writer = multi_threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
+        /*sortblocks read is unsyncronized: must use threaded_callback (with numchan)*/
+        auto writerp = threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
+        for (size_t i=0; i < params.numchan; i++) {
+            writer.push_back(writerp);
+        }
+            
     }
     
         

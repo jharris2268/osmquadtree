@@ -104,8 +104,8 @@ class tboxbuf:
     def __call__(self, q):
         return self.box.overlaps(oq.quadtree_bbox(q, self.buffer))
 def get_locs_single(fn, box_in,asmerge=False, buffer=None):
-    hh = oq.getHeaderBlock(fn)
-    if not len(hh.index):
+    hh = oq.get_header_block(fn)
+    if not len(hh.Index):
         raise Exception(fn+" doesn't contain a header index")
     
     box,test = prep_box(box_in)
@@ -115,9 +115,9 @@ def get_locs_single(fn, box_in,asmerge=False, buffer=None):
         test=tboxbuf(box,buffer)
         
     if asmerge:
-        return [fn],dict((a,[(0,b)]) for a,b,c in hh.index if test(a)),box        
+        return [fn],dict((a,[(0,b)]) for a,b,c in hh.Index if test(a)),box        
         
-    return [b for a,b,c in hh.index if test(a)]
+    return [b for a,b,c in hh.Index if test(a)]
 
 
 def pnpoly(vertx, verty, testx, testy):

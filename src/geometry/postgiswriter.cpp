@@ -92,15 +92,15 @@ void json_quotestring(std::ostream& strm, const std::string& val) {
 void hstore_quotestring(std::ostream& strm, const std::string& val) {
     strm << '"';
     for (auto c : val) {
-        if (c=='\n') {
+        /*if (c=='\n') {
             strm << '\\' << 'n';
-        } else if (c=='"') {
+        } else*/ if (c=='"') {
             strm << '\\' << '"';
-        } else if (c=='\t') {
+        } /*else if (c=='\t') {
             strm << '\\' << 't';
         } else if (c=='\r') {
             strm << '\\' << 'r';
-        } else if (c=='\\') {
+        } */else if (c=='\\') {
             strm << '\\' << '\\';
         } else {
             strm << c;
@@ -440,7 +440,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     
                     if (other_tags) {
                         if (!other.empty()) {
-                            quotestring(ss,other);
+                            ss << quote << other << quote;
                         }
                         ss << delim;
                     }
@@ -474,7 +474,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     
                     if (other_tags) {
                         if (!other.empty()) {
-                            quotestring(ss,other);
+                            ss << quote << other << quote;
                         }
                         ss << delim;
                     }
@@ -505,7 +505,7 @@ class PackCsvBlocksImpl : public PackCsvBlocks {
                     auto other = prep_tags(ss,poly_tags,o, other_tags, asjson);
                     if (other_tags) {
                         if (!other.empty()) {
-                            quotestring(ss,other);
+                            ss << quote << other << quote;
                         }
                         ss << delim;
                     }
