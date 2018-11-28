@@ -34,10 +34,6 @@
 namespace oqt {
 namespace geometry {
 
-
-
-
-
 class LonLatStore {
     public:
         virtual void add_tile(PrimitiveBlockPtr block)=0;
@@ -52,6 +48,8 @@ PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockP
 
 typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 block_callback make_addwaynodes_cb(block_callback cb);
+block_callback make_waynodes_cb_split(block_callback cb);
+
 }}
 
 #endif //ADDWAYNODES_HPP

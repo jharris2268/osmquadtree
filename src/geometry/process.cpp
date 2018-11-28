@@ -115,7 +115,8 @@ block_callback process_geometry_blocks(
     const style_info_map& style, bbox box,
     const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
     bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
-    std::function<void(mperrorvec&)> errors_callback) {
+    std::function<void(mperrorvec&)> errors_callback,
+    bool addwn_split) {
     
     
     auto errs = std::make_shared<mperrorvec>();
@@ -209,8 +210,15 @@ block_callback process_geometry_blocks(
             )
         );
     }
-        
-    return threaded_callback<PrimitiveBlock>::make(make_addwaynodes_cb(apt));
+    
+    block_callback awn;
+    if (addwn_split) {
+        awn=make_waynodes_cb_split(apt);
+    } else {
+        awn=make_addwaynodes_cb(apt);
+    }
+    
+    return threaded_callback<PrimitiveBlock>::make(awn);
         
 
     
@@ -508,7 +516,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
     auto addwns = process_geometry_blocks(
             writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
@@ -532,7 +540,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     auto addwns = process_geometry_blocks(
             sb_callbacks, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
@@ -610,7 +618,7 @@ mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
     auto addwns = process_geometry_blocks(
             csvcallback, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
@@ -658,7 +666,7 @@ mperrorvec process_geometry_from_vec(
     auto addwns = process_geometry_blocks(
             {callback}, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
     for (auto bl : blocks) {

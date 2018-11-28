@@ -55,11 +55,11 @@ def addto_merge(res, resort_tiles=False):
                     
                     for o in bl:
                         find_tile(res, o.Quadtree).add(o)
-                elif bl.quadtree in res:
+                elif bl.Quadtree in res:
                     for o in bl:
-                        res[bl.quadtree].add(o)
+                        res[bl.Quadtree].add(o)
                 else:
-                    res[bl.quadtree]=bl
+                    res[bl.Quadtree]=bl
         return True
     return _
 
@@ -115,7 +115,14 @@ def get_locs_single(fn, box_in,asmerge=False, buffer=None):
         test=tboxbuf(box,buffer)
         
     if asmerge:
-        return [fn],dict((a,[(0,b)]) for a,b,c in hh.Index if test(a)),box        
+        ll = {}
+        for a,b,c in hh.Index:
+            if test(a):
+                if not a in ll:
+                    ll[a]=[]
+                ll[a].append((0,b))
+        return [fn], ll, box
+        #return [fn],dict((a,[(0,b)]) for a,b,c in hh.Index if test(a)),box        
         
     return [b for a,b,c in hh.Index if test(a)]
 

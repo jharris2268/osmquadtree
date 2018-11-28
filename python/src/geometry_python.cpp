@@ -446,6 +446,7 @@ void geometry_defs(py::module& m) {
         .def_readwrite("coltags", &geometry::GeometryParameters::coltags)
         .def_readwrite("use_binary", &geometry::GeometryParameters::use_binary)
         .def_readwrite("groups", &geometry::GeometryParameters::groups)
+        .def_readwrite("addwn_split", &geometry::GeometryParameters::addwn_split)
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;
 
