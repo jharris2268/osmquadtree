@@ -311,3 +311,6 @@ def get_locs(prfx,box_in=None, lastdate=None):
     return fns, locs, box
 
 replace_ws = lambda w: re.sub('\s+', ' ', w)
+
+
+__old_read_style = lambda stylefn: dict((t['Tag'], oq.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 

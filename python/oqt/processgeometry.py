@@ -26,23 +26,9 @@ import json, psycopg2,csv
 from .utils import addto, Prog, get_locs, replace_ws, addto_merge
 import time,sys,re, gzip
 
+import geometrystyle
+import minzoomvalues
 
-highway_prio = {
-    'footway':1,'cycleway':1,'bridleway': 1,
-    'path':1, 'steps': 1, 'pedestrian': 1,
-    'service': 2,'track':2,'byway': 2,
-    'living_street':3, 'residential':3,'road':3,'unclassified':3,
-    'tertiary':4,'tertiary_link':4,
-    'secondary':5,'secondary_link':5,
-    'primary':6,'primary_link':6,
-    'trunk':7, 'trunk_link':7,
-    'motorway':8,'motorway_link':8}
-
-add_highway = [
-    oq.ParentTagSpec('highway','parent_highway','highway',highway_prio),
-    oq.ParentTagSpec('highway','parent_service','service',{}),
-    oq.ParentTagSpec('railway','parent_highway','highway',highway_prio),
-]
 def has_mem(ct,k):
     for a,b,c,d in ct:
         if k==a:
@@ -95,19 +81,22 @@ def create_tables(curs, table_prfx,coltags):
 def create_indices(curs, table_prfx, extraindices=False, vacuum=False, planet=False):
     write_indices(curs,table_prfx,indices)
     
-    if vacuum:
-        write_indices(curs,table_prfx,vacuums)
+    
     
     if extraindices:
         write_indices(curs,table_prfx,extras)
-        if vacuum:
-            write_indices(curs,table_prfx,vacuums_extra)
+        
+            
         
     if planet:
         write_indices(curs,table_prfx,planetosm)
         
-        
     
+    if vacuum:
+        write_indices(curs,table_prfx,vacuums)
+        if extraindices:
+            write_indices(curs,table_prfx,vacuums_extra)
+            
 def write_indices(curs,table_prfx, inds):
     ist=time.time()
     
@@ -234,6 +223,8 @@ def create_tables_lowzoom(curs, prfx, newprefix, minzoom, simp=None, cols=None):
     
     queries += indices[1:]
     queries += extras
+    queries += vacuums
+    queries += vacuums_extra
     
     print("call %d queries..." % len(queries))
     write_indices(curs,newprefix,queries)
@@ -263,17 +254,13 @@ def read_blocks(prfx, box_in, lastdate=None, objflags=7, numchan=4):
     oq.read_blocks_merge_primitive(fns, result, locs, numchan=numchan, objflags=objflags)
     return tiles
 
-read_style = lambda stylefn: dict((t['Tag'], oq.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
-read_minzoom = lambda minzoomfn: [(int(a),b,c,int(d)) for a,b,c,d,e in (r[:5] for r in csv.reader(open(minzoomfn)) if len(r)>=5)]
 
 
-def prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea):
+
+def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen, minarea):
     params = oq.geometry_parameters()
         
     params.numchan=numchan
-    params.parent_tag_spec = add_highway
-    params.add_rels=True
-    params.add_mps=True
     params.recalcqts=True
     
     if box_in is None:
@@ -285,20 +272,26 @@ def prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, mi
     params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
     print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
     
-    params.style = read_style(stylefn)
+    
+    if style is None:
+        style=geometrystyle.GeometryStyle()
+    
+    style.set_params(params)
+    
     print("%d styles" % len(params.style))
     
-    if 'minzoom' in params.style and minzoomfn is not None:
-        params.findmz = oq.findminzoom_onetag(read_minzoom(minzoomfn),minlen,minarea)
+    
+    if minzoom is not None:
+        params.findmz = oq.findminzoom_onetag(minzoomvalues.default if minzoom == 'default' else minzoomvalues.read(minzoom),minlen,minarea)
         print ('findmz', params.findmz)
         
     return params
 
-def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoomfn=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
+def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoom=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
     tiles={} if mergetiles else []
     
     
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     if not groups is None:
         params.groups=groups
@@ -324,7 +317,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     callback = None
     if collect:
         if mergetiles:
-            callback=Prog(addto_merge(tiles, minzoomfn is not None),params.locs)
+            callback=Prog(addto_merge(tiles, minzoom is not None),params.locs)
         else:
             callback=Prog(addto(tiles),params.locs)
     else:
@@ -423,9 +416,9 @@ def make_json_feat(obj):
 
 
 
-def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False,use_binary=False):
+def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False,use_binary=False):
     
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     
     params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
@@ -500,9 +493,9 @@ class CsvWriter:
             self.num_polygons += len(block.polygons)
     
     
-def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True, lastdate=None,minzoomfn=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
+def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
     
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoomfn, numchan, minlen, minarea)
+    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     
     params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))

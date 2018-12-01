@@ -160,6 +160,7 @@ block_callback process_geometry_blocks(
                 break;
             }
         }
+        Logger::Message() << "MultiPolygons(mps=" << mps << ", bounds=" << bounds << ")";
         make_mps = threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MultiPolygons", //blockhandler_callback(
                 make_multipolygons(errs,style,box,bounds,mps),

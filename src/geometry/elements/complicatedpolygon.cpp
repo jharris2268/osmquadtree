@@ -124,6 +124,7 @@ std::string ComplicatedPolygon::Wkb(bool transform, bool srid) const {
         res[1]=' ';
         pos = write_uint32(res,pos,epsg_code(transform));
     }
+
     pos = write_uint32(res,pos, 1+inners.size());
 
     pos = write_ringpart_ring(res, pos, outers, outer_len,transform);

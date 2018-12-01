@@ -185,6 +185,10 @@ std::vector<std::pair<bool,std::deque<Ring::Part>>> merge_rings(const std::vecto
 }
 
 
+bool is_ring(const auto& ring) {
+    auto ll=ringpart_refs(ring);
+    return ((ll.size()>3) && (ll.front()==ll.back()));
+}
 
 std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const std::vector<std::shared_ptr<WayWithNodes>>& ways, const bbox& box) {
     std::vector<std::pair<bool,std::deque<Ring::Part>>> rings;
@@ -210,7 +214,13 @@ std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const 
         }
         if (r.first) {
             if (overlaps(box, ringbox)) {
-                result.push_back(Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())});
+                auto rng = Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())};
+                if (!is_ring(rng)) {
+                    passes.push_back(std::make_pair(true, rng));
+                } else {
+                    result.push_back(rng);
+                }
+                
             } else {
                 passes.push_back(std::make_pair(true,Ring{std::vector<Ring::Part>(r.second.begin(),r.second.end())}));
             }
@@ -229,6 +239,20 @@ bool ring_contains(const std::vector<LonLat>& outer, const std::vector<LonLat>& 
     }
     return true;
 }
+
+
+    
+bool check_parts(const std::pair<std::vector<LonLat>,std::vector<Ring>>& part) {
+    if (part.first.size()<4) { return false; }
+    if (!part.second.empty()) {
+        for (const auto& r: part.second) {
+            if (!is_ring(r)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}   
 
 class MakeMultiPolygons : public BlockHandler {
     struct pendingrel {
@@ -390,6 +414,12 @@ class MakeMultiPolygons : public BlockHandler {
                     }
 
                     for (const auto& pp : parts) {
+                        
+                        if (!check_parts(pp.second)) {
+                            Logger::Message() << "invalid polygon part " << r->Id() << " " << pp.first;
+                            continue;
+                        }
+                        
                         auto cp = std::make_shared<ComplicatedPolygon>(r, pp.first, outers[pp.first], pp.second.second,tgs,zorder,layer,-1);
                         finished[tq]->add(cp);
 

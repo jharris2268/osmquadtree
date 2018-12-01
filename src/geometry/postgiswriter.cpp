@@ -34,6 +34,8 @@
 #include "oqt/utils/pbf/fixedint.hpp"
 
 #include <sstream>
+#include <fstream>
+
 #include <iostream>
 #include <map>
 #include <postgresql/libpq-fe.h>
@@ -905,6 +907,31 @@ std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec&
 }
 
 
+std::string pack_csv(const CsvRows& rr, const std::string& name) {
+    std::list<PbfTag> tt;
+    tt.push_back(PbfTag{1,0,name});
+    tt.push_back(PbfTag{2,(uint64) rr.size(),""});
+    tt.push_back(PbfTag{3,0,rr.data_blob()});
+    return pack_pbf_tags(tt);
+}
+
+void write_csv_block(std::string outfn, std::shared_ptr<CsvBlock> bl) {
+    std::ofstream out(outfn,std::ios::binary);
+    
+    if (!bl) {
+        out.write("EMPTY",5);
+        out.close();
+        return;
+    }
+    std::list<PbfTag> ll;
+    ll.push_back(PbfTag{1,0,pack_csv(bl->points,"points")});
+    ll.push_back(PbfTag{1,0,pack_csv(bl->lines,"lines")});
+    ll.push_back(PbfTag{1,0,pack_csv(bl->polygons,"polygons")});
+    auto mm=pack_pbf_tags(ll);
+    out.write(mm.data(),mm.size());
+    out.close();
+}
+
 class PostgisWriterImpl : public PostgisWriter {
     public:
         PostgisWriterImpl(
@@ -929,28 +956,39 @@ class PostgisWriterImpl : public PostgisWriter {
         }
         
         virtual void call(std::shared_ptr<CsvBlock> bl) {
-            if (bl->points.size()>0) {
-                copy_func(table_prfx+"point", bl->points.data_blob());
-            }
-            if (bl->lines.size()>0) {
-                copy_func(table_prfx+"line", bl->lines.data_blob());
-            }
-            if (bl->polygons.size()>0) {
-                copy_func(table_prfx+"polygon", bl->polygons.data_blob());
-            }
-            ii++;
-            if ((ii % 17731)==0) {
-                auto res = PQexec(conn,"commit");
-                int r = PQresultStatus(res);
-                PQclear(res);
-                if (r!=PGRES_COMMAND_OK){
-                    Logger::Message() << "postgiswriter: commit failed " << PQerrorMessage(conn);
-                    PQfinish(conn);
-                    throw std::domain_error("failed");
+            
+            try {
+            
+                if (bl->points.size()>0) {
+                    copy_func(table_prfx+"point", bl->points.data_blob());
+                                        
                 }
-                res = PQexec(conn,"begin");
-                PQclear(res);
+                if (bl->lines.size()>0) {
+                    copy_func(table_prfx+"line", bl->lines.data_blob());
+                }
+                if (bl->polygons.size()>0) {
+                    copy_func(table_prfx+"polygon", bl->polygons.data_blob());
+                }
+                ii++;
+                if ((ii % 17731)==0) {
+                    auto res = PQexec(conn,"commit");
+                    int r = PQresultStatus(res);
+                    PQclear(res);
+                    if (r!=PGRES_COMMAND_OK){
+                        Logger::Message() << "postgiswriter: commit failed " << PQerrorMessage(conn);
+                        PQfinish(conn);
+                        throw std::domain_error("failed");
+                    }
+                    res = PQexec(conn,"begin");
+                    PQclear(res);
+                }
+            } catch (std::exception& ex) {
+                write_csv_block("previous.data", prev_block);
+                write_csv_block("current.data", bl);
+                throw ex;
             }
+                
+            prev_block=bl;
         }
         
         
@@ -991,7 +1029,7 @@ class PostgisWriterImpl : public PostgisWriter {
 
             if (PQresultStatus(res) != PGRES_COPY_IN) {
                 Logger::Message() << "PQresultStatus != PGRES_COPY_IN [" << PQresultStatus(res) << "] " <<  PQerrorMessage(conn);
-                
+                Logger::Message() << sql;
                 PQclear(res);
                 PQfinish(conn);
                 init=false;
@@ -999,9 +1037,15 @@ class PostgisWriterImpl : public PostgisWriter {
                 return 0;
             }
 
-            PQputCopyData(conn,data.data(),data.size());
+            int r = PQputCopyData(conn,data.data(),data.size());
+            if (r!=1) {
+                Logger::Message() << "copy data failed {r=" << r<< "} [" << sql << "]" << PQerrorMessage(conn) << "\n" ;
+                PQputCopyEnd(conn,nullptr);
+                PQclear(res);
+                return 0;
+            }
 
-            int r = PQputCopyEnd(conn,nullptr);
+            r = PQputCopyEnd(conn,nullptr);
             PQclear(res);
             if (r!=PGRES_COMMAND_OK) {
                 Logger::Message() << "\n*****\ncopy failed [" << sql << "]" << PQerrorMessage(conn) << "\n" ;
@@ -1017,6 +1061,7 @@ class PostgisWriterImpl : public PostgisWriter {
         PGconn* conn;
         bool init;
         size_t ii;
+        std::shared_ptr<CsvBlock> prev_block;
 };
 
 std::shared_ptr<PostgisWriter> make_postgiswriter(
