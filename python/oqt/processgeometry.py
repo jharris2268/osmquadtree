@@ -26,8 +26,7 @@ import json, psycopg2,csv
 from .utils import addto, Prog, get_locs, replace_ws, addto_merge
 import time,sys,re, gzip
 
-import geometrystyle
-import minzoomvalues
+from . import geometrystyle, minzoomvalues
 
 def has_mem(ct,k):
     for a,b,c,d in ct:
@@ -54,11 +53,44 @@ def make_tag_cols(coltags):
     
     return point,line,poly
     
-
+    
+def type_str(ct):
+    if ct==oq.GeometryColumnType.BigInteger:
+        return 'bigint'
+    elif ct==oq.GeometryColumnType.Text:
+        return 'text'
+    elif ct==oq.GeometryColumnType.Double:
+        return 'float'
+    elif ct==oq.GeometryColumnType.Hstore:
+        return 'hstore'
+    elif ct==oq.GeometryColumnType.PointGeometry:
+        return 'geometry(Point,3857)'
+    elif ct==oq.GeometryColumnType.LineGeometry:
+        return 'geometry(Linestring,3857)'
+    elif ct==oq.GeometryColumnType.PolygonGeometry:
+        return 'geometry(Polygon,3857)'
+    raise Exception("unexpected column type "+repr(ct))
+    
+def prep_table_create(prfx, ts):
+    
+    cols = [(c.name, type_str(c.type)) for c in ts.columns]
+    return 'create table %s%s (%s) with oids' % (prfx, ts.table_name, ", ".join('"%s" %s' % (a,b) for a,b in cols))
+    
+    
 
 def create_tables(curs, table_prfx,coltags):
-    for t in ('point','line','polygon','roads','boundary'):
+    for t in ('point','line','polygon','roads','boundary','building','highway'):
         curs.execute("drop table if exists "+table_prfx+t+" cascade" )
+    
+    
+    for ct in coltags:
+        create = prep_table_create(table_prfx, ct)
+        print(create)
+        curs.execute(create)
+        x="alter table %s%s set (autovacuum_enabled=false)" % (table_prfx, ct.table_name)
+        print(x)
+        curs.execute(x)
+    return
     
     point_cols,line_cols, poly_cols = make_tag_cols(coltags)
     point_create = "create table %spoint (%s) with oids" % (table_prfx, ", ".join('"%s" %s' % (a,b) for a,b in point_cols))
@@ -187,17 +219,55 @@ planetosm = [
 "create view planet_osm_building as (select * from %ZZ%building)",
 ]
 
-def create_tables_lowzoom(curs, prfx, newprefix, minzoom, simp=None, cols=None):
+extended_indices = [
+"create index %ZZ%point_way on %ZZ%point using gist(way)",
+"create index %ZZ%line_way on %ZZ%line using gist(way)",
+"create index %ZZ%polygon_way on %ZZ%polygon using gist(way)",
+"create index %ZZ%highway_way on %ZZ%highway using gist(way)",
+"create index %ZZ%building_way on %ZZ%building using gist(way)",
+"create index %ZZ%boundary_way on %ZZ%boundary using gist(way)",
+"""create index %ZZ%highway_way_lz on %ZZ%highway using gist(way) where (
+    highway in ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary')
+    or (railway in ('rail','light_rail','narrow_gauge','funicular') and (service IS NULL OR service NOT IN ('spur', 'siding', 'yard')))
+)""",
+"create index %ZZ%point_id on %ZZ%point using btree(osm_id)",
+"create index %ZZ%line_id on %ZZ%line using btree(osm_id)",
+"create index %ZZ%polygon_id on %ZZ%polygon using btree(osm_id)",
+"create index %ZZ%highway_id on %ZZ%highway using btree(osm_id)",
+"create index %ZZ%building_id on %ZZ%building using btree(osm_id)",
+"create index %ZZ%boundary_id on %ZZ%boundary using btree(osm_id)",
+
+"alter table %ZZ%point set (autovacuum_enabled=true)",
+"alter table %ZZ%line set (autovacuum_enabled=true)",
+"alter table %ZZ%polygon set (autovacuum_enabled=true)",
+"alter table %ZZ%highway set (autovacuum_enabled=true)",
+"alter table %ZZ%building set (autovacuum_enabled=true)",
+"alter table %ZZ%boundary set (autovacuum_enabled=true)",
+"vacuum analyze %ZZ%point",
+"vacuum analyze %ZZ%line",
+"vacuum analyze %ZZ%polygon",
+"vacuum analyze %ZZ%highway",
+"vacuum analyze %ZZ%building",
+"vacuum analyze %ZZ%boundary",
+]
+
+
+
+def create_tables_lowzoom(curs, prfx, newprefix, minzoom, simp=None, cols=None, extended=False):
     
     
     queries = []
     
-    for tab in ("point", "line", "polygon","roads"):
+    table_names = ["point", "line", "polygon","roads"]
+    if extended:
+        table_names = ["point", "line", "polygon","boundary","highway","building"]
+    
+    for tab in table_names:
         queries.append("drop table if exists %ZZ%"+tab+" cascade")
     
     
     
-    for tab in ("point", "line", "polygon", "roads"):
+    for tab in table_names:
     
         colsstr="*"
         if not simp is None:
@@ -221,27 +291,50 @@ def create_tables_lowzoom(curs, prfx, newprefix, minzoom, simp=None, cols=None):
              " where minzoom <= "+str(minzoom)+")")
              
     
-    queries += indices[1:]
-    queries += extras
-    queries += vacuums
-    queries += vacuums_extra
+    if extended:
+        for tab in table_names:
+            queries.append("create index %ZZ%" + tab +"_way on %ZZ%" + tab +" using gist(way)")
+            queries.append("create index %ZZ%" + tab +"_id on %ZZ%" + tab +" using btree(osm_id)")
+        for tab in table_names:
+            queries.append("vacuum analyze %ZZ%" + tab)
+        
+    else:
+        queries += indices[1:]
+        queries += extras
+        queries += vacuums
+        queries += vacuums_extra
     
     print("call %d queries..." % len(queries))
     write_indices(curs,newprefix,queries)
     
     
-def create_views_lowzoom(curs, prfx, newprefix, minzoom, indicies=False):
-    queries=[]
-    for tab in ("point", "line", "polygon","roads", "highway", "building", "boundary"):
-        queries.append("drop view if exists %ZZ%"+tab)
-        queries.append("create view %ZZ%"+tab+" as (select * from "+prfx+tab+" where minzoom <= "+str(minzoom)+")")
+def create_views_lowzoom(curs, prfx, newprefix, minzoom, indicies=True,extended=False):
     
-    if indicies:
-        for tab in ("point", "line", "polygon","roads","boundary"):
-            queries.append("create index %ZZ%"+tab+"_way on "+prfx+tab+" using gist(way) where minzoom <= "+str(minzoom))
+    
+    
+    queries=[]
+    
+    if extended:
+        for tab in ("point", "line", "polygon","highway", "building", "boundary"):
+            queries.append("drop view if exists %ZZ%"+tab)
+            queries.append("create view %ZZ%"+tab+" as (select * from "+prfx+tab+" where minzoom <= "+str(minzoom)+")")
+            if indices:
+                queries.append("create index %ZZ%"+tab+"_way on "+prfx+tab+" using gist(way) where minzoom <= "+str(minzoom))
+                
         
-        queries.append("create index %ZZ%highway_way on "+prfx+"line using gist (way) where z_order is not null and z_order!=0 and minzoom <= "+str(minzoom))
-        queries.append("create index %ZZ%building_view on "+prfx+"polygon using gist (way) where building is not null and building != 'no' and minzoom <= "+str(minzoom))
+        
+    else:
+    
+        for tab in ("point", "line", "polygon","roads", "highway", "building", "boundary"):
+            queries.append("drop view if exists %ZZ%"+tab)
+            queries.append("create view %ZZ%"+tab+" as (select * from "+prfx+tab+" where minzoom <= "+str(minzoom)+")")
+        
+        if indicies:
+            for tab in ("point", "line", "polygon","roads","boundary"):
+                queries.append("create index %ZZ%"+tab+"_way on "+prfx+tab+" using gist(way) where minzoom <= "+str(minzoom))
+            
+            queries.append("create index %ZZ%highway_way on "+prfx+"line using gist (way) where z_order is not null and z_order!=0 and minzoom <= "+str(minzoom))
+            queries.append("create index %ZZ%building_view on "+prfx+"polygon using gist (way) where building is not null and building != 'no' and minzoom <= "+str(minzoom))
     write_indices(curs,newprefix,queries)
     
 
@@ -276,22 +369,27 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
     if style is None:
         style=geometrystyle.GeometryStyle()
     
-    style.set_params(params)
+    style.set_params(params, minzoom != [])
     
     print("%d styles" % len(params.style))
     
     
-    if minzoom is not None:
-        params.findmz = oq.findminzoom_onetag(minzoomvalues.default if minzoom == 'default' else minzoomvalues.read(minzoom),minlen,minarea)
+    if minzoom != []:
+        if minzoom is None or minzoom=='default':
+            minzoom=[t[:4] for t in minzoomvalues.default]
+        if isinstance(minzoom, basestring):
+            minzoom=[t[:4] for t in minzoomvalues.read(minzoom)]
+        
+        params.findmz = oq.findminzoom_onetag(minzoom,minlen,minarea)
         print ('findmz', params.findmz)
         
-    return params
+    return params, style
 
-def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoom=None,nothread=False,mergetiles=False, groups=None, numchan=4,minlen=0,minarea=5):
+def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=None,indexed=False,minzoom=None,nothread=False,mergetiles=False, maxtilelevel=None, groups=None, numchan=4,minlen=0,minarea=5):
     tiles={} if mergetiles else []
     
     
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    params,style = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     if not groups is None:
         params.groups=groups
@@ -303,6 +401,8 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     
     if mergetiles and collect:
         for l in params.locs:
+            if not maxtilelevel is None and (l&31) > maxtilelevel:
+                continue
             tiles[l]=oq.PrimitiveBlock(0,0)
             tiles[l].Quadtree=l
     
@@ -317,7 +417,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
     callback = None
     if collect:
         if mergetiles:
-            callback=Prog(addto_merge(tiles, minzoom is not None),params.locs)
+            callback=Prog(addto_merge(tiles, True),params.locs)
         else:
             callback=Prog(addto(tiles),params.locs)
     else:
@@ -416,12 +516,16 @@ def make_json_feat(obj):
 
 
 
-def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False,use_binary=False):
+def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False,use_binary=False, extended=False):
     
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    params,style = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     
-    params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
+    #params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
+    params.coltags = style.postgis_columns(params.findmz is not None, extended)
+    if extended:
+        params.alloc_func='extended'
+        
     
     if tabprfx and not tabprfx.endswith('_'):
         tabprfx = tabprfx+'_'
@@ -429,10 +533,11 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
     params.connstring = connstr
     params.use_binary=use_binary
     
-    
-    conn=psycopg2.connect(params.connstring)
-    conn.autocommit=True
-    create_tables(conn.cursor(), params.tableprfx, params.coltags)
+    conn=None
+    if params.connstring!='null':
+        conn=psycopg2.connect(params.connstring)
+        conn.autocommit=True
+        create_tables(conn.cursor(), params.tableprfx, params.coltags)
     
         
     cnt,errs=None,None
@@ -441,8 +546,11 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
     else:
         cnt, errs = oq.process_geometry(params, Prog(locs=params.locs))
         
-    if writeindices:
-        create_indices(conn.cursor(), params.tableprfx, extraindices, extraindices)
+    if writeindices and params.connstring!='null':
+        if extended:
+            write_indices(conn.cursor(),params.tableprfx, extended_indices)
+        else:
+            create_indices(conn.cursor(), params.tableprfx, extraindices, extraindices)
 
     return cnt, errs
 
@@ -451,63 +559,54 @@ class CsvWriter:
     def __init__(self, outfnprfx,toobig=False):
         self.storeblocks=outfnprfx is None
         self.toobig=toobig
-        if not outfnprfx is None:
-            self.points = gzip.open(outfnprfx+'-point.csv.gz','w',5)
-            self.lines = gzip.open(outfnprfx+'-line.csv.gz','w',5)
-            self.polygons = gzip.open(outfnprfx+'-polygon.csv.gz','w',5)
-        else:
+        
+        
+        self.outs={}
+        self.num={}
+        self.outfnprfx=outfnprfx
+        if outfnprfx is None:
             self.blocks=[]
         
-        self.num_points, self.num_lines, self.num_polygons=0,0,0
         
+    
+    def get_out(self, tab):
+        if not tab in self.outs:
+            self.outs[tab]=gzip.open("%s%s.csv.gz" % (self.outfnprfx,tab),'w',5)
+            self.num[tab]=0
+        return self.outs[tab]
+    
     def __call__(self, block):
         if self.storeblocks:
             if block:
                 if self.toobig:
-                    self.blocks.append((
-                        len(block.points),len(block.points.data()),
-                        len(block.lines),len(block.lines.data()),
-                        len(block.polygons), len(block.polygons.data())
-                    ))
+                    self.blocks.append([(k,len(v),len(v.data())) for k,v in block.rows.iteritems()])
                 else:
                     self.blocks.append(block)
             return
         
         if not block :
-            self.points.close()
-            self.lines.close()
-            self.polygons.close()
-            print("written %d points, %d lines, %d polygons" % (self.num_points, self.num_lines, self.num_polygons))
+            for k,v in self.outs.iteritems():
+                v.close()
+            print("written: %s" % self.outs)
             return
         
         
+        for k,v in block.rows.iteritems():
+            self.get_out(k).write(v.data())
+            self.num[k] += len(v)
+            
+    
+def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5, extended=False):
+    
+    params,style = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    
+    
+    #params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
+    
+    params.coltags = style.postgis_columns(params.findmz is not None, extended)
+    if extended:
+        params.alloc_func='extended'
         
-        if len(block.points):
-            self.points.write(block.points.data())
-            self.num_points += len(block.points)
-        if len(block.lines):
-            self.lines.write(block.lines.data())
-            self.num_lines += len(block.lines)
-        if len(block.polygons):
-            self.polygons.write(block.polygons.data())
-            self.num_polygons += len(block.polygons)
-    
-    
-def write_to_csvfile(prfx, box_in, stylefn, outfnprfx, tabprfx,writeindices=True, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5,extraindices=False):
-    
-    params = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
-    
-    
-    params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
-    
-    if tabprfx and not tabprfx.endswith('_'):
-        tabprfx = tabprfx+'_'
-    params.tableprfx = tabprfx + ('_' if tabprfx and not tabprfx.endswith('_') else '')
-    #params.connstring = connstr
-    
-    
-    #create_tables(psycopg2.connect(params.connstring).cursor(), params.tableprfx, params.coltags)
-    
     
     
     cnt,errs=None,None

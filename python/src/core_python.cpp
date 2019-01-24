@@ -116,7 +116,7 @@ int run_sortblocks_py(
     std::string origfn, std::shared_ptr<QtTree> tree,
     std::string qtsfn, std::string outfn,
     int64 timestamp, size_t numchan,
-    std::string tempfn, size_t blocksplit,bool fixstrs) {
+    std::string tempfn, size_t blocksplit,bool fixstrs, bool seperate_filelocs) {
 
     if (!tree) { throw std::domain_error("no tree!"); }
     if (qtsfn=="") {
@@ -134,7 +134,7 @@ int run_sortblocks_py(
     Logger::Get().reset_timing();
     py::gil_scoped_release release;
     
-    int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit, fixstrs);
+    int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit, fixstrs,seperate_filelocs);
     Logger::Get().timing_messages();
     return r;
 }
@@ -539,7 +539,8 @@ void core_defs(py::module& m) {
         py::arg("numchan") = 4,
         py::arg("tempfn") = "",
         py::arg("blocksplit")=500,
-        py::arg("fixstrs")=false
+        py::arg("fixstrs")=false,
+        py::arg("seperate_filelocs")=true
     );
 
     

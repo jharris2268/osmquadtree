@@ -212,6 +212,7 @@ int main(int argc, char** argv) {
     bool use_tree=false;
     bool use_48bit_quadtrees=false;
     bool fixstrs=false;
+    bool seperate_filelocs=true;
     //bool usefindgroupscopy=false;
     if (argc>3) {
         for (int i=3; i < argc; i++) {
@@ -295,6 +296,8 @@ int main(int argc, char** argv) {
                 Logger::Message() << "use_48bit_quadtrees=true";
             } else if (key=="fixstrs") {
                 fixstrs=true;
+            } else if (key=="notseperatefilelocs") {
+                seperate_filelocs=false;
             } else {
                Logger::Message() << "unrecongisned argument " << arg;
                return 1;
@@ -360,7 +363,7 @@ int main(int argc, char** argv) {
             resp = run_sortblocks_inmem(origfn,qtsfn,outfn,timestamp, numchan, groups, fixstrs);
         } else {
             
-            resp = run_sortblocks(origfn,qtsfn,outfn,timestamp,  numchan, groups, tempfn, grptiles, fixstrs);
+            resp = run_sortblocks(origfn,qtsfn,outfn,timestamp,  numchan, groups, tempfn, grptiles, fixstrs, seperate_filelocs);
         }
         
 

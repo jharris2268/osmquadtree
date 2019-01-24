@@ -24,6 +24,9 @@
 #define GEOMETRY_POSTGISWRITER_HPP
 
 #include "oqt/elements/block.hpp"
+#include <map>
+
+
 namespace oqt {
 namespace geometry {
 
@@ -41,7 +44,7 @@ class CsvRows {
         std::string at(int i) const;
         int size() const;
         
-        const std::string data_blob() const { return data; }
+        const std::string& data_blob() const { return data; }
         
     private:
         bool _is_binary;
@@ -50,25 +53,97 @@ class CsvRows {
         std::vector<size_t> poses;
 };
 
-struct CsvBlock {
+class CsvBlock {
     
-    CsvBlock(bool is_binary) : points(is_binary), lines(is_binary), polygons(is_binary) {}
     
-    CsvRows points;
-    CsvRows lines;
-    CsvRows polygons;
+    public:
+        CsvBlock(bool is_binary_) : is_binary(is_binary_) {}
+        virtual ~CsvBlock() {}
+        
+        CsvRows& get(const std::string& tab) {
+            if (rows_.count(tab)==0) {
+                rows_.insert(std::make_pair(tab,CsvRows(is_binary)));
+            }
+            return rows_.at(tab);
+        }
+        
+        void finish() {
+            for (auto& r: rows_) {
+                r.second.finish();
+            }
+        }
+        
+        const std::map<std::string,CsvRows>& rows() const { return rows_; } 
+    
+    private:
+        bool is_binary;
+        std::map<std::string, CsvRows> rows_;
 };
 
+enum class ColumnType {
+    Text,
+    BigInteger,
+    Integer,
+    Double,
+    Hstore,
+    Json,
+    TextArray,
+    PointGeometry,
+    LineGeometry,
+    PolygonGeometry
+};
+
+enum class ColumnSource {
+    OsmId,
+    Part,
+    ObjectQuadtree,
+    BlockQuadtree,
+    Tag,
+    OtherTags,
+    Layer,
+    ZOrder,
+    MinZoom,
+    Length,
+    Area,
+    Geometry
+};
+
+
+struct ColumnSpec {
+    ColumnSpec(const std::string& name_, ColumnType type_, ColumnSource source_) : name(name_), type(type_), source(source_) {}
+    std::string name;
+    ColumnType type;
+    ColumnSource source;
+};
+
+struct TableSpec {
+    TableSpec(const std::string& table_name_) : table_name(table_name_) {}
+    std::string table_name;
+    std::vector<ColumnSpec> columns;
+};
+
+   
 class PackCsvBlocks {
     public:
-        typedef std::vector<std::tuple<std::string,bool,bool,bool>> tagspec;
+        //typedef std::vector<std::tuple<std::string,bool,bool,bool>> tagspec;
+        
+        
+        typedef std::vector<TableSpec> tagspec;
+        
+        
         virtual std::shared_ptr<CsvBlock> call(PrimitiveBlockPtr bl) = 0;
         virtual ~PackCsvBlocks() {}
 };
 std::string pack_hstoretags(const tagvector& tags);
 std::string pack_jsontags_picojson(const tagvector& tags);
+std::string pack_hstoretags_binary(const tagvector& tags);
 
-std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header, bool binary_format);
+typedef std::function<std::vector<std::string>(ElementPtr)> table_alloc_func;
+
+std::vector<std::string> default_table_alloc(ElementPtr geom);
+
+
+std::shared_ptr<PackCsvBlocks> make_pack_csvblocks(const PackCsvBlocks::tagspec& tags, bool with_header, bool binary_format, table_alloc_func table_alloc);
 
 class PostgisWriter {
     public:

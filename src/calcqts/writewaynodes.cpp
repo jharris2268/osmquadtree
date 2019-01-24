@@ -168,7 +168,7 @@ class WayNodesFilePrep {
             if (sortinmem) {
                 waynodes_writer_obj = make_pbffilewriter_indexedinmem(fn, nullptr);
             } else {
-                waynodes_writer_obj = make_pbffilewriter(fn,nullptr,true);
+                waynodes_writer_obj = make_pbffilewriter_filelocs(fn,nullptr);
             }
                 
             //auto add_relations = threaded_callback<way_nodes>::make([rels](std::shared_ptr<way_nodes> r) {

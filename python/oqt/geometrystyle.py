@@ -1,5 +1,5 @@
 import json
-import _oqt as oq
+from . import _oqt as oq
 
 
 class KeySpec:
@@ -42,7 +42,7 @@ default_keys = {
 'boundary': KeySpec(IsArea=False, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 'bridge': KeySpec(IsArea=False, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 'building': KeySpec(IsArea=True, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
-'bus_routes': KeySpec(IsArea=False, IsFeature=False, IsNode=False, IsWay=True, OnlyArea=False),
+#'bus_routes': KeySpec(IsArea=False, IsFeature=False, IsNode=False, IsWay=True, OnlyArea=False),
 'construction': KeySpec(IsArea=False, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 'covered': KeySpec(IsArea=False, IsFeature=False, IsNode=True, IsWay=True, OnlyArea=False),
 'embankment': KeySpec(IsArea=False, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
@@ -224,20 +224,24 @@ class GeometryStyle:
         return GeometryStyle.from_json(json.load(obj))
     
     
-    def set_params(self, params):
+    def set_params(self, params, add_min_zoom=False):
         
         style = dict((k, v.to_cpp()) for k,v in self.keys.iteritems())
         if self.other_tags:
             style['XXX']=oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=True)
         
+        if add_min_zoom:
+            style['minzoom'] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=False)
         
         parent_tag_spec=[]
         for k,v in self.parent_tags.iteritems():
-            style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
+            if not self.other_tags:
+                style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
             parent_tag_spec+=v.to_cpp(k)
         
-        for k,v in self.parent_relations.iteritems():
-            style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
+        if not self.other_tags or True:
+            for k,v in self.parent_relations.iteritems():
+                style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
             
         params.style = style
         if self.parent_relations:
@@ -250,9 +254,85 @@ class GeometryStyle:
         
     
     
-    def postgis_columns(self):
-        pass
-    
+    def postgis_columns(self, add_min_zoom, extended=False):
+        ans = []
+        
+        
+        point_cols = [
+            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
+            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
+            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+        ]
+        point_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsNode]
+        point_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in self.parent_tags]
+        
+        if add_min_zoom:
+            point_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+        if self.other_tags:
+            point_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
+        point_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.PointGeometry, oq.GeometryColumnSource.Geometry))
+        
+        line_cols = [
+            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
+            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
+            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+        ]
+        line_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
+        line_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in self.parent_relations]
+        
+        line_cols.append(oq.GeometryColumnSpec("layer", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.Layer))
+        line_cols.append(oq.GeometryColumnSpec("z_order", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ZOrder))
+        
+        if add_min_zoom:
+            line_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+        if self.other_tags:
+            line_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
+        
+        line_cols.append(oq.GeometryColumnSpec('length', oq.GeometryColumnType.Double, oq.GeometryColumnSource.Length))
+        line_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.LineGeometry, oq.GeometryColumnSource.Geometry))
+        
+        poly_cols = [
+            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
+            oq.GeometryColumnSpec("part", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
+            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
+            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+        ]
+        
+        poly_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
+        
+        poly_cols.append(oq.GeometryColumnSpec("layer", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.Layer))
+        poly_cols.append(oq.GeometryColumnSpec("z_order", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ZOrder))
+        
+        if add_min_zoom:
+            poly_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+        if self.other_tags:
+            poly_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
+        poly_cols.append(oq.GeometryColumnSpec('way_area', oq.GeometryColumnType.Double, oq.GeometryColumnSource.Area))
+        poly_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.PolygonGeometry, oq.GeometryColumnSource.Geometry))
+        
+        
+        
+        point = oq.GeometryTableSpec("point")
+        point.set_columns(point_cols)
+        
+        line = oq.GeometryTableSpec("line")
+        line.set_columns(line_cols)
+        
+        polygon = oq.GeometryTableSpec("polygon")
+        polygon.set_columns(poly_cols)
+        
+        if extended:
+            highway=oq.GeometryTableSpec('highway')
+            highway.set_columns(line_cols)
+            
+            building=oq.GeometryTableSpec('building')
+            building.set_columns(poly_cols)
+            
+            boundary=oq.GeometryTableSpec('boundary')
+            boundary.set_columns([p for p in poly_cols if p.name in ('osm_id','part','quadtree','tile','boundary','admin_level','name','minzoom','way_area','way')])
+            return [point,line,polygon,highway,building,boundary]
+        return [point,line,polygon]
+        
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %.50s" % (k,repr(getattr(self,k))) for k in self.__slots__),)
     

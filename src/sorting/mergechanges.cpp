@@ -464,7 +464,7 @@ void run_mergechanges(
     
     auto outfile_header = std::make_shared<Header>();
     outfile_header->SetBBox(filter_box);
-    auto outfile_writer = make_pbffilewriter(outfn, outfile_header, !sort_objs);
+    auto outfile_writer = (sort_objs ? make_pbffilewriter(outfn, outfile_header) : make_pbffilewriter_filelocs(outfn,outfile_header));
     auto packers = make_final_packers_sync(outfile_writer, numchan, enddate, !sort_objs, true);
     
     auto read_data = [read_blocks_caller,filter,numchan,filter_objs](std::vector<primitiveblock_callback> addobjs) {

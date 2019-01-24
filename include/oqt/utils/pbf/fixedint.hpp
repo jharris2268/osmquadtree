@@ -42,6 +42,10 @@ size_t write_int64(std::string& data, size_t pos, int64 i);
 
 uint32_t read_uint32_le(const std::string& data, size_t pos);
 
+
+int64 read_int32(std::string& data, size_t& pos);
+
+
 }
 
 #endif

@@ -134,7 +134,7 @@ void run_applychange(const std::string& origfn, const std::string& outfn, size_t
     
     std::shared_ptr<PbfFileWriter> writer;
     if (outfn!="NONE") {
-        writer = make_pbffilewriter(outfn, head, false);
+        writer = make_pbffilewriter(outfn, head);
     }
     
     std::vector<primitiveblock_callback> packers;

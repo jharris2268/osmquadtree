@@ -351,7 +351,7 @@ void block_defs(py::module& m) {
         .def("__setitem__", [](PrimitiveBlock& pb, int i, ElementPtr e) { if (i<0) { i+= pb.size(); } pb.at(i)=e; })
         .def("add", [](PrimitiveBlock& pb, ElementPtr e) { pb.add(e); })
         .def("sort", [](PrimitiveBlock& pb) { std::sort(pb.Objects().begin(),pb.Objects().end(),element_cmp); })
-        .def_property_readonly("FileProgress", &PrimitiveBlock::FileProgress)
+        .def_property("FileProgress", &PrimitiveBlock::FileProgress, &PrimitiveBlock::SetFileProgress)
         .def_property_readonly("FilePosition", &PrimitiveBlock::FilePosition)
     ;
     py::class_<Element,std::shared_ptr<Element>>(m, "element")

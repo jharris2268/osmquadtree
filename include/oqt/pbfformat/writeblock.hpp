@@ -29,7 +29,8 @@
 
 namespace oqt {
 std::string pack_primitive_block(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs);
-std::string pack_header_block(HeaderPtr head);
+std::string pack_header_block(HeaderPtr head, bool seperateFileLocs);
+void write_filelocs_json(const block_index& index, const std::string& pbffilename);
 }
 
 

@@ -69,7 +69,8 @@ class Prog:
     def __init__(self, tiles=None,locs=None):
         self.st=time.time()
         self.nb=0
-        self.npt,self.nln,self.nsp,self.ncp=0,0,0,0
+        #self.npt,self.nln,self.nsp,self.ncp=0,0,0,0
+        self.nobjs=0
         self.tiles = tiles
         self.locs=None
         if locs:
@@ -81,18 +82,20 @@ class Prog:
             
         
         self.nb+=len(bls)
-        for bl in bls:
-            for o in bl:
-                if o.Type==oq.ElementType.Point: self.npt+=1
-                elif o.Type==oq.ElementType.Linestring: self.nln+=1
-                elif o.Type==oq.ElementType.SimplePolygon: self.nsp+=1
-                elif o.Type==oq.ElementType.ComplicatedPolygon: self.ncp+=1
+        self.nobjs+=sum(len(b) for b in bls)
+        #for bl in bls:
+        #    for o in bl:
+        #        if o.Type==oq.ElementType.Point: self.npt+=1
+        #        elif o.Type==oq.ElementType.Linestring: self.nln+=1
+        #        elif o.Type==oq.ElementType.SimplePolygon: self.nsp+=1
+        #        elif o.Type==oq.ElementType.ComplicatedPolygon: self.ncp+=1
         lc=''
+        maxq=max(b.Quadtree for b in bls) if bls else 0
         if self.locs:
-            maxq=max(b.Quadtree for b in bls)
             if maxq in self.locs:
                 lc = "%6.1f%% " % self.locs[maxq]
-        print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),oq.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
+        #print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),oq.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
+        sys.stdout.write("\r%7d: %s%6.1fs %2d blocks [%-18s] %d" % (self.nb, lc, time.time()-self.st, len(bls), oq.quadtree_string(maxq), self.nobjs))
         sys.stdout.flush()
         return True
 

@@ -43,8 +43,15 @@ class PbfFileWriter {
         
         
 };
-std::shared_ptr<PbfFileWriter> make_pbffilewriter(const std::string& filename, HeaderPtr head, bool indexed);
-write_file_callback make_pbffilewriter_callback(const std::string& filename, HeaderPtr head, bool indexed);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter(const std::string& filename, HeaderPtr head);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_filelocs(const std::string& filename, HeaderPtr head);
+std::shared_ptr<PbfFileWriter> make_pbffilewriter_indexed(const std::string& filename, HeaderPtr head);
+
+
+write_file_callback make_pbffilewriter_callback(const std::string& filename, HeaderPtr head);
+write_file_callback make_pbffilewriter_filelocs_callback(const std::string& filename, HeaderPtr head);
+write_file_callback make_pbffilewriter_indexed_callback(const std::string& filename, HeaderPtr head);
+
 
 void rewrite_indexed_file(std::string filename, std::string tempfilename, HeaderPtr head, block_index& idx);
 void sort_block_index(block_index& index);

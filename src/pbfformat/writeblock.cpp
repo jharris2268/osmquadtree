@@ -34,6 +34,8 @@
 #include "oqt/elements/relation.hpp"
 #include "oqt/elements/geometry.hpp"
 
+#include <fstream>
+#include "picojson.h"
 
 namespace oqt {
 namespace writeblock_detail {
@@ -296,7 +298,7 @@ std::string packBlockIdx(int64 qt, bool isc, int64 len) {
     return pack_pbf_tags(msgs);
 }
 }
-std::string pack_header_block(HeaderPtr head) {
+std::string pack_header_block(HeaderPtr head, bool seperateFileLocs) {
     std::list<PbfTag> msgs;
     msgs.push_back(PbfTag{1,0,writeblock_detail::packHeaderBbox(head->BBox())});
     if (head->Features().empty()) {
@@ -313,15 +315,41 @@ std::string pack_header_block(HeaderPtr head) {
         msgs.push_back(PbfTag{16,0,head->Writer()});
     }
 
-    if (!head->Index().empty()) {
+    if ((!seperateFileLocs) && (!head->Index().empty())) {
         for (auto& ii: head->Index()) {
             int64 qt,fl,ln;
             std::tie(qt,fl,ln)=ii;
             msgs.push_back(PbfTag{22,0,writeblock_detail::packBlockIdx(qt,false,ln)});
         }
     }
+    if (seperateFileLocs) {
+        msgs.push_back(PbfTag{23,0,"-filelocs.json"});
+    }
     return pack_pbf_tags(msgs);
 }
+
+void write_filelocs_json(const block_index& index, const std::string& pbffilename) {
+    
+    picojson::array arr;
+    for (const auto& row: index) {
+        picojson::array row_arr;
+        row_arr.push_back(picojson::value((int64_t) std::get<0>(row)));
+        row_arr.push_back(picojson::value((int64_t) std::get<1>(row)));
+        row_arr.push_back(picojson::value((int64_t) std::get<2>(row)));
+        
+        arr.push_back(picojson::value(row_arr));
+    }
+    
+    picojson::value data(arr);
+    
+    std::ofstream out(pbffilename+"-filelocs.json", std::ios::out);
+    data.serialize(std::ostream_iterator<char>(out));
+    
+    out.close();   
+    
+}
+
+
 
 std::string pack_primitive_block(PrimitiveBlockPtr block, bool includeQts, bool change, bool includeInfo, bool includeRefs) {
     

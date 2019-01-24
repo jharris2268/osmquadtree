@@ -152,7 +152,7 @@ size_t write_index_file(const std::string& fn, size_t numchan, const std::string
         throw std::domain_error("not an indexed pbf file: "+fn);
     }
         
-    auto out_obj = make_pbffilewriter(outfn, nullptr, false);
+    auto out_obj = make_pbffilewriter(outfn, nullptr);
     auto out_callback = multi_threaded_callback<keystring>::make([out_obj](keystring_ptr p) {
         if (p) {
             out_obj->writeBlock(p->first,p->second);

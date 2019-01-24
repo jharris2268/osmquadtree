@@ -45,7 +45,8 @@ std::vector<std::string> read_string_table(const std::string& data);
 int64 read_quadtree(const std::string& data);
 
 
-HeaderPtr read_header_block(const std::string& data, int64 fl);
+HeaderPtr read_header_block(const std::string& data, int64 fl, const std::string& filename);
+void read_filelocs_json(HeaderPtr head, int64 fl, const std::string& filename, const std::string& filelocssuffix);
 
 
     

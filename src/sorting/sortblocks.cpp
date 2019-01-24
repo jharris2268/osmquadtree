@@ -33,6 +33,8 @@
 
 #include "oqt/utils/multithreadedcallback.hpp"
 #include "oqt/utils/threadedcallback.hpp"
+#include "oqt/utils/splitcallback.hpp"
+
 #include "oqt/utils/logger.hpp"
 
 
@@ -343,7 +345,7 @@ class SortBlocksImpl : public SortBlocks {
             }
             Logger::Message() << "orig_file_size=" << orig_file_size << "mb; blocksplit=" << blocksplit << "num_splits=" << num_splits << ", groups->size() = " << groups->size() << ", group_split=" << group_split;
             
-            auto blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, true);
+            auto blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, false);
             tempobjs = make_tempobjs(blobs, numchan);
         
         
@@ -369,10 +371,17 @@ class SortBlocksImpl : public SortBlocks {
         
                 
         virtual void read_blocks(std::vector<primitiveblock_callback> packers, bool sortobjs) {
-            std::vector<primitiveblock_callback> rss;
+            
+            
+            auto split_p = split_callback<PrimitiveBlock>::make(packers);
+            
+            auto rss = multi_threaded_callback<PrimitiveBlock>::make(make_resortobjects_callback(split_p,groups, blocksplit, sortobjs), packers.size());
+            
+            
+            /*std::vector<primitiveblock_callback> rss;
             for (auto p: packers) {
                 rss.push_back(make_resortobjects_callback(p,groups, blocksplit, sortobjs));
-            }
+            }*/
             tempobjs->read(rss);
         }
         
@@ -397,7 +406,7 @@ std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_pt
 
 int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const std::string& outfn,
     int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
-    const std::string& tempfn, size_t blocksplit, bool fixstrs) {
+    const std::string& tempfn, size_t blocksplit, bool fixstrs, bool seperate_filelocs) {
     
    
     if (tempfn=="NONE") {
@@ -457,7 +466,7 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     
     auto hh = std::make_shared<Header>();
     hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
-    auto write_file_obj = make_pbffilewriter(outfn, hh, true);
+    auto write_file_obj = seperate_filelocs ? make_pbffilewriter_filelocs(outfn, hh) : make_pbffilewriter_indexed(outfn, hh);
     
     
             

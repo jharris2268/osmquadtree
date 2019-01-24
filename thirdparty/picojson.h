@@ -57,6 +57,10 @@ extern "C" {
 }
 #endif
 
+
+#define PICOJSON_USE_INT64
+
+
 #ifndef PICOJSON_USE_RVALUE_REFERENCE
 #if (defined(__cpp_rvalue_references) && __cpp_rvalue_references >= 200610) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 #define PICOJSON_USE_RVALUE_REFERENCE 1

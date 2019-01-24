@@ -142,6 +142,21 @@ size_t write_int64(std::string& data, size_t pos, int64 i) {
 }
 
 
+int64 read_int32(std::string& data, size_t& pos) {
+    union {
+        int32_t sd;
+        char sc[4];
+    };
+    
+    sc[0] = data[pos+3];
+    sc[1] = data[pos+2];
+    sc[2] = data[pos+1];
+    sc[3] = data[pos];
+    
+    pos += 4;
+        
+    return sd;
+}
 
 
 

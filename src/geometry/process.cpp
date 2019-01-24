@@ -330,14 +330,15 @@ std::vector<block_callback> pack_and_write_callback(
     auto head = std::make_shared<Header>();
     head->SetBBox(box);
     
-    write_file_callback write = make_pbffilewriter_callback(filename,head,indexed);
+    write_file_callback write = make_pbffilewriter_filelocs_callback(filename,head);
     
-    auto write_split = threaded_callback<std::pair<int64,std::string>>::make(write, numchan);
+    //auto write_split = threaded_callback<std::pair<int64,std::string>>::make(write, numchan);
+    auto write_split = multi_threaded_callback<std::pair<int64,std::string>>::make(write, numchan);
     
     std::vector<block_callback> pack(numchan);
     
     for (size_t i=0; i < numchan; i++) {
-        auto write_i = write_split;//[i];
+        auto write_i = write_split[i];
         block_callback cb;
         if (!callbacks.empty()) { cb = callbacks[i]; }
         pack[i] = //threaded_callback<primitiveblock>::make(
@@ -372,7 +373,7 @@ block_callback pack_and_write_callback_nothread(
     auto head = std::make_shared<Header>();
     head->SetBBox(box);
     
-    write_file_callback write = make_pbffilewriter_callback(filename,head,indexed);
+    write_file_callback write = make_pbffilewriter_filelocs_callback(filename,head);
     
     return [write, callback, writeqts,writeinfos,writerefs](PrimitiveBlockPtr bl) {
         if (callback) {
@@ -392,8 +393,8 @@ block_callback pack_and_write_callback_nothread(
     
 
 
-block_callback make_pack_csvblocks_callback(block_callback cb, std::function<void(std::shared_ptr<CsvBlock>)> wr, PackCsvBlocks::tagspec tags,bool with_header,bool as_binary) {
-    auto pc = make_pack_csvblocks(tags,with_header,as_binary);
+block_callback make_pack_csvblocks_callback(block_callback cb, std::function<void(std::shared_ptr<CsvBlock>)> wr, PackCsvBlocks::tagspec tags,bool with_header,bool as_binary, table_alloc_func alloc_func) {
+    auto pc = make_pack_csvblocks(tags,with_header,as_binary, alloc_func);
     return [cb, wr, pc](PrimitiveBlockPtr bl) {
         if (!bl) {
             //std::cout << "pack_csvblocks done" << std::endl;
@@ -418,7 +419,8 @@ std::vector<block_callback> write_to_postgis_callback(
     std::vector<block_callback> callbacks, size_t numchan,
     const std::string& connection_string, const std::string& table_prfx,
     const PackCsvBlocks::tagspec& coltags,
-    bool with_header, bool as_binary) {
+    bool with_header, bool as_binary,
+    table_alloc_func alloc_func) {
         
     
     auto writers = multi_threaded_callback<CsvBlock>::make(make_postgiswriter_callback(connection_string, table_prfx, with_header,as_binary), numchan);
@@ -434,7 +436,7 @@ std::vector<block_callback> write_to_postgis_callback(
         if (!callbacks.empty()) {
             cb = callbacks[i];
         }
-        res[i]=make_pack_csvblocks_callback(cb, writer_i, coltags, with_header,as_binary);
+        res[i]=make_pack_csvblocks_callback(cb, writer_i, coltags, with_header,as_binary,alloc_func);
     }
     
     return res;
@@ -444,11 +446,12 @@ block_callback write_to_postgis_callback_nothread(
     block_callback callback,
     const std::string& connection_string, const std::string& table_prfx,
     const PackCsvBlocks::tagspec& coltags,
-    bool with_header, bool as_binary) {
+    bool with_header, bool as_binary,
+    table_alloc_func alloc_func) {
         
     
     auto writer = make_postgiswriter_callback(connection_string, table_prfx,with_header,as_binary);
-    return make_pack_csvblocks_callback(callback,writer,coltags,with_header,as_binary);
+    return make_pack_csvblocks_callback(callback,writer,coltags,with_header,as_binary,alloc_func);
 }
     
 class GeomProgress {
@@ -498,6 +501,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
 
     mperrorvec errors_res;
     
+    
     if (!wrapped) {
         auto pp = std::make_shared<GeomProgress>(params.locs);
         wrapped = [pp](PrimitiveBlockPtr bl) { pp->call(bl); };
@@ -511,7 +515,8 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
     }
     
     if (params.connstring != "") {
-        writer = write_to_postgis_callback(writer, params.numchan, params.connstring, params.tableprfx, params.coltags, true, params.use_binary);
+        bool header = (!params.use_binary) ? true : false;
+        writer = write_to_postgis_callback(writer, params.numchan, params.connstring, params.tableprfx, params.coltags, header, params.use_binary,params.alloc_func);
     }
     
     auto addwns = process_geometry_blocks(
@@ -590,7 +595,8 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     }
     block_callback postgis=writer;
     if (params.connstring != "") {
-        postgis = write_to_postgis_callback_nothread(writer, params.connstring, params.tableprfx, params.coltags, true, params.use_binary);
+        bool header = (!params.use_binary) ? true : false;
+        postgis = write_to_postgis_callback_nothread(writer, params.connstring, params.tableprfx, params.coltags, header, params.use_binary,params.alloc_func);
     }
     
     block_callback addwns = process_geometry_blocks_nothread(
@@ -612,7 +618,7 @@ mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
     
     mperrorvec errors_res;
     
-    auto cb=make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary);
+    auto cb=make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary,params.alloc_func);
     auto csvcallback = multi_threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
        
     
@@ -635,7 +641,7 @@ mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& param
     
     mperrorvec errors_res;
     
-    block_callback csvcallback = make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary);
+    block_callback csvcallback = make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary,params.alloc_func);
     
     block_callback addwns = process_geometry_blocks_nothread(
             csvcallback, params.style, params.box, params.parent_tag_spec, params.add_rels,

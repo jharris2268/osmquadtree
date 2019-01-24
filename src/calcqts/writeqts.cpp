@@ -150,7 +150,7 @@ class CollectQtsImpl : public CollectQts {
 };
 
 std::shared_ptr<CollectQts> make_collectqts(const std::string& qtsfn, size_t numchan, size_t blocksize) {
-    auto write_file_obj = make_pbffilewriter(qtsfn, nullptr, false);
+    auto write_file_obj = make_pbffilewriter(qtsfn, nullptr);
     
     auto writeblocks = multi_threaded_callback<keystring>::make(
         [write_file_obj](std::shared_ptr<keystring> ks) {

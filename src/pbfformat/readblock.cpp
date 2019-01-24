@@ -31,8 +31,12 @@
 #include "oqt/elements/relation.hpp"
 #include "oqt/elements/geometry.hpp"
 
+#include "oqt/utils/logger.hpp"
+
+#include "picojson.h"
 
 #include <iostream>
+#include <fstream>
 
 namespace oqt {
 
@@ -504,11 +508,51 @@ PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool 
 
 
 
+void read_filelocs_json(HeaderPtr head, int64 fl, const std::string& filename, const std::string& filelocssuffix) {
+    if (!head->Index().empty()) {
+        throw std::domain_error("header index not empty()");
+    }
+    
+    std::ifstream file(filename+filelocssuffix, std::ios::in);
+    
+    
+    auto err = [&file, &head]() -> std::string {
+        if (!file.good()) { return "didn't open"; }
+        
+        std::string err;
+        picojson::value locs_obj;
+        picojson::parse(locs_obj, std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), &err);
+        if (!err.empty()) { return err; }
+        
+        if (!locs_obj.is<picojson::array>()) { return "not an array"; }
+        picojson::array arr = locs_obj.get<picojson::array>();
+    
+        for (const auto& row: arr) {
+            if (!row.is<picojson::array>()) { return "row "+std::to_string(head->Index().size()) +" not an array"; }
+            
+            auto row_arr = row.get<picojson::array>();
+            if (row_arr.size()!=3) { return "row "+std::to_string(head->Index().size()) +" size != 3"; }
+            
+            if ((!row_arr[0].is<double>()) || (!row_arr[1].is<double>()) || (!row_arr[2].is<double>())) {
+                return "row "+std::to_string(head->Index().size()) +" not all integers";
+            }
+            
+            head->Index().push_back(std::make_tuple(
+                row_arr[0].get<int64_t>(), row_arr[1].get<int64_t>(), row_arr[2].get<int64_t>() ));
+        }
+        return "";
+    }();
+    
+    if (!err.empty()) {
+        Logger::Message() << "failed to read " << filename+filelocssuffix << ": " << err;
+        throw std::domain_error("read_filelocs_json failed");
+    }
+    
+}
 
 
 
-
-HeaderPtr read_header_block(const std::string& data, int64 fl) {
+HeaderPtr read_header_block(const std::string& data, int64 fl, const std::string& filename) {
     auto res=std::make_shared<Header>();
     size_t pos=0;
     for (PbfTag tg=read_pbf_tag(data,pos); tg.tag>0; tg=read_pbf_tag(data,pos)) {
@@ -521,13 +565,17 @@ HeaderPtr read_header_block(const std::string& data, int64 fl) {
             }
             case 4: res->Features().push_back(tg.data); break;
             case 16: res->SetWriter(tg.data); break;
-            case 22:
+            case 22: {
                 int64 qt,len; bool isc=false;
                 std::tie(qt,isc,len) = readBlockIdx(tg.data);
                 res->Index().push_back(std::make_tuple(qt,fl,len));
                 fl+=len;
-
                 break;
+            }
+            case 23:
+                read_filelocs_json(res, fl, filename, tg.data);
+                break;
+            
         }
     }
 

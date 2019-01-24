@@ -40,7 +40,11 @@ class BlobStoreFile : public BlobStore {
     
     public:
         BlobStoreFile(std::string tempfn_, bool sortfile) : tempfn(tempfn_) {
-            fileobj = make_pbffilewriter(tempfn,nullptr,sortfile);
+            if (sortfile) {
+                fileobj = make_pbffilewriter_indexed(tempfn,nullptr);
+            } else {
+                fileobj = make_pbffilewriter(tempfn,nullptr);
+            }
         }
         
         virtual void add(keystring_ptr ks) {
@@ -99,7 +103,7 @@ class BlobStoreFileSplit : public BlobStore {
             
             if (it==writers.end()) {
                 auto fn=tempfn+"-pt"+std::to_string(k);
-                writers[k] = std::make_tuple(fn,block_index{},make_pbffilewriter(fn,nullptr,false));
+                writers[k] = std::make_tuple(fn,block_index{},make_pbffilewriter(fn,nullptr));
                 it = writers.find(k);
             }
             std::get<2>(it->second)->writeBlock(p->first,p->second);

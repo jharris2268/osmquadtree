@@ -129,8 +129,10 @@ class WritePbfFileImpl : public WritePbfFile {
             head->SetBBox(bounds);
             if ((!tempfile)&&(indexed)) {
                 outobj = make_pbffilewriter_indexedinmem(fn, head);
+            } else if (indexed) {
+                outobj = make_pbffilewriter_filelocs(fn, head);
             } else {
-                outobj = make_pbffilewriter(fn, head, indexed);
+                outobj = make_pbffilewriter(fn, head);
             }
             
         }

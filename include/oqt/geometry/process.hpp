@@ -43,7 +43,7 @@ namespace geometry {
 
 struct GeometryParameters {
     GeometryParameters() 
-        : numchan(1), numblocks(512), box(), add_rels(false),
+        : numchan(4), numblocks(512), box(), add_rels(false),
             add_mps(false), recalcqts(false), outfn(""), indexed(false),
             connstring(""), tableprfx(""), use_binary(false), addwn_split(false) {}
     
@@ -65,6 +65,7 @@ struct GeometryParameters {
     std::string tableprfx;
     PackCsvBlocks::tagspec coltags;
     bool use_binary;
+    table_alloc_func alloc_func;
     std::shared_ptr<QtTree> groups;
     bool addwn_split;
     
