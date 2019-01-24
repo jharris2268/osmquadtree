@@ -206,7 +206,7 @@ int run_calcqts(const std::string& origfn, const std::string& qtsfn, size_t numc
     
     
     if (splitways) {
-        int64 midway = 320<<20;
+        int64 midway = 340<<20;
         find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, midway, use_48bit_quadtrees); //find_way_quadtrees_test
         
         Logger::Message() << "[RSS = " << getmemval(getpid())/1024/1024 << "mb]";

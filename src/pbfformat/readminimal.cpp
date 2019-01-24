@@ -33,7 +33,7 @@ namespace oqt {
 
 void readMinimalGroup(minimal::BlockPtr block, const std::string& group, size_t objflags);
 
-void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) noexcept;
+void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags);
 
 minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_t objflags) {
 
@@ -653,6 +653,8 @@ void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, siz
             pos+=vl;
         } else if (tg==10) {
             ct=vl;
+        } else if (isdata) {
+            pos+=vl;
         }
     }
     
@@ -683,7 +685,7 @@ void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, siz
 }
     
 
-void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) noexcept {
+void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size_t objflags) {
     size_t pos=0;
     size_t lim=data.size();
     
@@ -695,6 +697,7 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
             std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
         
             if (isdata && (tg == 2)) {
+                //Logger::Message() << "call readMinimalGroup_alt " << pos << " to " << pos+vl << " / " << data.size();
                 readMinimalGroup_alt(block, data, objflags, pos, pos+vl);
                 pos+=vl;
             } else if (tg==31) {
