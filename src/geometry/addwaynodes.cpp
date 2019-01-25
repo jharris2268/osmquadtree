@@ -152,6 +152,8 @@ PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockP
     out_bl->SetQuadtree(in_bl->Quadtree());
     out_bl->SetStartDate(in_bl->StartDate());
     out_bl->SetEndDate(in_bl->EndDate());
+    out_bl->SetFilePosition(in_bl->FilePosition());
+    out_bl->SetFileProgress(in_bl->FileProgress());
 
     for (auto& o : in_bl->Objects()) {
         if (o->Type()==ElementType::Node) {

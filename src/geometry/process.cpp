@@ -540,9 +540,9 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     
     mperrorvec errors_res;
     
-    auto sb = make_sortblocks(1000, params.groups, params.outfn+"-interim",200, params.numchan);
+    auto sb = make_sortblocks(params.locs.size()/16, params.groups, params.outfn+"-interim",50, params.numchan, 0);
     auto sb_callbacks = sb->make_addblocks_cb(false);
-    
+  
     auto addwns = process_geometry_blocks(
             sb_callbacks, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
@@ -570,7 +570,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
         writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
         
     }
-    sb->read_blocks(writer, true);
+    sb->read_blocks(split_callback<PrimitiveBlock>::make(writer), true);
     
     
     return errors_res;

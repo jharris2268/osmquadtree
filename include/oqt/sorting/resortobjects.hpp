@@ -25,13 +25,25 @@
 
 
 #include "oqt/sorting/common.hpp"
+#include "oqt/sorting/tempobjs.hpp"
 
 namespace oqt {
 
-primitiveblock_callback make_resortobjects_callback(primitiveblock_callback callback, std::shared_ptr<QtTree> groups, int64 blocksize, bool sortobjs);
+//typedef std::function<void(std::shared_ptr<std::vector<PrimitiveBlockPtr>>)> primblock_vec_callback;
+
+//primitiveblock_callback make_resortobjects_callback(primblock_vec_callback callback, std::shared_ptr<QtTree> groups, int64 blocksize, bool sortobjs);
 
 
+std::vector<keyedblob_callback> make_resortobjects_callback_alt(
+    std::shared_ptr<QtTree> groups, bool sortobjs,
+    int64 timestamp, int complevel,
+    std::function<void(keystring_ptr)> cb, size_t numchan);
+
+
+
+std::vector<keyedblob_callback> make_resort_objects_collect_block(
+    std::shared_ptr<QtTree> groups, bool sortobjs,
+    int64 timestamp,
+    primitiveblock_callback cb, size_t numchan);
 }
-
-
 #endif //SORTING_RESORTOBJECTS_HPP

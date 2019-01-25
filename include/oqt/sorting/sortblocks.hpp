@@ -29,7 +29,8 @@
 //#include "oqt/calcqts/calculaterelations.hpp"
 #include "oqt/sorting/qttree.hpp"
 #include "oqt/elements/block.hpp"
-
+#include "oqt/pbfformat/writepbffile.hpp"
+//#include "oqt/sorting/tempobjs.hpp"
 namespace oqt {
 
 
@@ -38,13 +39,13 @@ class SortBlocks {
         virtual std::vector<primitiveblock_callback> make_addblocks_cb(bool threaded)=0;
         virtual void finish()=0;
                 
-        virtual void read_blocks(std::vector<primitiveblock_callback> packers, bool sortobjs)=0;
-        
+        virtual void read_blocks(primitiveblock_callback cb, bool sortobjs)=0;
+        virtual void read_blocks_packed(std::function<void(keystring_ptr)> cb)=0;
         virtual ~SortBlocks() {}
 };
 
 std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<QtTree> groups,
-    const std::string& tempfn, size_t blocksplit, size_t numchan);
+    const std::string& tempfn, size_t blocksplit, size_t numchan, int64 timestamp);
 
 int run_sortblocks(
     const std::string& origfn, const std::string& qtsfn, const std::string& outfn,

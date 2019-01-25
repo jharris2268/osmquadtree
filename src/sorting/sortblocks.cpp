@@ -331,8 +331,8 @@ PrimitiveBlockPtr convert_primblock(std::shared_ptr<FileBlock> bl) {
 class SortBlocksImpl : public SortBlocks {
     public:
         SortBlocksImpl(int64 orig_file_size_, std::shared_ptr<QtTree> groups_, const std::string& tempfn_,
-            size_t blocksplit_, size_t numchan_)
-        : orig_file_size(orig_file_size_), groups(groups_), tempfn(tempfn_),  blocksplit(blocksplit_), numchan(numchan_) {
+            size_t blocksplit_, size_t numchan_, int64 timestamp_)
+        : orig_file_size(orig_file_size_), groups(groups_), tempfn(tempfn_),  blocksplit(blocksplit_), numchan(numchan_), timestamp(timestamp_) {
             
             if (!groups) {
                 throw std::domain_error("no groups");
@@ -341,11 +341,11 @@ class SortBlocksImpl : public SortBlocks {
             num_splits = orig_file_size /1024 + 1;
             group_split = groups->size() / num_splits;
             if (blocksplit==0) {
-                blocksplit = groups->size() * 30 / orig_file_size;
+                blocksplit = groups->size() * 15 / orig_file_size;
             }
             Logger::Message() << "orig_file_size=" << orig_file_size << "mb; blocksplit=" << blocksplit << "num_splits=" << num_splits << ", groups->size() = " << groups->size() << ", group_split=" << group_split;
             
-            auto blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, false);
+            blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, false);
             tempobjs = make_tempobjs(blobs, numchan);
         
         
@@ -368,24 +368,19 @@ class SortBlocksImpl : public SortBlocks {
         virtual void finish() {
             tempobjs->finish();
         }
-        
-                
-        virtual void read_blocks(std::vector<primitiveblock_callback> packers, bool sortobjs) {
-            
-            
-            auto split_p = split_callback<PrimitiveBlock>::make(packers);
-            
-            auto rss = multi_threaded_callback<PrimitiveBlock>::make(make_resortobjects_callback(split_p,groups, blocksplit, sortobjs), packers.size());
-            
-            
-            /*std::vector<primitiveblock_callback> rss;
-            for (auto p: packers) {
-                rss.push_back(make_resortobjects_callback(p,groups, blocksplit, sortobjs));
-            }*/
-            tempobjs->read(rss);
+    
+    
+        virtual void read_blocks_packed(write_file_callback cb) {
+            auto resort = make_resortobjects_callback_alt(groups, true, timestamp, -1, cb, numchan);
+            blobs->read(resort);
         }
-        
-          
+                
+        virtual void read_blocks(primitiveblock_callback cb, bool sortobjs) {
+            auto resort = make_resort_objects_collect_block(groups, sortobjs, timestamp, cb, numchan);
+            blobs->read(resort);
+        }
+            
+                      
 
     private:
         int64 orig_file_size;
@@ -396,11 +391,13 @@ class SortBlocksImpl : public SortBlocks {
         
         int64 num_splits;
         size_t group_split;
+        std::shared_ptr<BlobStore> blobs;
         std::shared_ptr<TempObjs> tempobjs;
+        int64 timestamp;
 };
 std::shared_ptr<SortBlocks> make_sortblocks(int64 orig_file_size, std::shared_ptr<QtTree> groups,
-    const std::string& tempfn, size_t blocksplit, size_t numchan) {
-    return std::make_shared<SortBlocksImpl>(orig_file_size,groups,tempfn,blocksplit,numchan  );
+    const std::string& tempfn, size_t blocksplit, size_t numchan, int64 timestamp) {
+    return std::make_shared<SortBlocksImpl>(orig_file_size,groups,tempfn,blocksplit,numchan, timestamp  );
 }
 
 
@@ -414,7 +411,7 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     }
     
     int64 orig_file_size = file_size(origfn) / 1024/1024;
-    auto sb = make_sortblocks(orig_file_size, groups, tempfn, blocksplit,numchan);
+    auto sb = make_sortblocks(orig_file_size, groups, tempfn, blocksplit,numchan, timestamp);
     
     
     std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> convert;
@@ -468,10 +465,13 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
     auto write_file_obj = seperate_filelocs ? make_pbffilewriter_filelocs(outfn, hh) : make_pbffilewriter_indexed(outfn, hh);
     
-    
-            
-    auto packers = make_final_packers(write_file_obj, numchan, timestamp, true,false);
-    sb->read_blocks(packers, false);
+    auto cb = [write_file_obj](keystring_ptr k) {
+        if (k) {
+            write_file_obj->writeBlock(k->first,k->second);
+        }
+    };    
+   
+    sb->read_blocks_packed(cb);
     
     Logger::Get().time("resort objs");
     block_index finalidx = write_file_obj->finish();

@@ -87,7 +87,7 @@ void SplitBlocksDetail::writetemps(std::shared_ptr<std::vector<PrimitiveBlockPtr
     
     tb+=b;
     if (msgs) {
-        Logger::Progress(maxp) << "SplitBlocks: write " << a << " blocks // " << b << " objs"
+        Logger::Progress(maxp) << " [" << ts << "] SplitBlocks: write " << a << " blocks // " << b << " objs"
             << " [" << currww << "/" << writeat << " " << TmStr{ts.since()-x,4,1} << "]";
     }
     trr += (ts.since()-x);
