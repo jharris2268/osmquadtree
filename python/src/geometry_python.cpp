@@ -69,61 +69,59 @@ ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> t
 typedef std::function<bool(std::vector<PrimitiveBlockPtr>)> external_callback;
 typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_py(const geometry::GeometryParameters& params, external_callback cb) {
+
+
+block_callback prep_callback(external_callback cb, size_t numblocks) {
+    if (!cb) { return nullptr; }
     
-    py::gil_scoped_release r;
-    block_callback wrapped;
-    
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(cb),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
-    
-    return std::make_pair(collect->total(), process_geometry(params, wrapped));
-}
-    
-std::pair<size_t,geometry::mperrorvec> process_geometry_nothread_py(const geometry::GeometryParameters& params, external_callback callback) {
-    
-    py::gil_scoped_release r;
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
-    
-    return std::make_pair(collect->total(), process_geometry_nothread(params, wrapped));
+    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(cb),numblocks);
+    return [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_sortblocks_py(const geometry::GeometryParameters& params, external_callback callback) {
-    py::gil_scoped_release r;
-
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+geometry::mperrorvec process_geometry_py(const geometry::GeometryParameters& params, external_callback cb) {
     
-    return std::make_pair(collect->total(), process_geometry_sortblocks(params, wrapped));
+    py::gil_scoped_release r;
+    block_callback wrapped = prep_callback(cb, params.numblocks);
+    
+    return process_geometry(params, wrapped);
+}
+    
+geometry::mperrorvec process_geometry_nothread_py(const geometry::GeometryParameters& params, external_callback cb) {
+    
+    py::gil_scoped_release r;
+    block_callback wrapped = prep_callback(cb, params.numblocks);
+    
+    return process_geometry_nothread(params, wrapped);
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_py(const geometry::GeometryParameters& params,
-    external_callback callback,
+geometry::mperrorvec process_geometry_sortblocks_py(const geometry::GeometryParameters& params, external_callback cb) {
+    py::gil_scoped_release r;
+
+    block_callback wrapped = prep_callback(cb, params.numblocks);
+    
+    return process_geometry_sortblocks(params, wrapped);
+}
+
+geometry::mperrorvec process_geometry_csvcallback_py(const geometry::GeometryParameters& params,
+    external_callback cb,
     std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
 
     py::gil_scoped_release r;
     
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    block_callback wrapped = prep_callback(cb, params.numblocks);
     
-    return std::make_pair(collect->total(), process_geometry_csvcallback(params, wrapped, wrap_callback(csvblock_callback)));
+    return process_geometry_csvcallback(params, wrapped, wrap_callback(csvblock_callback));
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_nothread_py(const geometry::GeometryParameters& params,
-    external_callback callback,
+geometry::mperrorvec process_geometry_csvcallback_nothread_py(const geometry::GeometryParameters& params,
+    external_callback cb,
     std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
 
     py::gil_scoped_release r;
     
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    block_callback wrapped = prep_callback(cb, params.numblocks);
     
-    return std::make_pair(collect->total(), process_geometry_csvcallback_nothread(params, wrapped, wrap_callback(csvblock_callback)));
+    return process_geometry_csvcallback_nothread(params, wrapped, wrap_callback(csvblock_callback));
 }
 
 PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
@@ -132,17 +130,15 @@ PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
     return read_primitive_block(fb->idx,fb->get_data(),false,15,nullptr,geometry::read_geometry);
 }
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_from_vec_py(
+geometry::mperrorvec process_geometry_from_vec_py(
     std::vector<PrimitiveBlockPtr> blocks,
     const geometry::GeometryParameters& params,
-    external_callback callback) {
+    external_callback cb) {
 
     py::gil_scoped_release r;
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    block_callback wrapped = prep_callback(cb, params.numblocks);
     
-    return std::make_pair(collect->total(), process_geometry_from_vec(blocks, params, wrapped));
+    return process_geometry_from_vec(blocks, params, wrapped);
 }
 
 
@@ -249,20 +245,18 @@ class CsvWriter {
         std::map<std::string,std::shared_ptr<gzstream::ogzstream>> outs;
 };
 
-std::pair<size_t,geometry::mperrorvec> process_geometry_csvcallback_write(const geometry::GeometryParameters& params,
-    external_callback callback,
+geometry::mperrorvec process_geometry_csvcallback_write(const geometry::GeometryParameters& params,
+    external_callback cb,
     const std::string& out_prfx) {
 
     py::gil_scoped_release r;
     
-    block_callback wrapped;
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),params.numblocks);
-    wrapped = [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
+    block_callback wrapped = prep_callback(cb, params.numblocks);
     
     auto writer=std::make_shared<CsvWriter>(out_prfx);
     auto csvblock_callback = [writer](std::shared_ptr<oqt::geometry::CsvBlock> bl) { writer->call(bl); };
     
-    return std::make_pair(collect->total(), process_geometry_csvcallback(params, wrapped, csvblock_callback));
+    return process_geometry_csvcallback(params, wrapped, csvblock_callback);
 }
 std::vector<std::string> extended_table_alloc(ElementPtr geom) {
     if (geom->Type()==ElementType::Point) {

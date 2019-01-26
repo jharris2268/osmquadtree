@@ -554,25 +554,36 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     
     sb->finish();
     
+    if ((params.outfn!="") && (!cb)) {
+        auto head = std::make_shared<Header>();
+        head->SetBBox(params.box);
     
-    std::vector<block_callback> writer;
-    if (cb) {
-        /*sortblocks read is unsyncronized: must use threaded_callback (with numchan)*/
-        auto writerp = threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
-        for (size_t i=0; i < params.numchan; i++) {
-            writer.push_back(writerp);
-        }
+        write_file_callback write = make_pbffilewriter_filelocs_callback(params.outfn,head);
+        
+        sb->read_blocks_packed(write);
+        
+    } else {
+    
+    
+        std::vector<block_callback> writer;
+        if (cb) {
             
-    }
-    
+            auto writerp = multi_threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
+            for (size_t i=0; i < params.numchan; i++) {
+                writer.push_back(writerp[i]);
+            }
+                
+        }
         
-    if (params.outfn!="") {
-        writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
-        
+            
+        if (params.outfn!="") {
+            writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
+            
+        }
+        sb->read_blocks(split_callback<PrimitiveBlock>::make(writer), true);
+    
     }
-    sb->read_blocks(split_callback<PrimitiveBlock>::make(writer), true);
-    
-    
+
     return errors_res;
 
 }

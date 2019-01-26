@@ -420,17 +420,20 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
             callback=Prog(addto_merge(tiles, True),params.locs)
         else:
             callback=Prog(addto(tiles),params.locs)
-    else:
-        callback=Prog(locs=params.locs)
-            
+    
+    #else:
+    #    if (groups and outfn) or params.connstring != '':
+    #        callback=Prog(locs=params.locs)
+    #    else:
+    #        pass
     
     
     if nothread:
-        cnt, errs = oq.process_geometry_nothread(params, callback)
+        errs = oq.process_geometry_nothread(params, callback)
     elif groups is not None:
-        cnt, errs = oq.process_geometry_sortblocks(params, callback)
+        errs = oq.process_geometry_sortblocks(params, callback)
     else:
-        cnt, errs = oq.process_geometry(params, callback)
+        errs = oq.process_geometry(params, callback)
     
     if collect:
         if mergetiles:
@@ -443,7 +446,7 @@ def process_geometry(prfx, box_in, stylefn, collect=True, outfn=None, lastdate=N
         else:
             return tiles
     
-    return cnt, errs
+    return errs
 
 def to_json(tile,split=True):
     res = {}
@@ -542,9 +545,9 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
         
     cnt,errs=None,None
     if nothread:
-        cnt, errs = oq.process_geometry_nothread(params, Prog(locs=params.locs))
+        errs = oq.process_geometry_nothread(params, Prog(locs=params.locs))
     else:
-        cnt, errs = oq.process_geometry(params, Prog(locs=params.locs))
+        errs = oq.process_geometry(params, None)#Prog(locs=params.locs))
         
     if writeindices and params.connstring!='null':
         if extended:
@@ -552,7 +555,7 @@ def write_to_postgis(prfx, box_in, stylefn, connstr, tabprfx,writeindices=True, 
         else:
             create_indices(conn.cursor(), params.tableprfx, extraindices, extraindices)
 
-    return cnt, errs
+    return errs
 
 class CsvWriter:
     
