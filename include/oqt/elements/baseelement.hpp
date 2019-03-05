@@ -56,6 +56,7 @@ std::ostream& operator<<(std::ostream& strm, ElementType e);
 
 
 //! Base class for all osm Elements
+/*! Exposes minimum of information needed to sort osm elements */
 class BaseElement {
     public:
         //! Allows for simple sorting of Elements

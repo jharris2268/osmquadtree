@@ -35,7 +35,7 @@ namespace geometry {
 
 
 
-class WayWithNodes : public Element {
+class WayWithNodes : public ElementImpl<Element::data> {
     public:
         WayWithNodes(std::shared_ptr<Way> wy, const std::vector<LonLat>& lonlats_);
         WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, const bbox& bounds_);

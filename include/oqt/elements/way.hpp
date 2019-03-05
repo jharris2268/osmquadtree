@@ -27,7 +27,7 @@
 
 namespace oqt {
 
-class Way : public Element {
+class Way : public ElementImpl<Element::data> {
     public:
         Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<int64> refs);
         virtual ~Way() {}

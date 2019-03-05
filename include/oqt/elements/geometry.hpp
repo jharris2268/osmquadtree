@@ -31,12 +31,12 @@
 namespace oqt {
 bool is_geometry_type(ElementType ty);
 
-class BaseGeometry : public Element {
-    public:
+class BaseGeometry : public ElementImpl<Element::data> {
+    protected:
         BaseGeometry(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 minzoom_) :
-            Element(t,c,i,q,inf,tags), minzoom(minzoom_) {};
+            ElementImpl(Element::data{t,c,i,q,inf,tags}), minzoom(minzoom_) {};
             
-    
+    public:
         virtual ElementType OriginalType() const=0;
         virtual bbox Bounds() const=0;
 

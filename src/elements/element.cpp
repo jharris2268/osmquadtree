@@ -27,10 +27,18 @@
 #include <algorithm>
 namespace oqt {
 
-
+/*
 Element::Element(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags)
     : type_(t),changetype_(c), id_(i), quadtree_(q), info_(inf), tags_(tags) {}
+*/
 
+int64 internal_id(ElementType et, int64 id) {
+    uint64 r = (uint64) et;
+    r<<=61;
+    r += (uint64) id;
+    return r;
+}
+/*
 uint64 Element::InternalId() const {
     uint64 r = (uint64) type_;
     r<<=61;
@@ -45,8 +53,11 @@ ElementInfo Element::Info() const  { return info_; }
 const std::vector<Tag>& Element::Tags() const { return tags_; }
 int64 Element::Quadtree() const { return quadtree_; }
 void Element::SetQuadtree(int64 qt) { quadtree_=qt; }
+*/
 
-void Element::AddTag(const std::string& k, const std::string& v, bool replaceifpresent) {
+
+//void Element::AddTag(const std::string& k, const std::string& v, bool replaceifpresent) {
+void add_tag(std::vector<Tag>& tags_, const std::string& k, const std::string& v, bool replaceifpresent) {
     if (replaceifpresent) {
         for (auto& t: tags_) {
             if (t.key==k) {
@@ -58,7 +69,8 @@ void Element::AddTag(const std::string& k, const std::string& v, bool replaceifp
     tags_.push_back(Tag{k,v});
 }
 
-bool Element::RemoveTag(const std::string& k) {
+//bool Element::RemoveTag(const std::string& k) {
+bool remove_tag(std::vector<Tag>& tags_, const std::string& k) {
     if (tags_.empty()) { return false; }
     for (auto it=tags_.begin(); it < tags_.end(); ++it) {
         if (it->key==k) {
@@ -68,17 +80,23 @@ bool Element::RemoveTag(const std::string& k) {
     }
     return false;
 }
-
+/*
 void Element::SetTags(const std::vector<Tag>& new_tags) {
     tags_ = new_tags;
 }
+*/
 
-        
+
+
+    
 bool fix_tags(Element& ele) {
-    if (ele.tags_.empty()) { return false; }
-    std::sort(ele.tags_.begin(),ele.tags_.end(),[](const Tag&l, const Tag& r) { return l.key<r.key; });
+    
+    auto& tags_ = ele.EditTags();
+    
+    if (tags_.empty()) { return false; }
+    std::sort(tags_.begin(),tags_.end(),[](const Tag&l, const Tag& r) { return l.key<r.key; });
     bool r=false;
-    for (auto& t: ele.tags_) {
+    for (auto& t: tags_) {
         if (t.key.find(127)!=std::string::npos) {
             auto s=fix_str(t.key);
             if (s!=t.key) {

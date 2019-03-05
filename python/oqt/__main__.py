@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-----------------------------------------------------------------------
-
+from __future__ import print_function
 from . import _oqt, xmlchange, update, sys, run_calcqts_alt
 if len(sys.argv)>=3 and sys.argv[1]=='update':
     nd = None
@@ -43,7 +43,13 @@ elif len(sys.argv)>=7 and sys.argv[1]=='initial':
     
     kw = {}
     if len(sys.argv)>7:
-        kw = dict(a.split("=") for a in sys.argv[7:])
+        for a in sys.argv[7:]:
+            if not a.count("=")==1:
+                raise Exception("invalid keyword %s" % a)
+                
+            k,v=a.split("=")
+            kw[k.lower()] = v
+        #print(kw)
     r=update.run_initial(prfx, origfn, enddate, diffs, state, **kw)
     sys.exit(r)
 
@@ -64,7 +70,7 @@ elif len(sys.argv)>=3 and sys.argv[1]=='calcqts':
 else:
     print("""
 %ZZ% update <prfx> <[optional] number of days>
-%ZZ% initial <prfx> <origfn> <enddate> <diff location> <state> {[optional] RoundTime=<true|false> AllowMissingUsers=<true|false> SourcePrfx=<replication url base (default https://planet.openstreetmap.org/replication/day/)>}
+%ZZ% initial <prfx> <origfn> <enddate> <diff location> <state> {[optional] RoundTime=<true|false> AllowMissingUsers=<true|false> SourcePrfx=<replication url base (default https://planet.openstreetmap.org/replication/day/)> MergeOscFiles=<true|false>}
 %ZZ% droplast <prfx>
 %ZZ% calcqts <prfx> {[optional] qtsfn=<default prfx[:-4]+'-qts.pbf'}
 """.replace("%ZZ%", sys.argv[0]))

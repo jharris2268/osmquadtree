@@ -67,7 +67,7 @@ std::vector<PrimitiveBlockPtr> find_change_tiles(
     int64 startdate,
     int64 enddate);
 
-std::pair<int64,int64> find_change_all(const std::string& src, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn);
+std::pair<int64,int64> find_change_all(const std::vector<std::string>& src_filenames, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn);
 
 
 }

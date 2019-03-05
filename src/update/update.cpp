@@ -160,11 +160,19 @@ size_t write_index_file(const std::string& fn, size_t numchan, const std::string
     }, numchan);
     
     std::vector<std::function<void(PrimitiveBlockPtr)>> converts;
+    
     for (auto oo: out_callback) {
+        bool prog=(converts.empty() && (fn[fn.size()-1]=='f'));
         converts.push_back(threaded_callback<PrimitiveBlock>::make(
-            [oo](PrimitiveBlockPtr mb) {
+            [oo,prog](PrimitiveBlockPtr mb) {
                 if (!mb) {
+                    if (prog) {
+                        Logger::Progress(100) << "write index file";
+                    }
                     return oo(nullptr);
+                }
+                if (prog && ((mb->Index() % 1680)==0)) {
+                    Logger::Progress(mb->FileProgress()) << "write index file " << quadtree::string(mb->Quadtree());
                 }
                 oo(std::make_shared<keystring>(mb->Quadtree(), makeIndexBlock(mb)));
             }
@@ -586,11 +594,16 @@ std::vector<PrimitiveBlockPtr> find_change_tiles(
 
 
 
-std::pair<int64,int64> find_change_all(const std::string& src, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn) {
+std::pair<int64,int64> find_change_all(const std::vector<std::string>& src_filenames, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn) {
     typeid_element_map_ptr objs = std::make_shared<typeid_element_map>();
-
-    gzstream::igzstream src_fl(src.c_str());
-    read_xml_change_file_em(&src_fl, objs, true);
+    
+    if (src_filenames.empty()) {
+        throw std::domain_error("no src_filenames");
+    }
+    for (const auto& src: src_filenames) {
+        gzstream::igzstream src_fl(src.c_str());
+        read_xml_change_file_em(&src_fl, objs, true);
+    }
     std::shared_ptr<QtStore> qts, orig_allocs;
     std::shared_ptr<QtTree> tree;
     std::tie(orig_allocs,qts,tree) =  add_orig_elements(objs, prfx, fls);

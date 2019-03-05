@@ -28,7 +28,7 @@ namespace oqt {
 
 
 Way::Way(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<int64> refs)
-    : Element(ElementType::Way,c,i,q,inf,tags), refs_(refs) {}
+    : ElementImpl(Element::data{ElementType::Way,c,i,q,inf,tags}), refs_(refs) {}
 
 
 const std::vector<int64>& Way::Refs() const { return refs_; }

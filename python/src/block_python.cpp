@@ -310,8 +310,8 @@ void block_defs(py::module& m) {
         .value("Remove", changetype::Remove)
         .value("Unchanged", changetype::Unchanged)
         .value("Modify", changetype::Modify)
-        .value("Create", changetype::Create)
-        .export_values();
+        .value("Create", changetype::Create);
+        //.export_values();
     py::enum_<ElementType>(m, "ElementType")
         .value("Node", ElementType::Node)
         .value("Way", ElementType::Way)

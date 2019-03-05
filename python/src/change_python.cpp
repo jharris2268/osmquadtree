@@ -96,10 +96,10 @@ void calc_change_qts_py(element_map& em, std::shared_ptr<QtStore> qts) {
     calc_change_qts(em.u, qts);
 }
 
-std::pair<int64,int64> find_change_all_py(const std::string& src, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn) {
+std::pair<int64,int64> find_change_all_py(const std::vector<std::string>& src_filenames, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn) {
 
     py::gil_scoped_release r;
-    return find_change_all(src,prfx,fls,st,et,outfn);
+    return find_change_all(src_filenames,prfx,fls,st,et,outfn);
 }
 
 size_t write_index_file_py(const std::string& fn, size_t numchan, const std::string& outfn) {

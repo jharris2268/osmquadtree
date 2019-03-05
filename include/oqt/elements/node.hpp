@@ -25,8 +25,19 @@
 
 #include "oqt/elements/element.hpp"
 namespace oqt {
-class Node : public Element {
+
+
+struct node_data : public Element::data {
+            
+    int64 lon;
+    int64 lat;
+};
+
+
+class Node : public ElementImpl<node_data> {
     public:
+        
+    
         Node(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 lon, int64 lat);
         
         virtual ~Node() {}
@@ -36,8 +47,9 @@ class Node : public Element {
 
         
         virtual ElementPtr copy();
-    private:
-        int64 lon_,lat_;
+    //private:
+        //int64 lon_,lat_;
+    //    data data_;
 };
 }
 #endif

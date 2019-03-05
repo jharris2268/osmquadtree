@@ -23,6 +23,8 @@
 #include "oqt/pbfformat/readminimal.hpp"
 #include "oqt/pbfformat/readblock.hpp"
 #include "oqt/utils/pbf/protobuf.hpp"
+#include "oqt/utils/pbf/protobuf_messages.hpp"
+
 #include "oqt/utils/logger.hpp"
 #include <iostream>
 #include <iterator>
@@ -692,6 +694,7 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
     uint64 tg=0, vl=0;
     bool isdata=false;
     
+    
     try {
         while (pos < lim) {
             std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
@@ -714,5 +717,36 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
         Logger::Message() << "?? " << block->index << " " << pos << "/" << lim << " [" << data.size() << "] {" << tg << ", " << vl << ", " << isdata << "}";
     }
     
+     /*
+    handle_data_func f1 = [&block,objflags](const std::string& d, size_t s, size_t e) { readMinimalGroup_alt(block,d,objflags,s,e); };
+    handle_data_func f2 = [&block](const std::string& d, size_t s, size_t e) { block->quadtree=read_quadtree(d.substr(s,e-s)); };
+    handle_value_func f3 = [&block](uint64 vl) { block->quadtree = un_zig_zag(vl); };
+    
+    auto h4 = handle_end{};
+    auto h3 = handle_pbf_value{32, f3, h4};
+    auto h2 = handle_pbf_data{31, f2, h3};
+    auto h1 = handle_pbf_data{2, f1, h2};
+    
+    read_pbf_messages(data, pos, lim, h1);
+    
+    
+   
+    read_pbf_messages(data, pos, lim, 
+        handle_pbf_data{2, f1, 
+            handle_pbf_data{31, f2, {
+                handle_pbf_value{32, f3, handle_end{}}
+            }
+        }
+    });
+    */
+    
 }
+
+
+
+
+
+
+
+
 }

@@ -77,6 +77,11 @@ PrimitiveBlockPtr combine_primitiveblock_two(
         ElementPtr left_object, right_object;
         if (left_idx<left_size) { left_object = left->at(left_idx); }
         if (right_idx<right_size) { right_object = right->at(right_idx); }
+        
+        /*if (apply_change) {
+            if (left_object) { left_object = left_object->copy(); }
+            if (right_object) { right_object = right_object->copy(); }
+        }*/
 
         if (!left_object) {
             if (!apply_change || check_changetype(right_object->ChangeType())) {
@@ -110,9 +115,22 @@ PrimitiveBlockPtr combine_primitiveblock_two(
         }
     }
     if (apply_change) {
+        auto& objs = res->Objects();
+        if (!objs.empty()) {
+            for (size_t i=0; i < objs.size(); i++) {
+                auto e = objs[i];
+                if (e->ChangeType() != changetype::Normal) {
+                    e=e->copy();
+                    e->SetChangeType(changetype::Normal);
+                    objs[i]=e;
+                }
+            }
+        }
+                
+/*                
         for (auto e:res->Objects()) {
             e->SetChangeType(changetype::Normal);
-        }
+        }*/
     }
     return res;
 }
@@ -127,13 +145,20 @@ PrimitiveBlockPtr combine_primitiveblock_many(
     if (changes.size()==0) {
         return main;
     }
+    
+    int64 idx = main ? main->Index() : -1;
+    
     PrimitiveBlockPtr merged_changes;
     merged_changes=changes[0];
     if (changes.size()>1) {
         for (size_t i=1; i < changes.size(); i++) {
-            merged_changes = combine_primitiveblock_two(main->Index(), merged_changes, changes[i], false);
+            merged_changes = combine_primitiveblock_two(idx, merged_changes, changes[i], false);
         }
     }
+    if (!main) {
+        return merged_changes;
+    }
+
     return combine_primitiveblock_two(main->Index(), main, merged_changes, true);
 }
 
@@ -199,6 +224,9 @@ minimal::BlockPtr combine_minimalblock_two(
     minimal::BlockPtr right,
     bool apply_change) {
         
+    if (!left) { return right; }
+    if (!right) { return left; }
+        
     auto res = std::make_shared<minimal::Block>();
     res->index = idx;
     res->quadtree=left->quadtree;
@@ -218,14 +246,21 @@ minimal::BlockPtr combine_minimalblock_many(
     if (changes.size()==0) {
         return main;
     }
+    
+    int64 idx = main ? main->index : -1;
+
+    
     minimal::BlockPtr merged_changes;
     merged_changes=changes[0];
     if (changes.size()>1) {
         for (size_t i=1; i < changes.size(); i++) {
-            merged_changes = combine_minimalblock_two(main->index, merged_changes, changes[i], false);
+            merged_changes = combine_minimalblock_two(idx, merged_changes, changes[i], false);
         }
         //merged_changes = combine_packedblock_vector(changes);
     }
+    if (!main) {
+        return merged_changes;
+    }    
     return combine_minimalblock_two(main->index, main, merged_changes, true);
 }
 }

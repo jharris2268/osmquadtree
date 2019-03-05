@@ -29,7 +29,7 @@ namespace oqt {
 
 
 Relation::Relation(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems)
-    : Element(ElementType::Relation,c,i,q,inf,tags), mems_(mems) {}
+    : ElementImpl(Element::data{ElementType::Relation,c,i,q,inf,tags}), mems_(mems) {}
         
 const std::vector<Member>&  Relation::Members() const { return mems_; }
 

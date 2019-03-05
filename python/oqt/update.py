@@ -65,12 +65,18 @@ class timer:
         return "\n".join(res)
 
 
-def find_change(src, prfx, infiles, startdate, enddate, outfn, use_alt=False,allow_missing_users=False):
-    print("call find_change",repr(src),repr(prfx),repr(infiles),repr(startdate),repr(enddate),repr(outfn),'allow_missing_users=',allow_missing_users)
+def find_change(src_filenames, prfx, infiles, startdate, enddate, outfn, use_alt=False,allow_missing_users=False):
+    print("call find_change",
+        "%d src files: %s%s" % (len(src_filenames),src_filenames[0],(" => %s" % src_filenames[-1] if len(src_filenames)>1 else '')),
+        repr(prfx),
+        "%d infiles %s%s" % (len(infiles), infiles[0],('=> %s' % infiles[-1] if len(infiles)>1 else '')),
+        repr(startdate),repr(enddate),repr(outfn),'allow_missing_users=',allow_missing_users)
+        
     tm = timer()
     objs = _oqt.element_map()
 
-    _oqt.read_xml_change_file_em(src,True,objs,allow_missing_users)
+    for src in src_filenames:
+        _oqt.read_xml_change_file_em(src,True,objs,allow_missing_users)
     tm("read xml")
     
     aoe = _oqt.add_orig_elements_alt if use_alt else _oqt.add_orig_elements
@@ -113,7 +119,9 @@ def check_diffslocation(location, initial=None, srcprfx=None):
         diffs = [l for l in csv.reader(open(location+'state.csv')) if l]
     tms=[]
     if srcprfx is not None:
-        new_diffs,tms_ = fetch_new_diffs(srcprfx, location, int(diffs[-1][0]) if diffs else initial)
+        fd = max(int(diffs[-1][0]) if diffs else 0, initial or 0)
+        if fd==0: raise Exception("??")
+        new_diffs,tms_ = fetch_new_diffs(srcprfx, location, fd)
         tms.extend(tms_)
         if new_diffs:
             ww=csv.writer(open(location+'state.csv','a'))
@@ -180,18 +188,44 @@ def get_state(srcprfx, state_in=None):
 
 def run_initial(prfx, orig_fn, end_date, diffs_location, initial_state, **kw):
     settings = {
-        "RoundTime": kw['roundtime'] if 'roundtime' in kw else True,
+        "RoundTime": kw['roundtime'].lower() in ('yes','true') if 'roundtime' in kw else True,
         "DiffsLocation": diffs_location,
         "InitialState": initial_state,
         "SourcePrfx": kw['sourceprfx'] if 'sourceprfx' in kw else "http://planet.openstreetmap.org/replication/day/",
     }
-    if 'AllowMissingUsers' in kw and kw['AllowMissingUsers'].lower() in ('yes','true'):
+    if 'allowmissingusers' in kw and kw['allowmissingusers'].lower() in ('yes','true'):
         settings['AllowMissingUsers']=True
-    
+    if 'mergeoscfiles' in kw and kw['mergeoscfiles'].lower() in ('yes','true'):
+        settings['MergeOscFiles']=True
+    print(settings)
     json.dump(settings, open(prfx+'settings.json','w'))
     nt = _oqt.write_index_file(prfx+orig_fn)
     filelist = [{'Filename': orig_fn, 'EndDate': end_date, 'NumTiles':nt, 'State': initial_state}]
     json.dump(filelist, open(prfx+'filelist.json','w'))
+
+def split_available(diffsLocation, available, merge_osc_files, max_osc_size=100*1024*1024):
+    if not merge_osc_files:
+        for state, enddate in available:
+            src=["%s%d.osc.gz" % (diffsLocation, state)]
+            yield src, state, enddate
+        
+        return
+    
+    src = []
+    curr_size=0
+    for state, enddate in available:
+        next_src="%s%d.osc.gz" % (diffsLocation, state)
+        src.append(next_src)
+        curr_size += os.stat(next_src).st_size
+        if curr_size >= max_osc_size:
+            yield src, state, enddate
+            src=[]
+            curr_size=0
+    
+    if src:
+        yield src, available[-1][0], available[-1][1]
+        
+    
     
 
 def run_update(prfx, nd=None, check_new_diffs=True):
@@ -204,6 +238,8 @@ def run_update(prfx, nd=None, check_new_diffs=True):
 
     diffsLocation = settings['DiffsLocation']
     allow_missing_users=settings['AllowMissingUsers'] if 'AllowMissingUsers' in settings else False
+    merge_osc_files = settings['MergeOscFiles'] if 'MergeOscFiles' in settings else False
+    
     
     diffs, tms = check_diffslocation(diffsLocation, settings['InitialState'],settings['SourcePrfx'])
 
@@ -217,19 +253,24 @@ def run_update(prfx, nd=None, check_new_diffs=True):
         return 1
     if nd is not None and len(available)>nd:
         available = available[:nd]
-    print("update\n%s" % ("\n".join("%d %s" % (a,datestr(b)) for a,b in available),))
-
     
-    for state, enddate in available:
-        startdate = xmlchange.read_timestamp(files[-1]['EndDate'])
-        src = "%s%d.osc.gz" % (diffsLocation, state)
+    if len(available)==1:
+        print("update 1 osc: %d %s" % (available[0][0], available[0][-1]))
+    else:
+        print("update %d osc: %d %s => %d %s" % (len(available),available[0][0], available[0][-1],available[-1][0], available[-1][-1]))
+
+    for src, state, enddate in split_available(diffsLocation, available, merge_osc_files):
+        
         infiles = [f['Filename'] for f in files]
         outfn  = make_filename(enddate, settings['RoundTime'])
 
+        startdate = xmlchange.read_timestamp(files[-1]['EndDate'])
         tm, ln, nt = find_change(src, prfx, infiles, startdate, enddate, outfn,allow_missing_users=allow_missing_users)
         tms.append((state, tm))
         files.append({'State':state, 'NumTiles': nt, 'EndDate': datestr(enddate), 'Filename':outfn})
 
+
+    
     json.dump(files, open(prfx+'filelist.json','w'))
     if len(tms)>1:
         for a,b in tms:

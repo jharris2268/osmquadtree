@@ -407,6 +407,8 @@ void geometry_defs(py::module& m) {
     m.def("make_complicatedpolygon", &make_complicatedpolygon, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("part"), py::arg("exterior"), py::arg("interiors"), py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
 
 
+    
+
     py::class_<LonLat>(m,"LonLat")
         .def(py::init<int64,int64>())
         .def_readonly("lon", &LonLat::lon)
@@ -646,5 +648,14 @@ void geometry_defs(py::module& m) {
         })
     ;
 
+    
+    py::class_<geometry::LonLatStore, std::shared_ptr<geometry::LonLatStore>>(m, "LonLatStore")
+        .def("add_tile", &geometry::LonLatStore::add_tile)
+        .def("finish", &geometry::LonLatStore::finish)
+        .def("get_lonlats", &geometry::LonLatStore::get_lonlats)
+    ;
 
+    m.def("make_lonlatstore", &geometry::make_lonlatstore);
+    m.def("make_waywithnodes", [](std::shared_ptr<Way> way, const std::vector<LonLat>& lonlats) { return std::make_shared<geometry::WayWithNodes>(way, lonlats); });
+    
 }
