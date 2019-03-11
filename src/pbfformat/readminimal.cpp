@@ -42,7 +42,7 @@ minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_
     auto result = std::make_shared<minimal::Block>();
     result->index = index;
     
-    if (!(objflags&48)) {
+    if ((objflags&32)==0) {
         readMinimalBlock_alt(result, data, objflags);
     } else {
 
@@ -439,7 +439,16 @@ size_t readPackedDelta_altcb(const std::string& data, size_t pos, size_t len, st
 }
     
 
-size_t readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::string& data, size_t posin, size_t len) {
+
+void readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::string& data, size_t pos, size_t lim) {
+    read_pbf_messages(data,pos,lim, 
+        handle_pbf_packed_int{1, nullptr, [&block,&firstnd](size_t i, uint64 v) { block->nodes.at(firstnd+i).version = v; }},
+        handle_pbf_packed_int_delta{2, nullptr, [&block,&firstnd](size_t i, int64 v) { block->nodes.at(firstnd+i).timestamp = v; }}
+    );
+    
+    
+    /*
+size_t readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::string& data, size_t posin, size_t len) {    
     size_t pos=posin;
     uint64 tg=0, vl=0;
     bool isdata=false;
@@ -463,12 +472,35 @@ size_t readDenseInfo_alt(minimal::BlockPtr& block, size_t firstnd, const std::st
         Logger::Message() << "?? readDenseInfo_alt " << posin << ", " << len << ", @ " << pos;
         throw std::domain_error("wtf");
     }
-    return pos;
+    return pos;*/
 }
             
 
 void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     size_t firstnd = block->nodes.size();
+    
+    
+    read_pbf_messages(data,pos,lim,
+        handle_pbf_data{1, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+            size_t num_ids = numPacked(d,p,l-p);
+            block->nodes.resize(firstnd+num_ids);
+            readPackedDelta_altcb(d,p,l-p,[&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; });
+        }},
+        handle_pbf_data{5, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+            readDenseInfo_alt(block,firstnd,d,p,l);
+        }},
+        handle_pbf_data{8, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+            readPackedDelta_altcb(d,p,l-p, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lat = v; });
+        }},
+        handle_pbf_data{9, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+            readPackedDelta_altcb(d,p,l-p, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lon = v; });
+        }},
+        handle_pbf_data{20, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+            readPackedDelta_altcb(d,p,l-p, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).quadtree = v; });
+        }}
+    );
+    /*
+    
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -481,11 +513,6 @@ void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, siz
     block->nodes.resize(firstnd + num_ids);
     
     pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; });
-    /*int64 v=0;
-    for (size_t i=0; i < num_ids; i++) {
-        v += read_varint(data,pos);
-        block->nodes[firstnd + i].id=v;
-    }*/
     
     while (pos < lim) {
         std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
@@ -494,36 +521,31 @@ void readMinimalDense_alt(minimal::BlockPtr& block, const std::string& data, siz
             pos = readDenseInfo_alt(block,firstnd,data,pos,vl);
         } else if (isdata && (tg == 8)) {
             pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lat = v; });
-            /*
             
-            v=0;
-            for (size_t i=0; i < num_ids; i++) {
-                v += read_varint(data,pos);
-                block->nodes[firstnd + i].lat=v;
-            }*/
         } else if (isdata && (tg==9)) {
             pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lon = v; });
-            /*v=0;
-            for (size_t i=0; i < num_ids; i++) {
-                v += read_varint(data,pos);
-                block->nodes[firstnd + i].lon=v;
-            }*/
+           
         } else if (isdata && (tg==20)) {
             pos = readPackedDelta_altcb(data, pos, vl, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).quadtree = v; });
-            /*v=0;
-            for (size_t i=0; i < num_ids; i++) {
-                v += read_varint(data,pos);
-                block->nodes[firstnd + i].quadtree=v;
-            }*/
+            
         } else if (isdata) {
             pos += vl;
         }
     }
-    
+    */
 }
 
 template <class T>
-size_t readMinimalInfo_alt(T& obj, const std::string& data, size_t pos, size_t lim) {
+void/*size_t*/ readMinimalInfo_alt(T& obj, const std::string& data, size_t pos, size_t lim) {
+    
+    /*
+    read_pbf_messages(data,pos,lim,
+        handle_pbf_value{1,[&obj](uint64 v) { obj.version=v; }},
+        handle_pbf_value{2,[&obj](uint64 v) { obj.timestamp=v; }}
+    );
+    
+    */
+    
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -539,7 +561,7 @@ size_t readMinimalInfo_alt(T& obj, const std::string& data, size_t pos, size_t l
         }
     }
     if (pos != lim) { throw std::domain_error("wtf"); }
-    return pos;
+    //return pos;*/
 }
     
 
@@ -547,6 +569,27 @@ void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_
     //if (block->ways.capacity() == block->ways.size()) { block->ways.reserve(block->ways.size()+1000); }
     
     minimal::Way w;
+    
+    read_pbf_messages(data, pos, lim, 
+        handle_pbf_value{1, [&w](uint64 v) { w.id=v; }},
+        handle_pbf_data{4, [&w](const std::string& d, size_t p, size_t l) { readMinimalInfo_alt(w, d, p, l); }},
+        handle_pbf_data{8, [&w](const std::string& d, size_t p, size_t l) { w.refs_data=d.substr(p,l-p); }},
+        handle_pbf_value{20, [&w](uint64 v) { w.quadtree = un_zig_zag(v); }}
+    );
+    /*if (w.timestamp<1100000000) {
+        read_pbf_messages(data,pos,lim,
+            handle_pbf_data{4,[](const std::string& d, size_t p, size_t l) {
+                read_pbf_messagesxx(d,p,l,
+                    handle_pbf_value{1,[](uint64 v) { std::cout << "vers=" << v; }},
+                    handle_pbf_value{2,[](uint64 v) { std::cout << " timestamp=" << v; }}
+                );
+            }}
+        );
+        std::cout << "  [" << block->ways.size() << "] ?? way " << w.id << " " << w.version << " " << w.timestamp << std::endl;
+    }*/
+    
+    block->ways.emplace_back(std::move(w));
+    /*
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -571,12 +614,26 @@ void readMinimalWay_alt(minimal::BlockPtr& block, const std::string& data, size_
         
     }
     
-    block->ways.push_back(std::move(w));
+    block->ways.push_back(std::move(w));*/
 }
 void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
     //if (block->relations.capacity() == block->relations.size()) { block->relations.reserve(block->relations.size()+1000); }
     
     minimal::Relation r;
+    
+    
+    read_pbf_messages(data, pos, lim, 
+        handle_pbf_value{1, [&r](uint64 v) { r.id=v; }},
+        handle_pbf_data{4, [&r](const std::string& d, size_t p, size_t l) { readMinimalInfo_alt(r, d, p, l); }},
+        handle_pbf_data{9, [&r](const std::string& d, size_t p, size_t l) { r.refs_data=d.substr(p,l-p); }},
+        handle_pbf_data{10, [&r](const std::string& d, size_t p, size_t l) { r.tys_data=d.substr(p,l-p); }},
+        handle_pbf_value{20, [&r](uint64 v) { r.quadtree = un_zig_zag(v); }}
+    );
+    block->relations.emplace_back(std::move(r));
+    
+    
+    /*
+    
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -599,7 +656,7 @@ void readMinimalRelation_alt(minimal::BlockPtr& block, const std::string& data, 
             pos+=vl;
         }
     }
-    block->relations.push_back(std::move(r));
+    block->relations.push_back(std::move(r));*/
 }
 void readMinimalGeometry_alt(minimal::BlockPtr& block, size_t gm_type, const std::string& data, size_t pos, size_t lim) {
     //if (block->relations.capacity() == block->relations.size()) { block->relations.reserve(block->relations.size()+1000); }
@@ -607,6 +664,15 @@ void readMinimalGeometry_alt(minimal::BlockPtr& block, size_t gm_type, const std
     minimal::Geometry r;
     r.ty = gm_type;
     
+    
+    read_pbf_messages(data, pos, lim, 
+        handle_pbf_value{1, [&r](uint64 v) { r.id=v; }},
+        handle_pbf_data{4, [&r](const std::string& d, size_t p, size_t l) { readMinimalInfo_alt(r, d, p, l); }},
+        handle_pbf_value{20, [&r](uint64 v) { r.quadtree = un_zig_zag(v); }}
+    );
+    block->geometries.emplace_back(std::move(r));
+    
+    /*
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -623,17 +689,42 @@ void readMinimalGeometry_alt(minimal::BlockPtr& block, size_t gm_type, const std
             pos+=vl;
         }
     }
-    block->geometries.push_back(std::move(r));
+    block->geometries.push_back(std::move(r));*/
 }
 
 
 void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, size_t objflags, size_t pos, size_t lim) {
-    uint64 tg=0, vl=0;
-    bool isdata=false;
+    
     
     
     size_t np=block->nodes.size(), wp=block->ways.size(), rp=block->relations.size(), gp=block->geometries.size();
     size_t ct=0;
+    
+    
+    
+    
+    read_pbf_messages(data, pos, lim, 
+        handle_pbf_data{1, [](const std::string& d, size_t p, size_t l) { throw std::domain_error("can't handle non-dense nodes"); }},
+        handle_pbf_data{2, [&block,&objflags](const std::string& d, size_t p, size_t l) {
+            block->has_nodes=true;
+            if (objflags&1) { readMinimalDense_alt(block,d,p,l); }
+        }},
+        handle_pbf_data{3, [&block,&objflags](const std::string& d, size_t p, size_t l) {
+            if (objflags&2) { readMinimalWay_alt(block,d,p,l); }
+        }},
+        handle_pbf_data{4, [&block,&objflags](const std::string& d, size_t p, size_t l) {
+            if (objflags&4) { readMinimalRelation_alt(block,d,p,l); }
+        }},
+        handle_pbf_data_mt{20,24,[&block,&objflags](uint64 tg, const std::string& d, size_t p, size_t l) {
+            if (objflags&8) { readMinimalGeometry_alt(block, tg-17, d,p,l); }
+        }},
+        handle_pbf_value{10, [&ct](uint64 vl) { ct=vl; }}
+        
+    );
+    
+    /*
+    uint64 tg=0, vl=0;
+    bool isdata=false;
     while (pos < lim) {
         std::tie(tg,vl,isdata) = read_pbf_tag_alt(data,pos);
     
@@ -659,7 +750,7 @@ void readMinimalGroup_alt(minimal::BlockPtr& block, const std::string& data, siz
             pos+=vl;
         }
     }
-    
+    */
     
     if (ct!=0) {
         if (block->nodes.size()>np) {
@@ -691,6 +782,7 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
     size_t pos=0;
     size_t lim=data.size();
     
+    /*
     uint64 tg=0, vl=0;
     bool isdata=false;
     
@@ -716,29 +808,20 @@ void readMinimalBlock_alt(minimal::BlockPtr block, const std::string& data, size
     } catch (const std::out_of_range& e) {
         Logger::Message() << "?? " << block->index << " " << pos << "/" << lim << " [" << data.size() << "] {" << tg << ", " << vl << ", " << isdata << "}";
     }
-    
-     /*
+    */
+     
     handle_data_func f1 = [&block,objflags](const std::string& d, size_t s, size_t e) { readMinimalGroup_alt(block,d,objflags,s,e); };
     handle_data_func f2 = [&block](const std::string& d, size_t s, size_t e) { block->quadtree=read_quadtree(d.substr(s,e-s)); };
     handle_value_func f3 = [&block](uint64 vl) { block->quadtree = un_zig_zag(vl); };
     
-    auto h4 = handle_end{};
-    auto h3 = handle_pbf_value{32, f3, h4};
-    auto h2 = handle_pbf_data{31, f2, h3};
-    auto h1 = handle_pbf_data{2, f1, h2};
+       
     
-    read_pbf_messages(data, pos, lim, h1);
-    
-    
-   
     read_pbf_messages(data, pos, lim, 
-        handle_pbf_data{2, f1, 
-            handle_pbf_data{31, f2, {
-                handle_pbf_value{32, f3, handle_end{}}
-            }
-        }
-    });
-    */
+        handle_pbf_data{2, f1},
+        handle_pbf_data{31, f2},
+        handle_pbf_value{32, f3}
+    );
+    
     
 }
 

@@ -26,15 +26,7 @@
 #include "oqt/elements/element.hpp"
 namespace oqt {
 
-
-struct node_data : public Element::data {
-            
-    int64 lon;
-    int64 lat;
-};
-
-
-class Node : public ElementImpl<node_data> {
+class Node : public Element {
     public:
         
     
@@ -47,9 +39,9 @@ class Node : public ElementImpl<node_data> {
 
         
         virtual ElementPtr copy();
-    //private:
-        //int64 lon_,lat_;
-    //    data data_;
+    private:
+        int64 lon_,lat_;
+        
 };
 }
 #endif

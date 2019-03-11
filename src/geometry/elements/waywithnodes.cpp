@@ -35,13 +35,13 @@ namespace oqt {
 namespace geometry {
 
 WayWithNodes::WayWithNodes(std::shared_ptr<Way> wy, const std::vector<LonLat>& lonlats_)
-    : ElementImpl(Element::data{ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()}), refs(wy->Refs()), lonlats(lonlats_) {
+    : Element(ElementType::WayWithNodes, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), wy->Tags()), refs(wy->Refs()), lonlats(lonlats_) {
     for (auto& l : lonlats) {
         expand_point(bounds, l.lon,l.lat);
     }
 }
 WayWithNodes:: WayWithNodes(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tgs, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, const bbox& bounds_)
-    : ElementImpl(Element::data{ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs}), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
+    : Element(ElementType::WayWithNodes,changetype::Normal, id,qt,inf,tgs), refs(refs_), lonlats(lonlats_), bounds(bounds_) {}
 
 
 const std::vector<int64>& WayWithNodes::Refs() const { return refs; }

@@ -27,7 +27,7 @@
 #include "oqt/pbfformat/idset.hpp"
 #include "oqt/elements/member.hpp"
 namespace oqt {
-class Relation : public ElementImpl<Element::data> {
+class Relation : public Element {
     public:
         Relation(changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems);
         virtual ~Relation() {}
