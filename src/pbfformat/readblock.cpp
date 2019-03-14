@@ -463,7 +463,9 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
 
 
 PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
-
+    if (objflags&64) {
+        return read_primitive_block_new(idx,data,change,objflags,ids,readGeometry);
+    }
 
     std::vector<std::string> stringtable;
 

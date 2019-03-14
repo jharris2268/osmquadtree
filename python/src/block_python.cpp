@@ -444,6 +444,8 @@ void block_defs(py::module& m) {
 
     
     m.def("read_primitive_block", &read_primitive_block_py, py::arg("index"), py::arg("data"), py::arg("change"));
+    m.def("read_primitive_block_new", [](size_t idx, const std::string& d, bool c) { return read_primitive_block_new(idx,d,c,7,nullptr,geometry::read_geometry); },
+        py::arg("index"), py::arg("data"), py::arg("change"));
 
     
     py::class_<minimal::Block, std::shared_ptr<minimal::Block>>(m, "MinimalBlock")

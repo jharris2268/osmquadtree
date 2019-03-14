@@ -2,6 +2,7 @@ set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/fileblock.cpp
     ${CMAKE_CURRENT_LIST_DIR}/objsidset.cpp
     ${CMAKE_CURRENT_LIST_DIR}/readblock.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/readblocknew.cpp
     ${CMAKE_CURRENT_LIST_DIR}/readblockscaller.cpp
     ${CMAKE_CURRENT_LIST_DIR}/readfile.cpp
     ${CMAKE_CURRENT_LIST_DIR}/readfileblocks.cpp

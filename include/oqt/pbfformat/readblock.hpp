@@ -49,6 +49,9 @@ HeaderPtr read_header_block(const std::string& data, int64 fl, const std::string
 void read_filelocs_json(HeaderPtr head, int64 fl, const std::string& filename, const std::string& filelocssuffix);
 
 
-    
+PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change,
+    size_t objflags=7, IdSetPtr ids=IdSetPtr(),
+    read_geometry_func readGeometry = read_geometry_func());
+
 }
 #endif //PBFFORMAT_READBLOCK_HPP

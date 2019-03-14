@@ -69,3 +69,13 @@ class PbfFile:
             self.fileobj.seek(loc)
         
         return read_file_block(self.fileobj)
+
+    def __iter__(self):
+        self.fileobj.seek(0)
+        return self
+    
+    def next(self):
+        try:
+            return self.read_block()
+        except:
+            raise StopIteration()

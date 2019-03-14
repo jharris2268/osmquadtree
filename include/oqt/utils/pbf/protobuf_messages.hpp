@@ -58,7 +58,7 @@ class handle_end : public handle_t {
         }
 };
 */
-void handle_end_f(uint64 tg, const std::string& data, size_t& pos) {
+inline void handle_end_f(uint64 tg, const std::string& data, size_t& pos) {
     if ((tg&7) == 2) {
         uint64 ln = read_unsigned_varint(data,pos);
         pos += ln;
@@ -357,7 +357,23 @@ void read_pbf_messages(const std::string& data, size_t pos, size_t end, H1 h1, H
     }
 }
 
+template <class H1, class H2, class H3, class H4, class H5, class H6, class H7, class H8>
+void read_pbf_messages(const std::string& data, size_t pos, size_t end, H1 h1, H2 h2, H3 h3, H4 h4, H5 h5, H6 h6, H7 h7, H8 h8) {
     
+    while (pos < end) {
+        
+        uint64 tg = read_unsigned_varint(data, pos);
+        if (h1(tg,data,pos)) {}
+        else if (h2(tg,data,pos)) {}
+        else if (h3(tg,data,pos)) {}
+        else if (h4(tg,data,pos)) {}
+        else if (h5(tg,data,pos)) {}
+        else if (h6(tg,data,pos)) {}
+        else if (h7(tg,data,pos)) {}
+        else if (h8(tg,data,pos)) {}
+        else { handle_end_f(tg,data,pos); }
+    }
+}
 
 
 
