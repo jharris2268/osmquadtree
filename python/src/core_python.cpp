@@ -197,12 +197,12 @@ void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, 
 }
 
 
-std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, ReadBlockFlags objflags, bool count_full) {
+std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, ReadBlockFlags objflags, bool use_minimal) {
 
     
     Logger::Get().reset_timing();
     py::gil_scoped_release r;
-    auto res = run_count(fn,numchan,true,true,objflags, count_full);
+    auto res = run_count(fn,numchan,true,true,objflags, use_minimal);
 
     Logger::Get().timing_messages();
 
@@ -516,7 +516,7 @@ void core_defs(py::module& m) {
          py::arg("fn"),
          py::arg("numchan")=4,
          py::arg("objflags")=ReadBlockFlags::Empty,
-         py::arg("count_full")=false
+         py::arg("use_minimal")=true
     );
 
     m.def("calcqts", &run_calcqts_py, "calculate quadtrees",
