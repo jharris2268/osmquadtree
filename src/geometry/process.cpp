@@ -525,7 +525,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
-    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
       
     
     return errors_res;
@@ -549,7 +549,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
-    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
     
     
     sb->finish();
@@ -616,7 +616,7 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, ReadBlockFlags::Empty);
       
     
     return errors_res;
@@ -639,7 +639,7 @@ mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
     );
     
-    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, 7, 1<<14);
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
     
     return errors_res;
 
@@ -660,7 +660,7 @@ mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& param
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
     
-    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, 7);
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, ReadBlockFlags::Empty);
       
     
     return errors_res;

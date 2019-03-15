@@ -558,7 +558,7 @@ class CountProgress {
             
     
     
-std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, size_t objflags, bool use_minimal) {
+std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal) {
     
     
     auto& lg=Logger::Get();

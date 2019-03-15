@@ -44,7 +44,7 @@ void read_minimal_dense_info(minimal::BlockPtr& block, size_t firstnd, const std
 }
             
 
-void read_minimal_dense(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
+void read_minimal_dense(minimal::BlockPtr& block, bool skip_info, const std::string& data, size_t pos, size_t lim) {
     size_t firstnd = block->nodes.size();
     
     
@@ -54,7 +54,7 @@ void read_minimal_dense(minimal::BlockPtr& block, const std::string& data, size_
                 [&block,&firstnd](size_t sz) { block->nodes.resize(firstnd+sz); },
                 [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).id = v; }
         },
-        handle_pbf_data{5, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
+        handle_pbf_data{skip_info ? 0ull : 5, [&block,&firstnd](const std::string& d, size_t p, size_t l) {
             read_minimal_dense_info(block,firstnd,d,p,l);
         }},
         handle_pbf_packed_int_delta{8, nullptr, [&block,&firstnd](const size_t& i, const int64& v) { block->nodes.at(firstnd+i).lat = v; }},
@@ -77,13 +77,13 @@ void read_minimal_info(T& obj, const std::string& data, size_t pos, size_t lim) 
 }
     
 
-void read_minimal_way(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
+void read_minimal_way(minimal::BlockPtr& block, bool skip_info, const std::string& data, size_t pos, size_t lim) {
     
     minimal::Way w;
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&w](uint64 v) { w.id=v; }},
-        handle_pbf_data{4, [&w](const std::string& d, size_t p, size_t l) { read_minimal_info(w, d, p, l); }},
+        handle_pbf_data{skip_info ? 0ull : 4, [&w](const std::string& d, size_t p, size_t l) { read_minimal_info(w, d, p, l); }},
         handle_pbf_data{8, [&w](const std::string& d, size_t p, size_t l) { w.refs_data=d.substr(p,l-p); }},
         handle_pbf_value{20, [&w](uint64 v) { w.quadtree = un_zig_zag(v); }}
     );
@@ -91,14 +91,14 @@ void read_minimal_way(minimal::BlockPtr& block, const std::string& data, size_t 
     block->ways.emplace_back(std::move(w));
     
 }
-void read_minimal_relation(minimal::BlockPtr& block, const std::string& data, size_t pos, size_t lim) {
+void read_minimal_relation(minimal::BlockPtr& block, bool skip_info, const std::string& data, size_t pos, size_t lim) {
     
     minimal::Relation r;
     
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&r](uint64 v) { r.id=v; }},
-        handle_pbf_data{4, [&r](const std::string& d, size_t p, size_t l) { read_minimal_info(r, d, p, l); }},
+        handle_pbf_data{skip_info ? 0ull : 4, [&r](const std::string& d, size_t p, size_t l) { read_minimal_info(r, d, p, l); }},
         handle_pbf_data{9, [&r](const std::string& d, size_t p, size_t l) { r.refs_data=d.substr(p,l-p); }},
         handle_pbf_data{10, [&r](const std::string& d, size_t p, size_t l) { r.tys_data=d.substr(p,l-p); }},
         handle_pbf_value{20, [&r](uint64 v) { r.quadtree = un_zig_zag(v); }}
@@ -107,7 +107,7 @@ void read_minimal_relation(minimal::BlockPtr& block, const std::string& data, si
     
     
 }
-void read_minimal_geometry(minimal::BlockPtr& block, size_t gm_type, const std::string& data, size_t pos, size_t lim) {
+void read_minimal_geometry(minimal::BlockPtr& block, bool skip_info, size_t gm_type, const std::string& data, size_t pos, size_t lim) {
     
     minimal::Geometry r;
     r.ty = gm_type;
@@ -115,7 +115,7 @@ void read_minimal_geometry(minimal::BlockPtr& block, size_t gm_type, const std::
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&r](uint64 v) { r.id=v; }},
-        handle_pbf_data{4, [&r](const std::string& d, size_t p, size_t l) { read_minimal_info(r, d, p, l); }},
+        handle_pbf_data{skip_info ? 0ull : 4, [&r](const std::string& d, size_t p, size_t l) { read_minimal_info(r, d, p, l); }},
         handle_pbf_value{20, [&r](uint64 v) { r.quadtree = un_zig_zag(v); }}
     );
     block->geometries.emplace_back(std::move(r));
@@ -133,27 +133,27 @@ void set_changetype(std::vector<T>& objs, size_t first, size_t ct) {
     }
 }
 
-void read_minimal_group(minimal::BlockPtr& block, const std::string& data, size_t objflags, size_t pos, size_t lim) {
+void read_minimal_group(minimal::BlockPtr& block, const std::string& data, ReadBlockFlags objflags, size_t pos, size_t lim) {
     
     
     
     size_t np=block->nodes.size(), wp=block->ways.size(), rp=block->relations.size(), gp=block->geometries.size();
     size_t ct=0;
-    
+    bool skip_info = has_flag(objflags, ReadBlockFlags::SkipInfo);
     read_pbf_messages(data, pos, lim, 
-        handle_pbf_data{1, [](const std::string& d, size_t p, size_t l) { throw std::domain_error("can't handle non-dense nodes"); }},
-        handle_pbf_data{2, [&block,&objflags](const std::string& d, size_t p, size_t l) {
+        handle_pbf_data{has_flag(objflags, ReadBlockFlags::SkipNodes) ? 0ull : 1, [](const std::string& d, size_t p, size_t l) { throw std::domain_error("can't handle non-dense nodes"); }},
+        handle_pbf_data{has_flag(objflags, ReadBlockFlags::SkipNodes) ? 0ull : 2, [&block,skip_info](const std::string& d, size_t p, size_t l) {
             block->has_nodes=true;
-            if (objflags&1) { read_minimal_dense(block,d,p,l); }
+            read_minimal_dense(block,skip_info, d,p,l);
         }},
-        handle_pbf_data{3, [&block,&objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&2) { read_minimal_way(block,d,p,l); }
+        handle_pbf_data{has_flag(objflags, ReadBlockFlags::SkipWays) ? 0ull : 3, [&block,skip_info](const std::string& d, size_t p, size_t l) {
+            read_minimal_way(block,skip_info, d,p,l);
         }},
-        handle_pbf_data{4, [&block,&objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&4) { read_minimal_relation(block,d,p,l); }
+        handle_pbf_data{has_flag(objflags, ReadBlockFlags::SkipRelations) ? 0ull : 4, [&block,skip_info](const std::string& d, size_t p, size_t l) {
+            read_minimal_relation(block,skip_info, d,p,l);
         }},
-        handle_pbf_data_mt{20,24,[&block,&objflags](uint64 tg, const std::string& d, size_t p, size_t l) {
-            if (objflags&8) { read_minimal_geometry(block, tg-17, d,p,l); }
+        handle_pbf_data_mt{20,24,[&block,&objflags,skip_info](uint64 tg, const std::string& d, size_t p, size_t l) {
+            if (!has_flag(objflags, ReadBlockFlags::SkipGeometries)) { read_minimal_geometry(block, skip_info, tg-17, d,p,l); }
         }},
         handle_pbf_value{10, [&ct](uint64 vl) { ct=vl; }}
         
@@ -168,7 +168,7 @@ void read_minimal_group(minimal::BlockPtr& block, const std::string& data, size_
                
 }
     
-minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, size_t objflags) {
+minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, ReadBlockFlags objflags) {
 
     auto result = std::make_shared<minimal::Block>();
     result->index = index;
@@ -211,25 +211,25 @@ void read_quadtree_vector_dense(std::shared_ptr<quadtree_vector>& block, const s
 }
 
 
-void read_quadtree_vector_group(std::shared_ptr<quadtree_vector>& block, size_t objflags, const std::string& data, size_t pos, size_t lim) {
+void read_quadtree_vector_group(std::shared_ptr<quadtree_vector>& block, ReadBlockFlags objflags, const std::string& data, size_t pos, size_t lim) {
     
     block->reserve(8000);
     read_pbf_messages(data,pos,lim,
         handle_pbf_data{1, [&block,objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&1) { read_quadtree_vector_object(block, 0, d, p, l); }
+            if (!has_flag(objflags,ReadBlockFlags::SkipNodes)) { read_quadtree_vector_object(block, 0, d, p, l); }
         }},
         
         handle_pbf_data{2, [&block, objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&1) { read_quadtree_vector_dense(block, d, p, l); }
+            if (!has_flag(objflags,ReadBlockFlags::SkipNodes)) { read_quadtree_vector_dense(block, d, p, l); }
         }},
         handle_pbf_data{3, [&block,objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&2) { read_quadtree_vector_object(block, 1, d, p, l); }
+            if (!has_flag(objflags,ReadBlockFlags::SkipWays)) { read_quadtree_vector_object(block, 1, d, p, l); }
         }},
         handle_pbf_data{4, [&block,objflags](const std::string& d, size_t p, size_t l) {
-            if (objflags&4) { read_quadtree_vector_object(block, 2, d, p, l); }
+            if (!has_flag(objflags,ReadBlockFlags::SkipRelations)) { read_quadtree_vector_object(block, 2, d, p, l); }
         }},
         handle_pbf_data_mt{20,24, [&block,objflags](size_t tg, const std::string& d, size_t p, size_t l) {
-            if (objflags&8) { read_quadtree_vector_object(block, tg-17, d, p, l); }
+            if (!has_flag(objflags,ReadBlockFlags::SkipGeometries)) { read_quadtree_vector_object(block, tg-17, d, p, l); }
         }}
     );
 }
@@ -238,7 +238,7 @@ void read_quadtree_vector_group(std::shared_ptr<quadtree_vector>& block, size_t 
     
 
 
-std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& data, size_t objflags) {
+std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& data, ReadBlockFlags objflags) {
 
     auto result = std::make_shared<quadtree_vector>();
 

@@ -30,7 +30,7 @@ size_t read_blocks_merge_py(
     std::vector<std::string> filenames,
     std::function<bool(std::vector<std::shared_ptr<BlockType>>)> callback,
     src_locs_map locs, size_t numchan, size_t numblocks,
-    IdSetPtr filter, size_t objflags,
+    IdSetPtr filter, ReadBlockFlags objflags,
     size_t buffer) {
 
 
@@ -48,7 +48,7 @@ size_t read_blocks_primitiveblock_py(
     const std::string& filename,
     std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
-    IdSetPtr filter, bool ischange, size_t objflags) {
+    IdSetPtr filter, bool ischange, ReadBlockFlags objflags) {
 
     
     py::gil_scoped_release r;
@@ -64,7 +64,7 @@ size_t read_blocks_minimalblock_py(
     const std::string& filename,
     std::function<bool(std::vector<minimal::BlockPtr>)> callback,
     std::vector<int64> locs, size_t numchan, size_t numblocks,
-    size_t objflags) {
+    ReadBlockFlags objflags) {
 
 
     py::gil_scoped_release r;
@@ -124,7 +124,7 @@ ElementPtr make_relation(int64 id, ElementInfo inf, std::vector<Tag> tags, std::
 }
 
 PrimitiveBlockPtr read_primitive_block_py(int64 idx, py::bytes data, bool change) {
-    return read_primitive_block(idx,data,change,15,nullptr,geometry::read_geometry);
+    return read_primitive_block(idx,data,change,ReadBlockFlags::Empty,nullptr,geometry::read_geometry);
 }
 
 class IdSetInvert : public IdSet {
@@ -206,7 +206,7 @@ void read_some_blocks_primitiveblock(
     primitiveblock_callback callback,
     size_t numblocks,
     size_t numchan,
-    IdSetPtr filter, bool ischange, size_t objflags) {
+    IdSetPtr filter, bool ischange, ReadBlockFlags objflags) {
         
     auto combine = multi_threaded_callback<PrimitiveBlock>::make(callback, numchan);
     
@@ -244,7 +244,7 @@ void read_some_blocks_primitiveblock(
 class ReadBlocksIter {
     
     public:
-        ReadBlocksIter(const std::string& fn, std::vector<int64> locs, size_t numchan_, size_t nb_, std::shared_ptr<IdSet> ids_,bool change_, size_t flags_)
+        ReadBlocksIter(const std::string& fn, std::vector<int64> locs, size_t numchan_, size_t nb_, std::shared_ptr<IdSet> ids_,bool change_, ReadBlockFlags flags_)
             : numchan(numchan_), change(change_), flags(flags_), ids(ids_), nb(nb_) {
                 
             int64 fs = file_size(fn);
@@ -275,7 +275,7 @@ class ReadBlocksIter {
     
         size_t numchan;
         bool change;
-        size_t flags;
+        ReadBlockFlags flags;
         std::shared_ptr<IdSet> ids;
         size_t nb;
         
@@ -283,7 +283,22 @@ class ReadBlocksIter {
             
     
 };      
+
+ReadBlockFlags make_readblockflags(
+    bool skip_nodes, bool skip_ways, bool skip_relations, bool skip_geometries,
+    bool skip_strings, bool skip_info, bool use_alternative) {
     
+    ReadBlockFlags ans = ReadBlockFlags::Empty;
+    
+    if (skip_nodes) { ans = ans | ReadBlockFlags::SkipNodes; }
+    if (skip_ways) { ans = ans | ReadBlockFlags::SkipWays; }
+    if (skip_relations) { ans = ans | ReadBlockFlags::SkipRelations; }
+    if (skip_geometries) { ans = ans | ReadBlockFlags::SkipGeometries; }
+    if (skip_strings) { ans = ans | ReadBlockFlags::SkipStrings; }
+    if (skip_info) { ans = ans | ReadBlockFlags::SkipInfo; }
+    if (use_alternative) { ans = ans | ReadBlockFlags::UseAlternative; }
+    return ans;
+}
 
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
@@ -444,7 +459,7 @@ void block_defs(py::module& m) {
 
     
     m.def("read_primitive_block", &read_primitive_block_py, py::arg("index"), py::arg("data"), py::arg("change"));
-    m.def("read_primitive_block_new", [](size_t idx, const std::string& d, bool c) { return read_primitive_block_new(idx,d,c,7,nullptr,geometry::read_geometry); },
+    m.def("read_primitive_block_new", [](size_t idx, const std::string& d, bool c) { return read_primitive_block_new(idx,d,c,ReadBlockFlags::Empty,nullptr,geometry::read_geometry); },
         py::arg("index"), py::arg("data"), py::arg("change"));
 
     
@@ -541,6 +556,24 @@ void block_defs(py::module& m) {
             })
     ;
     
+    py::enum_<ReadBlockFlags>(m, "ReadBlockFlags_");
+    m.def("ReadBlockFlags", &make_readblockflags, 
+        py::arg("skip_nodes")=false, py::arg("skip_ways")=false,
+        py::arg("skip_relations")=false, py::arg("skip_geometries")=false,
+        py::arg("skip_strings")=false, py::arg("skip_info")=false,
+        py::arg("use_alternative")=false
+    );
+    
+/*        .value("Empty", ReadBlockFlags::Empty)
+        .value("SkipNodes", ReadBlockFlags::SkipNodes)
+        .value("SkipWays", ReadBlockFlags::SkipWays)
+        .value("SkipRelations", ReadBlockFlags::SkipRelations)
+        .value("SkipGeometries", ReadBlockFlags::SkipGeometries)
+        .value("SkipStrings", ReadBlockFlags::SkipStrings)
+        .value("SkipInfo", ReadBlockFlags::SkipInfo)
+        .value("UseAlternative", ReadBlockFlags::UseAlternative)
+    ;*/
+    
     
     py::class_<ReadBlocksCaller, std::shared_ptr<ReadBlocksCaller>>(m, "ReadBlocksCaller")
         .def("num_tiles", &ReadBlocksCaller::num_tiles)
@@ -559,31 +592,31 @@ void block_defs(py::module& m) {
     m.def("read_blocks_primitive", &read_blocks_primitiveblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=7);
+        py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=ReadBlockFlags::Empty);
     
     m.def("read_blocks_minimal", &read_blocks_minimalblock_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("objflags")=7);
+        py::arg("objflags")=ReadBlockFlags::Empty);
    
    m.def("read_blocks_merge_primitive", &read_blocks_merge_py<PrimitiveBlock>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);
+        py::arg("filter")=nullptr, py::arg("objflags")=ReadBlockFlags::Empty, py::arg("buffer")=0);
     
    m.def("read_blocks_merge_minimal", &read_blocks_merge_py<minimal::Block>,
         py::arg("filenames"), py::arg("callback"), py::arg("locs"),
         py::arg("numchan")=4,py::arg("numblocks")=32,
-        py::arg("filter")=nullptr, py::arg("objflags")=7, py::arg("buffer")=0);
+        py::arg("filter")=nullptr, py::arg("objflags")=ReadBlockFlags::Empty, py::arg("buffer")=0);
     
    
    m.def("read_blocks_tempobjs", &read_blocks_tempobjs);
   
    py::class_<ReadBlocksIter, std::shared_ptr<ReadBlocksIter>>(m, "ReadBlocksIter")
-        .def(py::init<std::string,std::vector<int64>,size_t,size_t,std::shared_ptr<IdSet>,bool,size_t>(),
+        .def(py::init<std::string,std::vector<int64>,size_t,size_t,std::shared_ptr<IdSet>,bool,ReadBlockFlags>(),
             py::arg("fn"), py::arg("locs")=std::vector<int64>(),
             py::arg("numchan")=4,py::arg("numblocks")=256,
-            py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=7)
+            py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=ReadBlockFlags::Empty)
      
         .def("next", &ReadBlocksIter::next)
     ;

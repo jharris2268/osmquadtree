@@ -46,26 +46,26 @@ PrimitiveBlockPtr read_as_primitiveblock(
     std::shared_ptr<FileBlock> bl, 
     IdSetPtr idset, 
     bool ischange,
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 minimal::BlockPtr read_as_minimalblock(
     std::shared_ptr<FileBlock> bl, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 
 std::shared_ptr<quadtree_vector> read_as_quadtree_vector(
     std::shared_ptr<FileBlock> bl, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 
 PrimitiveBlockPtr merge_as_primitiveblock(
     std::shared_ptr<FileBlock> bl, 
     IdSetPtr idset, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 minimal::BlockPtr merge_as_minimalblock(
     std::shared_ptr<FileBlock> bl, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 
 
@@ -177,7 +177,7 @@ void read_blocks_primitiveblock(
     primitiveblock_callback callback,
     std::vector<int64> locs, 
     size_t numchan,
-    IdSetPtr filter, bool ischange, size_t objflags);
+    IdSetPtr filter, bool ischange, ReadBlockFlags objflags);
 
 
 
@@ -186,7 +186,7 @@ void read_blocks_split_primitiveblock(
     const std::string& filename,
     std::vector<primitiveblock_callback> callbacks,
     std::vector<int64> locs, 
-    IdSetPtr filter, bool ischange, size_t objflags);        
+    IdSetPtr filter, bool ischange, ReadBlockFlags objflags);        
     
 void read_blocks_convfunc_primitiveblock(
     const std::string& filename,
@@ -205,7 +205,7 @@ void read_blocks_nothread_primitiveblock(
     const std::string& filename,
     primitiveblock_callback callback,
     std::vector<int64> locs, 
-    IdSetPtr filter, bool ischange, size_t objflags);
+    IdSetPtr filter, bool ischange, ReadBlockFlags objflags);
 
 
 
@@ -214,25 +214,25 @@ void read_blocks_minimalblock(
     minimalblock_callback callback,
     std::vector<int64> locs, 
     size_t numchan, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 void read_blocks_split_minimalblock(
     const std::string& filename,
     std::vector<minimalblock_callback> callbacks,
     std::vector<int64> locs, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 void read_blocks_nothread_minimalblock(
     const std::string& filename,
     minimalblock_callback callback,
     std::vector<int64> locs, 
-    size_t objflags);
+    ReadBlockFlags objflags);
 
 void read_blocks_split_quadtree_vector(
     const std::string& filename,
     std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> callbacks,
     std::vector<int64> locs, 
-    size_t objflags);   
+    ReadBlockFlags objflags);   
 
 
 
@@ -240,13 +240,13 @@ void read_blocks_split_quadtree_vector(
 
 namespace readpbffile_detail {
     template <class BlockType>
-    std::shared_ptr<BlockType> merge_keyedblob(std::shared_ptr<KeyedBlob>, size_t, IdSetPtr);
+    std::shared_ptr<BlockType> merge_keyedblob(std::shared_ptr<KeyedBlob>, ReadBlockFlags, IdSetPtr);
 
 
     template <>
     inline PrimitiveBlockPtr merge_keyedblob<PrimitiveBlock>(
         std::shared_ptr<KeyedBlob> bl,
-        size_t objflags, IdSetPtr ids) {
+        ReadBlockFlags objflags, IdSetPtr ids) {
         
         std::vector<PrimitiveBlockPtr> changes;
         PrimitiveBlockPtr main;
@@ -272,7 +272,7 @@ namespace readpbffile_detail {
     template <>
     inline minimal::BlockPtr merge_keyedblob<minimal::Block>(
         std::shared_ptr<KeyedBlob> bl,
-        size_t objflags, IdSetPtr ids) {
+        ReadBlockFlags objflags, IdSetPtr ids) {
         
         std::vector<minimal::BlockPtr> changes;
         minimal::BlockPtr main;
@@ -307,7 +307,7 @@ void read_blocks_split_merge(
     std::vector<std::string> filenames,
     std::vector<std::function<void(std::shared_ptr<BlockType>)>> callbacks,
     src_locs_map locs,
-    IdSetPtr filter, size_t objflags, size_t buffer=0) {
+    IdSetPtr filter, ReadBlockFlags objflags, size_t buffer=0) {
 
 
 
@@ -332,7 +332,7 @@ void read_blocks_merge(
     std::vector<std::string> filenames,
     std::function<void(std::shared_ptr<BlockType>)> callback,
     src_locs_map locs, size_t numchan,
-    IdSetPtr filter, size_t objflags, size_t buffer=0) {
+    IdSetPtr filter, ReadBlockFlags objflags, size_t buffer=0) {
 
 
     auto cbs = multi_threaded_callback<BlockType>::make(callback, numchan);
@@ -348,7 +348,7 @@ void read_blocks_merge_nothread(
     std::vector<std::string> filenames,
     std::function<void(std::shared_ptr<BlockType>)> callback,
     src_locs_map locs,
-    IdSetPtr filter, size_t objflags) {
+    IdSetPtr filter, ReadBlockFlags objflags) {
     
     
     

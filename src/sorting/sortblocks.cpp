@@ -106,7 +106,7 @@ std::shared_ptr<QtTree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
         make_addcounts.push_back(CollectQts::make(add_qts));
     }
     
-    read_blocks_split_quadtree_vector(qtsfn, make_addcounts, {}, 15);
+    read_blocks_split_quadtree_vector(qtsfn, make_addcounts, {}, ReadBlockFlags::Empty);
     
     return tree;
 };
@@ -203,7 +203,7 @@ class ReadQtsVec {
             auto bl = readfile->next();
             if (!bl) { return nullptr; }
             if (bl->blocktype != "OSMData") { return std::make_shared<quadtree_vector>(); }
-            return read_quadtree_vector_block(bl->get_data(), 7);
+            return read_quadtree_vector_block(bl->get_data(), ReadBlockFlags::Empty);
         }
         
         static std::function<std::shared_ptr<quadtree_vector>()> make(const std::string& qtsfn) {
@@ -283,11 +283,11 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     };
     
     if (qtsfn == "NONE") {
-        read_blocks_primitiveblock(origfn, resort, {}, numchan, nullptr, false, 7);
+        read_blocks_primitiveblock(origfn, resort, {}, numchan, nullptr, false, ReadBlockFlags::Empty);
     } else {
         
         auto add_quadtrees = add_quadtreesup_callback({resort}, qtsfn);
-        read_blocks_primitiveblock(origfn, add_quadtrees, {}, numchan, nullptr, false,7);
+        read_blocks_primitiveblock(origfn, add_quadtrees, {}, numchan, nullptr, false,ReadBlockFlags::Empty);
     }
     Logger::Message() << "finished";
     
@@ -317,7 +317,7 @@ PrimitiveBlockPtr convert_primblock(std::shared_ptr<FileBlock> bl) {
     if (!bl) { return PrimitiveBlockPtr(); }
     if ((bl->blocktype=="OSMData")) {
         std::string dd = bl->get_data();//decompress(std::get<2>(*bl), std::get<3>(*bl))
-        auto pb = read_primitive_block(bl->idx, dd, false,15,nullptr,nullptr);
+        auto pb = read_primitive_block(bl->idx, dd, false,ReadBlockFlags::Empty,nullptr,nullptr);
         pb->SetFilePosition(bl->file_position);
         pb->SetFileProgress(bl->file_progress);
         return pb;

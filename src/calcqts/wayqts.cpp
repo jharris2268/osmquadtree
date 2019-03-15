@@ -366,7 +366,8 @@ void find_way_quadtrees(
     
     
     auto wnla = std::make_shared<AddLocationsToWayNodes>(wns, expand_all, minway, maxway);
-    read_blocks_minimalblock(source_filename, [wnla](minimal::BlockPtr mb) { wnla->call(mb); }, source_locs, numchan, 1 | 48);
+    ReadBlockFlags flags = ReadBlockFlags::SkipWays | ReadBlockFlags::SkipRelations | ReadBlockFlags::SkipInfo;
+    read_blocks_minimalblock(source_filename, [wnla](minimal::BlockPtr mb) { wnla->call(mb); }, source_locs, numchan, flags);
     
     
     Logger::Get().time("expand way bboxes");

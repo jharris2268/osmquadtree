@@ -105,11 +105,11 @@ class ReadBlocksSingle : public ReadBlocksCaller {
             }
         }
         void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter) {
-            read_blocks_split_primitiveblock(fn, cbs, locs, filter, false, 15);
+            read_blocks_split_primitiveblock(fn, cbs, locs, filter, false, ReadBlockFlags::Empty);
         }
         
         void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)  {
-            read_blocks_split_minimalblock(fn, cbs, locs, 15);
+            read_blocks_split_minimalblock(fn, cbs, locs, ReadBlockFlags::Empty);
         }
         
         size_t num_tiles() { return locs.size(); }
@@ -158,12 +158,11 @@ class ReadBlocksMerged : public ReadBlocksCaller {
         }
         
         void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter) {
-            //Logger::Message() << "ReadBlocksMerged::read_primitive";
             
-            read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, 15, buffer);
+            read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, ReadBlockFlags::Empty, buffer);
         }
         void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)  {
-            read_blocks_split_merge<minimal::Block>(filenames, cbs, locs, filter, 15, buffer);
+            read_blocks_split_merge<minimal::Block>(filenames, cbs, locs, filter, ReadBlockFlags::Empty, buffer);
         }
         
         

@@ -168,6 +168,18 @@ class Logger_stdout : public Logger {
     
 };
 
+ReadBlockFlags read_flags(size_t ii) {
+    ReadBlockFlags ans=ReadBlockFlags::Empty;
+    if (ii&1) { ans = ans | ReadBlockFlags::SkipNodes; }
+    if (ii&2) { ans = ans | ReadBlockFlags::SkipWays; }
+    if (ii&4) { ans = ans | ReadBlockFlags::SkipRelations; }
+    if (ii&8) { ans = ans | ReadBlockFlags::SkipGeometries; }
+    if (ii&16) { ans = ans | ReadBlockFlags::SkipStrings; }
+    if (ii&32) { ans = ans | ReadBlockFlags::SkipInfo; }
+    if (ii&64) { ans = ans | ReadBlockFlags::UseAlternative; }
+    return ans;
+}
+
 int main(int argc, char** argv) {
     
     Logger::Set(std::make_shared<Logger_stdout>());
@@ -208,7 +220,7 @@ int main(int argc, char** argv) {
     bool countgeom=false;
     bool splitways=true;
     std::vector<LonLat> poly;
-    size_t countflags=15;
+    size_t countflags=0;
     bool use_tree=false;
     bool use_48bit_quadtrees=false;
     bool fixstrs=false;
@@ -318,13 +330,14 @@ int main(int argc, char** argv) {
     int resp=0;
     if (operation == "count") {
         
+        
         //bool useminimal = (countflags&32)==0;
         Logger::Message() <<  "count fn=" << origfn << ", numchan=" << numchan << ", countgeom=" << countgeom << ", countflags=" << countflags;// << ", useminimal=" << useminimal;
-        auto res = run_count(origfn, numchan,false, countgeom, countflags, true);//useminimal);
+        auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), true);//useminimal);
         if (!res) { return 1; }
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "count_full") {
-        auto res = run_count(origfn, numchan,false, countgeom, countflags, false);
+        auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), false);
         if (!res) { return 1; }
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "calcqts") {

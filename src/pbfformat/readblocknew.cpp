@@ -45,9 +45,15 @@ namespace readblock_detail {
 struct block_data {
     std::vector<std::string> stringtable;
     bool change;
-    size_t objflags;
     IdSetPtr ids;
     read_geometry_func readGeometry;
+    bool skip_nodes;
+    bool skip_ways;
+    bool skip_relations;
+    bool skip_geometries;
+    bool skip_strings;
+    bool skip_info;
+    
 };
 
 
@@ -94,7 +100,7 @@ void read_info(ElementInfo& info, const block_data& block, const std::string& da
         handle_pbf_value{2, [&info](uint64 vl) { info.timestamp = vl; }},
         handle_pbf_value{3, [&info](uint64 vl) { info.changeset = vl; }},
         handle_pbf_value{4, [&info](uint64 vl) { info.user_id = vl; }},
-        handle_pbf_value{5, [&info,&block](uint64 vl) { info.user = block.stringtable.at(vl); }},
+        handle_pbf_value{block.skip_strings ? 0ull: 5, [&info,&block](uint64 vl) { info.user = block.stringtable.at(vl); }},
         handle_pbf_value{6, [&info](uint64 vl) { info.visible = vl==1; }}
     );
     
@@ -107,15 +113,15 @@ ElementPtr read_node(const std::string& data, size_t pos, size_t lim, const bloc
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&nd](uint64 v) { nd.id=v; }},
-        handle_pbf_packed_int{2,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 2,
                 [&nd](size_t s) { if (s>nd.tags.size()) { nd.tags.resize(s); } },
                 [&nd,&block](size_t i, uint64 v) { nd.tags[i].key=block.stringtable.at(v); }
         },
-        handle_pbf_packed_int{3,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 3,
                 [&nd](size_t s) { if (s>nd.tags.size()) { nd.tags.resize(s); } },
                 [&nd,&block](size_t i, uint64 v) { nd.tags[i].val=block.stringtable.at(v); }
         },
-        handle_pbf_data{4,[&nd,&block](const std::string& d, size_t p, size_t l) { read_info(nd.info, block, d, p, l); }},
+        handle_pbf_data{block.skip_info ? 0ull: 4,[&nd,&block](const std::string& d, size_t p, size_t l) { read_info(nd.info, block, d, p, l); }},
         handle_pbf_value{8, [&nd](uint64 v) { nd.lat=un_zig_zag(v); }},
         handle_pbf_value{9, [&nd](uint64 v) { nd.lon=un_zig_zag(v); }},
         handle_pbf_value{20, [&nd](uint64 v) { nd.qt=un_zig_zag(v); }}
@@ -161,7 +167,7 @@ void read_dense_info(std::vector<node_data>& nds, const block_data& block, const
         handle_pbf_packed_int_delta{2, check_size, [&nds](size_t i, int64 vl) { nds[i].info.timestamp = vl; }},
         handle_pbf_packed_int_delta{3, check_size, [&nds](size_t i, int64 vl) { nds[i].info.changeset = vl; }},
         handle_pbf_packed_int_delta{4, check_size, [&nds](size_t i, int64 vl) { nds[i].info.user_id = vl; }},
-        handle_pbf_packed_int_delta{5, check_size, [&nds,&block](size_t i, int64 vl) { nds[i].info.user = block.stringtable.at(vl); }},
+        handle_pbf_packed_int_delta{block.skip_strings ? 0ull: 5, check_size, [&nds,&block](size_t i, int64 vl) { nds[i].info.user = block.stringtable.at(vl); }},
         handle_pbf_packed_int{6, check_size, [&nds](size_t i, uint64 vl) { nds[i].info.visible = vl==1; }}
     );
     
@@ -177,7 +183,7 @@ void read_dense(std::vector<ElementPtr>& objects, const std::string& data, size_
             [&nds](size_t sz) { nds.resize(sz); },
             [&nds](size_t i, int64 v) { nds[i].id=v; }
         },
-        handle_pbf_data{5, [&nds,&block](const std::string& d, size_t p, size_t l) { read_dense_info(nds,block,d,p,l); }},
+        handle_pbf_data{block.skip_info ? 0ull: 5, [&nds,&block](const std::string& d, size_t p, size_t l) { read_dense_info(nds,block,d,p,l); }},
         handle_pbf_packed_int_delta{8,
             [&nds](size_t sz) { if (sz!=nds.size()) { throw std::domain_error("unexpected size of dense lons"); } },
             [&nds](size_t i, int64 v) { nds[i].lat=v; }
@@ -186,7 +192,7 @@ void read_dense(std::vector<ElementPtr>& objects, const std::string& data, size_
             [&nds](size_t sz) { if (sz!=nds.size()) { throw std::domain_error("unexpected size of dense lats"); } },
             [&nds](size_t i, int64 v) { nds[i].lon=v; }
         },
-        handle_pbf_packed_int{10, nullptr, [&dnt](size_t i, int64 v) { dnt.call(i,v); }},
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 10, nullptr, [&dnt](size_t i, int64 v) { dnt.call(i,v); }},
         
         handle_pbf_packed_int_delta{20,
             [&nds](size_t sz) { if (sz!=nds.size()) { throw std::domain_error("unexpected size of dense quadtree"); } },
@@ -211,15 +217,15 @@ ElementPtr read_way(const std::string& data, size_t pos, size_t lim, const block
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&wy](uint64 v) { wy.id=v; }},
-        handle_pbf_packed_int{2,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 2,
                 [&wy](size_t s) { if (s>wy.tags.size()) { wy.tags.resize(s); } },
                 [&wy,&block](size_t i, uint64 v) { wy.tags[i].key=block.stringtable.at(v); }
         },
-        handle_pbf_packed_int{3,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 3,
                 [&wy](size_t s) { if (s>wy.tags.size()) { wy.tags.resize(s); } },
                 [&wy,&block](size_t i, uint64 v) { wy.tags[i].val=block.stringtable.at(v); }
         },
-        handle_pbf_data{4, [&wy,&block](const std::string& d, size_t p, size_t l) { read_info(wy.info, block, d, p, l); }},
+        handle_pbf_data{block.skip_info ? 0ull: 4, [&wy,&block](const std::string& d, size_t p, size_t l) { read_info(wy.info, block, d, p, l); }},
         handle_pbf_packed_int_delta{8,
                 [&wy](size_t sz) { wy.refs.resize(sz); },
                 [&wy](size_t i, int64 v) { wy.refs[i]=v; }
@@ -238,17 +244,17 @@ ElementPtr read_relation(const std::string& data, size_t pos, size_t lim, const 
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_value{1, [&rl](uint64 v) { rl.id=v; }},
-        handle_pbf_packed_int{2,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 2,
                 [&rl](size_t s) { if (s>rl.tags.size()) { rl.tags.resize(s); } },
                 [&rl,&block](size_t i, uint64 v) { rl.tags[i].key=block.stringtable.at(v); }
         },
-        handle_pbf_packed_int{3,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 3,
                 [&rl](size_t s) { if (s>rl.tags.size()) { rl.tags.resize(s); } },
                 [&rl,&block](size_t i, uint64 v) { rl.tags[i].val=block.stringtable.at(v); }
         },
-        handle_pbf_data{4, [&rl,&block](const std::string& d, size_t p, size_t l) { read_info(rl.info, block, d, p, l); }},
+        handle_pbf_data{block.skip_info ? 0ull: 4, [&rl,&block](const std::string& d, size_t p, size_t l) { read_info(rl.info, block, d, p, l); }},
         
-        handle_pbf_packed_int{8,
+        handle_pbf_packed_int{block.skip_strings ? 0ull: 8,
                 [&rl](size_t sz) { if (sz>rl.members.size()) { rl.members.resize(sz); } },
                 [&rl,&block](size_t i, int64 v) { rl.members[i].role=block.stringtable.at(v); }
         },
@@ -285,31 +291,23 @@ void read_primitive_group(std::vector<ElementPtr>& objects,
     }
     
     read_pbf_messages(data,pos,lim,
-        handle_pbf_data{1, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
-            if (block.objflags&1) {
-                auto obj = read_node(d,p,l, block, c);
-                if (obj) { objects.push_back(obj); }
-            }
+        handle_pbf_data{block.skip_nodes ? 0ull: 1, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
+            auto obj = read_node(d,p,l, block, c);
+            if (obj) { objects.push_back(obj); }
         }},
-        handle_pbf_data{2, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
-            if (block.objflags&2) {
-                read_dense(objects, d,p,l, block, c);
-            }
+        handle_pbf_data{block.skip_nodes ? 0ull: 2, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
+            read_dense(objects, d,p,l, block, c);
         }},
-        handle_pbf_data{3, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
-            if (block.objflags&2) {
+        handle_pbf_data{block.skip_ways ? 0ull: 3, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
                 auto obj = read_way(d,p,l, block, c);
                 if (obj) { objects.push_back(obj); }
-            }
         }},
-        handle_pbf_data{4, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
-            if (block.objflags&4) {
+        handle_pbf_data{block.skip_relations ? 0ull: 4, [&objects,&block,c](const std::string& d, size_t p, size_t l) {
                 auto obj = read_relation(d,p,l, block, c);
                 if (obj) { objects.push_back(obj); }
-            }
         }},
         handle_pbf_data_mt{20,24, [&objects,&block,c](uint64 tg, const std::string& d, size_t p, size_t l) {
-            if (block.objflags&8) {
+            if (!block.skip_geometries) {
                 ElementType ty = (ElementType) (tg-17);
                 ElementPtr obj;
                 if (!block.readGeometry) {
@@ -351,17 +349,24 @@ using oqt::readblock_detail::block_data;
 using oqt::readblock_detail::read_string_table;
 using oqt::readblock_detail::read_quadtree;
 using oqt::readblock_detail::read_primitive_group;
-PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
+PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change, ReadBlockFlags objflags, IdSetPtr ids, read_geometry_func readGeometry) {
     
-    block_data block{{},change,objflags,ids,readGeometry};
+    block_data block{{},change,ids,readGeometry,
+        has_flag(objflags,ReadBlockFlags::SkipNodes),
+        has_flag(objflags,ReadBlockFlags::SkipWays),
+        has_flag(objflags,ReadBlockFlags::SkipRelations),
+        has_flag(objflags,ReadBlockFlags::SkipGeometries),
+        has_flag(objflags,ReadBlockFlags::SkipStrings),
+        has_flag(objflags,ReadBlockFlags::SkipInfo)};
    
-    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=7)) ? 0 : 8000);
+    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=ReadBlockFlags::Empty)) ? 0: 8000);
 
 
     std::vector<std::pair<size_t,size_t>> group_poses;
+    
 
     read_pbf_messages(data, 0, data.size(),
-        handle_pbf_data{1, [&block](const std::string& d, size_t p, size_t l) { read_string_table(block.stringtable, d, p, l); }},
+        handle_pbf_data{block.skip_strings ? 0ull : 1, [&block](const std::string& d, size_t p, size_t l) { read_string_table(block.stringtable, d, p, l); }},
         handle_pbf_data{2, [&group_poses](const std::string&, size_t p, size_t l) { group_poses.push_back(std::make_pair(p,l)); }},
         handle_pbf_data{31,[&primblock](const std::string& d, size_t p, size_t l) { primblock->SetQuadtree(read_quadtree(d,p,l)); }},
         handle_pbf_value{32, [&primblock](uint64 vl) { primblock->SetQuadtree(un_zig_zag(vl)); }},

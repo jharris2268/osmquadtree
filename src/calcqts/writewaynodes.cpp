@@ -262,11 +262,11 @@ std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std
         
     auto pack_waynodes= waynodes->make_writewaynodes(rels, sortinmem, numchan);
         
-    
+    ReadBlockFlags flags = ReadBlockFlags::SkipNodes | ReadBlockFlags::SkipInfo;
     if (numchan!=0) {
-        read_blocks_minimalblock(orig_fn, pack_waynodes, {}, 4, 6); //6 = ways (2) | rels (4)
+        read_blocks_minimalblock(orig_fn, pack_waynodes, {}, 4, flags); //6 = ways (2) | rels (4)
     } else {
-        read_blocks_nothread_minimalblock(orig_fn, pack_waynodes, {}, 6);
+        read_blocks_nothread_minimalblock(orig_fn, pack_waynodes, {}, flags);
     }
         
     

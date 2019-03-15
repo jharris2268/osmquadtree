@@ -239,7 +239,7 @@ int run_calcqts_inmem(const std::string& origfn, const std::string& qtsfn, size_
         }
     };
     
-    read_blocks_minimalblock(origfn, read_objs, {},  numchan, 7);
+    read_blocks_minimalblock(origfn, read_objs, {},  numchan, ReadBlockFlags::Empty);
     Logger::Get().time("read data");    
     
     

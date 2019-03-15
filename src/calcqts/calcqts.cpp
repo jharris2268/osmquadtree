@@ -148,7 +148,8 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
         }
         calc_node_qts(nds);
     };
-    read_blocks_minimalblock(nodes_fn, add_nodeway_qts, node_locs, 4, 1 | 48);
+    ReadBlockFlags flags = ReadBlockFlags::SkipWays | ReadBlockFlags::SkipRelations | ReadBlockFlags::SkipInfo;
+    read_blocks_minimalblock(nodes_fn, add_nodeway_qts, node_locs, 4, flags);
     
     
 

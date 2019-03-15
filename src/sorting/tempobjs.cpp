@@ -208,7 +208,7 @@ std::function<void(std::shared_ptr<KeyedBlob>)> make_conv_keyedblob_primblock(pr
         res->SetQuadtree(kk->key);
         for (const auto& x: kk->blobs) {
             auto dd = decompress(x.first,x.second);
-            auto bl = read_primitive_block(kk->key,dd,false,15,nullptr,nullptr);
+            auto bl = read_primitive_block(kk->key,dd,false,ReadBlockFlags::Empty,nullptr,nullptr);
             
             
             

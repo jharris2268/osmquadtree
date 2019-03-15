@@ -127,7 +127,7 @@ geometry::mperrorvec process_geometry_csvcallback_nothread_py(const geometry::Ge
 PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
     if (!fb) { return PrimitiveBlockPtr(); }
     if (fb->blocktype!="OSMData") { return std::make_shared<PrimitiveBlock>(fb->idx,0); }
-    return read_primitive_block(fb->idx,fb->get_data(),false,15,nullptr,geometry::read_geometry);
+    return read_primitive_block(fb->idx,fb->get_data(),false,ReadBlockFlags::Empty,nullptr,geometry::read_geometry);
 }
 
 geometry::mperrorvec process_geometry_from_vec_py(

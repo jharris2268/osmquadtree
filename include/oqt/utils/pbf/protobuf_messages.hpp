@@ -36,28 +36,7 @@ typedef std::function<void(uint64, const std::string&, size_t&)> handle_func;
 typedef std::function<void(uint64)> handle_value_func;
 typedef std::function<void(const std::string&, size_t, size_t)> handle_data_func;
 typedef std::function<void(uint64, const std::string&, size_t, size_t)> handle_data_mt_func;
-/*
-class handle_t {
-    public:
-        virtual bool operator()(uint64 tg, const std::string& data, size_t& pos)=0;
-};
 
-class handle_end : public handle_t {
-    
-    
-    public:
-        handle_end() {}
-    
-        virtual bool operator()(uint64 tg, const std::string& data, size_t& pos){
-            if ((tg&7) == 2) {
-                uint64 ln = read_unsigned_varint(data,pos);
-                pos += ln;
-                return true;
-            }
-            return false;
-        }
-};
-*/
 inline void handle_end_f(uint64 tg, const std::string& data, size_t& pos) {
     if ((tg&7) == 2) {
         uint64 ln = read_unsigned_varint(data,pos);
@@ -68,53 +47,41 @@ inline void handle_end_f(uint64 tg, const std::string& data, size_t& pos) {
 }
 
 
-
-//class handle_pbf_value : public handle_t {
 struct handle_pbf_value {
     uint64 tag;
     handle_value_func call;
-    /*public:
-        handle_pbf_value(uint64 tag_, const handle_value_func& call_) 
-            : tag(tag_), call(call_) {}*/
     
-        /*virtual*/ bool operator()(uint64 tg, const std::string& data, size_t& pos) {
-            
-            if ( ((tg >> 3) == tag) && ((tg&7) == 0)) {
-            
-                uint64 v = read_unsigned_varint(data,pos);
-                if (call) {
-                    call(v);
-                }
-                return true;
+    bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+        if (tag==0) { return false; }
+        if ( ((tg >> 3) == tag) && ((tg&7) == 0)) {
+        
+            uint64 v = read_unsigned_varint(data,pos);
+            if (call) {
+                call(v);
             }
-            return false;
+            return true;
         }
+        return false;
+    }
 };
 
-//template <class NextHandle>
-//class handle_pbf_data : public handle_t {
 struct handle_pbf_data {
     uint64 tag;
     handle_data_func call;
     
-    
-    /*public:
-        handle_pbf_data(uint64 tag_, const handle_data_func& call_) 
-            : tag(tag_), call(call_) {}
-    
-        virtual*/ bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+    bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+        if (tag==0) { return false; }
+        if ( ((tg >> 3) == tag) && ((tg&7) == 2)) {
         
-            if ( ((tg >> 3) == tag) && ((tg&7) == 2)) {
-            
-                uint64 ln = read_unsigned_varint(data,pos);
-                if (call) {
-                    call(data,pos,pos+ln);
-                }
-                pos+=ln;
-                return true;
+            uint64 ln = read_unsigned_varint(data,pos);
+            if (call) {
+                call(data,pos,pos+ln);
             }
-            return false;
+            pos+=ln;
+            return true;
         }
+        return false;
+    }
 };
 
 struct handle_pbf_data_mt {
@@ -123,19 +90,19 @@ struct handle_pbf_data_mt {
     handle_data_mt_func call;
     
     
-        bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+    bool operator()(uint64 tg, const std::string& data, size_t& pos) {
         
-            if ( ((tg >> 3) >= min_tag) && ((tg >> 3) < max_tag) && ((tg&7) == 2))  {
-            
-                uint64 ln = read_unsigned_varint(data,pos);
-                if (call) {
-                    call(tg>>3, data,pos,pos+ln);
-                }
-                pos+=ln;
-                return true;
+        if ( ((tg >> 3) >= min_tag) && ((tg >> 3) < max_tag) && ((tg&7) == 2))  {
+        
+            uint64 ln = read_unsigned_varint(data,pos);
+            if (call) {
+                call(tg>>3, data,pos,pos+ln);
             }
-            return false;
+            pos+=ln;
+            return true;
         }
+        return false;
+    }
 };
 
 
@@ -144,40 +111,6 @@ typedef std::function<void(size_t)> handle_packed_int_size_call;
 typedef std::function<void(size_t, int64)> handle_packed_int_delta_call;
 typedef std::function<void(size_t, uint64)> handle_packed_int_call;
 
-    /*
-size_t readPacked_altcb(const std::string& data, size_t pos, size_t len, std::function<void(size_t i, uint64 v)> cb) {
-    size_t pp = pos;
-    
-    size_t i=0;
-    while (pp < (pos+len)) {
-        uint64 v = read_unsigned_varint(data,pp);
-        cb(i, v);
-        i+=1;
-    }
-    
-    if (pp != (pos+len)) {
-        Logger::Message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
-        throw std::domain_error("wtf");
-    }
-    return pp;
-}
-
-size_t readPackedDelta_altcb(const std::string& data, size_t pos, size_t len, std::function<void(size_t i, int64 v)> cb) {
-    size_t pp = pos;
-    int64 v=0;
-    size_t i=0;
-    while (pp < (pos+len)) {
-        v += read_varint(data,pp);
-        cb(i, v);
-        i+=1;
-    }
-    
-    if (pp != (pos+len)) {
-        Logger::Message() << "?? readPackedDelta_altcb " << pos << ", " << len << ", @ " << pp;
-        throw std::domain_error("wtf");
-    }
-    return pp;
-}*/
     
 
 struct handle_pbf_packed_int {
@@ -186,6 +119,7 @@ struct handle_pbf_packed_int {
     handle_packed_int_call call;
     
     bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+        if (tag==0) { return false; }
         if ( ((tg >> 3) == tag) && ((tg&7) == 2)) {
             uint64 ln = read_unsigned_varint(data,pos);
             
@@ -225,6 +159,7 @@ struct handle_pbf_packed_int_delta {
     handle_packed_int_delta_call call;
     
     bool operator()(uint64 tg, const std::string& data, size_t& pos) {
+        if (tag==0) { return false; }
         if ( ((tg >> 3) == tag) && ((tg&7) == 2)) {
             uint64 ln = read_unsigned_varint(data,pos);
             

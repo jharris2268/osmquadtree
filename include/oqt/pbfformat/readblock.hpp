@@ -31,11 +31,41 @@
 #include "oqt/utils/pbf/protobuf.hpp"
 namespace oqt {
     
+enum class ReadBlockFlags {
+    Empty = 0,
+    SkipNodes = 1,
+    SkipWays = 2,
+    SkipRelations = 4,
+    SkipGeometries = 8,
+    SkipStrings = 16,
+    SkipInfo = 32,
+    UseAlternative = 64
+};
+inline ReadBlockFlags operator |(ReadBlockFlags lhs, ReadBlockFlags rhs)  
+{
+    return static_cast<ReadBlockFlags> (
+        static_cast<std::underlying_type<ReadBlockFlags>::type>(lhs) |
+        static_cast<std::underlying_type<ReadBlockFlags>::type>(rhs)
+    );
+}
 
+inline bool has_flag(ReadBlockFlags lhs, ReadBlockFlags rhs) {
+    auto l = static_cast<std::underlying_type<ReadBlockFlags>::type>(lhs);
+    auto r = static_cast<std::underlying_type<ReadBlockFlags>::type>(rhs);
+    return (l&r) == r;
+}
+
+/*inline ReadBlockFlags operator &(ReadBlockFlags lhs, ReadBlockFlags rhs)  
+{
+    return static_cast<ReadBlockFlags> (
+        static_cast<std::underlying_type<ReadBlockFlags>::type>(lhs) &
+        static_cast<std::underlying_type<ReadBlockFlags>::type>(rhs)
+    );
+}*/
 
 typedef std::function<ElementPtr(ElementType, const std::string&, const std::vector<std::string>&, changetype)> read_geometry_func;
 PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool change,
-    size_t objflags=7, IdSetPtr ids=IdSetPtr(),
+    ReadBlockFlags flags=ReadBlockFlags::Empty, IdSetPtr ids=IdSetPtr(),
     read_geometry_func readGeometry = read_geometry_func());
 
 std::tuple<int64,ElementInfo,std::vector<Tag>,int64,std::list<PbfTag> >
@@ -50,7 +80,7 @@ void read_filelocs_json(HeaderPtr head, int64 fl, const std::string& filename, c
 
 
 PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change,
-    size_t objflags=7, IdSetPtr ids=IdSetPtr(),
+    ReadBlockFlags flags=ReadBlockFlags::Empty, IdSetPtr ids=IdSetPtr(),
     read_geometry_func readGeometry = read_geometry_func());
 
 }

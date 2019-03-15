@@ -294,7 +294,7 @@ void change_defs(py::module& m) {
     });
     m.def("read_xml_change_file_em", &read_xml_change_file_em_py);
 
-    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, size_t objflags, IdSetPtr ids   ) {
+    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, ReadBlockFlags objflags, IdSetPtr ids   ) {
         py::gil_scoped_release r;
         return read_file_blocks(fn,locs,numchan,index_offset,change,objflags,ids);
     });

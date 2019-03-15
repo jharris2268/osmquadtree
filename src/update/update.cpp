@@ -181,7 +181,7 @@ size_t write_index_file(const std::string& fn, size_t numchan, const std::string
     
     
     
-    read_blocks_split_primitiveblock(fn, converts, locs, nullptr, false, 7);
+    read_blocks_split_primitiveblock(fn, converts, locs, nullptr, false, ReadBlockFlags::Empty);
     
     auto ii = out_obj->finish();
     
@@ -254,7 +254,7 @@ std::set<int64> check_index_file(const std::string& idxfn, HeaderPtr head, size_
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
-    size_t index_offset, bool change, size_t objflags, IdSetPtr ids) {
+    size_t index_offset, bool change, ReadBlockFlags objflags, IdSetPtr ids) {
 
 
     
@@ -357,7 +357,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtT
         }
     };
     
-    read_blocks_merge<PrimitiveBlock>(fl, cb, locs, 4, ids, 7, 1<<14);
+    read_blocks_merge<PrimitiveBlock>(fl, cb, locs, 4, ids, ReadBlockFlags::Empty, 1<<14);
     return std::make_tuple(allocs, qts,tree);
 }
     
@@ -403,7 +403,7 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtT
         }
         if (!locs.empty()) {
             Logger::Progress(i*100.0/fls.size()) << "have " << em->size() << "objs (" << ne << " empty blocks): read " << locs.size() << " blocks from " << fn;
-            auto bb = read_file_blocks(fn,locs,4,0,true,7,ids);
+            auto bb = read_file_blocks(fn,locs,4,0,true,ReadBlockFlags::Empty,ids);
             for (auto bl: bb) {
                 if (bl->size() == 0) {
                     

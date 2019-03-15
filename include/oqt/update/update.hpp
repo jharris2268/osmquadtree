@@ -27,6 +27,7 @@
 #include "oqt/update/xmlchange.hpp"
 #include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
+#include "oqt/pbfformat/readblock.hpp"
 #include "oqt/sorting/tempobjs.hpp"
 #include <set>
 namespace oqt {
@@ -36,7 +37,7 @@ std::set<int64> check_index_file(const std::string& idxfn, HeaderPtr header, siz
 
 std::vector<PrimitiveBlockPtr> read_file_blocks(
     const std::string& fn, std::vector<int64> locs, size_t numchan,
-    size_t index_offset, bool change, size_t objflags, IdSetPtr ids);
+    size_t index_offset, bool change, ReadBlockFlags objflags, IdSetPtr ids);
 
 std::tuple<
     std::shared_ptr<QtStore>, //orig allocs

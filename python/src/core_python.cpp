@@ -197,7 +197,7 @@ void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, 
 }
 
 
-std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, size_t objflags, bool count_full) {
+std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, ReadBlockFlags objflags, bool count_full) {
 
     
     Logger::Get().reset_timing();
@@ -314,8 +314,8 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
     size_t numchan_half = numchan/2;
     if (numchan_half==0) { numchan_half=1; }
             
-    auto left_reader  = std::make_shared<inverted_callback<PrimitiveBlock>>([left_fn, numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(left_fn,  cb, {}, numchan_half, nullptr, false, 7); });
-    auto right_reader = std::make_shared<inverted_callback<PrimitiveBlock>>([right_fn,numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(right_fn, cb, {}, numchan_half, nullptr, false, 7); });
+    auto left_reader  = std::make_shared<inverted_callback<PrimitiveBlock>>([left_fn, numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(left_fn,  cb, {}, numchan_half, nullptr, false, ReadBlockFlags::Empty); });
+    auto right_reader = std::make_shared<inverted_callback<PrimitiveBlock>>([right_fn,numchan_half](primitiveblock_callback cb) { read_blocks_primitiveblock(right_fn, cb, {}, numchan_half, nullptr, false, ReadBlockFlags::Empty); });
     
     std::vector<objdiff> curr;
     curr.reserve(10000);
@@ -515,7 +515,7 @@ void core_defs(py::module& m) {
     m.def("run_count", &run_count_py, "count pbf file contents",
          py::arg("fn"),
          py::arg("numchan")=4,
-         py::arg("objflags")=8,
+         py::arg("objflags")=ReadBlockFlags::Empty,
          py::arg("count_full")=false
     );
 

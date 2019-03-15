@@ -329,7 +329,7 @@ ElementPtr readGeometry_default(ElementType ty, const std::string& data, const s
 void readPrimitiveGroupCommon(
         const std::string& data, const std::vector<std::string>& stringtable,
         std::vector<ElementPtr >& objects,
-        changetype ct, size_t objflags, IdSetPtr ids,
+        changetype ct, ReadBlockFlags objflags, IdSetPtr ids,
         read_geometry_func readGeometry) {
 
     
@@ -342,19 +342,19 @@ void readPrimitiveGroupCommon(
     PbfTag tag = read_pbf_tag(data,pos);
     for ( ; tag.tag>0; tag = read_pbf_tag(data,pos)) {
 
-        if ((tag.tag==1) && (objflags&1)) {
+        if ((tag.tag==1) && (!has_flag(objflags, ReadBlockFlags::SkipNodes))) {
             auto o = readNode(tag.data, stringtable,ct,ids);
             if (o) { objects.push_back(o); }
 
-        } else if ((tag.tag==2) && (objflags&1)) {
+        } else if ((tag.tag==2) && (!has_flag(objflags, ReadBlockFlags::SkipNodes))) {
             readDenseNodes(tag.data, stringtable, ct,objects,ids);
-        } else if ((tag.tag==3) && (objflags&2)) {
+        } else if ((tag.tag==3) && (!has_flag(objflags, ReadBlockFlags::SkipWays))) {
             auto o = readWay(tag.data, stringtable,ct,ids);
             if (o) { objects.push_back(o); }
-        } else if ((tag.tag==4) && (objflags&4)) {
+        } else if ((tag.tag==4) && (!has_flag(objflags, ReadBlockFlags::SkipRelations))) {
             auto o = readRelation(tag.data, stringtable,ct,ids);
             if (o) { objects.push_back(o); }
-        } else if ((tag.tag>=20) && (objflags&8) ) {
+        } else if ((tag.tag>=20) && (!has_flag(objflags, ReadBlockFlags::SkipGeometries)) ) {
 
             ElementType ty = (ElementType) (tag.tag-17);
             auto o = readGeometry(ty, tag.data, stringtable, ct);
@@ -366,7 +366,7 @@ void readPrimitiveGroupCommon(
     return;
 }
 
-void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<ElementPtr >& objects, bool change, size_t objflags, IdSetPtr ids,read_geometry_func readGeometry) {
+void readPrimitiveGroup(const std::string& data, const std::vector<std::string>& stringtable, std::vector<ElementPtr >& objects, bool change, ReadBlockFlags objflags, IdSetPtr ids,read_geometry_func readGeometry) {
 
     
 
@@ -462,14 +462,14 @@ std::tuple<int64,bool,int64> readBlockIdx(const std::string& data) {
 
 
 
-PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool change, size_t objflags, IdSetPtr ids, read_geometry_func readGeometry) {
-    if (objflags&64) {
+PrimitiveBlockPtr read_primitive_block(int64 idx, const std::string& data, bool change, ReadBlockFlags objflags, IdSetPtr ids, read_geometry_func readGeometry) {
+    if (has_flag(objflags, ReadBlockFlags::UseAlternative)) {
         return read_primitive_block_new(idx,data,change,objflags,ids,readGeometry);
     }
 
     std::vector<std::string> stringtable;
 
-    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=7)) ? 0 : 8000);
+    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=ReadBlockFlags::Empty)) ? 0 : 8000);
 
 
     std::vector<uint64> kk,vv;

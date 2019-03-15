@@ -117,7 +117,7 @@ std::shared_ptr<std::map<int64, PrimitiveBlockPtr>> resort_objects(std::shared_p
     double pf = 100.0/groups->size();
     for (const auto& x: inblocks->blobs) {
         auto dd = decompress(x.first,x.second);
-        auto bl = read_primitive_block(inblocks->key,dd,false,15,nullptr,nullptr);
+        auto bl = read_primitive_block(inblocks->key,dd,false,ReadBlockFlags::Empty,nullptr,nullptr);
         for (auto o: bl->Objects()) {
             const auto& tile = groups->find_tile(o->Quadtree());
             
