@@ -52,7 +52,7 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
     
     if box_in is None:
         
-        box_in=_block.bbox(-1800000000,-900000000,1800000000,900000000)
+        box_in=utils.bbox(-1800000000,-900000000,1800000000,900000000)
     
     
     

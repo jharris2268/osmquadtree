@@ -40,6 +40,7 @@ PYBIND11_PLUGIN(_oqt) {
     geometry_defs(m);
     postgis_defs(m);
     core_defs(m);
+    utils_defs(m);
     return m.ptr();
 };
 

@@ -317,7 +317,8 @@ void block_defs(py::module& m) {
 
     m.def("quadtree_bbox", &quadtree::bbox);
     m.def("quadtree_calculate", &quadtree::calculate);
-
+    
+    m.def("overlaps_quadtree", &overlaps_quadtree);
 
     py::enum_<changetype>(m, "changetype")
         .value("Normal", changetype::Normal)
@@ -340,20 +341,7 @@ void block_defs(py::module& m) {
         //.export_values();
         
 
-    py::class_<bbox>(m,"bbox")
-        .def(py::init<int64,int64,int64,int64>())
-        .def_readwrite("minx", &bbox::minx)
-        .def_readwrite("miny", &bbox::miny)
-        .def_readwrite("maxx", &bbox::maxx)
-        .def_readwrite("maxy", &bbox::maxy)
-        .def("contains", &contains_point)
-        .def("overlaps", &overlaps)
-        .def("overlaps_quadtree", &overlaps_quadtree)
-        .def("contains_box", &bbox_contains)
-        .def("expand", &bbox_expand)
-    ;
-    m.def("bbox_empty", []() { return bbox{1800000000,900000000,-1800000000,-900000000}; });
-    m.def("bbox_planet", []() { return bbox{-1800000000,-900000000,1800000000,900000000}; });
+    
 
     py::class_<PrimitiveBlock, PrimitiveBlockPtr>(m, "PrimitiveBlock")
         .def(py::init<int64,size_t>())
@@ -520,25 +508,6 @@ void block_defs(py::module& m) {
 
     
     m.def("read_minimal_block", &read_minimal_block);
-
-    py::class_<PbfTag>(m,"PbfTag")
-        .def_readonly("tag", &PbfTag::tag)
-        .def_readonly("value", &PbfTag::value)
-        .def_property_readonly("data", [](const PbfTag& t)->py::object {
-            if (t.data.empty()) {
-                return py::none();
-            }
-            return py::bytes(t.data);
-        })
-    ;
-
-
-
-    m.def("read_all_pbf_tags", &read_all_pbf_tags);
-    m.def("read_packed_delta", &read_packed_delta);
-    m.def("read_packed_int", &read_packed_int);
-
-
 
 
     py::class_<Header, HeaderPtr>(m, "Header")

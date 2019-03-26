@@ -30,34 +30,8 @@
 
 #include "oqt/utils/invertedcallback.hpp"
 
+#include "oqt/utils/logger.hpp"
 using namespace oqt;
-class logger_python : public Logger {
-    public:
-        //using logger::logger;
-        logger_python() {};
-
-        virtual void message(const std::string& msg) {
-            py::gil_scoped_acquire acquire;
-            PYBIND11_OVERLOAD_PURE(
-                void,
-                Logger,
-                message,
-                msg);
-        }
-
-        virtual void progress(double p, const std::string& msg) {
-            py::gil_scoped_acquire acquire;
-            PYBIND11_OVERLOAD_PURE(
-                void,
-                Logger,
-                progress,
-                p,
-                msg);
-        }
-        virtual ~logger_python() {}
-};
-
-
 
 
 void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth, bool use_48bit_quadtree) {
@@ -442,19 +416,7 @@ std::vector<std::pair<int64,ElementPtr>> filter_weird(std::vector<PrimitiveBlock
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void core_defs(py::module& m) {
-    //py::class_<logger_python, std::shared_ptr<logger_python>> lg(m, "logger");
-    
-    
-    py::class_<Logger,std::shared_ptr<Logger>, logger_python>(m, "Logger")
-        .def(py::init<>())
-        .def("message", &Logger::message)
-        .def("progress", &Logger::progress)
-        .def("reset_timing", &Logger::reset_timing)
-        .def("timing_messages", &Logger::timing_messages)
-    ;
-    m.def("get_logger", &Logger::Get);
-    m.def("set_logger", &Logger::Set);
-
+   
 
     py::class_<CountElement>(m,"CountElement")
         .def_readonly("min_id", &CountElement::min_id)
@@ -643,19 +605,11 @@ void core_defs(py::module& m) {
     ;
     m.def("make_qtstore_split", &make_qtstore_split);
     
-    m.def("compress", [](const std::string& s, int l) { return py::bytes(compress(s,l)); }, py::arg("data"), py::arg("level")=-1);
-    m.def("decompress", [](const std::string& s, size_t l) { return py::bytes(decompress(s,l)); });
-    m.def("compress_gzip", [](const std::string& fn, const std::string& s, int l) { return py::bytes(compress_gzip(fn,s,l)); }, py::arg("filename"), py::arg("data"), py::arg("level")=-1);
-    m.def("decompress_gzip", [](const std::string& s) { return py::bytes(decompress_gzip(s)); });
-    m.def("decompress_gzip_info", [](const std::string& s) {
-        auto ii = gzip_info(s);
-        return py::make_tuple(py::str(ii.first), ii.second, py::bytes(decompress_gzip(s)));
-    });
-   m.def("checkstats", &checkstats);
+   
    
    m.def("has_weird_string", &has_weird_string);
    m.def("filter_weird", &filter_weird);
-   m.def("file_size", &file_size);
+   
 }
 #ifdef INDIVIDUAL_MODULES
 PYBIND11_PLUGIN(_core) {

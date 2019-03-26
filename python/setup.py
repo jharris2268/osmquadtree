@@ -35,12 +35,22 @@ class my_build_ext(build_ext):
 
 ext_modules = []
 
-for mod in ('block','change','core','geometry','postgis'):
+mods = {
+    '_block': ['block_python.cpp'],
+    '_change': ['change_python.cpp'],
+    '_core': ['core_python.cpp'],
+    '_geometry': ['geometry_python.cpp'],
+    '_postgis': ['postgis_python.cpp'],
+    'utils._utils': ['utils_python.cpp'],
+}
+
+
+for modname,srcs in mods.items():
     ext_modules.append(
     
         Extension(
-                'oqt._%s' % mod,
-                ['src/%s_python.cpp' % mod],
+                'oqt.%s' % (modname,),
+                ['src/%s' % s for s in srcs],
                 include_dirs=[
                     '/usr/local/include',
                     os.path.abspath('../include/'),
@@ -58,7 +68,7 @@ for mod in ('block','change','core','geometry','postgis'):
 
 setup(
     name='oqt',
-    packages=['oqt'],
+    packages=['oqt','oqt.utils'],
     version='0.0.1',
     long_description='',
     ext_modules=ext_modules,

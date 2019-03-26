@@ -21,7 +21,7 @@
 #-----------------------------------------------------------------------
 
 from __future__ import print_function
-from . import _change, _block, xmlchange
+from . import _change, _block, xmlchange, utils
 import json, csv, time, sys, subprocess, os
 
 try:
@@ -93,7 +93,7 @@ def find_change(src_filenames, prfx, infiles, startdate, enddate, outfn, use_alt
     objs.clear()
     print("after objs.clear(), len(objs)=%d" % len(objs))
     del objs,qts,orig_allocs
-    out = _change.WritePbfFile(prfx+outfn,bounds=_block.bbox(-1800000000,-900000000,1800000000,900000000), numchan=4, indexed=True, dropqts=False, change=True, tempfile=False)
+    out = _change.WritePbfFile(prfx+outfn,bounds=utils.bbox(-1800000000,-900000000,1800000000,900000000), numchan=4, indexed=True, dropqts=False, change=True, tempfile=False)
     print("calling out.write")
     out.write(tiles)
     print("calling out.finish()")

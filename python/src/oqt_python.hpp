@@ -26,6 +26,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
+
+
 #include "oqt/count.hpp"
 #include "oqt/sorting/qttreegroups.hpp"
 #include "oqt/elements/combineblocks.hpp"
@@ -74,6 +76,8 @@ void core_defs(py::module& m);
 void change_defs(py::module& m);
 void geometry_defs(py::module& m);
 void postgis_defs(py::module& m);
+void utils_defs(py::module& m);
+
 
 template <class BlockType>
 class collect_blocks {

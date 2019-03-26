@@ -22,7 +22,8 @@
 
 
 from __future__ import print_function
-from . import _block, _change, _core, _geometry, _postgis
+from .utils import _utils
+from . import _core, _block, _change, _geometry, _postgis
 
 
 from .processgeometry import process_geometry, read_blocks
@@ -32,17 +33,7 @@ from .utils import intm, read_poly_file, Poly
 from .xmlchange import read_timestamp
 time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))
 
-bbox = _block.bbox
-bbox.__repr__=lambda b: "bbox(% 10d, % 10d, % 10d, % 10d)" % (b.minx,b.miny,b.maxx,b.maxy)
-bbox.__len__ = lambda b: 4
-def bbox_getitem(b, i):
-    if i==0: return b.minx
-    if i==1: return b.miny
-    if i==2: return b.maxx
-    if i==3: return b.maxy
-    raise IndexError()
 
-bbox.__getitem__ = bbox_getitem
 
 class quadtree:
     def __init__(self, q):
@@ -103,28 +94,7 @@ _core.QtTreeItem.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.i
 
 
 
-class py_logger(_core.Logger):
-    def __init__(self):
-        super(py_logger,self).__init__()
-        self.msgs=[]
-        self.ln=0
 
-    def progress(self,d,m):
-        if len(m)>self.ln:
-            self.ln=len(m)
-
-        sys.stdout.write("\r%6.1f%% %s%s" % (d,m," "*(self.ln-len(m))))
-        sys.stdout.flush()
-
-    def message(self,m):
-        if self.ln:
-            print()
-        print(m)
-        self.ln=0
-        self.msgs.append(m)
-
-_logger = py_logger()
-_core.set_logger(_logger)
 
 sortblocks = _core.sortblocks
 calcqts = _core.calcqts
@@ -161,8 +131,6 @@ _block.Tag.tuple = property(lambda t: (t.key,t.val))
 _block.Member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==_block.ElementType.Node else 'w' if m.type==_block.ElementType.Way else 'r', m.ref, " {%s}" % m.role if m.role else '')
 _block.Member.tuple = property(lambda m: (m.type,m.ref,m.role))
 
-_block.PbfTag.__repr__ = lambda p: "(%d, %d, %.20s)" % (p.tag, p.value, p.data)
-_block.PbfTag.tuple = property(lambda p: (p.tag, p.value, p.data))
 
 def find_tag(obj, idx):
     for tg in obj.Tags:
@@ -285,7 +253,7 @@ class ReadBlocksCaller:
 _block.ReadBlocksCaller=ReadBlocksCaller
 
 def run_calcqts_alt(origfn, qtsfn=None, numchan=4, splitways=True, resort=True, buffer=0.05, max_depth=18):
-    _oqt.get_logger().reset_timing()
+    utils.get_logger().reset_timing()
     if qtsfn is None:
         qtsfn=origfn[:-4]+"-qts.pbf"
     waynodes_fn = qtsfn+"-waynodes"
@@ -298,18 +266,18 @@ def run_calcqts_alt(origfn, qtsfn=None, numchan=4, splitways=True, resort=True, 
     if splitways:
         midway = 256<<20
         _core.find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, midway)
-        _core.checkstats()
+        utils.checkstats()
         _core.find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, midway, 2*midway)
-        _core.checkstats()
+        utils.checkstats()
         _core.find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 2*midway, 0)
-        _core.checkstats()
+        utils.checkstats()
         
     else:
         _core.find_way_quadtrees(nodes_fn, node_locs, numchan, way_qts, wns, buffer, max_depth, 0, 0)
-        _core.checkstats()
+        utils.checkstats()
     
     
     _core.write_qts_file(qtsfn, nodes_fn, numchan, node_locs, way_qts, wns, rels, buffer, max_depth)
-    _core.get_logger().timing_messages()
+    utils.get_logger().timing_messages()
     return 1
 

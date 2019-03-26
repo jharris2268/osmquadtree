@@ -243,12 +243,7 @@ void geometry_defs(py::module& m) {
 
     
 
-    py::class_<LonLat>(m,"LonLat")
-        .def(py::init<int64,int64>())
-        .def_readonly("lon", &LonLat::lon)
-        .def_readonly("lat", &LonLat::lat)
-        .def_property_readonly("transform", [](const LonLat& ll) { return geometry::forward_transform(ll.lon,ll.lat); })
-    ;
+    
 
     py::class_<geometry::XY>(m,"XY")
         .def(py::init<double,double>())
@@ -372,11 +367,7 @@ void geometry_defs(py::module& m) {
     m.def("res_zoom", &geometry::res_zoom);
     
     
-    m.def("point_in_poly", &point_in_poly);
     
-    m.def("segment_intersects", &segment_intersects);
-    m.def("line_intersects", &line_intersects);
-    m.def("line_box_intersects", &line_box_intersects);
     
     
     py::class_<geometry::LonLatStore, std::shared_ptr<geometry::LonLatStore>>(m, "LonLatStore")
