@@ -622,3 +622,11 @@ void block_defs(py::module& m) {
     ;
    
 }
+
+#ifdef INDIVIDUAL_MODULES
+PYBIND11_PLUGIN(_block) {
+    py::module m("_block", "pybind11 example plugin");
+    block_defs(m);
+    return m.ptr();
+}
+#endif

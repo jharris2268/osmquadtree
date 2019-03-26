@@ -9,7 +9,7 @@ python/dist
 build/
 xx.out
 xml/
-doc/
-docs/
 python/oqt/__pycache__/
 oldstuff/
+docs/build/
+docs/xml/

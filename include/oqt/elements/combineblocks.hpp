@@ -41,9 +41,10 @@ PrimitiveBlockPtr combine_primitiveblock_two(
     PrimitiveBlockPtr right,
     bool apply_change);
 
-
-/*! Equivilant to
- * \verbatim embed:rst:leading-asterisk
+//:leading-asterisk
+/*! 
+ * Equivilant to::
+ * \verbatim embed:rst
  *      size_t idx = main->index();
  *      PrimitiveBlockPtr merged_changes = changes.pop_back();
  *      while (!changes.empty()) {
@@ -51,7 +52,8 @@ PrimitiveBlockPtr combine_primitiveblock_two(
  *              combine_primitiveblock_two(idx, changes.pop_back(), merged_changes, false);
  *      }
  *      return combine_primitiveblock_two(idx, main, merged_changes, true);
- * \endverbatim */
+ * \endverbatim
+ */
  
 PrimitiveBlockPtr combine_primitiveblock_many(
     PrimitiveBlockPtr main,

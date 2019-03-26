@@ -14,7 +14,7 @@ if not os.path.exists(os.path.join(postgresql_path, "libpq-fe.h")):
     raise Exception("specify path to postgresql (libpq) headers")
 
 
-srcs=['src/'+f for f in ("oqt_python.cpp","block_python.cpp", "core_python.cpp","change_python.cpp", "geometry_python.cpp")]
+#srcs=['src/'+f for f in ("oqt_python.cpp","block_python.cpp", "core_python.cpp","change_python.cpp", "geometry_python.cpp", "postgis_python.cpp")]
 
 
 
@@ -32,24 +32,28 @@ class my_build_ext(build_ext):
 
 
 
-ext_modules = [
-    Extension(
-        'oqt._oqt',
-        srcs,
-        include_dirs=[
-            '/usr/local/include',
-            os.path.abspath('../include/'),
-            os.path.abspath('../thirdparty/'),
-            xmlinspector_path,
-            postgresql_path,
-        ],
-        libraries=libs,
-        extra_compile_args=['-std=c++14',],
-        
-    ),
-    
-]
 
+ext_modules = []
+
+for mod in ('block','change','core','geometry','postgis'):
+    ext_modules.append(
+    
+        Extension(
+                'oqt._%s' % mod,
+                ['src/%s_python.cpp' % mod],
+                include_dirs=[
+                    '/usr/local/include',
+                    os.path.abspath('../include/'),
+                    os.path.abspath('../thirdparty/'),
+                    xmlinspector_path,
+                    postgresql_path,
+                ],
+                libraries=libs,
+                extra_compile_args=['-std=c++14','-DINDIVIDUAL_MODULES'],
+                
+        )
+    )
+    
 
 
 setup(

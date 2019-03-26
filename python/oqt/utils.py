@@ -22,7 +22,7 @@
 
 from __future__ import print_function
 import time, sys, json, os, re
-from . import _oqt as oq
+from . import _block, _core, _geometry, _change
 
 def intm(f):
     if f<0:
@@ -45,7 +45,7 @@ def find_tile(bls, qt):
         bls[0] = oq.primitiveblock(0,0)
         bls[0].quadtree=0
         return bls[0]
-    return find_tile(bls, oq.quadtree_round(qt,(qt&31)-1))
+    return find_tile(bls, _block.quadtree_round(qt,(qt&31)-1))
 
 def addto_merge(res, resort_tiles=False):
     def _(bls):
@@ -85,17 +85,17 @@ class Prog:
         self.nobjs+=sum(len(b) for b in bls)
         #for bl in bls:
         #    for o in bl:
-        #        if o.Type==oq.ElementType.Point: self.npt+=1
-        #        elif o.Type==oq.ElementType.Linestring: self.nln+=1
-        #        elif o.Type==oq.ElementType.SimplePolygon: self.nsp+=1
-        #        elif o.Type==oq.ElementType.ComplicatedPolygon: self.ncp+=1
+        #        if o.Type==_block.ElementType.Point: self.npt+=1
+        #        elif o.Type==_block.ElementType.Linestring: self.nln+=1
+        #        elif o.Type==_block.ElementType.SimplePolygon: self.nsp+=1
+        #        elif o.Type==_block.ElementType.ComplicatedPolygon: self.ncp+=1
         lc=''
         maxq=max(b.Quadtree for b in bls) if bls else 0
         if self.locs:
             if maxq in self.locs:
                 lc = "%6.1f%% " % self.locs[maxq]
-        #print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),oq.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
-        sys.stdout.write("\r%7d: %s%6.1fs %2d blocks [%-18s] %d" % (self.nb, lc, time.time()-self.st, len(bls), oq.quadtree_string(maxq), self.nobjs))
+        #print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),_block.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
+        sys.stdout.write("\r%7d: %s%6.1fs %2d blocks [%-18s] %d" % (self.nb, lc, time.time()-self.st, len(bls), _block.quadtree_string(maxq), self.nobjs))
         sys.stdout.flush()
         return True
 
@@ -105,9 +105,9 @@ class tboxbuf:
         self.box=box
         self.buffer=buffer
     def __call__(self, q):
-        return self.box.overlaps(oq.quadtree_bbox(q, self.buffer))
+        return self.box.overlaps(_block.quadtree_bbox(q, self.buffer))
 def get_locs_single(fn, box_in,asmerge=False, buffer=None):
-    hh = oq.get_header_block(fn)
+    hh = _change.get_header_block(fn)
     if not len(hh.Index):
         raise Exception(fn+" doesn't contain a header index")
     
@@ -144,18 +144,21 @@ def pnpoly(vertx, verty, testx, testy):
 
 class Poly:
     def __init__(self, coords):
-                
+        
+        if isinstance(coords, basestring):
+            coords = read_poly_file(coords)
+        
         self.vertx,self.verty = zip(*coords)
         mx = min(self.vertx)
         my = min(self.verty)
         Mx = max(self.vertx)
         My = max(self.verty)
         
-        self.bounds = oq.bbox(mx,my,Mx,My)
+        self.bounds = _block.bbox(mx,my,Mx,My)
     
     
     def test(self, qt):
-        return self.test_box(oq.quadtree_bbox(qt,0.05))
+        return self.test_box(_block.quadtree_bbox(qt,0.05))
     
     
     def test_box(self, tb):
@@ -264,18 +267,18 @@ def read_poly_file(fl):
 
 def prep_box(box_in):
     if box_in is None:
-        return oq.bbox(-1800000000,-900000000,1800000000,900000000), lambda x: True
+        return _block.bbox(-1800000000,-900000000,1800000000,900000000), lambda x: True
         
-    if isinstance(box_in, oq.bbox):
+    if isinstance(box_in, _block.bbox):
         return box_in, box_in.overlaps_quadtree
     try:
-        box = oq.bbox(*box_in)
+        box = _block.bbox(*box_in)
         return box, box.overlaps_quadtree
     except:
         pass
     
     try:
-        box = oq.bbox(*(intm(f) for f in box_in))
+        box = _block.bbox(*(intm(f) for f in box_in))
         return box, box.overlaps_quadtree
     except:
         pass
@@ -306,9 +309,9 @@ def get_locs(prfx,box_in=None, lastdate=None):
     if lastdate is not None:
         print("using %d of %d files: %s => %s" % (len(fns),sk+len(fns),fns[0],fns[-1]))
     #fns = [prfx+f['Filename'] for f in json.load(open(fl_path))]
-    locs = dict((a,[(0,b)]) for a,b,c in oq.get_header_block(fns[0]).Index if box is None or boxtest(a))
+    locs = dict((a,[(0,b)]) for a,b,c in _change.get_header_block(fns[0]).Index if box is None or boxtest(a))
     for i,f in enumerate(fns[1:]):
-        for a,b,c in oq.get_header_block(f).Index:
+        for a,b,c in _change.get_header_block(f).Index:
             if a in locs:
                 locs[a].append((i+1,b))
     return fns, locs, box
@@ -316,4 +319,4 @@ def get_locs(prfx,box_in=None, lastdate=None):
 replace_ws = lambda w: re.sub('\s+', ' ', w)
 
 
-__old_read_style = lambda stylefn: dict((t['Tag'], oq.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
+__old_read_style = lambda stylefn: dict((t['Tag'], _geometry.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 

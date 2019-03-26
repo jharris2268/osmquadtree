@@ -1771,3 +1771,4 @@ std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
     };
 }
 }}
+

@@ -38,6 +38,7 @@ namespace quadtree {
     
     typedef std::tuple<int64,int64,int64> xyz;
 
+    
     int64 calculate(int64 min_x, int64 min_y, int64 max_x, int64 max_y, double buffer, uint64 max_depth);
 
     int64 round(int64 quadtree, uint64 new_depth);

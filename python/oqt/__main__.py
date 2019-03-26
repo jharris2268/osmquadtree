@@ -20,7 +20,7 @@
 #
 #-----------------------------------------------------------------------
 from __future__ import print_function
-from . import _oqt, xmlchange, update, sys, run_calcqts_alt
+from . import xmlchange, update, sys, run_calcqts_alt
 if len(sys.argv)>=3 and sys.argv[1]=='update':
     nd = None
     if len(sys.argv)>3:

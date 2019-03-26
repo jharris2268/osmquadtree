@@ -164,4 +164,6 @@ std::function<void(std::shared_ptr<CsvBlock>)> make_postgiswriter_callback(
     bool with_header, bool binary_format);
 
 }}  
+
+
 #endif 

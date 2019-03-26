@@ -73,7 +73,7 @@ void block_defs(py::module& m);
 void core_defs(py::module& m);
 void change_defs(py::module& m);
 void geometry_defs(py::module& m);
-
+void postgis_defs(py::module& m);
 
 template <class BlockType>
 class collect_blocks {
@@ -114,6 +114,14 @@ class collect_blocks {
         std::vector<std::shared_ptr<BlockType>> pending;
 };
 
+typedef std::function<bool(std::vector<oqt::PrimitiveBlockPtr>)> external_callback;
+typedef std::function<void(oqt::PrimitiveBlockPtr)> block_callback;
 
+inline block_callback prep_callback(external_callback cb, size_t numblocks) {
+    if (!cb) { return nullptr; }
+    
+    auto collect = std::make_shared<collect_blocks<oqt::PrimitiveBlock>>(wrap_callback(cb),numblocks);
+    return [collect](oqt::PrimitiveBlockPtr bl) { collect->call(bl); };
+}
 
 #endif

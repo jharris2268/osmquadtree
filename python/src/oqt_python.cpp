@@ -22,6 +22,9 @@
 
 #include "oqt_python.hpp"
 
+#ifdef INDIVIDUAL_MODULES
+//pass
+#else
 
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
@@ -35,8 +38,9 @@ PYBIND11_PLUGIN(_oqt) {
     block_defs(m);
     change_defs(m);
     geometry_defs(m);
+    postgis_defs(m);
     core_defs(m);
     return m.ptr();
 };
 
-
+#endif

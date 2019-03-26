@@ -36,6 +36,7 @@
 #include "oqt/pbfformat/readfileparallel.hpp"
 
 #include "oqt/geometry/utils.hpp"
+
 #include <map>
 namespace oqt {
 namespace geometry {
@@ -45,7 +46,7 @@ struct GeometryParameters {
     GeometryParameters() 
         : numchan(4), numblocks(512), box(), add_rels(false),
             add_mps(false), recalcqts(false), outfn(""), indexed(false),
-            connstring(""), tableprfx(""), use_binary(false), addwn_split(false) {}
+            addwn_split(false) {}
     
     std::vector<std::string> filenames;
     
@@ -61,35 +62,55 @@ struct GeometryParameters {
     std::shared_ptr<FindMinZoom> findmz;
     std::string outfn;
     bool indexed;
-    std::string connstring;
-    std::string tableprfx;
-    PackCsvBlocks::tagspec coltags;
-    bool use_binary;
-    table_alloc_func alloc_func;
+    
     std::shared_ptr<QtTree> groups;
     bool addwn_split;
     
 };
 
+
+
+
 mperrorvec process_geometry(const GeometryParameters& params, block_callback wrapped);
 mperrorvec process_geometry_nothread(const GeometryParameters& params, block_callback wrapped);
 mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_callback cb);
-
-
-mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
-    block_callback callback,
-    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
-
-
-mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
-    block_callback callback,
-    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
 
 mperrorvec process_geometry_from_vec(
     std::vector<PrimitiveBlockPtr> blocks,
     const GeometryParameters& params,
     block_callback callback);
     
+
+
+struct PostgisParameters {
+    
+    PostgisParameters()
+        : connstring(""), tableprfx(""), use_binary(false) {}
+        
+    
+    std::string connstring;
+    std::string tableprfx;
+    PackCsvBlocks::tagspec coltags;
+    bool use_binary;
+    table_alloc_func alloc_func;
+};
+
+
+mperrorvec process_geometry_postgis(const GeometryParameters& params, const PostgisParameters& postgis, block_callback cb);
+mperrorvec process_geometry_postgis_nothread(const GeometryParameters& params, const PostgisParameters& postgis, block_callback cb);
+
+mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
+    const PostgisParameters& postgis, 
+    block_callback callback,
+    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
+
+
+mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
+    const PostgisParameters& postgis, 
+    block_callback callback,
+    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
+
+
 }
 }
 #endif

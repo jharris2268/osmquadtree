@@ -514,10 +514,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
         
     }
     
-    if (params.connstring != "") {
-        bool header = (!params.use_binary) ? true : false;
-        writer = write_to_postgis_callback(writer, params.numchan, params.connstring, params.tableprfx, params.coltags, header, params.use_binary,params.alloc_func);
-    }
+    
     
     auto addwns = process_geometry_blocks(
             writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
@@ -604,14 +601,10 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     if (params.outfn!="") {
         writer = pack_and_write_callback_nothread(callback, params.outfn, params.indexed, params.box, true, true, true);
     }
-    block_callback postgis=writer;
-    if (params.connstring != "") {
-        bool header = (!params.use_binary) ? true : false;
-        postgis = write_to_postgis_callback_nothread(writer, params.connstring, params.tableprfx, params.coltags, header, params.use_binary,params.alloc_func);
-    }
+    
     
     block_callback addwns = process_geometry_blocks_nothread(
-            postgis, params.style, params.box, params.parent_tag_spec, params.add_rels,
+            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
             params.add_mps, params.recalcqts, params.findmz,
             [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
     );
@@ -622,14 +615,100 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     return errors_res;
 
 }
+
+
+
+
+mperrorvec process_geometry_postgis(const GeometryParameters& params, const PostgisParameters& postgis, block_callback wrapped) {
+    
+    if (postgis.connstring.empty()) {
+        throw std::domain_error("must specify postgis connection string");
+    }
+    
+    mperrorvec errors_res;
+    
+    
+    if (!wrapped) {
+        auto pp = std::make_shared<GeomProgress>(params.locs);
+        wrapped = [pp](PrimitiveBlockPtr bl) { pp->call(bl); };
+    }
+    std::vector<block_callback> writer = multi_threaded_callback<PrimitiveBlock>::make(wrapped,params.numchan);
+    
+        
+    if (params.outfn!="") {
+        writer = pack_and_write_callback(writer, params.outfn, params.indexed, params.box, params.numchan, true, true, true);
+        
+    }
+    
+    bool header = (!postgis.use_binary) ? true : false;
+    writer = write_to_postgis_callback(writer, params.numchan, postgis.connstring, postgis.tableprfx, postgis.coltags, header, postgis.use_binary,postgis.alloc_func);
+    
+    auto addwns = process_geometry_blocks(
+            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
+    );
+    
+    read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
+      
+    
+    return errors_res;
+
+}
+
+
+
+mperrorvec process_geometry_postgis_nothread(const GeometryParameters& params, const PostgisParameters& postgis, block_callback callback) {
+
+    if (postgis.connstring.empty()) {
+        throw std::domain_error("must specify postgis connection string");
+    }
+    
+    mperrorvec errors_res;
+    
+    
+    
+    block_callback writer=callback;
+    if (params.outfn!="") {
+        writer = pack_and_write_callback_nothread(callback, params.outfn, params.indexed, params.box, true, true, true);
+    }
+   
+    
+    bool header = (!postgis.use_binary) ? true : false;
+    writer = write_to_postgis_callback_nothread(writer, postgis.connstring, postgis.tableprfx, postgis.coltags, header, postgis.use_binary,postgis.alloc_func);
+    
+    block_callback addwns = process_geometry_blocks_nothread(
+            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
+            params.add_mps, params.recalcqts, params.findmz,
+            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
+    );
+    
+    read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, ReadBlockFlags::Empty);
+      
+    
+    return errors_res;
+
+}
+
+
+
+
+
+
+
+
+
+
+
 mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
+    const PostgisParameters& postgis,
     block_callback callback,
     std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback) {
         
     
     mperrorvec errors_res;
     
-    auto cb=make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary,params.alloc_func);
+    auto cb=make_pack_csvblocks_callback(callback,csvblock_callback,postgis.coltags, true, postgis.use_binary,postgis.alloc_func);
     auto csvcallback = multi_threaded_callback<PrimitiveBlock>::make(cb,params.numchan);
        
     
@@ -646,13 +725,14 @@ mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
 }
 
 mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
+    const PostgisParameters& postgis,
     block_callback callback,
     std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback) {
         
     
     mperrorvec errors_res;
     
-    block_callback csvcallback = make_pack_csvblocks_callback(callback,csvblock_callback,params.coltags, true, params.use_binary,params.alloc_func);
+    block_callback csvcallback = make_pack_csvblocks_callback(callback,csvblock_callback,postgis.coltags, true, postgis.use_binary,postgis.alloc_func);
     
     block_callback addwns = process_geometry_blocks_nothread(
             csvcallback, params.style, params.box, params.parent_tag_spec, params.add_rels,

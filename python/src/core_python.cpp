@@ -657,3 +657,10 @@ void core_defs(py::module& m) {
    m.def("filter_weird", &filter_weird);
    m.def("file_size", &file_size);
 }
+#ifdef INDIVIDUAL_MODULES
+PYBIND11_PLUGIN(_core) {
+    py::module m("_core", "pybind11 example plugin");
+    core_defs(m);
+    return m.ptr();
+}
+#endif

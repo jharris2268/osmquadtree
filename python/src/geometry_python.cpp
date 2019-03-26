@@ -66,17 +66,7 @@ ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> t
     bbox bounds = geometry::lonlats_bounds(geometry::ringpart_lonlats(exterior));
     return std::make_shared<geometry::ComplicatedPolygon>(id, qt, inf, tags, part, exterior, interiors, zorder, layer, ar, bounds, minzoom);
 }
-typedef std::function<bool(std::vector<PrimitiveBlockPtr>)> external_callback;
-typedef std::function<void(PrimitiveBlockPtr)> block_callback;
 
-
-
-block_callback prep_callback(external_callback cb, size_t numblocks) {
-    if (!cb) { return nullptr; }
-    
-    auto collect = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(cb),numblocks);
-    return [collect](PrimitiveBlockPtr bl) { collect->call(bl); };
-}
 
 geometry::mperrorvec process_geometry_py(const geometry::GeometryParameters& params, external_callback cb) {
     
@@ -102,27 +92,6 @@ geometry::mperrorvec process_geometry_sortblocks_py(const geometry::GeometryPara
     return process_geometry_sortblocks(params, wrapped);
 }
 
-geometry::mperrorvec process_geometry_csvcallback_py(const geometry::GeometryParameters& params,
-    external_callback cb,
-    std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
-
-    py::gil_scoped_release r;
-    
-    block_callback wrapped = prep_callback(cb, params.numblocks);
-    
-    return process_geometry_csvcallback(params, wrapped, wrap_callback(csvblock_callback));
-}
-
-geometry::mperrorvec process_geometry_csvcallback_nothread_py(const geometry::GeometryParameters& params,
-    external_callback cb,
-    std::function<void(std::shared_ptr<geometry::CsvBlock>)> csvblock_callback) {
-
-    py::gil_scoped_release r;
-    
-    block_callback wrapped = prep_callback(cb, params.numblocks);
-    
-    return process_geometry_csvcallback_nothread(params, wrapped, wrap_callback(csvblock_callback));
-}
 
 PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
     if (!fb) { return PrimitiveBlockPtr(); }
@@ -140,11 +109,6 @@ geometry::mperrorvec process_geometry_from_vec_py(
     
     return process_geometry_from_vec(blocks, params, wrapped);
 }
-
-
-
-
-
 
 
 std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> make_read_blocks_geometry_convfunc_filter(bbox filt, int64 minzoom) {
@@ -188,7 +152,6 @@ std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> make_read_blocks_ge
         return pb2;
     };
 }       
-
 size_t read_blocks_geometry_py(
     const std::string& filename,
     std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
@@ -207,135 +170,6 @@ size_t read_blocks_geometry_py(
     return cb->total();
 }
 
-
-class CsvWriter {
-    public:
-        CsvWriter(const std::string& prfx_) : prfx(prfx_) {}
-        
-        void call(std::shared_ptr<oqt::geometry::CsvBlock> block) {
-            if (!block) {
-                for (auto& oo: outs) {
-                    oo.second->close();
-                }
-                return;
-            }
-            for (const auto& r: block->rows()) {
-                bool hh=false;
-                if (outs.count(r.first)==0) {
-                    hh=true;
-                    std::string fn(prfx+"-"+r.first+".csv.gz");
-                    outs.emplace(r.first, std::make_shared<gzstream::ogzstream>(fn.c_str()));
-                }
-                
-                gzstream::ogzstream& out = *outs.at(r.first);
-                
-                if (hh) {
-                    out << r.second.at(0);
-                }
-                
-                for (int i=1; i < r.second.size(); i++) {
-                    out << r.second.at(i);
-                }
-                
-            }
-            
-        }
-    private:
-        std::string prfx;
-        std::map<std::string,std::shared_ptr<gzstream::ogzstream>> outs;
-};
-
-geometry::mperrorvec process_geometry_csvcallback_write(const geometry::GeometryParameters& params,
-    external_callback cb,
-    const std::string& out_prfx) {
-
-    py::gil_scoped_release r;
-    
-    block_callback wrapped = prep_callback(cb, params.numblocks);
-    
-    auto writer=std::make_shared<CsvWriter>(out_prfx);
-    auto csvblock_callback = [writer](std::shared_ptr<oqt::geometry::CsvBlock> bl) { writer->call(bl); };
-    
-    return process_geometry_csvcallback(params, wrapped, csvblock_callback);
-}
-std::vector<std::string> extended_table_alloc(ElementPtr geom) {
-    if (geom->Type()==ElementType::Point) {
-        return {"point"};
-    }
-    
-    if (geom->Type()==ElementType::Linestring) {
-        auto ln = std::dynamic_pointer_cast<geometry::Linestring>(geom);
-        if (ln->ZOrder() > 0) {
-            return {"highway"};
-        } else {
-            return {"line"};
-        }
-    }   
-    
-    if (geom->Type()==ElementType::SimplePolygon) {
-        bool is_building=false;
-        for (const auto& tg: geom->Tags()) {
-            if ((tg.key=="building") && (tg.val != "no")) {
-                is_building=true;
-            }
-        }
-        if (is_building) {
-            return {"building"};
-        }
-        return {"polygon"};
-        
-    }   
-    
-    if (geom->Type() == ElementType::ComplicatedPolygon) {
-        bool is_boundary=false;
-        bool is_building=false;
-        
-        for (const auto& tg: geom->Tags()) {
-            if ((tg.key=="type") && (tg.val == "boundary")) {
-                is_boundary=true;
-            }
-            if ((tg.key=="building") && (tg.val != "no")) {
-                is_building=true;
-            }
-        }
-        if (is_boundary) {
-            return {"polygon","boundary"};
-        }
-        if (is_building) {
-            return {"building"};
-        }
-        return {"polygon"};
-        
-    }   
-    return {};
-}
-
-void set_params_alloc_func(geometry::GeometryParameters& gp, py::object obj) {
-    if (obj.is_none()) {
-        gp.alloc_func =  geometry::default_table_alloc;
-        return;
-    }
-    try {
-        auto s = py::cast<std::string>(obj);
-        if (s=="default") {
-            gp.alloc_func = geometry::default_table_alloc;
-            return;
-        }
-        if (s=="extended") {
-            gp.alloc_func = extended_table_alloc;
-            return;
-        }
-    } catch (...) {}
-    try {
-        auto p = py::cast<geometry::table_alloc_func>(obj);
-        gp.alloc_func = [p](ElementPtr e) {
-            py::gil_scoped_acquire g;
-            return p(e);
-        };
-        return;
-    } catch (...) {}
-    throw std::domain_error("can't set alloc func");
-}
 
 
 
@@ -465,15 +299,6 @@ void geometry_defs(py::module& m) {
     m.def("unpack_geometry_primitiveblock", &geometry::unpack_geometry_primitiveblock);
 
     
-    py::class_<geometry::CsvBlock, std::shared_ptr<geometry::CsvBlock>>(m,"CsvBlock")
-        .def_property_readonly("rows", &geometry::CsvBlock::rows);
-    ;
-    py::class_<geometry::CsvRows>(m, "CsvRows")
-        .def("__getitem__", &geometry::CsvRows::at)
-        .def("__len__", &geometry::CsvRows::size)
-        .def("data", [](const geometry::CsvRows& c) { return py::bytes(c.data_blob()); })
-    ;
-    
     py::class_<geometry::FindMinZoom, std::shared_ptr<geometry::FindMinZoom>>(m,"FindMinZoom")
         .def("calculate", &geometry::FindMinZoom::calculate)
     ;
@@ -500,7 +325,7 @@ void geometry_defs(py::module& m) {
     m.def("convert_packed_tags_to_json", &geometry::convert_packed_tags_to_json);
 
 
-    py::class_<geometry::GeometryParameters>(m, "geometry_parameters")
+    py::class_<geometry::GeometryParameters>(m, "GeometryParameters")
         .def(py::init<>())
         .def_readwrite("filenames", &geometry::GeometryParameters::filenames)
         //.def_readwrite("callback", &geometry_parameters::callback)
@@ -516,61 +341,25 @@ void geometry_defs(py::module& m) {
         .def_readwrite("findmz", &geometry::GeometryParameters::findmz)
         .def_readwrite("outfn", &geometry::GeometryParameters::outfn)
         .def_readwrite("indexed", &geometry::GeometryParameters::indexed)
-        .def_readwrite("connstring", &geometry::GeometryParameters::connstring)
-        .def_readwrite("tableprfx", &geometry::GeometryParameters::tableprfx)
-        .def_readwrite("coltags", &geometry::GeometryParameters::coltags)
-        .def_readwrite("use_binary", &geometry::GeometryParameters::use_binary)
-        .def_property("alloc_func", [](geometry::GeometryParameters& gp) { return gp.alloc_func; }, &set_params_alloc_func) 
+        
             
         .def_readwrite("groups", &geometry::GeometryParameters::groups)
         .def_readwrite("addwn_split", &geometry::GeometryParameters::addwn_split)
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;
+    
+    
 
 
-    m.def("process_geometry", &process_geometry_py/* ,
-       py::arg("filenames"), py::arg("callback"),
-        py::arg("locs"), py::arg("numchan"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"),py::arg("outfn"), py::arg("indexed"),
-        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")*/
-    );
+    m.def("process_geometry", &process_geometry_py);
     
-    m.def("process_geometry_sortblocks", &process_geometry_sortblocks_py/*, 
-        py::arg("filenames"), py::arg("callback"),
-        py::arg("locs"), py::arg("numchan"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"),py::arg("outfn"), py::arg("indexed"),
-        py::arg("groups")*/
-    );
+    m.def("process_geometry_sortblocks", &process_geometry_sortblocks_py);
     
-    m.def("process_geometry_nothread", &process_geometry_nothread_py/*,
-        py::arg("filenames"), py::arg("callback"),
-        py::arg("locs"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"), py::arg("outfn"), py::arg("indexed"),
-        py::arg("connstring"), py::arg("table_prfx"), py::arg("coltags")*/
-    );
+    m.def("process_geometry_nothread", &process_geometry_nothread_py);
     
-    m.def("process_geometry_csvcallback_nothread", &process_geometry_csvcallback_nothread_py/*,
-        py::arg("filenames"), py::arg("callback"),py::arg("csvblock_callback"),
-        py::arg("locs"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz"), py::arg("coltags")*/
-    );
-    m.def("process_geometry_csvcallback", &process_geometry_csvcallback_py);
-    m.def("process_geometry_csvcallback_write", &process_geometry_csvcallback_write);
     
-    m.def("process_geometry_from_vec", &process_geometry_from_vec_py/*,
-        py::arg("blocks"), py::arg("callback"), py::arg("numblocks"),
-        py::arg("style"), py::arg("box"), py::arg("apt_spec"),
-        py::arg("add_rels"), py::arg("add_mps"), py::arg("recalcqts"),
-        py::arg("findmz")*/
-    );
+    
+    m.def("process_geometry_from_vec", &process_geometry_from_vec_py);
     
 
     
@@ -589,65 +378,6 @@ void geometry_defs(py::module& m) {
     m.def("line_intersects", &line_intersects);
     m.def("line_box_intersects", &line_box_intersects);
     
-    py::class_<geometry::PostgisWriter, std::shared_ptr<geometry::PostgisWriter>>(m, "PostgisWriter")
-        .def("finish", &geometry::PostgisWriter::finish)
-        .def("call", &geometry::PostgisWriter::call)
-    ;
-    m.def("make_postgiswriter", &geometry::make_postgiswriter);
-    
-    py::class_<geometry::PackCsvBlocks, std::shared_ptr<geometry::PackCsvBlocks>>(m, "PackCsvBlocks")
-        .def("call", &geometry::PackCsvBlocks::call)
-    ;
-    m.def("make_pack_csvblocks", &geometry::make_pack_csvblocks);
-    m.def("extended_table_alloc", &extended_table_alloc);
-    m.def("pack_hstoretags", &geometry::pack_hstoretags);
-    m.def("pack_hstoretags_binary", &geometry::pack_hstoretags_binary);
-    m.def("pack_jsontags_picojson", &geometry::pack_jsontags_picojson);
-    
-    
-    py::enum_<geometry::ColumnType>(m, "GeometryColumnType")
-        .value("Text", geometry::ColumnType::Text)
-        .value("BigInteger", geometry::ColumnType::BigInteger)
-        .value("Integer", geometry::ColumnType::Integer)
-        .value("Double",geometry::ColumnType::Double)
-        .value("Hstore", geometry::ColumnType::Hstore)
-        .value("Json", geometry::ColumnType::Json)
-        .value("TextArray", geometry::ColumnType::TextArray)
-        .value("PointGeometry", geometry::ColumnType::PointGeometry)
-        .value("LineGeometry", geometry::ColumnType::LineGeometry)
-        .value("PolygonGeometry", geometry::ColumnType::PolygonGeometry)
-    ;
-    py::enum_<geometry::ColumnSource>(m, "GeometryColumnSource")
-        .value("OsmId", geometry::ColumnSource::OsmId)
-        .value("Part", geometry::ColumnSource::Part)
-        .value("ObjectQuadtree", geometry::ColumnSource::ObjectQuadtree)
-        .value("BlockQuadtree", geometry::ColumnSource::BlockQuadtree)
-        .value("Tag", geometry::ColumnSource::Tag)
-        .value("OtherTags", geometry::ColumnSource::OtherTags)
-        .value("Layer", geometry::ColumnSource::Layer)
-        .value("ZOrder", geometry::ColumnSource::ZOrder)
-        .value("MinZoom", geometry::ColumnSource::MinZoom)
-        .value("Length", geometry::ColumnSource::Length)
-        .value("Area", geometry::ColumnSource::Area)
-        .value("Geometry", geometry::ColumnSource::Geometry)
-    ;
-    
-    py::class_<geometry::ColumnSpec>(m, "GeometryColumnSpec")
-        .def(py::init<std::string,geometry::ColumnType,geometry::ColumnSource>())
-        .def_readwrite("name", &geometry::ColumnSpec::name)
-        .def_readwrite("type", &geometry::ColumnSpec::type)
-        .def_readwrite("source", &geometry::ColumnSpec::source)
-    ;
-    
-    py::class_<geometry::TableSpec>(m, "GeometryTableSpec")
-        .def(py::init<std::string>())
-        .def_readwrite("table_name", &geometry::TableSpec::table_name)
-        .def_readonly("columns", &geometry::TableSpec::columns)
-        .def("set_columns", [](geometry::TableSpec& ts, const std::vector<geometry::ColumnSpec>& cc) {
-            ts.columns=cc;
-        })
-    ;
-
     
     py::class_<geometry::LonLatStore, std::shared_ptr<geometry::LonLatStore>>(m, "LonLatStore")
         .def("add_tile", &geometry::LonLatStore::add_tile)
@@ -659,3 +389,10 @@ void geometry_defs(py::module& m) {
     m.def("make_waywithnodes", [](std::shared_ptr<Way> way, const std::vector<LonLat>& lonlats) { return std::make_shared<geometry::WayWithNodes>(way, lonlats); });
     
 }
+#ifdef INDIVIDUAL_MODULES
+PYBIND11_PLUGIN(_geometry) {
+    py::module m("_geometry", "pybind11 example plugin");
+    geometry_defs(m);
+    return m.ptr();
+}
+#endif

@@ -1,6 +1,5 @@
 import json
-from . import _oqt as oq
-
+from . import _geometry, _postgis
 
 class KeySpec:
     __slots__ = ['IsNode','IsWay','IsFeature','IsArea','OnlyArea']
@@ -16,7 +15,7 @@ class KeySpec:
         return dict((s, getattr(self, s)) for s in self.__slots__)
     
     def to_cpp(self):
-        res =  oq.StyleInfo(IsFeature=self.IsFeature, IsArea=self.IsArea, IsWay=self.IsWay, IsNode=self.IsNode, IsOtherTags=False)
+        res =  _geometry.StyleInfo(IsFeature=self.IsFeature, IsArea=self.IsArea, IsWay=self.IsWay, IsNode=self.IsNode, IsOtherTags=False)
         res.OnlyArea=self.OnlyArea
         
         return res
@@ -99,7 +98,7 @@ class ParentTag:
     def to_cpp(self, key):
         ans=[]
         for nk in self.node_keys:
-            ans.append(oq.ParentTagSpec(nk, key, self.way_key, self.way_priority))
+            ans.append(_geometry.ParentTagSpec(nk, key, self.way_key, self.way_priority))
         return ans
     
     def to_json(self):
@@ -228,20 +227,20 @@ class GeometryStyle:
         
         style = dict((k, v.to_cpp()) for k,v in self.keys.iteritems())
         if self.other_tags:
-            style['XXX']=oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=True)
+            style['XXX']=_geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=True)
         
         if add_min_zoom:
-            style['minzoom'] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=False)
+            style['minzoom'] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=False)
         
         parent_tag_spec=[]
         for k,v in self.parent_tags.iteritems():
             if not self.other_tags:
-                style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
+                style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
             parent_tag_spec+=v.to_cpp(k)
         
         if not self.other_tags or True:
             for k,v in self.parent_relations.iteritems():
-                style[k] = oq.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
+                style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
             
         params.style = style
         if self.parent_relations:
@@ -259,76 +258,76 @@ class GeometryStyle:
         
         
         point_cols = [
-            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
-            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
-            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
         ]
-        point_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsNode]
-        point_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in self.parent_tags]
+        point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsNode]
+        point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in self.parent_tags]
         
         if add_min_zoom:
-            point_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+            point_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
         if self.other_tags:
-            point_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
-        point_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.PointGeometry, oq.GeometryColumnSource.Geometry))
+            point_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
+        point_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PointGeometry, _postgis.GeometryColumnSource.Geometry))
         
         line_cols = [
-            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
-            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
-            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
         ]
-        line_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
-        line_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in self.parent_relations]
+        line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
+        line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in self.parent_relations]
         
-        line_cols.append(oq.GeometryColumnSpec("layer", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.Layer))
-        line_cols.append(oq.GeometryColumnSpec("z_order", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ZOrder))
+        line_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
+        line_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
         
         if add_min_zoom:
-            line_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+            line_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
         if self.other_tags:
-            line_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
+            line_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
         
-        line_cols.append(oq.GeometryColumnSpec('length', oq.GeometryColumnType.Double, oq.GeometryColumnSource.Length))
-        line_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.LineGeometry, oq.GeometryColumnSource.Geometry))
+        line_cols.append(_postgis.GeometryColumnSpec('length', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Length))
+        line_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.LineGeometry, _postgis.GeometryColumnSource.Geometry))
         
         poly_cols = [
-            oq.GeometryColumnSpec("osm_id", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
-            oq.GeometryColumnSpec("part", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.OsmId),
-            oq.GeometryColumnSpec("quadtree", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ObjectQuadtree),
-            oq.GeometryColumnSpec("tile", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.BlockQuadtree),
+            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+            _postgis.GeometryColumnSpec("part", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
         ]
         
-        poly_cols += [oq.GeometryColumnSpec(k, oq.GeometryColumnType.Text, oq.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
+        poly_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
         
-        poly_cols.append(oq.GeometryColumnSpec("layer", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.Layer))
-        poly_cols.append(oq.GeometryColumnSpec("z_order", oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.ZOrder))
+        poly_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
+        poly_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
         
         if add_min_zoom:
-            poly_cols.append(oq.GeometryColumnSpec('minzoom', oq.GeometryColumnType.BigInteger, oq.GeometryColumnSource.MinZoom))
+            poly_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
         if self.other_tags:
-            poly_cols.append(oq.GeometryColumnSpec('tags', oq.GeometryColumnType.Hstore, oq.GeometryColumnSource.OtherTags))
-        poly_cols.append(oq.GeometryColumnSpec('way_area', oq.GeometryColumnType.Double, oq.GeometryColumnSource.Area))
-        poly_cols.append(oq.GeometryColumnSpec('way', oq.GeometryColumnType.PolygonGeometry, oq.GeometryColumnSource.Geometry))
+            poly_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
+        poly_cols.append(_postgis.GeometryColumnSpec('way_area', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Area))
+        poly_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PolygonGeometry, _postgis.GeometryColumnSource.Geometry))
         
         
         
-        point = oq.GeometryTableSpec("point")
+        point = _postgis.GeometryTableSpec("point")
         point.set_columns(point_cols)
         
-        line = oq.GeometryTableSpec("line")
+        line = _postgis.GeometryTableSpec("line")
         line.set_columns(line_cols)
         
-        polygon = oq.GeometryTableSpec("polygon")
+        polygon = _postgis.GeometryTableSpec("polygon")
         polygon.set_columns(poly_cols)
         
         if extended:
-            highway=oq.GeometryTableSpec('highway')
+            highway=_postgis.GeometryTableSpec('highway')
             highway.set_columns(line_cols)
             
-            building=oq.GeometryTableSpec('building')
+            building=_postgis.GeometryTableSpec('building')
             building.set_columns(poly_cols)
             
-            boundary=oq.GeometryTableSpec('boundary')
+            boundary=_postgis.GeometryTableSpec('boundary')
             boundary.set_columns([p for p in poly_cols if p.name in ('osm_id','part','quadtree','tile','boundary','admin_level','name','minzoom','way_area','way')])
             return [point,line,polygon,highway,building,boundary]
         return [point,line,polygon]

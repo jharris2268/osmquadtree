@@ -308,3 +308,11 @@ void change_defs(py::module& m) {
 
 
 }
+
+#ifdef INDIVIDUAL_MODULES
+PYBIND11_PLUGIN(_change) {
+    py::module m("_change", "pybind11 example plugin");
+    change_defs(m);
+    return m.ptr();
+}
+#endif
