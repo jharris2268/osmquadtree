@@ -21,12 +21,13 @@
 #-----------------------------------------------------------------------
 
 from __future__ import print_function
-from . import _geometry, _block
+from . import _geometry
+from oqt import _block
 import json, csv
-from .utils import addto, Prog, get_locs, replace_ws, addto_merge
+from oqt.utils import addto, Prog, get_locs, replace_ws, addto_merge
 import time,sys,re, gzip
 
-from . import geometrystyle, minzoomvalues
+from . import style as geometrystyle, minzoomvalues
 
 
 def read_blocks(prfx, box_in, lastdate=None, objflags=None, numchan=4):
@@ -97,7 +98,7 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
         for l in params.locs:
             if not maxtilelevel is None and (l&31) > maxtilelevel:
                 continue
-            tiles[l]=oq.PrimitiveBlock(0,0)
+            tiles[l]=_block.PrimitiveBlock(0,0)
             tiles[l].Quadtree=l
     
     
@@ -142,6 +143,9 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
     
     return errs
 
+
+
+
 def to_json(tile,split=True):
     res = {}
     
@@ -150,14 +154,14 @@ def to_json(tile,split=True):
         
         tab=None
         if split:
-            if obj.Type==oq.elementtype.Point:
+            if obj.Type==_block.ElementType.Point:
                 tab = 'point'
-            if obj.Type==oq.elementtype.Linestring:
+            if obj.Type==_block.ElementType.Linestring:
                 tab='line'
-            if obj.Type in (oq.elementtype.SimplePolygon, oq.elementtype.ComplicatedPolygon):
+            if obj.Type in (_block.ElementType.SimplePolygon, _block.ElementType.ComplicatedPolygon):
                 tab='polygon'
         if not tab in res:
-            res[tab] = {'type':'FeatureCollection','features': [], 'quadtree': oq.quadtree_tuple(tile.quadtree), 'bbox': None, 'table': tab}
+            res[tab] = {'type':'FeatureCollection','features': [], 'quadtree': _block.quadtree_tuple(tile.Quadtree), 'bbox': None, 'table': tab}
         
         res[tab]['features'].append(make_json_feat(obj))
     
@@ -194,18 +198,18 @@ def make_json_feat(obj):
     elif obj.Type==_block.ElementType.Linestring:
         res['geometry'] = {'type':'LineString', 'coordinates': map(coord_json, obj.LonLats)}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'])
-        res['properties']['way_length'] = obj.Length
+        res['properties']['way_length'] = round(obj.Length,1)
         res['properties']['z_order'] = obj.ZOrder
     elif obj.Type==_block.ElementType.SimplePolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.LonLats)]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
-        res['properties']['way_area'] = obj.Area
+        res['properties']['way_area'] = round(obj.Area,1)
         res['properties']['z_order'] = obj.ZOrder
 
     elif obj.Type==_block.ElementType.ComplicatedPolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.OuterLonLats)]+[map(coord_json,ii) for ii in obj.InnerLonLats]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
-        res['properties']['way_area'] = obj.Area
+        res['properties']['way_area'] = round(obj.Area,1)
         res['properties']['z_order'] = obj.ZOrder
     return res
 

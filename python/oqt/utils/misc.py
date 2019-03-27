@@ -22,7 +22,7 @@
 
 from __future__ import print_function
 import time, sys, json, os, re
-from oqt import _block, _core, _geometry, _change
+from oqt import _block, _core, _change
 
 def intm(f):
     if f<0:
@@ -103,4 +103,4 @@ class Prog:
 replace_ws = lambda w: re.sub('\s+', ' ', w)
 
 
-__old_read_style = lambda stylefn: dict((t['Tag'], _geometry.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 
+#__old_read_style = lambda stylefn: dict((t['Tag'], _geometry.StyleInfo(IsFeature=t['IsFeature'],IsArea=t['IsPoly']!='no',IsNode=t['IsNode'],IsWay=t['IsWay'], IsOtherTags=('IsOtherTags' in t and t['IsOtherTags']))) for t in json.load(open(stylefn))) 

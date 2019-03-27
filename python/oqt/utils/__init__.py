@@ -14,7 +14,7 @@ bbox.__repr__=lambda b: "bbox(% 10d, % 10d, % 10d, % 10d)" % (b.minx,b.miny,b.ma
 bbox.__len__ = lambda b: 4
 
 
-bbox.overlaps_quadtree = oqt._block.overlaps_quadtree
+bbox.overlaps_quadtree = lambda bx, q: oqt._block.overlaps_quadtree(bx,q)
 
 def bbox_getitem(b, i):
     if i==0: return b.minx
@@ -53,3 +53,10 @@ class py_logger(_utils.Logger):
 
 _logger = py_logger()
 _utils.set_logger(_logger)
+
+
+def find_tag(obj, idx):
+    for tg in obj.Tags:
+        if tg.key==idx:
+            return tg.val
+    return None

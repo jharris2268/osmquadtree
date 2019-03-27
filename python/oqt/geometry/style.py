@@ -1,5 +1,6 @@
 import json
-from . import _geometry, _postgis
+from . import _geometry
+
 
 class KeySpec:
     __slots__ = ['IsNode','IsWay','IsFeature','IsArea','OnlyArea']
@@ -253,84 +254,7 @@ class GeometryStyle:
         
     
     
-    def postgis_columns(self, add_min_zoom, extended=False):
-        ans = []
-        
-        
-        point_cols = [
-            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
-            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
-            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
-        ]
-        point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsNode]
-        point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in self.parent_tags]
-        
-        if add_min_zoom:
-            point_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
-        if self.other_tags:
-            point_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
-        point_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PointGeometry, _postgis.GeometryColumnSource.Geometry))
-        
-        line_cols = [
-            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
-            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
-            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
-        ]
-        line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
-        line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in self.parent_relations]
-        
-        line_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
-        line_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
-        
-        if add_min_zoom:
-            line_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
-        if self.other_tags:
-            line_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
-        
-        line_cols.append(_postgis.GeometryColumnSpec('length', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Length))
-        line_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.LineGeometry, _postgis.GeometryColumnSource.Geometry))
-        
-        poly_cols = [
-            _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
-            _postgis.GeometryColumnSpec("part", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
-            _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
-            _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
-        ]
-        
-        poly_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(self.keys) if self.keys[k].IsWay and k!='layer']
-        
-        poly_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
-        poly_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
-        
-        if add_min_zoom:
-            poly_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
-        if self.other_tags:
-            poly_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
-        poly_cols.append(_postgis.GeometryColumnSpec('way_area', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Area))
-        poly_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PolygonGeometry, _postgis.GeometryColumnSource.Geometry))
-        
-        
-        
-        point = _postgis.GeometryTableSpec("point")
-        point.set_columns(point_cols)
-        
-        line = _postgis.GeometryTableSpec("line")
-        line.set_columns(line_cols)
-        
-        polygon = _postgis.GeometryTableSpec("polygon")
-        polygon.set_columns(poly_cols)
-        
-        if extended:
-            highway=_postgis.GeometryTableSpec('highway')
-            highway.set_columns(line_cols)
-            
-            building=_postgis.GeometryTableSpec('building')
-            building.set_columns(poly_cols)
-            
-            boundary=_postgis.GeometryTableSpec('boundary')
-            boundary.set_columns([p for p in poly_cols if p.name in ('osm_id','part','quadtree','tile','boundary','admin_level','name','minzoom','way_area','way')])
-            return [point,line,polygon,highway,building,boundary]
-        return [point,line,polygon]
+    
         
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %.50s" % (k,repr(getattr(self,k))) for k in self.__slots__),)

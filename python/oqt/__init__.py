@@ -23,13 +23,16 @@
 
 from __future__ import print_function
 from .utils import _utils
-from . import _core, _block, _change, _geometry, _postgis
+from . import _core, _block, _change#, _geometry, _postgis
 
 
-from .processgeometry import process_geometry, read_blocks
-from .postgis import write_to_postgis
+#from .processgeometry import process_geometry, read_blocks
+#from .postgis import write_to_postgis
+from . import geometry
+from .geometry import process_geometry, read_blocks, write_to_postgis
+
 import sys, time, numbers
-from .utils import intm, read_poly_file, Poly
+from .utils import intm, read_poly_file, Poly, find_tag
 from .xmlchange import read_timestamp
 time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))
 
@@ -132,29 +135,9 @@ _block.Member.__repr__ = lambda m: "%s %d%s" % ('n' if m.type==_block.ElementTyp
 _block.Member.tuple = property(lambda m: (m.type,m.ref,m.role))
 
 
-def find_tag(obj, idx):
-    for tg in obj.Tags:
-        if tg.key==idx:
-            return tg.val
-    return None
 _block.Node.find_tag = find_tag
 _block.Way.find_tag = find_tag
 _block.Relation.find_tag = find_tag
-_geometry.Point.find_tag = find_tag
-_geometry.Linestring.find_tag = find_tag
-_geometry.SimplePolygon.find_tag = find_tag
-_geometry.ComplicatedPolygon.find_tag = find_tag
-
-_geometry.ComplicatedPolygon.OuterRefs = property(lambda cp: _geometry.ringpart_refs(cp.OuterRing))
-_geometry.ComplicatedPolygon.OuterLonLats = property(lambda cp: _geometry.ringpart_lonlats(cp.OuterRing))
-_geometry.ComplicatedPolygon.InnerRefs = property(lambda cp: [_geometry.ringpart_refs(ii) for ii in cp.InnerRings])
-_geometry.ComplicatedPolygon.InnerLonLats = property(lambda cp: [_geometry.ringpart_lonlats(ii) for ii in cp.InnerRings])
-
-
-_geometry.Point.__repr__ = lambda p: "Point(%10d %.50s %-18s [% 8d % 8d] )" % (p.Id,p.Tags,p.Quadtree,p.LonLat.lon,p.LonLat.lat)
-_geometry.Linestring.__repr__ = lambda l: "Linestring(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (l.Id,l.Tags,l.Quadtree,len(l.Refs),l.Length)
-_geometry.SimplePolygon.__repr__ = lambda p: "SimplePolygon(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,len(p.Refs),p.Area)
-_geometry.ComplicatedPolygon.__repr__ = lambda p: "ComplicatedPolygon(%10d %.50s %-18s [P. %2d % 4d pts (%2d ints), %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,p.Part,len(p.OuterRefs),len(p.InnerRings),p.Area)
 
 class minimalblock_nodes:
     def __init__(self, mb):

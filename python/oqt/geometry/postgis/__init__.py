@@ -24,13 +24,90 @@
 from __future__ import print_function
 from . import _postgis
 import json, psycopg2,csv
-from .utils import addto, Prog, get_locs, replace_ws, addto_merge
+from oqt.utils import addto, Prog, get_locs, replace_ws, addto_merge
 import time,sys,re, gzip
 
-from . import geometrystyle, minzoomvalues, processgeometry
+from oqt.geometry import style as geometrystyle, minzoomvalues, process
 
 
-
+def postgis_columns(style, add_min_zoom, extended=False):
+    ans = []
+    
+    
+    point_cols = [
+        _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+        _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+        _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
+    ]
+    point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(style.keys) if style.keys[k].IsNode]
+    point_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in style.parent_tags]
+    
+    if add_min_zoom:
+        point_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
+    if style.other_tags:
+        point_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
+    point_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PointGeometry, _postgis.GeometryColumnSource.Geometry))
+    
+    line_cols = [
+        _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+        _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+        _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
+    ]
+    line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(style.keys) if style.keys[k].IsWay and k!='layer']
+    line_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in style.parent_relations]
+    
+    line_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
+    line_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
+    
+    if add_min_zoom:
+        line_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
+    if style.other_tags:
+        line_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
+    
+    line_cols.append(_postgis.GeometryColumnSpec('length', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Length))
+    line_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.LineGeometry, _postgis.GeometryColumnSource.Geometry))
+    
+    poly_cols = [
+        _postgis.GeometryColumnSpec("osm_id", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+        _postgis.GeometryColumnSpec("part", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.OsmId),
+        _postgis.GeometryColumnSpec("quadtree", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ObjectQuadtree),
+        _postgis.GeometryColumnSpec("tile", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.BlockQuadtree),
+    ]
+    
+    poly_cols += [_postgis.GeometryColumnSpec(k, _postgis.GeometryColumnType.Text, _postgis.GeometryColumnSource.Tag) for k in sorted(style.keys) if style.keys[k].IsWay and k!='layer']
+    
+    poly_cols.append(_postgis.GeometryColumnSpec("layer", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.Layer))
+    poly_cols.append(_postgis.GeometryColumnSpec("z_order", _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.ZOrder))
+    
+    if add_min_zoom:
+        poly_cols.append(_postgis.GeometryColumnSpec('minzoom', _postgis.GeometryColumnType.BigInteger, _postgis.GeometryColumnSource.MinZoom))
+    if style.other_tags:
+        poly_cols.append(_postgis.GeometryColumnSpec('tags', _postgis.GeometryColumnType.Hstore, _postgis.GeometryColumnSource.OtherTags))
+    poly_cols.append(_postgis.GeometryColumnSpec('way_area', _postgis.GeometryColumnType.Double, _postgis.GeometryColumnSource.Area))
+    poly_cols.append(_postgis.GeometryColumnSpec('way', _postgis.GeometryColumnType.PolygonGeometry, _postgis.GeometryColumnSource.Geometry))
+    
+    
+    
+    point = _postgis.GeometryTableSpec("point")
+    point.set_columns(point_cols)
+    
+    line = _postgis.GeometryTableSpec("line")
+    line.set_columns(line_cols)
+    
+    polygon = _postgis.GeometryTableSpec("polygon")
+    polygon.set_columns(poly_cols)
+    
+    if extended:
+        highway=_postgis.GeometryTableSpec('highway')
+        highway.set_columns(line_cols)
+        
+        building=_postgis.GeometryTableSpec('building')
+        building.set_columns(poly_cols)
+        
+        boundary=_postgis.GeometryTableSpec('boundary')
+        boundary.set_columns([p for p in poly_cols if p.name in ('osm_id','part','quadtree','tile','boundary','admin_level','name','minzoom','way_area','way')])
+        return [point,line,polygon,highway,building,boundary]
+    return [point,line,polygon]
 
 
 def has_mem(ct,k):
@@ -348,14 +425,14 @@ def write_to_postgis(prfx, box_in,connstr, tabprfx, stylefn=None, writeindices=T
         raise Exception("must specify connstr and tabprfx")
         
         
-    params,style = processgeometry.prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    params,style = process.prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     
     
     postgisparams = _postgis.PostgisParameters()
     
     #params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
-    postgisparams.coltags = style.postgis_columns(params.findmz is not None, extended)
+    postgisparams.coltags = postgis_columns(style, params.findmz is not None, extended)
     if extended:
         postgis.alloc_func='extended'
         
@@ -367,7 +444,7 @@ def write_to_postgis(prfx, box_in,connstr, tabprfx, stylefn=None, writeindices=T
     postgisparams.use_binary=use_binary
     
     conn=None
-    if postgis.connstring!='null':
+    if postgisparams.connstring!='null':
         conn=psycopg2.connect(postgisparams.connstring)
         conn.autocommit=True
         create_tables(conn.cursor(), postgisparams.tableprfx, postgisparams.coltags)
@@ -431,13 +508,13 @@ class CsvWriter:
     
 def write_to_csvfile(prfx, box_in,outfnprfx,  stylefn=None, lastdate=None,minzoom=None,nothread=False, numchan=4, minlen=0,minarea=5, use_binary=True,extended=False):
     
-    params,style = processgeometry.prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    params,style = process.prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
     
     
     #params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
     
     postgisparams=_postgis.PostgisParameters()
-    postgisparams.coltags = style.postgis_columns(params.findmz is not None, extended)
+    postgisparams.coltags = postgis_columns(style, params.findmz is not None, extended)
     if extended:
         postgisparams.alloc_func='extended'
     postgisparams.use_binary=use_binary
