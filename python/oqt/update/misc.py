@@ -21,7 +21,8 @@
 #-----------------------------------------------------------------------
 
 from __future__ import print_function
-from . import _change, _block, xmlchange, utils
+from . import _update, xmlchange
+from oqt import pbfformat, utils
 import json, csv, time, sys, subprocess, os
 
 try:
@@ -73,27 +74,27 @@ def find_change(src_filenames, prfx, infiles, startdate, enddate, outfn, use_alt
         repr(startdate),repr(enddate),repr(outfn),'allow_missing_users=',allow_missing_users)
         
     tm = timer()
-    objs = _change.element_map()
+    objs = _update.element_map()
 
     for src in src_filenames:
-        _change.read_xml_change_file_em(src,True,objs,allow_missing_users)
+        _update.read_xml_change_file_em(src,True,objs,allow_missing_users)
     tm("read xml")
     
-    aoe = _change.add_orig_elements_alt if use_alt else _change.add_orig_elements
+    aoe = _update.add_orig_elements_alt if use_alt else _update.add_orig_elements
     
     orig_allocs,qts,tree = aoe(objs,prfx, infiles)
     tm("find orig")
-    _change.calc_change_qts(objs,qts)
+    _update.calc_change_qts(objs,qts)
     tm("calc qts")
 
-    tiles = _change.find_change_tiles(objs,orig_allocs,tree,startdate,enddate)
+    tiles = _update.find_change_tiles(objs,orig_allocs,tree,startdate,enddate)
     print("have %d tiles, %d objs" % (len(tiles),sum(map(len,tiles))))
     tm("find tiles")
 
     objs.clear()
     print("after objs.clear(), len(objs)=%d" % len(objs))
     del objs,qts,orig_allocs
-    out = _change.WritePbfFile(prfx+outfn,bounds=utils.bbox(-1800000000,-900000000,1800000000,900000000), numchan=4, indexed=True, dropqts=False, change=True, tempfile=False)
+    out = pbfformat.WritePbfFile(prfx+outfn,bounds=utils.bbox(-1800000000,-900000000,1800000000,900000000), numchan=4, indexed=True, dropqts=False, change=True, tempfile=False)
     print("calling out.write")
     out.write(tiles)
     print("calling out.finish()")
@@ -101,7 +102,7 @@ def find_change(src_filenames, prfx, infiles, startdate, enddate, outfn, use_alt
     del tiles, out
     tm("write pbfc")
     print("calling _change.write_index_file")
-    _change.write_index_file(prfx+outfn)
+    _update.write_index_file(prfx+outfn)
     tm("write index")
     print("done")
 
@@ -199,7 +200,7 @@ def run_initial(prfx, orig_fn, end_date, diffs_location, initial_state, **kw):
         settings['MergeOscFiles']=True
     print(settings)
     json.dump(settings, open(prfx+'settings.json','w'))
-    nt = _change.write_index_file(prfx+orig_fn)
+    nt = _update.write_index_file(prfx+orig_fn)
     filelist = [{'Filename': orig_fn, 'EndDate': end_date, 'NumTiles':nt, 'State': initial_state}]
     json.dump(filelist, open(prfx+'filelist.json','w'))
 

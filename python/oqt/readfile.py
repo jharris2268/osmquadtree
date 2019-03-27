@@ -23,7 +23,7 @@
 
 from __future__ import print_function
 
-from . import _block, _core
+from . import utils
 import struct
 
 def read_file_block(fileobj):
@@ -32,7 +32,7 @@ def read_file_block(fileobj):
     hh = fileobj.read(bl)
     
     ty, dl = None,None
-    for tg in _block.read_all_pbf_tags(hh):
+    for tg in utils.read_all_pbf_tags(hh):
         if tg.tag==1:
             ty = tg.data
         elif tg.tag==3:
@@ -42,7 +42,7 @@ def read_file_block(fileobj):
     
     uc=None
     dd=None
-    for tg in _block.read_all_pbf_tags(hh2):
+    for tg in utils.read_all_pbf_tags(hh2):
         if tg.tag==1:
             return ty, tg.data
         
@@ -51,7 +51,7 @@ def read_file_block(fileobj):
         elif tg.tag==3:
             dd=tg.data
     
-    return ty, _core.decompress(dd,uc)
+    return ty, utils.decompress(dd,uc)
     
         
     

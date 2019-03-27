@@ -1,20 +1,44 @@
+#-----------------------------------------------------------------------
+#
+# This file is part of osmquadtree
+#
+# Copyright (C) 2018 James Harris
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#-----------------------------------------------------------------------
+
+from __future__ import print_function
+
 from ._utils import bbox_empty, bbox_planet, get_logger
 from ._utils import LonLat, point_in_poly, segment_intersects, line_intersects, line_box_intersects
 from ._utils import compress, decompress, compress_gzip, decompress_gzip
 from ._utils import checkstats, file_size
 from ._utils import PbfTag, PbfValue, PbfData, read_all_pbf_tags, pack_pbf_tags, read_packed_delta, read_packed_int, zig_zag, un_zig_zag
-from .filelocs import *
+
 from .misc import *
 
 from . import _utils
-import oqt._block
+import oqt.elements
 
 bbox = _utils.bbox
 bbox.__repr__=lambda b: "bbox(% 10d, % 10d, % 10d, % 10d)" % (b.minx,b.miny,b.maxx,b.maxy)
 bbox.__len__ = lambda b: 4
 
 
-bbox.overlaps_quadtree = lambda bx, q: oqt._block.overlaps_quadtree(bx,q)
+bbox.overlaps_quadtree = lambda bx, q: oqt.elements.overlaps_quadtree(bx,q)
 
 def bbox_getitem(b, i):
     if i==0: return b.minx
@@ -55,8 +79,4 @@ _logger = py_logger()
 _utils.set_logger(_logger)
 
 
-def find_tag(obj, idx):
-    for tg in obj.Tags:
-        if tg.key==idx:
-            return tg.val
-    return None
+

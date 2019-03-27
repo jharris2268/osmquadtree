@@ -21,154 +21,23 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
-#include "oqt/calcqts/waynodes.hpp"
-#include "oqt/calcqts/writewaynodes.hpp"
-#include "oqt/calcqts/waynodesfile.hpp"
-#include "oqt/calcqts/calculaterelations.hpp"
-#include "oqt/calcqts/qtstore.hpp"
-#include "oqt/calcqts/qtstoresplit.hpp"
+
+
+#include "oqt/count.hpp"
+
+
+#include "oqt/elements/node.hpp"
+#include "oqt/elements/way.hpp"
+#include "oqt/elements/relation.hpp"
+
+
+#include "oqt/pbfformat/readfileblocks.hpp"
 
 #include "oqt/utils/invertedcallback.hpp"
-
+#include "oqt/utils/geometry.hpp"
 #include "oqt/utils/logger.hpp"
+
 using namespace oqt;
-
-
-void run_calcqts_py(std::string origfn, std::string qtsfn, size_t numchan, bool splitways, bool resort, double buffer, size_t max_depth, bool use_48bit_quadtree) {
-
-
-     if (qtsfn=="") {
-        qtsfn = origfn.substr(0,origfn.size()-4)+"-qts.pbf";
-    }
-    //auto lg = get_logger(lg_in);
-    Logger::Get().reset_timing();
-    py::gil_scoped_release release;
-    run_calcqts(origfn, qtsfn, numchan, splitways, resort, buffer, max_depth, use_48bit_quadtree);
-    Logger::Get().timing_messages();
-
-}
-/*
-std::shared_ptr<QtTree> run_findgroups_py(const std::string& qtsfn, size_t numchan,
-    bool rollup, int64 targetsize, int64 minsize, std::shared_ptr<logger> lg) {
-
-    lg->reset_timing();
-    py::gil_scoped_release release;
-    auto tree = run_findgroups(qtsfn, numchan, rollup, targetsize,minsize,lg);
-    lg->timing_messages();
-    return tree;
-}*/
-
-std::shared_ptr<QtTree> find_groups_copy_py(std::shared_ptr<QtTree> tree, 
-        int64 target, int64 minsize) {
-    if (!tree) { throw std::domain_error("no tree!"); }
-    py::gil_scoped_release release;
-    return find_groups_copy(tree, target, minsize);
-}
-    
-
-std::shared_ptr<QtTree> make_qts_tree_maxlevel_py(const std::string& qtsfn, size_t numchan, size_t maxlevel) {
-    py::gil_scoped_release release;
-    return make_qts_tree_maxlevel(qtsfn, numchan, maxlevel);
-}
-
-void tree_rollup_py(std::shared_ptr<QtTree> tree, int64 minsize) {
-    if (!tree) { throw std::domain_error("no tree!"); }
-    py::gil_scoped_release release;
-    tree_rollup(tree, minsize);
-}
-
-std::shared_ptr<QtTree> tree_round_copy_py(std::shared_ptr<QtTree> tree, int64 minsize) {
-    if (!tree) { throw std::domain_error("no tree!"); }
-    py::gil_scoped_release release;
-    return tree_round_copy(tree, minsize);
-}
-
-
-    
-
-int run_sortblocks_py(
-    std::string origfn, std::shared_ptr<QtTree> tree,
-    std::string qtsfn, std::string outfn,
-    int64 timestamp, size_t numchan,
-    std::string tempfn, size_t blocksplit,bool fixstrs, bool seperate_filelocs) {
-
-    if (!tree) { throw std::domain_error("no tree!"); }
-    if (qtsfn=="") {
-        qtsfn = origfn.substr(0,origfn.size()-4)+"-qts.pbf";
-    }
-    if (outfn=="") {
-        outfn = origfn.substr(0,origfn.size()-4)+"-sorted.pbf";
-    }
-
-    if (tempfn=="") {
-        tempfn = outfn+"-temp";
-    }
-    
-    
-    Logger::Get().reset_timing();
-    py::gil_scoped_release release;
-    
-    int r = run_sortblocks(origfn,qtsfn,outfn,timestamp,numchan, tree,tempfn,blocksplit, fixstrs,seperate_filelocs);
-    Logger::Get().timing_messages();
-    return r;
-}
-
-std::tuple<std::shared_ptr<WayNodesFile>,std::shared_ptr<CalculateRelations>,std::string,std::vector<int64>>
-    run_write_waynodes_py(const std::string& origfn, const std::string& waynodes_fn, size_t numchan, bool sortinmem) {
-    
-    py::gil_scoped_release release;
-    return write_waynodes(origfn, waynodes_fn, numchan, sortinmem); 
-}
-
-
-void find_way_quadtrees_py(
-    const std::string& source_filename,
-    const std::vector<int64>& source_locs, 
-    size_t numchan,
-    std::shared_ptr<QtStoreSplit> way_qts,
-    std::shared_ptr<WayNodesFile> wns,
-    double buffer, size_t max_depth,int64 minway, int64 maxway,
-    bool use_48bit_quadtrees) {
-    
-    
-    py::gil_scoped_release release;
-    find_way_quadtrees(source_filename, source_locs, numchan, way_qts, wns, buffer, max_depth, minway, maxway,use_48bit_quadtrees);
-}
-void write_qts_file_py(const std::string& qtsfn, const std::string& nodes_fn, size_t numchan,
-    const std::vector<int64>& node_locs, std::shared_ptr<QtStoreSplit> way_qts,
-    std::shared_ptr<WayNodesFile> wns, std::shared_ptr<CalculateRelations> rels, double buffer, size_t max_depth) {
-    
-    py::gil_scoped_release release;
-    write_qts_file(qtsfn, nodes_fn, numchan, node_locs, way_qts, wns, rels, buffer, max_depth);
-}
-
-void run_mergechanges_py(std::string origfn, std::string outfn, size_t numchan, bool sort_objs, bool filter_objs, py::object filter_box_in, std::vector<LonLat> poly, int64 enddate, std::string tempfn, size_t grptiles, bool sortfile, bool inmem) {
-    if (outfn=="") {
-        outfn = origfn.substr(0,origfn.size()-4)+"-merged.pbf";
-    }
-    
-    bbox filter_box{-1800000000, -900000000, 1800000000, 900000000};
-    if (filter_box_in.is(py::none())) {
-        try {
-            filter_box = py::cast<bbox>(filter_box_in);
-        } catch (py::cast_error& c) {
-            auto filter_box_list = filter_box_in.cast<py::list>();
-            filter_objs=true;
-            filter_box.minx = py::cast<int64>(filter_box_list[0]);
-            filter_box.maxx = py::cast<int64>(filter_box_list[1]);
-            filter_box.miny = py::cast<int64>(filter_box_list[2]);
-            filter_box.maxy = py::cast<int64>(filter_box_list[3]);
-        }
-        std::cout << "filter_box=" << filter_box << std::endl;
-        filter_objs=true;
-    }
-
-
-    Logger::Get().reset_timing();
-    py::gil_scoped_release release;
-    run_mergechanges(origfn, outfn, numchan, sort_objs, filter_objs, filter_box, poly, enddate,tempfn, grptiles,sortfile,inmem);
-    Logger::Get().timing_messages();
-}
 
 
 std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, ReadBlockFlags objflags, bool use_minimal) {
@@ -415,9 +284,7 @@ std::vector<std::pair<int64,ElementPtr>> filter_weird(std::vector<PrimitiveBlock
     
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
-void core_defs(py::module& m) {
-   
-
+void count_defs(py::module& m) {
     py::class_<CountElement>(m,"CountElement")
         .def_readonly("min_id", &CountElement::min_id)
         .def_readonly("max_id", &CountElement::max_id)
@@ -481,71 +348,6 @@ void core_defs(py::module& m) {
          py::arg("use_minimal")=true
     );
 
-    m.def("calcqts", &run_calcqts_py, "calculate quadtrees",
-        py::arg("origfn"),
-        py::arg("qtsfn")= "",
-        py::arg("numchan")= 4,
-        py::arg("splitways")=true,
-        py::arg("resort") = true,
-        py::arg("buffer") = 0.05,
-        py::arg("maxdepth") = 18,
-        py::arg("use_48bit_quadtree")=false
-    );
-
-    m.def("sortblocks", &run_sortblocks_py, "sort into quadtree blocks",
-        py::arg("origfn"),
-        py::arg("groups"),
-        py::arg("qtsfn") = "",
-        py::arg("outfn") = "",
-        py::arg("timestamp") = 0,
-        py::arg("numchan") = 4,
-        py::arg("tempfn") = "",
-        py::arg("blocksplit")=500,
-        py::arg("fixstrs")=false,
-        py::arg("seperate_filelocs")=true
-    );
-
-    
-
-    m.def("mergechanges", &run_mergechanges_py, "merge changes files, optionally filter and sort",
-        py::arg("origfn"),
-        py::arg("outfn") = "",
-        py::arg("numchan") = 4,
-        py::arg("sort") = false,
-        py::arg("filterobjs") = false,
-        py::arg("filter") = py::none(),
-        py::arg("poly") = py::none(),
-        py::arg("timestamp") = 0,
-        py::arg("tempfn") = "",
-        py::arg("grptiles") = 500,
-        py::arg("sortfile")=true,
-        py::arg("inmem")=false
-
-    );
-
-    py::class_<QtTree,std::shared_ptr<QtTree>>(m,"QtTree")
-        .def("add", &QtTree::add, py::arg("qt"), py::arg("val"))
-        .def("find", &QtTree::find_tile, py::arg("qt"))
-        .def("at", &QtTree::at)
-    ;
-    m.def("make_tree_empty",&make_tree_empty);
-    m.def("make_qts_tree_maxlevel", &make_qts_tree_maxlevel_py);
-    m.def("tree_rollup", &tree_rollup_py);
-    m.def("find_groups_copy", &find_groups_copy_py);
-    m.def("tree_round_copy", &tree_round_copy_py);
-
-    py::class_<QtTree::Item>(m,"QtTreeItem")
-        .def_readonly("qt", &QtTree::Item::qt)
-        .def_readonly("parent", &QtTree::Item::parent)
-        .def_readonly("idx", &QtTree::Item::idx)
-        .def_readonly("weight", &QtTree::Item::weight)
-        .def_readonly("total", &QtTree::Item::total)
-        .def("children", [](const QtTree::Item& q, int i) {
-            if ((i<0) || (i>3)) { throw std::range_error("children len 4"); };
-            return q.children[i];
-        });
-            //return py::make_tuple(q.children[0],q.children[1],q.children[2],q.children[3]);})
-    ;
     
  
     py::enum_<diffreason>(m, "diffreason")
@@ -572,38 +374,9 @@ void core_defs(py::module& m) {
     m.def("fix_str", [](const std::string& s) { return py::bytes(fix_str(s)); });
     
     
-    py::class_<WayNodesFile, std::shared_ptr<WayNodesFile>>(m,"WayNodesFile");
-    py::class_<CalculateRelations, std::shared_ptr<CalculateRelations>>(m,"CalculateRelations")
-        .def("str",&CalculateRelations::str)    
-    ;
     
     
-    m.def("write_waynodes", &run_write_waynodes_py, "write waynodes",
-        py::arg("origfn"),
-        py::arg("qtsfn")= "",
-        py::arg("numchan")= 4,
-        py::arg("resort") = true
-    );
-
-    m.def("find_way_quadtrees", &find_way_quadtrees_py, "find_way_quadtrees",
-        py::arg("source_filename"), py::arg("source_locs"), py::arg("numchan"),
-        py::arg("way_qts"), py::arg("wns"), py::arg("buffer"), py::arg("max_depth"),
-        py::arg("minway"), py::arg("maxway"),py::arg("use_48bit_quadtrees")
-    );
-    m.def("write_qts_file", &write_qts_file_py, "write_qts_file", 
-        py::arg("qtsfn"), py::arg("nodes_fn"), py::arg("numchan"),
-        py::arg("node_locs"), py::arg("way_qts"),
-        py::arg("wns"), py::arg("rels"), py::arg("buffer"), py::arg("max_depth")
-    );
     
-    py::class_<QtStoreSplit, std::shared_ptr<QtStoreSplit>>(m,"QtStoreSplit")
-        .def("split_at", &QtStoreSplit::split_at)
-        .def("num_tiles", &QtStoreSplit::num_tiles)
-        .def("last_tile", &QtStoreSplit::last_tile)
-        .def("use_arr", &QtStoreSplit::use_arr)
-        .def("tile", &QtStoreSplit::tile)
-    ;
-    m.def("make_qtstore_split", &make_qtstore_split);
     
    
    
@@ -612,9 +385,9 @@ void core_defs(py::module& m) {
    
 }
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_core) {
-    py::module m("_core", "pybind11 example plugin");
-    core_defs(m);
+PYBIND11_PLUGIN(_count) {
+    py::module m("_count", "pybind11 example plugin");
+    count_defs(m);
     return m.ptr();
 }
 #endif

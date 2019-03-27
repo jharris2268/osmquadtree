@@ -22,6 +22,8 @@
 
 #include "oqt_python.hpp"
 
+#include "oqt/geometry/utils.hpp"
+
 #include "oqt/utils/compress.hpp"
 #include "oqt/utils/bbox.hpp"
 #include "oqt/utils/date.hpp"

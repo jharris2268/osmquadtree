@@ -22,7 +22,8 @@
 
 from __future__ import print_function
 import time, sys, json, os, re
-from oqt import _block, _core, _change
+#from oqt import _block, _core, _change
+from oqt import elements
 
 def intm(f):
     if f<0:
@@ -42,10 +43,10 @@ def find_tile(bls, qt):
         return bls[qt]
     if qt==0:
         print("adding tile 0")
-        bls[0] = oq.primitiveblock(0,0)
+        bls[0] = elements.primitiveblock(0,0)
         bls[0].quadtree=0
         return bls[0]
-    return find_tile(bls, _block.quadtree_round(qt,(qt&31)-1))
+    return find_tile(bls, elements.quadtree_round(qt,(qt&31)-1))
 
 def addto_merge(res, resort_tiles=False):
     def _(bls):
@@ -95,7 +96,7 @@ class Prog:
             if maxq in self.locs:
                 lc = "%6.1f%% " % self.locs[maxq]
         #print("\r%5d: %s%6.1fs %2d blcks [%-18s] %10d %10d %10d %10d" % (self.nb,lc,time.time()-self.st,len(bls),_block.quadtree_string(max(b.Quadtree for b in bls)) if bls else '', self.npt,self.nln,self.nsp,self.ncp),)
-        sys.stdout.write("\r%7d: %s%6.1fs %2d blocks [%-18s] %d" % (self.nb, lc, time.time()-self.st, len(bls), _block.quadtree_string(maxq), self.nobjs))
+        sys.stdout.write("\r%7d: %s%6.1fs %2d blocks [%-18s] %d" % (self.nb, lc, time.time()-self.st, len(bls), elements.quadtree_string(maxq), self.nobjs))
         sys.stdout.flush()
         return True
 

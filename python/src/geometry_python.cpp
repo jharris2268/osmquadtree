@@ -21,6 +21,8 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
+
+#include "oqt/pbfformat/readfileblocks.hpp"
 #include "oqt/utils/splitcallback.hpp"
 
 #include "oqt/geometry/process.hpp"

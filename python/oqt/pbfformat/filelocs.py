@@ -1,19 +1,41 @@
+#-----------------------------------------------------------------------
+#
+# This file is part of osmquadtree
+#
+# Copyright (C) 2018 James Harris
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#-----------------------------------------------------------------------
 
-import os
+from __future__ import print_function
+from six import string_types
 
-from oqt import _block, _change
-from . import _utils
-from .misc import intm
-import json
+import os, json
+
+from oqt import elements, utils
+from . import _pbfformat
 
 class tboxbuf:
     def __init__(self, box, buffer):
         self.box=box
         self.buffer=buffer
     def __call__(self, q):
-        return self.box.overlaps(_block.quadtree_bbox(q, self.buffer))
+        return self.box.overlaps(elements.quadtree_bbox(q, self.buffer))
 def get_locs_single(fn, box_in,asmerge=False, buffer=None):
-    hh = _change.get_header_block(fn)
+    hh = get_header_block(fn)
     if not len(hh.Index):
         raise Exception(fn+" doesn't contain a header index")
     
@@ -49,10 +71,11 @@ def pnpoly(vertx, verty, testx, testy):
     
 
 class Poly:
-    def __init__(self, coords):
+    def __init__(self, coords_in):
         
-        if isinstance(coords, basestring):
-            coords = read_poly_file(coords)
+        
+        coords = prep_poly(coords_in)
+        
         
         self.vertx,self.verty = zip(*coords)
         mx = min(self.vertx)
@@ -60,11 +83,11 @@ class Poly:
         Mx = max(self.vertx)
         My = max(self.verty)
         
-        self.bounds = _utils.bbox(mx,my,Mx,My)
+        self.bounds = utils.bbox(mx,my,Mx,My)
     
     
     def test(self, qt):
-        return self.test_box(_block.quadtree_bbox(qt,0.05))
+        return self.test_box(elements.quadtree_bbox(qt,0.05))
     
     
     def test_box(self, tb):
@@ -125,7 +148,7 @@ class Poly:
             
             return False
         
-        vertc=zip(self.vertx,self.verty)
+        vertc=list(zip(self.vertx,self.verty))
         def intersects_line(c,d):
             for a,b in zip(vertc,vertc[1:]):
                 if intersects_seg(a,b,c,d):
@@ -157,13 +180,20 @@ class Poly:
         return self.test(qt) in (1,2,3)
 
 
+def prep_poly(coords_in):
+    if isinstance(coords_in, string_types):
+        return read_poly_file(coords_in)
+    
+    
+    return coords_in
+
 def read_poly_file(fl):
     
     res=[]
     for l in open(fl):
         try:
             a,b = map(float, l.strip().split())
-            res.append((intm(a), intm(b)))
+            res.append((utils.intm(a), utils.intm(b)))
             
         except:
             pass
@@ -173,18 +203,18 @@ def read_poly_file(fl):
 
 def prep_box(box_in):
     if box_in is None:
-        return _utils.bbox(-1800000000,-900000000,1800000000,900000000), lambda x: True
+        return utils.bbox(-1800000000,-900000000,1800000000,900000000), lambda x: True
         
-    if isinstance(box_in, _utils.bbox):
+    if isinstance(box_in, utils.bbox):
         return box_in, box_in.overlaps_quadtree
     try:
-        box = _utils.bbox(*box_in)
+        box = utils.bbox(*box_in)
         return box, box.overlaps_quadtree
     except:
         pass
     
     try:
-        box = _utils.bbox(*(intm(f) for f in box_in))
+        box = utils.bbox(*(intm(f) for f in box_in))
         return box, box.overlaps_quadtree
     except:
         pass
@@ -215,9 +245,9 @@ def get_locs(prfx,box_in=None, lastdate=None):
     if lastdate is not None:
         print("using %d of %d files: %s => %s" % (len(fns),sk+len(fns),fns[0],fns[-1]))
     #fns = [prfx+f['Filename'] for f in json.load(open(fl_path))]
-    locs = dict((a,[(0,b)]) for a,b,c in _change.get_header_block(fns[0]).Index if box is None or boxtest(a))
+    locs = dict((a,[(0,b)]) for a,b,c in _pbfformat.get_header_block(fns[0]).Index if box is None or boxtest(a))
     for i,f in enumerate(fns[1:]):
-        for a,b,c in _change.get_header_block(f).Index:
+        for a,b,c in _pbfformat.get_header_block(f).Index:
             if a in locs:
                 locs[a].append((i+1,b))
     return fns, locs, box

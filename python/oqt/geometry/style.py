@@ -1,3 +1,27 @@
+#-----------------------------------------------------------------------
+#
+# This file is part of osmquadtree
+#
+# Copyright (C) 2018 James Harris
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#-----------------------------------------------------------------------
+
+from __future__ import print_function
+
 import json
 from . import _geometry
 
@@ -154,7 +178,7 @@ def write_entries(obj, key, vals, ident, last=False):
     print >>obj, '%s"%s": {' % ('  '*ident, key,)
     
     li = len(vals)-1
-    for i,(k,v) in enumerate(sorted(vals.iteritems())):
+    for i,(k,v) in enumerate(sorted(vals.items())):
         write_entry(obj, k, v, ident+1, i==li)
     
     print >>obj, '%s}%s' % ('  '*ident, '' if last else ',')
@@ -181,9 +205,9 @@ class GeometryStyle:
     def to_json(self):
         
         result = {}
-        result['keys'] = dict((k, v.to_json()) for k,v in self.keys.iteritems())
-        result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.iteritems())
-        result['parent_relations'] = dict((k, v.to_json()) for k,v in self.parent_relations.iteritems())
+        result['keys'] = dict((k, v.to_json()) for k,v in self.keys.items())
+        result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
+        result['parent_relations'] = dict((k, v.to_json()) for k,v in self.parent_relations.items())
         result['multipolygons']=self.multipolygons
         result['boundary_relations']=self.boundary_relations
         result['other_tags']=self.other_tags
@@ -213,9 +237,9 @@ class GeometryStyle:
     @staticmethod
     def from_json(jj):
         
-        keys = dict((k, KeySpec.from_json(v)) for k,v in jj['keys'].iteritems())
-        parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].iteritems())
-        parent_relations = dict((k, ParentRelation.from_json(v)) for k,v in jj['parent_relations'].iteritems())
+        keys = dict((k, KeySpec.from_json(v)) for k,v in jj['keys'].items())
+        parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
+        parent_relations = dict((k, ParentRelation.from_json(v)) for k,v in jj['parent_relations'].items())
         
         return GeometryStyle(keys, parent_tags, parent_relations, jj['multipolygons'], jj['boundary_relations'], jj['other_tags'])
     
@@ -226,7 +250,7 @@ class GeometryStyle:
     
     def set_params(self, params, add_min_zoom=False):
         
-        style = dict((k, v.to_cpp()) for k,v in self.keys.iteritems())
+        style = dict((k, v.to_cpp()) for k,v in self.keys.items())
         if self.other_tags:
             style['XXX']=_geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=True)
         
@@ -234,13 +258,13 @@ class GeometryStyle:
             style['minzoom'] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=False)
         
         parent_tag_spec=[]
-        for k,v in self.parent_tags.iteritems():
+        for k,v in self.parent_tags.items():
             if not self.other_tags:
                 style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
             parent_tag_spec+=v.to_cpp(k)
         
         if not self.other_tags or True:
-            for k,v in self.parent_relations.iteritems():
+            for k,v in self.parent_relations.items():
                 style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
             
         params.style = style

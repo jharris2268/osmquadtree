@@ -20,25 +20,23 @@
 #
 #-----------------------------------------------------------------------
 
-
 from __future__ import print_function
 
-from . import utils, elements, pbfformat, count, geometry, sorting, calcqts
 
-from . import geometry
-from .geometry import process_geometry, read_blocks, write_to_postgis
+from . import _sorting
+from ._sorting import QtTree, QtTreeItem, sortblocks, mergechanges
 
-from .utils import intm
-from .pbfformat import read_poly_file, Poly
-
-from .update.xmlchange import read_timestamp
-time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))
+from oqt import utils, pbfformat
 
 
-
-
-
-
-
-
+def iter_tree(tree, i=0):
+    t=tree.at(i)
+    if t.weight:
+        yield t
+    for i in range(4):
+        if t.children(i):
+            for x in iter_tree(tree,t.children(i)):
+                yield x
+QtTree.__iter__ = iter_tree
+QtTreeItem.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.idx,repr(quadtree(t.qt))+",", t.total, t.weight)
 

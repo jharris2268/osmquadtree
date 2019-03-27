@@ -21,10 +21,13 @@
 #-----------------------------------------------------------------------
 
 from __future__ import print_function
+from six import string_types
+
 from . import _geometry
-from oqt import _block
+from oqt import elements, pbfformat
 import json, csv
-from oqt.utils import addto, Prog, get_locs, replace_ws, addto_merge
+from oqt.utils import addto, replace_ws, addto_merge, Prog
+from oqt.pbfformat import get_locs
 import time,sys,re, gzip
 
 from . import style as geometrystyle, minzoomvalues
@@ -37,9 +40,9 @@ def read_blocks(prfx, box_in, lastdate=None, objflags=None, numchan=4):
     fns,locs,box = get_locs(prfx,box_in,lastdate)
     
     if objflags is None:
-        objflags=_block.ReadBlockFlags()
+        objflags=pbfformat.ReadBlockFlags()
     
-    _block.read_blocks_merge_primitive(fns, result, locs, numchan=numchan, objflags=objflags)
+    pbfformat.read_blocks_merge_primitive(fns, result, locs, numchan=numchan, objflags=objflags)
     return tiles
 
 
@@ -72,7 +75,7 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
     if minzoom != []:
         if minzoom is None or minzoom=='default':
             minzoom=[t[:4] for t in minzoomvalues.default]
-        if isinstance(minzoom, basestring):
+        if isinstance(minzoom, string_types):
             minzoom=[t[:4] for t in minzoomvalues.read(minzoom)]
         
         params.findmz = _geometry.findminzoom_onetag(minzoom,minlen,minarea)
@@ -98,7 +101,7 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
         for l in params.locs:
             if not maxtilelevel is None and (l&31) > maxtilelevel:
                 continue
-            tiles[l]=_block.PrimitiveBlock(0,0)
+            tiles[l]=elements.PrimitiveBlock(0,0)
             tiles[l].Quadtree=l
     
     
@@ -154,14 +157,14 @@ def to_json(tile,split=True):
         
         tab=None
         if split:
-            if obj.Type==_block.ElementType.Point:
+            if obj.Type==elements.ElementType.Point:
                 tab = 'point'
-            if obj.Type==_block.ElementType.Linestring:
+            if obj.Type==elements.ElementType.Linestring:
                 tab='line'
-            if obj.Type in (_block.ElementType.SimplePolygon, _block.ElementType.ComplicatedPolygon):
+            if obj.Type in (elements.ElementType.SimplePolygon, elements.ElementType.ComplicatedPolygon):
                 tab='polygon'
         if not tab in res:
-            res[tab] = {'type':'FeatureCollection','features': [], 'quadtree': _block.quadtree_tuple(tile.Quadtree), 'bbox': None, 'table': tab}
+            res[tab] = {'type':'FeatureCollection','features': [], 'quadtree': elements.quadtree_tuple(tile.Quadtree), 'bbox': None, 'table': tab}
         
         res[tab]['features'].append(make_json_feat(obj))
     
@@ -185,28 +188,28 @@ def collect_bbox(bboxes):
 
 def make_json_feat(obj):
     res = {'type':'Feature',}
-    if obj.Type==_block.ElementType.ComplicatedPolygon:
+    if obj.Type==elements.ElementType.ComplicatedPolygon:
         res['id'] = -1*obj.Id
     else:
         res['id'] = obj.Id
-    res['quadtree'] = _block.quadtree_tuple(obj.Quadtree)
+    res['quadtree'] = elements.quadtree_tuple(obj.Quadtree)
     res['minzoom']  = obj.MinZoom
     res['properties'] = dict((t.key,t.val) for t in obj.Tags)
-    if obj.Type==_block.ElementType.Point:
+    if obj.Type==elements.ElementType.Point:
         res['geometry'] = {'type':'Point','coordinates':coord_json(obj.LonLat)}
         res['bbox'] = res['geometry']['coordinates']*2
-    elif obj.Type==_block.ElementType.Linestring:
+    elif obj.Type==elements.ElementType.Linestring:
         res['geometry'] = {'type':'LineString', 'coordinates': map(coord_json, obj.LonLats)}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'])
         res['properties']['way_length'] = round(obj.Length,1)
         res['properties']['z_order'] = obj.ZOrder
-    elif obj.Type==_block.ElementType.SimplePolygon:
+    elif obj.Type==elements.ElementType.SimplePolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.LonLats)]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         res['properties']['way_area'] = round(obj.Area,1)
         res['properties']['z_order'] = obj.ZOrder
 
-    elif obj.Type==_block.ElementType.ComplicatedPolygon:
+    elif obj.Type==elements.ElementType.ComplicatedPolygon:
         res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.OuterLonLats)]+[map(coord_json,ii) for ii in obj.InnerLonLats]}
         res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         res['properties']['way_area'] = round(obj.Area,1)

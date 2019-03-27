@@ -20,25 +20,8 @@
 #
 #-----------------------------------------------------------------------
 
-
 from __future__ import print_function
 
-from . import utils, elements, pbfformat, count, geometry, sorting, calcqts
-
-from . import geometry
-from .geometry import process_geometry, read_blocks, write_to_postgis
-
-from .utils import intm
-from .pbfformat import read_poly_file, Poly
-
-from .update.xmlchange import read_timestamp
-time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))
-
-
-
-
-
-
-
-
-
+from . import _update, misc, xmlchange
+from .misc import run_droplast, run_initial, run_update
+from .xmlchange import read_timestamp

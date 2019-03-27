@@ -20,7 +20,9 @@
 #
 #-----------------------------------------------------------------------
 from __future__ import print_function
-from . import xmlchange, update, sys, run_calcqts_alt
+from . import update, calcqts
+import sys
+
 if len(sys.argv)>=3 and sys.argv[1]=='update':
     nd = None
     if len(sys.argv)>3:
@@ -33,7 +35,7 @@ elif len(sys.argv)>=7 and sys.argv[1]=='initial':
     origfn = sys.argv[3]
     enddate = sys.argv[4]
     try:
-        xmlchange.read_timestamp(enddate)
+        update.read_timestamp(enddate)
     except:
         raise Exception("can't understand timestamp %s" % repr(enddate))
     
@@ -64,7 +66,7 @@ elif len(sys.argv)>=3 and sys.argv[1]=='calcqts':
             if s.startswith('qtsfn='):
                 qtsfn=s[6:]
                 
-    r=run_calcqts_alt(sys.argv[2], qtsfn)
+    r=calcqts.run_calcqts_alt(sys.argv[2], qtsfn)
     sys.exit(r)
 
 else:

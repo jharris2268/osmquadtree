@@ -21,7 +21,20 @@
  *****************************************************************************/
 
 #include "oqt_python.hpp"
+
+#include "oqt/pbfformat/fileblock.hpp"
+#include "oqt/pbfformat/idset.hpp"
 #include "oqt/pbfformat/objsidset.hpp"
+#include "oqt/pbfformat/readblock.hpp"
+#include "oqt/pbfformat/readblockscaller.hpp"
+#include "oqt/pbfformat/readfileblocks.hpp"
+#include "oqt/pbfformat/readfileparallel.hpp"
+#include "oqt/pbfformat/readminimal.hpp"
+#include "oqt/pbfformat/writeblock.hpp"
+#include "oqt/pbfformat/writepbffile.hpp"
+
+#include "oqt/sorting/mergechanges.hpp"
+#include "oqt/geometry/utils.hpp"
 
 using namespace oqt;
 
@@ -110,22 +123,6 @@ size_t read_blocks_caller_read_minimal(
     
 }
 
-
-ElementPtr make_node(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 lon, int64 lat, int64 qt, changetype ct) {
-    return std::make_shared<Node>(ct, id, qt, inf, tags, lon, lat);
-}
-
-ElementPtr make_way(int64 id, ElementInfo inf, std::vector<Tag> tags, std::vector<int64> refs, int64 qt, changetype ct) {
-    return std::make_shared<Way>(ct, id, qt, inf, tags,refs);
-}
-
-ElementPtr make_relation(int64 id, ElementInfo inf, std::vector<Tag> tags, std::vector<Member> mems, int64 qt, changetype ct) {
-    return std::make_shared<Relation>(ct, id, qt, inf, tags, mems);
-}
-
-PrimitiveBlockPtr read_primitive_block_py(int64 idx, py::bytes data, bool change) {
-    return read_primitive_block(idx,data,change,ReadBlockFlags::Empty,nullptr,geometry::read_geometry);
-}
 
 class IdSetInvert : public IdSet {
     public:
@@ -301,128 +298,112 @@ ReadBlockFlags make_readblockflags(
 }
 
 
-PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
-void block_defs(py::module& m) {
-    m.def("quadtree_string", &quadtree::string);
-    m.def("quadtree_from_string", &quadtree::from_string);
 
-    m.def("quadtree_from_tuple", &quadtree::from_tuple);
-    m.def("quadtree_tuple", &quadtree::tuple/*[](int64 q) {
-        auto r = quadtree::tuple(q);
-        return py::make_tuple(r.x,r.y,r.z);
-    }*/);
 
-    m.def("quadtree_common", &quadtree::common);
-    m.def("quadtree_round", &quadtree::round);
+PrimitiveBlockPtr read_primitive_block_py(int64 idx, py::bytes data, bool change) {
+    return read_primitive_block(idx,data,change,ReadBlockFlags::Empty,nullptr,geometry::read_geometry);
+}
 
-    m.def("quadtree_bbox", &quadtree::bbox);
-    m.def("quadtree_calculate", &quadtree::calculate);
-    
-    m.def("overlaps_quadtree", &overlaps_quadtree);
+class WritePbfFile {
+    public:
+        virtual void write(std::vector<PrimitiveBlockPtr> blocks)=0;
+        virtual std::pair<int64,int64> finish()=0;
+        virtual ~WritePbfFile() {}
+};
 
-    py::enum_<changetype>(m, "changetype")
-        .value("Normal", changetype::Normal)
-        .value("Delete", changetype::Delete)
-        .value("Remove", changetype::Remove)
-        .value("Unchanged", changetype::Unchanged)
-        .value("Modify", changetype::Modify)
-        .value("Create", changetype::Create);
-        //.export_values();
-    py::enum_<ElementType>(m, "ElementType")
-        .value("Node", ElementType::Node)
-        .value("Way", ElementType::Way)
-        .value("Relation", ElementType::Relation)
-        .value("Point", ElementType::Point)
-        .value("Linestring", ElementType::Linestring)
-        .value("SimplePolygon", ElementType::SimplePolygon)
-        .value("ComplicatedPolygon", ElementType::ComplicatedPolygon)
-        .value("WayWithNodes", ElementType::WayWithNodes)
-        .value("Unknown", ElementType::Unknown);
-        //.export_values();
-        
-
-    
-
-    py::class_<PrimitiveBlock, PrimitiveBlockPtr>(m, "PrimitiveBlock")
-        .def(py::init<int64,size_t>())
-        .def_property_readonly("index", &PrimitiveBlock::Index)
-        .def_property("Quadtree", &PrimitiveBlock::Quadtree, &PrimitiveBlock::SetQuadtree)
-        .def_property("StartDate", &PrimitiveBlock::StartDate, &PrimitiveBlock::SetStartDate)
-        .def_property("EndDate", &PrimitiveBlock::EndDate, &PrimitiveBlock::SetEndDate)
-        .def("__len__", [](const PrimitiveBlock& pb) { return pb.size(); })
-        .def("__getitem__", [](const PrimitiveBlock& pb, int i) { if (i<0) { i+= pb.size(); } return pb.at(i); })
-        .def("__setitem__", [](PrimitiveBlock& pb, int i, ElementPtr e) { if (i<0) { i+= pb.size(); } pb.at(i)=e; })
-        .def("add", [](PrimitiveBlock& pb, ElementPtr e) { pb.add(e); })
-        .def("sort", [](PrimitiveBlock& pb) { std::sort(pb.Objects().begin(),pb.Objects().end(),element_cmp); })
-        .def_property("FileProgress", &PrimitiveBlock::FileProgress, &PrimitiveBlock::SetFileProgress)
-        .def_property_readonly("FilePosition", &PrimitiveBlock::FilePosition)
-    ;
-    py::class_<Element,std::shared_ptr<Element>>(m, "element")
-        .def_property_readonly("InternalId", &Element::InternalId)
-        .def_property_readonly("Type", &Element::Type)
-        .def_property_readonly("Id", &Element::Id)
-        .def_property_readonly("ChangeType", &Element::ChangeType)
-        .def_property_readonly("Quadtree", &Element::Quadtree)
-        .def_property_readonly("Tags", &Element::Tags)
-        .def_property_readonly("Info", &Element::Info)
-        .def("SetQuadtree", &Element::SetQuadtree)
-        .def("SetChangeType", &Element::SetChangeType)
-        .def("SetTags", &Element::SetTags)
-        .def("RemoveTag", &Element::RemoveTag)
-        .def("AddTag", &Element::AddTag)
-        .def("copy", &Element::copy)
-        
-    ;
-
-    py::class_<ElementInfo>(m, "ElementInfo")
-
-        .def(py::init<int64,int64,int64,int64,std::string,bool>(),py::arg("version"),py::arg("timestamp"),py::arg("changeset"),py::arg("user_id"),py::arg("user"),py::arg("visible"))
-        .def_readonly("version", &ElementInfo::version)
-        .def_readonly("timestamp", &ElementInfo::timestamp)
-        .def_readonly("changeset", &ElementInfo::changeset)
-        .def_readonly("user_id", &ElementInfo::user_id)
-        .def_readonly("user", &ElementInfo::user)
-        .def_readonly("visible", &ElementInfo::visible)
-    ;
-
-    py::class_<Member>(m, "Member")
-        .def(py::init<ElementType,int64,std::string>(),py::arg("type"),py::arg("ref"), py::arg("role"))
-        .def_readonly("type", &Member::type)
-        .def_readonly("ref", &Member::ref)
-        .def_readonly("role", &Member::role)
-    ;
-
-    py::class_<Tag>(m, "Tag")
-        .def(py::init<std::string,std::string>(),py::arg("key"), py::arg("val"))
-        .def_readonly("key", &Tag::key)
-        .def_property_readonly("val", [](const Tag& t) {
-            if (!t.val.empty() && (t.val[0]=='\0')) {
-                return py::object(py::bytes(t.val));
-            }
-            return py::object(py::str(t.val));
+class WritePbfFileImpl : public WritePbfFile {
+    public:
+        WritePbfFileImpl(const std::string& fn, bbox bounds, size_t numchan_, bool indexed, bool dropqts_, bool change_, bool tempfile)
+            : numchan(numchan_), dropqts(dropqts_), change(change_) {
             
-        })
-    ;
+            
+            auto head = std::make_shared<Header>();
+            head->SetBBox(bounds);
+            if ((!tempfile)&&(indexed)) {
+                outobj = make_pbffilewriter_indexedinmem(fn, head);
+            } else if (indexed) {
+                outobj = make_pbffilewriter_filelocs(fn, head);
+            } else {
+                outobj = make_pbffilewriter(fn, head);
+            }
+            
+        }
+
+        void write(std::vector<PrimitiveBlockPtr> blocks) {
+            
+            
+            
+            if ((numchan==0) || (blocks.size()<numchan)) {
+                for (auto bl: blocks) {
+                    auto dd = write_and_pack_pbfblock(bl);
+                    
+                    outobj->writeBlock(dd->first,dd->second);
+                }
+                return;
+            }
+            
+            auto outcb = multi_threaded_callback<keystring>::make([this](keystring_ptr p) {
+                if (p) {
+                    outobj->writeBlock(p->first,p->second);
+                }
+            }, numchan);
+            
+            std::vector<std::function<void(PrimitiveBlockPtr)>> packers;
+            for (auto cb: outcb) {
+                packers.push_back(threaded_callback<PrimitiveBlock>::make(
+                    [cb,this](PrimitiveBlockPtr pb) {
+                        if (!pb) { return cb(nullptr); }
+                        cb(write_and_pack_pbfblock(pb));
+                    }
+                ));
+            }
+            
+            for (size_t i=0; i < blocks.size(); i++) {
+                packers[i%packers.size()](blocks.at(i));
+            }
+            for (auto& p: packers) { p(nullptr); }
+        }
+        
+        
+        
+        
+        std::pair<int64,int64> finish() {
+            
+            auto rr = outobj->finish();
+            
+            auto ll = std::get<1>(rr.back())+std::get<2>(rr.back());
+            return std::make_pair(ll, rr.size());
+        }
+        
+        
+    private:
+        
+        std::shared_ptr<PbfFileWriter> outobj;
+        size_t numchan;
+        bool indexed;
+        bool dropqts;
+        bool change;
+        
+        
+        
+        keystring_ptr write_and_pack_pbfblock(PrimitiveBlockPtr bl) {
+            auto data = pack_primitive_block(bl, !dropqts, change, true, true);
+            auto block = prepare_file_block("OSMData", data);
+            return std::make_shared<keystring>(bl->Quadtree(), block);
+        }
+            
+        
+
+};
+
+std::shared_ptr<WritePbfFile> make_WritePbfFile(const std::string& fn, bbox bounds, size_t numchan, bool indexed, bool dropqts, bool change, bool tempfile) {
+    return std::make_shared<WritePbfFileImpl>(fn,bounds,indexed,numchan,dropqts,change,tempfile);
+}
+
+
+PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
+void pbfformat_defs(py::module& m) {
     
-    py::class_<Node, Element, std::shared_ptr<Node>>(m,"Node")
-        .def_property_readonly("Lon", &Node::Lon)
-        .def_property_readonly("Lat", &Node::Lat)
-        //.def("copy", &node::copy)
-    ;
-
-    py::class_<Way, Element, std::shared_ptr<Way>>(m,"Way")
-        .def_property_readonly("Refs", &Way::Refs)
-        //.def("copy", &way::copy)
-    ;
-
-    py::class_<Relation, Element, std::shared_ptr<Relation>>(m,"Relation")
-        .def_property_readonly("Members", &Relation::Members)
-        //.def("copy", &relation::copy)
-    ;
-
-    m.def("make_node", &make_node, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("lon"), py::arg("lat"), py::arg("quadtree"), py::arg("changetype"));
-    m.def("make_way", &make_way, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("refs"), py::arg("quadtree"), py::arg("changetype"));
-    m.def("make_relation", &make_relation, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("members"), py::arg("quadtree"), py::arg("changetype"));
 
 
     py::class_<IdSet,IdSetPtr>(m, "IdSet")
@@ -451,79 +432,11 @@ void block_defs(py::module& m) {
         py::arg("index"), py::arg("data"), py::arg("change"));
 
     
-    py::class_<minimal::Block, std::shared_ptr<minimal::Block>>(m, "MinimalBlock")
-        .def_readonly("index", &minimal::Block::index)
-        .def_readonly("quadtree", &minimal::Block::quadtree)
-        
-        .def("nodes_len", [](const minimal::Block& mb) { return mb.nodes.size(); })
-        .def("nodes_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.nodes.size(); } return mb.nodes.at(i); })
-        .def("ways_len", [](const minimal::Block& mb) { return mb.ways.size(); })
-        .def("ways_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.ways.size(); } return mb.ways.at(i); })
-        .def("relations_len", [](const minimal::Block& mb) { return mb.relations.size(); })
-        .def("relations_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.relations.size(); } return mb.relations.at(i); })
-        .def("geometries_len", [](const minimal::Block& mb) { return mb.geometries.size(); })
-        .def("geometries_getitem", [](const minimal::Block& mb, int i) { if (i<0) { i+=mb.geometries.size(); } return mb.geometries.at(i); })
-        .def_readonly("file_progress", &minimal::Block::file_progress)
-        .def_readonly("file_position", &minimal::Block::file_position)
-
-    ;
-    py::class_<minimal::Node>(m, "MinimalNode")
-        .def_property_readonly("id", [](const minimal::Node& mn) { return mn.id; })
-        .def_property_readonly("timestamp", [](const minimal::Node& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimal::Node& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimal::Node& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimal::Node::quadtree)
-        .def_readonly("lon", &minimal::Node::lon)
-        .def_readonly("lat", &minimal::Node::lat)
-        .def("sizeof", [](const minimal::Node& m ) { return sizeof(m); })
-    ;
-
-    py::class_<minimal::Way>(m, "MinimalWay")
-        .def_property_readonly("id", [](const minimal::Way& mn) { return mn.id; })
-        .def_property_readonly("timestamp", [](const minimal::Way& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimal::Way& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimal::Way& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimal::Way::quadtree)
-        .def_property_readonly("refs_data", [](const minimal::Way& w)->py::bytes { return py::bytes(w.refs_data); })
-    ;
-
-    py::class_<minimal::Relation>(m, "MinimalRelation")
-        .def_property_readonly("id", [](const minimal::Relation& mn) { return mn.id; })
-        .def_property_readonly("timestamp", [](const minimal::Relation& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimal::Relation& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimal::Relation& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimal::Relation::quadtree)
-        .def_property_readonly("tys_data", [](const minimal::Relation& r)->py::bytes { return py::bytes(r.tys_data); })
-        .def_property_readonly("refs_data", [](const minimal::Relation& r)->py::bytes { return py::bytes(r.refs_data); })
-    ;
-    
-    py::class_<minimal::Geometry>(m, "MinimalGeometry")
-        .def_property_readonly("ty", [](const minimal::Geometry& mn) { return mn.ty; })
-        .def_property_readonly("id", [](const minimal::Geometry& mn) { return mn.id; })
-        .def_property_readonly("timestamp", [](const minimal::Geometry& mn) { return mn.timestamp; })
-        .def_property_readonly("version", [](const minimal::Geometry& mn) { return mn.version; })
-        .def_property_readonly("changetype", [](const minimal::Geometry& mn) { return mn.changetype; })
-        .def_readonly("quadtree", &minimal::Geometry::quadtree)
-    ;
-
     
     m.def("read_minimal_block", &read_minimal_block);
 
 
-    py::class_<Header, HeaderPtr>(m, "Header")
-        .def_property("Writer", &Header::Writer, &Header::SetWriter)
-        .def_property("Features", &Header::Features,
-            [](Header& h, std::vector<std::string>& f) {
-                h.Features().clear();
-                std::copy(f.begin(),f.end(),std::back_inserter(h.Features()));
-            })
-        .def_property("Box", &Header::BBox, &Header::SetBBox)
-        .def_property("Index", &Header::Index,
-            [](Header& h, const block_index& f) {
-                h.Index().clear();
-                std::copy(f.begin(),f.end(),std::back_inserter(h.Index()));
-            })
-    ;
+    
     
     py::enum_<ReadBlockFlags>(m, "ReadBlockFlags_");
     m.def("ReadBlockFlags", &make_readblockflags, 
@@ -589,13 +502,43 @@ void block_defs(py::module& m) {
      
         .def("next", &ReadBlocksIter::next)
     ;
+    
+    
+    m.def("get_header_block", &get_header_block);
+    
+    m.def("pack_primitive_block", 
+        [](PrimitiveBlockPtr b, bool incQts, bool change, bool incInfo, bool incRefs) {
+                return py::bytes(pack_primitive_block(b,incQts,change,incInfo,incRefs)); },
+        py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
+    
+
+    
+    
+
+    py::class_<WritePbfFile, std::shared_ptr<WritePbfFile>>(m, "WritePbfFile_obj")
+        //.def(py::init<std::string,bool,bool,bool,bool,size_t,bbox>())
+        .def("write", [](WritePbfFile& wpf, std::vector<PrimitiveBlockPtr> tls) {
+            py::gil_scoped_release r;
+            wpf.write(tls);
+        })
+        .def("finish", [](WritePbfFile& wpf)->std::pair<int,int> {
+            py::gil_scoped_release r;
+            return wpf.finish();
+        })
+    ;
+    m.def("WritePbfFile", make_WritePbfFile,
+            py::arg("filename"), py::arg("bounds"),
+            py::arg("numchan")=4, py::arg("indexed")=true,
+            py::arg("dropqts")=false, py::arg("change")=false,
+            py::arg("tempfile")=true);
+    
    
 }
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_block) {
-    py::module m("_block", "pybind11 example plugin");
-    block_defs(m);
+PYBIND11_PLUGIN(_pbfformat) {
+    py::module m("_pbfformat", "pybind11 example plugin");
+    pbfformat_defs(m);
     return m.ptr();
 }
 #endif

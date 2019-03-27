@@ -30,7 +30,7 @@
 #include "oqt/geometry/elements/simplepolygon.hpp"
 #include "oqt/geometry/elements/complicatedpolygon.hpp"
 #include "oqt/geometry/elements/waywithnodes.hpp"
-
+#include "gzstream.hpp"
 #include <cmath> 
 using namespace oqt;
 

@@ -36,11 +36,14 @@ class my_build_ext(build_ext):
 ext_modules = []
 
 mods = {
-    '_block': ['block_python.cpp'],
-    '_change': ['change_python.cpp'],
-    '_core': ['core_python.cpp'],
+    'calcqts._calcqts': ['calcqts_python.cpp'],
+    'count._count': ['count_python.cpp'],
+    'elements._elements': ['elements_python.cpp'],
     'geometry._geometry': ['geometry_python.cpp'],
     'geometry.postgis._postgis': ['postgis_python.cpp'],
+    'pbfformat._pbfformat': ['pbfformat_python.cpp'],
+    'sorting._sorting': ['sorting_python.cpp'],
+    'update._update': ['update_python.cpp'],
     'utils._utils': ['utils_python.cpp'],
 }
 
@@ -68,7 +71,7 @@ for modname,srcs in mods.items():
 
 setup(
     name='oqt',
-    packages=['oqt','oqt.geometry','oqt.geometry.postgis','oqt.utils'],
+    packages=['oqt','oqt.geometry','oqt.geometry.postgis','oqt.utils','oqt.elements','oqt.pbfformat','oqt.update','oqt.sorting','oqt.calcqts','oqt.count'],
     version='0.0.1',
     long_description='',
     ext_modules=ext_modules,

@@ -28,36 +28,30 @@
 #include <pybind11/stl.h>
 
 
-#include "oqt/count.hpp"
-#include "oqt/sorting/qttreegroups.hpp"
-#include "oqt/elements/combineblocks.hpp"
-#include "oqt/pbfformat/fileblock.hpp"
-#include "oqt/sorting/tempobjs.hpp"
-#include "oqt/pbfformat/readfileblocks.hpp"
-#include "oqt/pbfformat/writepbffile.hpp"
+#include "oqt/elements/block.hpp"
 #include "oqt/utils/logger.hpp"
 
-#include "oqt/update/xmlchange.hpp"
-#include "gzstream.hpp"
-#include "oqt/update/update.hpp"
-
-#include "oqt/calcqts/calcqts.hpp"
-#include "oqt/sorting/mergechanges.hpp"
-#include "oqt/sorting/sortblocks.hpp"
-
-#include "oqt/pbfformat/writeblock.hpp"
-#include "oqt/geometry/addwaynodes.hpp"
-#include "oqt/geometry/makegeometries.hpp"
-#include "oqt/geometry/addparenttags.hpp"
-#include "oqt/geometry/handlerelations.hpp"
-#include "oqt/geometry/multipolygons.hpp"
-#include "oqt/geometry/postgiswriter.hpp"
 #include <algorithm>
 #include <memory>
 #include <tuple>
 
 
 namespace py = pybind11;
+
+
+
+
+void calcqts_defs(py::module& m);
+void count_defs(py::module& m);
+void elements_defs(py::module& m);
+void geometry_defs(py::module& m);
+void pbfformat_defs(py::module& m);
+void postgis_defs(py::module& m);
+void sorting_defs(py::module& m);
+void update_defs(py::module& m);
+void utils_defs(py::module& m);
+
+
 
 template <class RetType, class ArgType>
 std::function<RetType(ArgType)> wrap_callback(std::function<RetType(ArgType)> callback) {
@@ -69,15 +63,6 @@ std::function<RetType(ArgType)> wrap_callback(std::function<RetType(ArgType)> ca
         return callback(arg);
     };
 }
-
-//void read_defs(py::module& m);
-void block_defs(py::module& m);
-void core_defs(py::module& m);
-void change_defs(py::module& m);
-void geometry_defs(py::module& m);
-void postgis_defs(py::module& m);
-void utils_defs(py::module& m);
-
 
 template <class BlockType>
 class collect_blocks {

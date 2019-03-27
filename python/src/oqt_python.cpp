@@ -33,14 +33,16 @@ PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 PYBIND11_PLUGIN(_oqt) {
     py::module m("_oqt", "pybind11 example plugin");
 
-    
-    //read_defs(m);
-    block_defs(m);
-    change_defs(m);
+    calcqts_defs(m);
+    count_defs(m);
+    elements_defs(m);
     geometry_defs(m);
+    pbfformat_defs(m);
     postgis_defs(m);
-    core_defs(m);
+    sorting_defs(m);
+    update_defs(m);
     utils_defs(m);
+
     return m.ptr();
 };
 

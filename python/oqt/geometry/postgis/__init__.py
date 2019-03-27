@@ -24,7 +24,8 @@
 from __future__ import print_function
 from . import _postgis
 import json, psycopg2,csv
-from oqt.utils import addto, Prog, get_locs, replace_ws, addto_merge
+from oqt.utils import addto, Prog, replace_ws, addto_merge
+from oqt.pbfformat import get_locs
 import time,sys,re, gzip
 
 from oqt.geometry import style as geometrystyle, minzoomvalues, process
@@ -434,7 +435,7 @@ def write_to_postgis(prfx, box_in,connstr, tabprfx, stylefn=None, writeindices=T
     #params.coltags = sorted((k,v.IsNode,v.IsWay,v.IsWay) for k,v in params.style.items() if k not in ('z_order','way_area'))
     postgisparams.coltags = postgis_columns(style, params.findmz is not None, extended)
     if extended:
-        postgis.alloc_func='extended'
+        postgisparams.alloc_func='extended'
         
     
     if tabprfx and not tabprfx.endswith('_'):
@@ -489,19 +490,19 @@ class CsvWriter:
         if self.storeblocks:
             if block:
                 if self.toobig:
-                    self.blocks.append([(k,len(v),len(v.data())) for k,v in block.rows.iteritems()])
+                    self.blocks.append([(k,len(v),len(v.data())) for k,v in block.rows.items()])
                 else:
                     self.blocks.append(block)
             return
         
         if not block :
-            for k,v in self.outs.iteritems():
+            for k,v in self.outs.items():
                 v.close()
             print("written: %s" % self.outs)
             return
         
         
-        for k,v in block.rows.iteritems():
+        for k,v in block.rows.items():
             self.get_out(k).write(v.data())
             self.num[k] += len(v)
             

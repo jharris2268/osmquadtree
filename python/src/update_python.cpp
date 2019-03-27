@@ -22,6 +22,11 @@
 
 #include "oqt_python.hpp"
 #include "oqt/pbfformat/objsidset.hpp"
+
+#include "oqt/update/update.hpp"
+#include "oqt/update/xmlchange.hpp"
+#include "gzstream.hpp"
+
 using namespace oqt;
 struct element_map {
     typeid_element_map_ptr u;
@@ -101,7 +106,6 @@ std::pair<int64,int64> find_change_all_py(const std::vector<std::string>& src_fi
     py::gil_scoped_release r;
     return find_change_all(src_filenames,prfx,fls,st,et,outfn);
 }
-
 size_t write_index_file_py(const std::string& fn, size_t numchan, const std::string& outfn) {
     py::gil_scoped_release r;
     return write_index_file(fn,numchan,outfn);
@@ -111,115 +115,9 @@ std::set<int64> check_index_file_py(const std::string& idxfn, HeaderPtr head, si
     py::gil_scoped_release r;
     return check_index_file(idxfn,head,numchan,ids);
 }
-
-class WritePbfFile {
-    public:
-        virtual void write(std::vector<PrimitiveBlockPtr> blocks)=0;
-        virtual std::pair<int64,int64> finish()=0;
-        virtual ~WritePbfFile() {}
-};
-
-class WritePbfFileImpl : public WritePbfFile {
-    public:
-        WritePbfFileImpl(const std::string& fn, bbox bounds, size_t numchan_, bool indexed, bool dropqts_, bool change_, bool tempfile)
-            : numchan(numchan_), dropqts(dropqts_), change(change_) {
-            
-            
-            auto head = std::make_shared<Header>();
-            head->SetBBox(bounds);
-            if ((!tempfile)&&(indexed)) {
-                outobj = make_pbffilewriter_indexedinmem(fn, head);
-            } else if (indexed) {
-                outobj = make_pbffilewriter_filelocs(fn, head);
-            } else {
-                outobj = make_pbffilewriter(fn, head);
-            }
-            
-        }
-
-        void write(std::vector<PrimitiveBlockPtr> blocks) {
-            
-            
-            
-            if ((numchan==0) || (blocks.size()<numchan)) {
-                for (auto bl: blocks) {
-                    auto dd = write_and_pack_pbfblock(bl);
-                    
-                    outobj->writeBlock(dd->first,dd->second);
-                }
-                return;
-            }
-            
-            auto outcb = multi_threaded_callback<keystring>::make([this](keystring_ptr p) {
-                if (p) {
-                    outobj->writeBlock(p->first,p->second);
-                }
-            }, numchan);
-            
-            std::vector<std::function<void(PrimitiveBlockPtr)>> packers;
-            for (auto cb: outcb) {
-                packers.push_back(threaded_callback<PrimitiveBlock>::make(
-                    [cb,this](PrimitiveBlockPtr pb) {
-                        if (!pb) { return cb(nullptr); }
-                        cb(write_and_pack_pbfblock(pb));
-                    }
-                ));
-            }
-            
-            for (size_t i=0; i < blocks.size(); i++) {
-                packers[i%packers.size()](blocks.at(i));
-            }
-            for (auto& p: packers) { p(nullptr); }
-        }
-        
-        
-        
-        
-        std::pair<int64,int64> finish() {
-            
-            auto rr = outobj->finish();
-            
-            auto ll = std::get<1>(rr.back())+std::get<2>(rr.back());
-            return std::make_pair(ll, rr.size());
-        }
-        
-        
-    private:
-        
-        std::shared_ptr<PbfFileWriter> outobj;
-        size_t numchan;
-        bool indexed;
-        bool dropqts;
-        bool change;
-        
-        
-        
-        keystring_ptr write_and_pack_pbfblock(PrimitiveBlockPtr bl) {
-            auto data = pack_primitive_block(bl, !dropqts, change, true, true);
-            auto block = prepare_file_block("OSMData", data);
-            return std::make_shared<keystring>(bl->Quadtree(), block);
-        }
-            
-        
-
-};
-
-std::shared_ptr<WritePbfFile> make_WritePbfFile(const std::string& fn, bbox bounds, size_t numchan, bool indexed, bool dropqts, bool change, bool tempfile) {
-    return std::make_shared<WritePbfFileImpl>(fn,bounds,indexed,numchan,dropqts,change,tempfile);
-}
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
-void change_defs(py::module& m) {
-    m.def("get_header_block", &get_header_block);
-    m.def("check_index_file", &check_index_file_py);
-    m.def("write_index_file", &write_index_file_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
-    m.def("pack_primitive_block", 
-        [](PrimitiveBlockPtr b, bool incQts, bool change, bool incInfo, bool incRefs) {
-                return py::bytes(pack_primitive_block(b,incQts,change,incInfo,incRefs)); },
-        py::arg("block"), py::arg("includeQts")=true, py::arg("change")=false, py::arg("includeInfo")=true, py::arg("includeRefs")=true);
+void update_defs(py::module& m) {
     
-
-    m.def("combine_primitiveblock_two", &combine_primitiveblock_two);
-    m.def("combine_primitiveblock_many", &combine_primitiveblock_many);
 
 
     m.def("add_all_element_map", &add_all_element_map);
@@ -259,33 +157,7 @@ void change_defs(py::module& m) {
         })
     ;
 
-    py::class_<QtStore, std::shared_ptr<QtStore>>(m,"QtStore")
-        .def("__getitem__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.at((p.first<<61) | p.second);})
-        .def("expand", [](QtStore& qq, int64 t, int64 i, int64 q) { return qq.expand((t<<61) | i, q);})
-        .def("__contains__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.contains((p.first<<61) | p.second);})
-        .def("__len__",&QtStore::size)
-        .def("first", &QtStore::first)
-        .def("next", &QtStore::next)
-    ;
-    m.def("make_qtstore", &make_qtstore_map);
-
-    py::class_<WritePbfFile, std::shared_ptr<WritePbfFile>>(m, "WritePbfFile_obj")
-        //.def(py::init<std::string,bool,bool,bool,bool,size_t,bbox>())
-        .def("write", [](WritePbfFile& wpf, std::vector<PrimitiveBlockPtr> tls) {
-            py::gil_scoped_release r;
-            wpf.write(tls);
-        })
-        .def("finish", [](WritePbfFile& wpf)->std::pair<int,int> {
-            py::gil_scoped_release r;
-            return wpf.finish();
-        })
-    ;
-    m.def("WritePbfFile", make_WritePbfFile,
-            py::arg("filename"), py::arg("bounds"),
-            py::arg("numchan")=4, py::arg("indexed")=true,
-            py::arg("dropqts")=false, py::arg("change")=false,
-            py::arg("tempfile")=true);
-
+    
     m.def("read_xml_change", &read_xml_change);
     m.def("read_xml_change_file", &read_xml_change_file_py);
     m.def("read_xml_change_em", [](std::string d, element_map& em, bool allow_missing_users) {
@@ -294,10 +166,7 @@ void change_defs(py::module& m) {
     });
     m.def("read_xml_change_file_em", &read_xml_change_file_em_py);
 
-    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, ReadBlockFlags objflags, IdSetPtr ids   ) {
-        py::gil_scoped_release r;
-        return read_file_blocks(fn,locs,numchan,index_offset,change,objflags,ids);
-    });
+    
     m.def("add_orig_elements", &add_orig_elements_py);
     m.def("add_orig_elements_alt", &add_orig_elements_alt_py);
 
@@ -306,13 +175,19 @@ void change_defs(py::module& m) {
 
     m.def("find_change_all", &find_change_all_py);
 
-
+    m.def("check_index_file", &check_index_file_py);
+    m.def("write_index_file", &write_index_file_py, py::arg("fn"), py::arg("numchan")=4, py::arg("outfn")="");
+    
+    m.def("read_file_blocks", [](const std::string& fn, std::vector<int64> locs, size_t numchan,size_t index_offset, bool change, ReadBlockFlags objflags, IdSetPtr ids   ) {
+        py::gil_scoped_release r;
+        return read_file_blocks(fn,locs,numchan,index_offset,change,objflags,ids);
+    });
 }
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_change) {
-    py::module m("_change", "pybind11 example plugin");
-    change_defs(m);
+PYBIND11_PLUGIN(_update) {
+    py::module m("_update", "pybind11 example plugin");
+    update_defs(m);
     return m.ptr();
 }
 #endif
