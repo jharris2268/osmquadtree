@@ -24,9 +24,9 @@ from __future__ import print_function
 
 
 from . import _sorting
-from ._sorting import QtTree, QtTreeItem, sortblocks, mergechanges
+from ._sorting import QtTree, QtTreeItem, sortblocks, mergechanges, make_tree_empty
 
-from oqt import utils, pbfformat
+from oqt import utils, pbfformat, elements
 
 
 def iter_tree(tree, i=0):
@@ -38,5 +38,5 @@ def iter_tree(tree, i=0):
             for x in iter_tree(tree,t.children(i)):
                 yield x
 QtTree.__iter__ = iter_tree
-QtTreeItem.__repr__ = lambda t: "qttree_item(%6d, %-29s %6d, %10d)" % (t.idx,repr(quadtree(t.qt))+",", t.total, t.weight)
+QtTreeItem.__repr__ = lambda t: "qttree_item(%6d, %-18s, %6d, %10d)" % (t.idx,elements.quadtree_string(t.qt), t.total, t.weight)
 

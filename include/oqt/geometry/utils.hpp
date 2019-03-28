@@ -83,6 +83,14 @@ size_t unpack_geometry_primitiveblock(primblock_ptr pb);
 std::string pack_tags(const std::vector<Tag>& tgs);
 void unpack_tags(const std::string& str, std::vector<Tag>& tgs);
 std::string convert_packed_tags_to_json(const std::string& str);
+
+
+
+std::string pack_hstoretags(const tagvector& tags);
+std::string pack_jsontags_picojson(const tagvector& tags);
+std::string pack_hstoretags_binary(const tagvector& tags);
+
+
 } }
 
 #endif

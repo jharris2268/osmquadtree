@@ -24,7 +24,7 @@ from __future__ import print_function
 from six import string_types
 
 from . import _geometry
-from oqt import elements, pbfformat
+from oqt import elements, pbfformat, utils
 import json, csv
 from oqt.utils import addto, replace_ws, addto_merge, Prog
 from oqt.pbfformat import get_locs

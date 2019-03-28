@@ -439,5 +439,81 @@ std::string convert_packed_tags_to_json(const std::string& data) {
 
 
 
+
+void hstore_quotestring(std::ostream& strm, const std::string& val) {
+    strm << '"';
+    for (auto c : val) {
+        if (c=='\n') {
+            //strm << '\\' << 'n';
+        } else if (c=='"') {
+            strm << '\\' << '"';
+        } else if (c=='\t') {
+            strm << '\\' << 't';
+        } else if (c=='\r') {
+            strm << '\\' << 'r';
+        } else if (c=='\\') {
+            strm << '\\' << '\\';
+        } else {
+            strm << c;
+        }
+    }
+    strm << '"';
+}
+std::string pack_hstoretags(const tagvector& tags) {
+    std::stringstream strm;
+    
+    bool isf=true;
+    for (const auto& t: tags) {
+        if (!isf) { strm << ", "; }
+        hstore_quotestring(strm, t.key);
+        
+        //strm << picojson::value(t.key).serialize();
+        
+        strm << "=>";
+        hstore_quotestring(strm, t.val);
+        //strm << picojson::value(t.val).serialize();
+        
+        isf=false;
+    }
+    return strm.str();
+}
+
+std::string pack_jsontags_picojson(const tagvector& tags) {
+    picojson::object p;
+    for (const auto& t: tags) {
+        p[t.key] = picojson::value(t.val);
+    }
+    return picojson::value(p).serialize();
+}
+    
+    
+
+size_t _write_data(std::string& data, size_t pos, const std::string& v) {
+    std::copy(v.begin(),v.end(),data.begin()+pos);
+    pos+=v.size();
+    return pos;
+}
+
+std::string pack_hstoretags_binary(const tagvector& tags) {
+    size_t len=4 + tags.size()*8;
+    for (const auto& tg: tags) {
+        len += tg.key.size();
+        len += tg.val.size();
+    }
+    
+    std::string out(len,'\0');
+    size_t pos=0;
+    pos = write_int32(out,pos,tags.size());
+    
+    for (const auto& tg: tags) {
+        pos = write_int32(out,pos,tg.key.size());
+        pos = _write_data(out,pos,tg.key);
+        pos = write_int32(out,pos,tg.val.size());
+        pos = _write_data(out,pos,tg.val);
+    }
+    return out;
+}
+
+
 }}
 
