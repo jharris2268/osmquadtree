@@ -18,7 +18,8 @@ include_directories(include)
 include_directories(thirdparty)
 include_directories(thirdparty/xmlinspector)
 
-set (LIBS pq z stdc++fs)
+#set (LIBS pq z stdc++fs)
+set (LIBS z stdc++fs)
 
 
 add_subdirectory(src)

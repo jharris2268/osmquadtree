@@ -27,7 +27,7 @@ from . import _geometry, style, process, minzoomvalues
 from ._geometry import Point,Linestring,SimplePolygon, ComplicatedPolygon, WayWithNodes
 from oqt.elements import find_tag
 from .process import process_geometry, read_blocks, make_json_feat, to_json
-from .postgis import write_to_csvfile, write_to_postgis
+#from .postgis import write_to_csvfile, write_to_postgis
 
 
 Point.find_tag = find_tag
