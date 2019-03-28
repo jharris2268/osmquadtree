@@ -24,6 +24,9 @@
 #include "oqt/utils/splitcallback.hpp"
 
 #include "oqt/geometry/process.hpp"
+#include "oqt/geometry/processpostgis.hpp"
+#include "oqt/geometry/postgiswriter.hpp"
+
 #include "oqt/geometry/elements/ring.hpp"
 #include "oqt/geometry/elements/point.hpp"
 #include "oqt/geometry/elements/linestring.hpp"

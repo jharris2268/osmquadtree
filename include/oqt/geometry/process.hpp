@@ -26,7 +26,7 @@
 #include "oqt/geometry/makegeometries.hpp"
 #include "oqt/geometry/addwaynodes.hpp"
 #include "oqt/geometry/addparenttags.hpp"
-#include "oqt/geometry/postgiswriter.hpp"
+
 #include "oqt/geometry/multipolygons.hpp"
 #include "oqt/geometry/handlerelations.hpp"
 #include "oqt/geometry/findminzoom.hpp"
@@ -68,8 +68,32 @@ struct GeometryParameters {
     
 };
 
+block_callback make_geomprogress(const src_locs_map& locs);
 
-
+std::vector<block_callback> pack_and_write_callback(
+    std::vector<block_callback> callbacks,
+    std::string filename, bool indexed, bbox box, size_t numchan,
+    bool writeqts, bool writeinfos, bool writerefs);
+    
+block_callback pack_and_write_callback_nothread(
+    block_callback callback,
+    std::string filename, bool indexed, bbox box,
+    bool writeqts, bool writeinfos, bool writerefs);
+    
+block_callback process_geometry_blocks(
+    std::vector<block_callback> final_callbacks,
+    const style_info_map& style, bbox box,
+    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
+    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
+    std::function<void(mperrorvec&)> errors_callback,
+    bool addwn_split);
+    
+block_callback process_geometry_blocks_nothread(
+    block_callback final_callback,
+    const style_info_map& style, bbox box,
+    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
+    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
+    std::function<void(mperrorvec&)> errors_callback);
 
 mperrorvec process_geometry(const GeometryParameters& params, block_callback wrapped);
 mperrorvec process_geometry_nothread(const GeometryParameters& params, block_callback wrapped);
@@ -80,37 +104,8 @@ mperrorvec process_geometry_from_vec(
     const GeometryParameters& params,
     block_callback callback);
     
-
-
-struct PostgisParameters {
-    
-    PostgisParameters()
-        : connstring(""), tableprfx(""), use_binary(false) {}
-        
-    
-    std::string connstring;
-    std::string tableprfx;
-    PackCsvBlocks::tagspec coltags;
-    bool use_binary;
-    table_alloc_func alloc_func;
-};
-
-
-mperrorvec process_geometry_postgis(const GeometryParameters& params, const PostgisParameters& postgis, block_callback cb);
-mperrorvec process_geometry_postgis_nothread(const GeometryParameters& params, const PostgisParameters& postgis, block_callback cb);
-
-mperrorvec process_geometry_csvcallback(const GeometryParameters& params,
-    const PostgisParameters& postgis, 
-    block_callback callback,
-    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
-
-
-mperrorvec process_geometry_csvcallback_nothread(const GeometryParameters& params,
-    const PostgisParameters& postgis, 
-    block_callback callback,
-    std::function<void(std::shared_ptr<CsvBlock>)> csvblock_callback);
-
-
 }
 }
+
 #endif
+

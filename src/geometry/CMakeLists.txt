@@ -7,6 +7,7 @@ set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/multipolygons.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/postgiswriter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/process.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/processpostgis.cpp
     ${CMAKE_CURRENT_LIST_DIR}/utils.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/elements/complicatedpolygon.cpp
