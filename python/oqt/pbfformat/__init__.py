@@ -21,6 +21,7 @@
 #-----------------------------------------------------------------------
 
 from __future__ import print_function
+from oqt import utils
 
 from . import _pbfformat
 from ._pbfformat import get_header_block, read_primitive_block, read_minimal_block
@@ -31,7 +32,7 @@ from ._pbfformat import WritePbfFile
 from .filelocs import prep_poly,  get_locs, get_locs_single, Poly, read_poly_file
 
 _pbfformat._ReadBlocksCaller = _pbfformat.ReadBlocksCaller
-
+import numbers
 
 class ReadBlocksCaller:
     def __init__(self, prfx, bbox, poly=None, lastdate=None):
@@ -47,10 +48,10 @@ class ReadBlocksCaller:
             if self.poly:
                 ln=[l.lon for l in self.poly]
                 lt=[l.lat for l in self.poly]
-                self.bbox=_block.bbox(min(ln),min(lt),max(ln),max(lt))
+                self.bbox=utils.bbox(min(ln),min(lt),max(ln),max(lt))
             else:
-                self.bbox=_block.bbox(-1800000000,-900000000,1800000000,900000000)
-        self.rbc = _block.make_read_blocks_caller(prfx, self.bbox, self.poly, lastdate)
+                self.bbox=utils.bbox(-1800000000,-900000000,1800000000,900000000)
+        self.rbc = _pbfformat.make_read_blocks_caller(prfx, self.bbox, self.poly, lastdate)
     
     def read_primitive(self, cb, numblocks=512, numchan=4, filter=None):
         return _pbfformat.read_blocks_caller_read_primitive(self.rbc, cb, numblocks, numchan, filter)

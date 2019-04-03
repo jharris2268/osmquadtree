@@ -24,7 +24,7 @@ from __future__ import print_function
 
 from . import _geometry, style, process, minzoomvalues
 
-from ._geometry import Point,Linestring,SimplePolygon, ComplicatedPolygon, WayWithNodes
+from ._geometry import Point,Linestring,SimplePolygon, ComplicatedPolygon, WayWithNodes, read_blocks_geometry
 from oqt.elements import find_tag
 from .process import process_geometry, read_blocks, make_json_feat, to_json
 #from .postgis import write_to_csvfile, write_to_postgis

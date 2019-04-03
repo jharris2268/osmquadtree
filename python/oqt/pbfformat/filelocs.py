@@ -35,7 +35,7 @@ class tboxbuf:
     def __call__(self, q):
         return self.box.overlaps(elements.quadtree_bbox(q, self.buffer))
 def get_locs_single(fn, box_in,asmerge=False, buffer=None):
-    hh = get_header_block(fn)
+    hh = _pbfformat.get_header_block(fn)
     if not len(hh.Index):
         raise Exception(fn+" doesn't contain a header index")
     

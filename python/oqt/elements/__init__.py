@@ -24,7 +24,7 @@ from __future__ import print_function
 
 from . import _elements
 from ._elements import Node,Way,Relation,ElementInfo,Tag,Member,ElementType,changetype,PrimitiveBlock,MinimalBlock
-from ._elements import quadtree_bbox, overlaps_quadtree, quadtree_round, quadtree_string, quadtree_tuple, quadtree_common
+from ._elements import quadtree_bbox, overlaps_quadtree, quadtree_round, quadtree_string, quadtree_tuple, quadtree_common, quadtree_from_tuple, quadtree_from_string, quadtree_calculate
 
 def find_tag(obj, idx):
     for tg in obj.Tags:
