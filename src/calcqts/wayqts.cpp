@@ -70,18 +70,76 @@ struct WayBBox {
     int32 maxy;
 };
 
-class WayBBoxTile {
+class WayBBoxTileBase {
     public:
-        WayBBoxTile(int64 key_, size_t size_) :
-                key(key_), size(size_), boxes(size_, WayBBox{2000000000,1000000000,-2000000000,-1000000000})  {
+        virtual ~WayBBoxTileBase() {}
+        virtual void expand(int64 id, int32 x, int32 y)=0;
+        virtual void reset()=0;
+        
+        virtual std::shared_ptr<QtStore> calculate(double buffer, int64 maxdepth)=0;
+        
+};
+
+class WayBBoxTileMap : public WayBBoxTileBase {
+    public:
+        WayBBoxTileMap(int64 key_, size_t size_) : key(key_), size(size_) {
+            min = key*size;
+            max = (key+1)*size;
+            
+        }
+        virtual ~WayBBoxTileMap() {}
+                
+        virtual void expand(int64 id, int32 x, int32 y) {
+            if ((id<min) || (id>= max)) { throw std::domain_error("wtf"); }
+            
+            if (boxes.count(id)==0) {
+                boxes.emplace(id, WayBBox{x,y,x,y});
+            } else {
+                auto& box = boxes.at(id);
+                if (x < box.minx) { box.minx=x; }
+                if (y < box.miny) { box.miny=y; }
+                if (x > box.maxx) { box.maxx=x; }
+                if (y > box.maxy) { box.maxy=y; }
+            }
+        }
+        
+        virtual void reset() {
+            boxes.clear();
+        }
+        
+        virtual std::shared_ptr<QtStore> calculate(double buffer, int64 maxdepth) {
+            
+            auto res=make_qtstore_map();
+            for (const auto& bx: boxes) {
+                int64 qt = quadtree::calculate(bx.second.minx, bx.second.miny, bx.second.maxx, bx.second.maxy, buffer, maxdepth);
+                res->expand(bx.first, qt);
+            }
+            return res;
+        }
+        
+    private:
+        int64 key;
+        size_t size;
+        int64 min, max;
+        
+        std::map<int64,WayBBox> boxes;
+};
+                
+            
+            
+
+class WayBBoxTile : public WayBBoxTileBase {
+    public:
+        WayBBoxTile(int64 key_, size_t size_, bool use_48bit_quadtrees_) :
+                key(key_), size(size_), use_48bit_quadtrees(use_48bit_quadtrees_), boxes(size_, WayBBox{2000000000,1000000000,-2000000000,-1000000000})  {
                 
             min = key*size;
             max = (key+1)*size;
             
         }
-        
+        virtual ~WayBBoxTile() {}
                 
-        void expand(int64 id, int32 x, int32 y) {
+        virtual void expand(int64 id, int32 x, int32 y) {
             if ((id<min) || (id>= max)) { throw std::domain_error("wtf"); }
             
             size_t i = id-min;
@@ -92,13 +150,13 @@ class WayBBoxTile {
             if (y > box.maxy) { box.maxy=y; }
             
         }
-        void reset() {
+        virtual void reset() {
             boxes.clear();
             std::vector<WayBBox> empty;
             boxes.swap(empty);
         }
         
-        std::shared_ptr<QtStore> calculate(double buffer, int64 maxdepth, bool use_48bit_quadtrees) {
+        virtual std::shared_ptr<QtStore> calculate(double buffer, int64 maxdepth) {
             
             
             if (use_48bit_quadtrees) {
@@ -127,16 +185,20 @@ class WayBBoxTile {
             
         }
         
-    
-        int64 key;
+        
+        
     private:
+        int64 key;   
         size_t size;
         int64 min;
         int64 max;
+        bool use_48bit_quadtrees;
         std::vector<WayBBox> boxes;
-        
-                
+                     
 };
+
+
+
 /*
 std::string getmem(size_t);
 int64 getmemval(size_t);        
@@ -256,10 +318,16 @@ class AddLocationsToWayNodes {
 
 class ExpandWayBBoxes {
     public:
-        ExpandWayBBoxes(size_t split_, size_t nt, bool use_48bit_quadtrees_) : split(split_), tiles(nt), use_48bit_quadtrees(use_48bit_quadtrees_) {
+        ExpandWayBBoxes(size_t split_, size_t nt, bool usearr, bool use_48bit_quadtrees_) : split(split_), tiles(nt), use_48bit_quadtrees(use_48bit_quadtrees_) {
             pid = getpid();
             cc=0;
             mn=1ll<<61; mx=0;
+            
+            if (usearr) {
+                make_tile = [this](int64 key) ->std::unique_ptr<WayBBoxTileBase> { return std::make_unique<WayBBoxTile>(key, this->split, this->use_48bit_quadtrees); };
+            } else {
+                make_tile = [this](int64 key) ->std::unique_ptr<WayBBoxTileBase> { return std::make_unique<WayBBoxTileMap>(key, this->split); };
+            }
         }
         
         virtual ~ExpandWayBBoxes() { Logger::Message() << "~ExpandBoxes"; }
@@ -277,7 +345,8 @@ class ExpandWayBBoxes {
                 
                 cc++;
                 try {
-                    tiles[k] = std::make_unique<WayBBoxTile>(k, split);
+                    //tiles[k] = std::make_unique<WayBBoxTile>(k, split, use_48bit_quadtrees);
+                    tiles[k] = make_tile(k);
                     
                 } catch(std::exception& ex) {
                     Logger::Message() << "ExpandBoxes adding tile " << k << " failed, RSS=" << getmemval(getpid())/1024.0/1024;
@@ -319,7 +388,7 @@ class ExpandWayBBoxes {
                 if (tiles[i]) {
                     Logger::Progress(100.0*i/tiles.size()) <<  "calc tile " << i;
                     
-                    qts->add_tile(i,tiles[i]->calculate(buffer, maxdepth,use_48bit_quadtrees));
+                    qts->add_tile(i,tiles[i]->calculate(buffer, maxdepth));
                     tiles[i].reset();
                     
                 }
@@ -338,11 +407,13 @@ class ExpandWayBBoxes {
         size_t split;
         size_t pid;
         
-        std::vector<std::unique_ptr<WayBBoxTile>> tiles;
+        std::vector<std::unique_ptr<WayBBoxTileBase>> tiles;
         size_t cc;
         
         int64 mn, mx;
         bool use_48bit_quadtrees;
+        
+        std::function<std::unique_ptr<WayBBoxTileBase>(int64 key)> make_tile;
 };          
         
         
@@ -359,9 +430,15 @@ void find_way_quadtrees(
     
     
     size_t nb=580;
+    bool usearr = !((minway==0) && (maxway==0));
+    Logger::Message()
+        << "find way qts " << minway << " to " << maxway
+        << ", RSS=" << getmemval(getpid())/1024.0/1024
+        << ", usearr=" << (usearr?"t":"f")
+        << ", use_48bit_quadtree=" << (use_48bit_quadtrees?"t":"f");
     
-    Logger::Message() << "find way qts " << minway << " to " << maxway << ", RSS=" << getmemval(getpid())/1024.0/1024;
-    auto expand=std::make_shared<ExpandWayBBoxes>(1<<20, nb, use_48bit_quadtrees);
+    
+    auto expand=std::make_shared<ExpandWayBBoxes>(1<<20, nb, usearr, use_48bit_quadtrees);
     auto expand_all = [expand](std::shared_ptr<WayNodeLocationBlock> ww) { expand->expand_all(ww); };
     
     

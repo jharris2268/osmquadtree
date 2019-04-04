@@ -234,7 +234,11 @@ void read_blocks_split_quadtree_vector(
     std::vector<int64> locs, 
     ReadBlockFlags objflags);   
 
-
+void read_blocks_nothread_quadtree_vector(
+    const std::string& filename, 
+    std::function<void(std::shared_ptr<quadtree_vector>)> callback,
+    std::vector<int64> locs, 
+    ReadBlockFlags objflags);
 
 
 

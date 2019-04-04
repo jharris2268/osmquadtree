@@ -99,14 +99,22 @@ std::shared_ptr<QtTree> make_qts_tree_maxlevel(const std::string& qtsfn, size_t 
     
     auto tree = make_tree_empty();
     
-    auto add_qts = threaded_callback<count_map>::make(make_addcountmaptree(tree, maxlevel),numchan);
+    if (numchan==0) {
+        auto add_qts=make_addcountmaptree(tree,maxlevel);
+        auto addcount = CollectQts::make(add_qts);
+        read_blocks_nothread_quadtree_vector(qtsfn, addcount, {}, ReadBlockFlags::Empty);
+    } else {
+        
     
-    std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> make_addcounts;
-    for (size_t i=0; i < numchan; i++) {
-        make_addcounts.push_back(CollectQts::make(add_qts));
+        auto add_qts = multi_threaded_callback<count_map>::make(make_addcountmaptree(tree, maxlevel),numchan);
+        
+        std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> make_addcounts;
+        for (size_t i=0; i < numchan; i++) {
+            make_addcounts.push_back(CollectQts::make(add_qts[i]));
+        }
+        
+        read_blocks_split_quadtree_vector(qtsfn, make_addcounts, {}, ReadBlockFlags::Empty);
     }
-    
-    read_blocks_split_quadtree_vector(qtsfn, make_addcounts, {}, ReadBlockFlags::Empty);
     
     return tree;
 };
@@ -152,6 +160,7 @@ class AddQuadtrees {
                 }
                 
             }
+            //std::cout << "bl with " << bl->size() << " objs" << std::endl;
             
             for (size_t i=0; i < bl->size(); i++) {
                 
@@ -163,7 +172,7 @@ class AddQuadtrees {
                     }
                 }
                 auto q = curr->at(curr_idx);//minimalblock_at(curr, curr_idx); //
-                
+                //std::cout << q.first << " // " << q.second << std::endl;
                 auto obj = bl->at(i);
                 if (q.first != obj->InternalId()) {
                     auto err = "out of sync "+std::to_string(q.first)+" "+std::to_string(q.second)+" // "+std::to_string(obj->InternalId());
@@ -254,6 +263,11 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     
     auto packers2 = make_final_packers(write_file_obj, numchan, timestamp, true,true);
     
+    std::cout << "groups->size()=" << groups->size() << std::endl;
+    /*for (size_t i=0; i < groups->size(); i++) {
+        auto tl = groups->at(i);
+        std::cout << "groups->at(" << i << ")=" << tl.idx << " " << tl.qt << " " << tl.weight << " " << tl.total  << std::endl;
+    }*/
     
     //auto resort/*_int*/ = make_resortobjects_callback(packers2, groups, groups->size());
     std::vector<PrimitiveBlockPtr> outs;
@@ -261,13 +275,17 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     
     auto resort = [&outs,groups,timestamp,fix_strs](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
+        if (bl->size()==0) { return; }
+        //std::cout << "block " << bl->Index() << " " << bl->size() << " objs" << std::endl;
         for (auto o: bl->Objects()) {
+            std::cout << o->Type() << " " << o->Id() << " " << oqt::quadtree::string(o->Quadtree()) << " to tile " << std::flush;
             auto tl = groups->find_tile(o->Quadtree());
-            if (!outs.at(tl.idx)) {
+            //std::cout << tl.idx << " " << oqt::quadtree::string(tl.qt) << std::endl;
+            if (!outs.at(tl.idx-1)) {
                 auto nbl = std::make_shared<PrimitiveBlock>(tl.idx, tl.weight);
                 nbl->SetEndDate(timestamp);
                 nbl->SetQuadtree(tl.qt);
-                outs.at(tl.idx) = nbl;
+                outs.at(tl.idx-1) = nbl;
             }
             
             if (fix_strs) {
@@ -278,7 +296,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
                 }
             }
             
-            outs.at(tl.idx)->add(o);
+            outs.at(tl.idx-1)->add(o);
         }
     };
     
