@@ -59,9 +59,10 @@ class QtTree {
 
 };
 
-
-typedef std::map<int64,int64> count_map;
-
+struct count_map {
+    double progress;
+    std::map<int64,int64> vals;
+};
 
 std::shared_ptr<QtTree> make_tree_empty();
 

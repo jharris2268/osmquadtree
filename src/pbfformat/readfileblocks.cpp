@@ -69,13 +69,18 @@ minimal::BlockPtr read_as_minimalblock(
 std::shared_ptr<quadtree_vector> read_as_quadtree_vector(
     std::shared_ptr<FileBlock> bl, ReadBlockFlags objflags) {
     
+    
     std::string dd = bl->get_data();
     if ((bl->blocktype=="OSMData")) {
-        return read_quadtree_vector_block(dd, objflags);
+        auto r = read_quadtree_vector_block(dd, objflags);
+        r->idx=bl->idx;
+        r->file_progress = bl->file_progress;
+        return r;
         
     }
     auto r=std::make_shared<quadtree_vector>();
-    
+    r->idx=bl->idx;
+    r->file_progress = bl->file_progress;
     return r;
 }
 

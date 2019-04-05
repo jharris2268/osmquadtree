@@ -92,5 +92,16 @@ typedef std::shared_ptr<Block> BlockPtr;
 
 
 typedef std::function<void(minimal::BlockPtr)> minimalblock_callback;
+
+struct quadtree_vector {
+    int64 idx;
+    double file_progress;
+    
+    std::vector<uint64> ids;
+    std::vector<int64> quadtrees;
+};
+
+
+
 }
 #endif

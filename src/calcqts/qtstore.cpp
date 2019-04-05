@@ -66,6 +66,7 @@ class QtStoreMap : public QtStore {
         }
 
         int64 first() {
+            if (m.empty()) { return -1; }
             return m.begin()->first;
         }
         

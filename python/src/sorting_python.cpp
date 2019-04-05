@@ -155,6 +155,7 @@ void sorting_defs(py::module& m) {
         .def("add", &QtTree::add, py::arg("qt"), py::arg("val"))
         .def("find", &QtTree::find_tile, py::arg("qt"))
         .def("at", &QtTree::at)
+        .def("__len__", &QtTree::size)
     ;
     m.def("make_tree_empty",&make_tree_empty);
     m.def("make_qts_tree_maxlevel", &make_qts_tree_maxlevel_py);

@@ -429,7 +429,7 @@ void find_way_quadtrees(
     
     
     
-    size_t nb=580;
+    size_t nb=(maxway>0) ? (maxway >> 20) : 700;
     bool usearr = !((minway==0) && (maxway==0));
     Logger::Message()
         << "find way qts " << minway << " to " << maxway

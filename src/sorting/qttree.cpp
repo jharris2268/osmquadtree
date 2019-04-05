@@ -217,18 +217,18 @@ class QtTreeImpl : public QtTree {
 void collect_block(std::shared_ptr<count_map> res, minimal::BlockPtr block) {
 
     for (const auto&  nn : block->nodes) {
-        (*res)[nn.quadtree]+=1;
+        res->vals[nn.quadtree]+=1;
     }
 
     for (const auto&  ww : block->ways) {
-        (*res)[ww.quadtree]+=1;
+        res->vals[ww.quadtree]+=1;
     }
 
     for (const auto&  rr : block->relations) {
-        (*res)[rr.quadtree]+=1;
+        res->vals[rr.quadtree]+=1;
     }
     for (const auto& gg: block->geometries) {
-        (*res)[gg.quadtree]+=1;
+        res->vals[gg.quadtree]+=1;
     }
 
 }
@@ -243,13 +243,13 @@ class AddCountMapTree {
             tree(tree_), maxlevel(maxlevel_), tb(0) {}
         
         void call(std::shared_ptr<count_map> fb) {
-            tb+=std::accumulate(fb->begin(),fb->end(),0,
-            [](int64 l, const std::pair<int64,int64>& r){return l+r.second;});
-            Logger::Progress(50) << "add " << fb->size() << " qts ["
+            tb+=std::accumulate(fb->vals.begin(),fb->vals.end(),0,
+                [](int64 l, const std::pair<int64,int64>& r){return l+r.second;});
+            Logger::Progress(fb->progress) << "add " << fb->vals.size() << " qts ["
                     << std::setw(12) << tree->size() << " "
                     << std::fixed << std::setw(15) << std::setprecision(0) << tb
                     << "]";
-            for (auto it : *fb) {
+            for (auto it : fb->vals) {
                 if (it.first>=0) {
                     tree->add(quadtree::round(it.first,maxlevel),it.second);
                 }

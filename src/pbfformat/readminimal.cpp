@@ -195,25 +195,33 @@ void read_quadtree_vector_object(std::shared_ptr<quadtree_vector>& block, size_t
         handle_pbf_value{20, [&qt](uint64 v) { qt = un_zig_zag(v); }}
     );
     
-    block->push_back(std::make_pair(id,qt));
+    //block->push_back(std::make_pair(id,qt));
+    block->ids.push_back(id);
+    block->quadtrees.push_back(qt);
 }
 
 void read_quadtree_vector_dense(std::shared_ptr<quadtree_vector>& block, const std::string& data, size_t pos, size_t lim) {
-    size_t firstidx = block->size();
+    size_t firstidx = block->ids.size();
     
     read_pbf_messages(data, pos, lim, 
         handle_pbf_packed_int_delta{1,
-            [&block, firstidx](size_t sz) { block->resize(firstidx+sz,std::make_pair(-1,-1)); },
-            [&block, firstidx](size_t i, int64 v) { block->at(firstidx+i).first=v; }
+            [&block, firstidx](size_t sz) { block->ids.resize(firstidx+sz); },
+            [&block, firstidx](size_t i, int64 v) { block->ids.at(firstidx+i)=v; }
         },
-        handle_pbf_packed_int_delta{20,nullptr,[&block, firstidx](size_t i, int64 v) { block->at(firstidx+i).second=v; }}
+        handle_pbf_packed_int_delta{20,
+            [&block, firstidx](size_t sz) { block->quadtrees.resize(firstidx+sz); },
+            [&block, firstidx](size_t i, int64 v) { block->quadtrees.at(firstidx+i)=v; }}
     );
+    if (block->quadtrees.size() != block->ids.size()) {
+        block->quadtrees.resize(block->ids.size());
+    }
 }
 
 
 void read_quadtree_vector_group(std::shared_ptr<quadtree_vector>& block, ReadBlockFlags objflags, const std::string& data, size_t pos, size_t lim) {
     
-    block->reserve(8000);
+    block->ids.reserve(8000);
+    block->quadtrees.reserve(8000);
     read_pbf_messages(data,pos,lim,
         handle_pbf_data{1, [&block,objflags](const std::string& d, size_t p, size_t l) {
             if (!has_flag(objflags,ReadBlockFlags::SkipNodes)) { read_quadtree_vector_object(block, 0, d, p, l); }
@@ -245,7 +253,7 @@ std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& d
     read_pbf_messages(data, 0, data.size(),
         handle_pbf_data{2, [&result, objflags](const std::string& d, size_t p, size_t l) { read_quadtree_vector_group(result, objflags,d,p,l); }}
     );
-   
+    
     return result;
 }
 

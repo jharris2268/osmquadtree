@@ -83,9 +83,9 @@ PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void calcqts_defs(py::module& m) {
     
     py::class_<QtStore, std::shared_ptr<QtStore>>(m,"QtStore")
-        .def("__getitem__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.at((p.first<<61) | p.second);})
-        .def("expand", [](QtStore& qq, int64 t, int64 i, int64 q) { return qq.expand((t<<61) | i, q);})
-        .def("__contains__", [](QtStore& qq, std::pair<int64,int64> p) { return qq.contains((p.first<<61) | p.second);})
+        .def("__getitem__", &QtStore::at)
+        .def("expand",  &QtStore::expand)
+        .def("__contains__", &QtStore::contains)
         .def("__len__",&QtStore::size)
         .def("first", &QtStore::first)
         .def("next", &QtStore::next)

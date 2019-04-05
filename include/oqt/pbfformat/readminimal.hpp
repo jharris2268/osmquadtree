@@ -36,7 +36,7 @@ namespace oqt {
 
 minimal::BlockPtr read_minimal_block(int64 index, const std::string& data, ReadBlockFlags objflags=ReadBlockFlags::Empty);
 
-typedef std::vector<std::pair<uint64,int64> > quadtree_vector;
+
 std::shared_ptr<quadtree_vector> read_quadtree_vector_block(const std::string& data, ReadBlockFlags objflags=ReadBlockFlags::Empty);
 
 }

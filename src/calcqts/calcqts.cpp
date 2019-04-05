@@ -153,22 +153,25 @@ void write_qts_file(const std::string& qtsfn, const std::string& nodes_fn, size_
     
     
 
-    
+    size_t nn=0;
     Logger::Get().time("calculate node qts");            
     rels->add_ways(way_qts);
     Logger::Get().time("added rel way qts");
-    for (size_t ti = 0; ti < way_qts->num_tiles(); ti++) {
+    for (size_t ti = 0; ti < way_qts->last_tile(); ti++) {
         auto wq = way_qts->tile(ti);
         if (!wq) { continue; }
         
         int64 f = wq->first();
-        Logger::Progress(100.0*ti/way_qts->num_tiles()) << "write ways tile " << wq->key() << " first " << f;
+        Logger::Progress(100.0*ti/way_qts->last_tile()) << "write ways tile " << wq->key() << " first " << f;
         
         while (f>0 ) {
             out->add(1, f, wq->at(f));
             f= wq->next(f);
+            nn++;
         }
     }
+    Logger::Progress(100.0) << "wrote " << nn << " way qts";
+    
     Logger::Get().time("wrote way qts");
     
     rels->finish_alt([out](int64 i, int64 q) { out->add(2,i,q); });

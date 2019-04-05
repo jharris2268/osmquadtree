@@ -83,8 +83,31 @@ class QtStoreSplitImpl : public QtStoreSplit {
             return get_tile_key(i,false);
         }
 
-        virtual int64 next(int64) { return -1; };
-        virtual int64 first() { return -1; };
+        virtual int64 next(int64 ref) {
+            if (ref<0) { return next(0); }
+            
+            if (ref >= ((int64) last_tile()*splitat_)) {
+                return -1;
+            }
+            
+            std::shared_ptr<QtStore> tile = get_tile(ref,false);
+            if (tile) {
+                int64 res = tile->next(ref);
+                if (res!=-1) {
+                    return res;
+                }
+            }
+            
+            size_t ni = ref/splitat_;
+            ni++;
+            int64 nref = ni*splitat_;
+            if (contains(nref)) {
+                return nref;
+            }
+            return next(nref);
+            
+        };
+        virtual int64 first() { return next(0); };
         
 
 
