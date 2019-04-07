@@ -192,6 +192,7 @@ void geometry_defs(py::module& m) {
         .def_property_readonly("MinZoom", &BaseGeometry::MinZoom)
         .def("SetMinZoom", &BaseGeometry::SetMinZoom)
         .def("Wkb", [](BaseGeometry& p,  bool transform, bool srid) { return py::bytes(p.Wkb(transform,srid)); }, py::arg("transform")=true, py::arg("srid")=true)
+        .def("pack_extras", &BaseGeometry::pack_extras)
     ;
     
     py::class_<GeometryPacked, BaseGeometry, std::shared_ptr<GeometryPacked>>(m,"GeometryPacked")

@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
 
     size_t numchan=std::thread::hardware_concurrency();
     std::string qtsfn=origfn.substr(0,origfn.size()-4)+std::string("-qts.pbf");
-    std::string outfn=origfn.substr(0,origfn.size()-4)+std::string("-sorted.pbf");
+    std::string outfn;
     std::string tempfn="";
     int64 timestamp = 0;
 
@@ -248,15 +248,15 @@ int main(int argc, char** argv) {
                 timestamp = read_date(val);
                 Logger::Message() << "read timestamp \"" << val << "\" as " << timestamp;
             } else if (key=="numchan=") {
-                numchan = atoi(val.c_str());
+                numchan = std::stoull(val);
             } else if (key=="rollup") {
                 rollup=true;
                 Logger::Message() << "rollup=true";
             } else if (key=="targetsize=") {
-                targetsize = atoi(val.c_str());
+                targetsize = std::stoull(val);
                 Logger::Message() << "targetsize=" << targetsize;
             } else if (key=="minsize=") {
-                minsize = atoi(val.c_str());
+                minsize = std::stoull(val);
                 Logger::Message() << "minsize=" << minsize;
             } else if (key=="tempfn=") {
                 tempfn = val;
@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
             } else if (key=="filterobjs") {
                 filter_objs=true;
             } else if (key=="grptiles=") {
-                grptiles = atoi(val.c_str());
+                grptiles = std::stoull(val);
                 Logger::Message() << "grptiles=" << grptiles;
             
             } else if (key=="inmem") {
@@ -293,9 +293,10 @@ int main(int argc, char** argv) {
             } else if (key=="countgeom") {
                 countgeom=true;
             } else if (key=="buffer=") {
-                buffer = atof(val.c_str());
+                buffer = std::stod(val);
             } else if (key=="max_depth=") {
-                max_depth=atoi(val.c_str());
+                max_depth=std::stoull(val);
+                Logger::Message() << "max_depth=" << max_depth;
             } else if (key=="dontsplitways") {
                 splitways=false;
                 Logger::Message() << "splitways=false";
@@ -351,6 +352,10 @@ int main(int argc, char** argv) {
         std::shared_ptr<QtTree> groups;
         //if (usefindgroupscopy) {
         
+        if (outfn.empty()) {
+            outfn = origfn.substr(0,origfn.size()-4)+std::string("-blocks.pbf");
+        }
+        
         if (true) {
             auto tree = make_qts_tree_maxlevel(qtsfn=="NONE" ? origfn : qtsfn, numchan, max_depth);
             Logger::Get().time("load qts");
@@ -382,9 +387,20 @@ int main(int argc, char** argv) {
 
     } else if (operation=="mergechanges") {
         if (grptiles==0) { grptiles=500; }
+        if (outfn.empty()) {
+            if (sortfile) {
+                outfn = origfn.substr(0,origfn.size()-4)+std::string("-sorted.pbf");
+            } else {
+                outfn = origfn.substr(0,origfn.size()-4)+std::string("-merged.pbf");
+            }
+        }
+        
         run_mergechanges(origfn, outfn, numchan, sort_objs, filter_objs, filter_box, poly, timestamp, tempfn, grptiles, sortfile,inmem);
         
     } else if (operation=="applychange") {
+        if (outfn.empty()) {
+            outfn = origfn.substr(0,origfn.size()-4)+std::string("-withchanges.pbf");
+        }
         run_applychange(origfn, outfn, numchan, changes);
     } else if (operation=="readfile") {
         

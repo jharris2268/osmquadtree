@@ -111,7 +111,23 @@ std::vector<primitiveblock_callback> make_final_packers_cb(std::function<void(ke
 };
 
 
+primitiveblock_callback make_final_packer_nothread(std::shared_ptr<PbfFileWriter> write_file_obj, int64 timestamp, bool writeqts) {
+    
+    auto write = [write_file_obj](keystring_ptr p) {
+        if (p) {
+            write_file_obj->writeBlock(p->first, p->second);
+        }
+    };
+    
+    return make_pack_final(write, timestamp, writeqts, 0,-1);
+}
+
 std::vector<primitiveblock_callback> make_final_packers_sync(std::shared_ptr<PbfFileWriter> write_file_obj, size_t numchan, int64 timestamp, bool writeqts, bool asthread) {
+    
+    
+    if (numchan==0) {
+        return {make_final_packer_nothread(write_file_obj,timestamp,writeqts) };
+    }
     
     auto writers = multi_threaded_callback<keystring>::make(
         [write_file_obj](keystring_ptr p) {

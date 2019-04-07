@@ -259,29 +259,24 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     
     auto hh = std::make_shared<Header>();
     hh->SetBBox(bbox{-1800000000,-900000000,1800000000,900000000});
-    auto write_file_obj = make_pbffilewriter_indexedinmem(outfn, hh);
+    auto write_file_obj = make_pbffilewriter_filelocs(outfn, hh);//make_pbffilewriter_indexedinmem(outfn, hh);
     
-    std::cout << "call make_final_packers_sync" << std::endl;
+    
     auto packers2 = make_final_packers_sync(write_file_obj, numchan, timestamp, true,true);
     
-    std::cout << "groups->size()=" << groups->size() << std::endl;
-    for (size_t i=0; i < groups->size(); i++) {
-        auto tl = groups->at(i);
-        std::cout << "groups->at(" << i << ")=" << tl.idx << " " << tl.qt << " " << tl.weight << " " << tl.total  << std::endl;
-    }
     
-    //auto resort/*_int*/ = make_resortobjects_callback(packers2, groups, groups->size());
     std::vector<PrimitiveBlockPtr> outs;
     outs.resize(groups->size());
     
-    auto resort = [&outs,groups,timestamp,fix_strs](PrimitiveBlockPtr bl) {
+    
+    primitiveblock_callback resort = [&outs,groups,timestamp,fix_strs](PrimitiveBlockPtr bl) {
         if (!bl) { return; }
         if (bl->size()==0) { return; }
-        std::cout << "block " << bl->Index() << " " << bl->size() << " objs" << std::endl;
+        
         for (auto o: bl->Objects()) {
-            std::cout << o->Type() << " " << o->Id() << " " << oqt::quadtree::string(o->Quadtree()) << " to tile " << std::flush;
+            
             auto tl = groups->find_tile(o->Quadtree());
-            std::cout << tl.idx << " " << oqt::quadtree::string(tl.qt) << std::endl;
+            
             if (!outs.at(tl.idx-1)) {
                 auto nbl = std::make_shared<PrimitiveBlock>(tl.idx, tl.weight);
                 nbl->SetEndDate(timestamp);
@@ -301,13 +296,15 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
         }
     };
     
-    if (qtsfn == "NONE") {
-        read_blocks_primitiveblock(origfn, resort, {}, numchan, nullptr, false, ReadBlockFlags::Empty);
-    } else {
-        
-        auto add_quadtrees = add_quadtreesup_callback({resort}, qtsfn);
-        read_blocks_primitiveblock(origfn, add_quadtrees, {}, numchan, nullptr, false,ReadBlockFlags::Empty);
+    if (qtsfn!="NONE") {
+        resort = add_quadtreesup_callback({resort}, qtsfn);
     }
+    if (numchan==0) {
+        read_blocks_nothread_primitiveblock(origfn, resort, {}, nullptr, false, ReadBlockFlags::Empty);
+    } else {
+        read_blocks_primitiveblock(origfn, resort, {}, numchan, nullptr, false, ReadBlockFlags::Empty);
+    }
+    
     Logger::Message() << "finished";
     
     Logger::Get().time("sorted data");
@@ -315,7 +312,7 @@ int run_sortblocks_inmem(const std::string& origfn, const std::string& qtsfn, co
     size_t i=0;
     for (auto bl: outs) {
         if (bl) {
-            packers2[i%numchan](bl);
+            packers2[i%(packers2.size())](bl);
             i++;
 
         } 
@@ -426,11 +423,12 @@ int run_sortblocks(const std::string& origfn, const std::string& qtsfn, const st
     int64 timestamp, size_t numchan, std::shared_ptr<QtTree> groups,
     const std::string& tempfn, size_t blocksplit, bool fixstrs, bool seperate_filelocs) {
     
+    
    
     if (tempfn=="NONE") {
         return run_sortblocks_inmem(origfn, qtsfn, outfn, timestamp, numchan, groups, fixstrs);
     }
-    
+    if (numchan==0) { throw std::domain_error("numchan must be >= 1"); }
     int64 orig_file_size = file_size(origfn) / 1024/1024;
     if (orig_file_size==0) { orig_file_size = 1; }
     auto sb = make_sortblocks(orig_file_size, groups, tempfn, blocksplit,numchan, timestamp);

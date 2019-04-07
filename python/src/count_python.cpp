@@ -29,6 +29,7 @@
 #include "oqt/elements/node.hpp"
 #include "oqt/elements/way.hpp"
 #include "oqt/elements/relation.hpp"
+#include "oqt/elements/geometry.hpp"
 
 
 #include "oqt/pbfformat/readfileblocks.hpp"
@@ -85,7 +86,10 @@ enum class diffreason {
     LonLat,
     Refs,
     Members,
-    Quadtree
+    Quadtree,
+    NoLeft,
+    NoRight,
+    GeomTags
 };
 
 
@@ -98,9 +102,16 @@ struct objdiff {
     ElementPtr right;
 };
 
-
+bool pbftag_equals(const PbfTag& left, const PbfTag& right) {
+    if (left.tag!=right.tag) { return false; }
+    if (left.value!=right.value) { return false; }
+    if (left.data!=right.data) { return false; }
+    return true;
+}
 
 diffreason compare_element(ElementPtr left, ElementPtr right) {
+    if (!left) { return diffreason::NoLeft; }
+    if (!right) { return diffreason::NoRight; }
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
     const ElementInfo& li = left->Info();
     const ElementInfo& ri = right->Info();
@@ -122,25 +133,51 @@ diffreason compare_element(ElementPtr left, ElementPtr right) {
     if (left->Type()==ElementType::Node) {
         auto ln = std::dynamic_pointer_cast<Node>(left);
         auto rn = std::dynamic_pointer_cast<Node>(right);
+        if ((!ln) || (!rn)) { throw std::domain_error("??"); }
         if ((ln->Lon()!=rn->Lon()) || (ln->Lat()!=rn->Lat())) {
             return diffreason::LonLat;
         }
     } else if (left->Type()==ElementType::Way) {
-        auto lw = std::dynamic_pointer_cast<Way>(left)->Refs();
-        auto rw = std::dynamic_pointer_cast<Way>(right)->Refs();
-        if (lw.size()!=rw.size()) { return diffreason::Refs; }
-        for (size_t i=0; i < lw.size(); i++) {
-            if (lw[i]!=rw[i]) { return diffreason::Refs; }
+        auto lw = std::dynamic_pointer_cast<Way>(left);
+        auto rw = std::dynamic_pointer_cast<Way>(right);
+        
+        if ((!lw) || (!rw)) { throw std::domain_error("??"); }
+        
+        if (lw->Refs().size()!=rw->Refs().size()) { return diffreason::Refs; }
+        for (size_t i=0; i < lw->Refs().size(); i++) {
+            if (lw->Refs()[i]!=rw->Refs()[i]) { return diffreason::Refs; }
         }
         
     } else if (left->Type()==ElementType::Relation) {
-        auto lr = std::dynamic_pointer_cast<Relation>(left)->Members();
-        auto rr = std::dynamic_pointer_cast<Relation>(right)->Members();
+        auto lrel = std::dynamic_pointer_cast<Relation>(left);
+        auto rrel = std::dynamic_pointer_cast<Relation>(right);
+        if ((!lrel) || (!rrel)) { throw std::domain_error("??"); }
+        auto lr=lrel->Members();
+        auto rr=rrel->Members();
         if (lr.size()!=rr.size()) { return diffreason::Members; }
         for (size_t i=0; i < lr.size(); i++) {
             if ((lr[i].type!=rr[i].type) || (lr[i].ref!=rr[i].ref) || (lr[i].role!=rr[i].role)) { return diffreason::Members; }
         }
+    } else if ( (left->Type()==ElementType::Point) 
+            || (left->Type()==ElementType::Linestring)
+            || (left->Type()==ElementType::SimplePolygon)
+            || (left->Type()==ElementType::ComplicatedPolygon)) {
+                
+        auto lg = std::dynamic_pointer_cast<BaseGeometry>(left);
+        auto rg = std::dynamic_pointer_cast<BaseGeometry>(right);
+        if ((!lg) || (!rg)) { throw std::domain_error("??"); }
+        auto lt = lg->pack_extras();
+        auto rt = rg->pack_extras();
+        
+        if (lt.size()!=rt.size()) { return diffreason::GeomTags; }
+        auto lt_iter=lt.begin();
+        auto rt_iter=rt.begin();
+        for ( ; lt_iter!= lt.end(); lt_iter++) {
+            if (!pbftag_equals(*lt_iter,*rt_iter)) { return diffreason::GeomTags; }
+            rt_iter++;
+        }
     }
+        
     
     if (left->Quadtree()!=right->Quadtree()) {
         return diffreason::Quadtree;
@@ -359,6 +396,9 @@ void count_defs(py::module& m) {
         .value("Refs", diffreason::Refs)
         .value("Members", diffreason::Members)
         .value("Quadtree", diffreason::Quadtree)
+        .value("NoLeft", diffreason::NoLeft)
+        .value("NoRight", diffreason::NoRight)
+        .value("GeomTags", diffreason::GeomTags)
     ;
     py::class_<objdiff>(m, "objdiff")
         .def_readonly("reason", &objdiff::reason)
