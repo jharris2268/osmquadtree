@@ -103,15 +103,20 @@ class HandleRelationTags : public BlockHandler {
 
                     auto rf_it = route_refs.find(o->Id());
                     if (rf_it!=route_refs.end()) {
-                        std::map<std::string,std::string> tgs;
+                        std::map<std::string,std::set<std::string>> tgs;
                         for (auto& rr : rf_it->second) {
-                            if (tgs.count(rr.first)>0) {
-                                tgs[rr.first] += "; ";
-                            }
-                            tgs[rr.first] += rr.second;
+                            
+                            tgs[rr.first].insert(rr.second);
+                            
                         }
                         for (auto& t : tgs) {
-                            o->AddTag(t.first+"_routes", t.second);
+                            std::string val;
+                            for (const auto& v: t.second) {
+                                if (!val.empty()) { val += ", "; }
+                                val += v;
+                            }
+                            
+                            o->AddTag(t.first+"_routes", val);
                         }
 
                         route_refs.erase(rf_it);

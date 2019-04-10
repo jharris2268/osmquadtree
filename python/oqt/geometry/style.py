@@ -100,7 +100,7 @@ default_keys = {
 'waterway': KeySpec(IsArea=True, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 }
     
-highway_prio = {
+highway_prio_old = {
     'footway':1,'cycleway':1,'bridleway': 1,
     'path':1, 'steps': 1, 'pedestrian': 1,
     'service': 2,'track':2,'byway': 2,
@@ -111,6 +111,18 @@ highway_prio = {
     'trunk':7, 'trunk_link':7,
     'motorway':8,'motorway_link':8}
 
+highway_prio = dict((h,i) for i,h in enumerate([
+    'footway','cycleway','bridleway',
+    'path','steps','pedestrian',
+    'service','track','byway',
+    'living_street','residential','road','unclassified',
+    'tertiary','tertiary_link',
+    'secondary','secondary_link',
+    'primary','primary_link',
+    'trunk','trunk_link',
+    'motorway','motorway_link',
+    'siding','rail',
+]))
 
 
 class ParentTag:
