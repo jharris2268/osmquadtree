@@ -29,7 +29,195 @@
 namespace oqt {
 namespace geometry {
 
+typedef std::vector<std::pair<size_t, std::string>> PendingVals;
+typedef std::map<int64, PendingVals> PendingMap;
 
+
+
+bool passes_filter(const RelationTagSpec& spec, const std::vector<Tag>& tags) {
+    
+    size_t passes_source_filter=0;
+    bool has_source_key=false;
+    for (const auto& tg : tags) {
+        if (tg.key==spec.source_key) { has_source_key=true; }
+        for (const auto& f: spec.source_filter) {
+            if ((f.key==tg.key) && ((f.val=="*") || (f.val==tg.val))) {
+                passes_source_filter++;
+            }
+        }
+        
+        if (has_source_key && (passes_source_filter>=spec.source_filter.size())) {
+            return true;
+        }
+    }
+    return false;
+}
+    
+
+
+void handle_relation(const std::vector<RelationTagSpec>& spec, PendingMap& pending, std::shared_ptr<Relation> rel) {
+    
+    for (size_t i=0; i < spec.size(); i++) {
+        
+        if (passes_filter(spec.at(i), rel->Tags())) {
+            auto val = get_tag(rel, spec.at(i).source_key);
+            for (const auto& m: rel->Members()) {
+                if (m.type==ElementType::Way) {
+                    pending[m.ref].push_back(std::make_pair(i,val));
+                }
+            }
+        }
+        
+    }
+    
+}
+
+std::string find_min(size_t i, const PendingVals& vals) {
+    
+    int64 min_val=0;
+    bool found=false;
+    for (const auto& pv: vals) {
+        if (pv.first==i) {
+            try {
+                int64 val = std::stoll(pv.second);
+                if ((!found) || val < min_val) {
+                    min_val=val;
+                    found=true;
+                }
+            } catch (...) {}
+        }
+    }
+    if (found) {
+        return std::to_string(min_val);
+    }
+    return "";
+}
+
+std::string find_max(size_t i, const PendingVals& vals) {
+    
+    int64 max_val=0;
+    bool found=false;
+    for (const auto& pv: vals) {
+        if (pv.first==i) {
+            try {
+                int64 val = std::stoll(pv.second);
+                if ((!found) || val > max_val) {
+                    max_val=val;
+                    found=true;
+                }
+            } catch (...) {}
+        }
+    }
+    if (found) {
+        return std::to_string(max_val);
+    }
+    return "";
+}
+
+std::string find_list(size_t i, const PendingVals& vals) {
+    
+    std::set<std::string> ss;
+    for (const auto& pv: vals) {
+        if (pv.first==i) {
+            ss.insert(pv.second);
+        }
+    }
+    if (ss.empty()) {
+        return "";
+    }
+    
+    bool first=true;
+    std::string result;
+    for (const auto& v: ss) {
+        if (!first) { 
+            result += "; ";
+        }
+        result+=v;
+        first=false;
+    }
+    
+    return result;
+}
+
+
+bool finish_way(const std::vector<RelationTagSpec>& spec_vec, const PendingVals& pendingvals, std::shared_ptr<Element> ele) {
+    
+    
+    
+        
+    bool found=false;
+    for (size_t i=0; i < spec_vec.size(); i++) {
+        
+        const RelationTagSpec& spec = spec_vec.at(i);
+        
+        
+        std::string result;
+        if (spec.type == RelationTagSpec::Type::Min) {
+            result = find_min(i,pendingvals);
+        } else if (spec.type == RelationTagSpec::Type::Max) {
+            result = find_max(i,pendingvals);
+        } else if (spec.type == RelationTagSpec::Type::List) {
+            result = find_list(i,pendingvals);
+        }
+        
+        if (!result.empty()) {
+            found=true;
+            ele->AddTag(spec.target_key, result);
+        }
+        
+        
+        
+    }
+    
+    return found;
+}
+    
+    
+class HandleRelationTags : public BlockHandler {
+    
+    public:
+        HandleRelationTags(const std::vector<RelationTagSpec>& spec_) : spec(spec_) {}
+        
+        virtual ~HandleRelationTags() {}
+        
+        virtual primblock_vec process(PrimitiveBlockPtr bl) {
+            
+            
+            if (!bl) { return {}; }
+            
+            
+            for (auto ele: bl->Objects()) {
+                if (ele->Type() == ElementType::Relation) {
+                    auto rel = std::dynamic_pointer_cast<Relation>(ele);
+                    
+                    handle_relation(spec, pending, rel);
+                }
+            }
+            
+            for (auto ele: bl->Objects()) {
+                if (ele->Type() == ElementType::WayWithNodes) {
+                    auto it = pending.find(ele->Id());
+                    if (it!=pending.end()) {
+                        finish_way(spec, it->second, ele);
+                        pending.erase(it);
+                    }
+                    
+                }
+                
+            }
+            return {bl};
+        }
+        
+    private:
+    
+        std::vector<RelationTagSpec> spec;
+        PendingMap pending;
+};
+            
+std::shared_ptr<BlockHandler> make_handlerelations(const std::vector<RelationTagSpec>& spec) {
+    return std::make_shared<HandleRelationTags>(spec);
+}
+/*
 
 class HandleRelationTags : public BlockHandler {
     public:
@@ -135,6 +323,10 @@ class HandleRelationTags : public BlockHandler {
 
 
     private:
+    
+        
+    
+    
         bool boundary_polys;
         bool add_admin_levels;
         std::set<std::string> route_types;
@@ -151,7 +343,7 @@ class HandleRelationTags : public BlockHandler {
 std::shared_ptr<BlockHandler> make_handlerelations(bool boundary_polys, bool add_admin_levels, const std::set<std::string>& route_refs) {
     return std::make_shared<HandleRelationTags>(boundary_polys,add_admin_levels,route_refs);
 }
-
+*/
 }}
 
 

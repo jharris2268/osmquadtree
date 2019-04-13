@@ -31,7 +31,29 @@ namespace oqt {
 namespace geometry {
 
 
-std::shared_ptr<BlockHandler> make_handlerelations(bool boundary_polys, bool add_admin_levels, const std::set<std::string>& route_refs);
+
+
+struct RelationTagSpec {
+    enum class Type {
+        Min,
+        Max,
+        List
+    };
+    
+    std::string target_key;
+    std::vector<Tag> source_filter;
+    std::string source_key;
+    Type type;
+    
+    RelationTagSpec(std::string target_key_, std::vector<Tag> source_filter_, std::string source_key_, Type type_) : 
+        target_key(target_key_), source_filter(source_filter_), source_key(source_key_), type(type_) {}
+    
+    
+};
+    
+
+
+std::shared_ptr<BlockHandler> make_handlerelations(const std::vector<RelationTagSpec>& spec);
 
 }}
 

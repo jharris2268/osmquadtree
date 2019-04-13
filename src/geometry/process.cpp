@@ -109,33 +109,36 @@ block_callback blockhandler_callback(std::shared_ptr<BlockHandler> handler, bloc
     };
 }
 
+    
             
 block_callback process_geometry_blocks(
     std::vector<block_callback> final_callbacks,
-    const style_info_map& style, bbox box,
-    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
-    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
-    std::function<void(mperrorvec&)> errors_callback,
-    bool addwn_split) {
+    
+    const GeometryParameters& params,
+    std::function<void(mperrorvec&)> errors_callback) {
+  
     
     
-    auto errs = std::make_shared<mperrorvec>();
+    //auto errs = std::make_shared<mperrorvec>();
     
     std::vector<block_callback> makegeoms(final_callbacks.size());
     for (size_t i=0; i < final_callbacks.size(); i++) {
         auto finalcb = final_callbacks[i];
-        if (i==0) {
-            finalcb = [finalcb, errs, errors_callback](PrimitiveBlockPtr bl) {
-                if (!bl && errs && (!errs->empty())) {
-                    errors_callback(*errs);
+        /*if (i==0) {
+            finalcb = [finalcb, &errs,&errors_callback](PrimitiveBlockPtr bl) {
+                
+                if (!bl) {
+                    if (errors_callback) {
+                        errors_callback(errs->errs);
+                    }
                 }
                 finalcb(bl);
             };
-        }
+        }*/
        
         makegeoms[i]  =threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MakeGeometries["+std::to_string(i)+"]",
-                make_geometryprocess(style,box,recalcqts,findmz),
+                make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz),
                 finalcb
             )
         );
@@ -150,20 +153,13 @@ block_callback process_geometry_blocks(
     }
     
     block_callback make_mps = makegeoms_split;
-    if (add_mps) {
+    if (params.add_multipolygons || params.add_boundary_polygons) {
         
-        bool bounds = style.count("boundary")>0;
-        bool mps = false;
-        for (const auto& s: style) {
-            if ((s.first!="boundary") && (s.second.IsArea)) {
-                mps=true;
-                break;
-            }
-        }
-        Logger::Message() << "MultiPolygons(mps=" << mps << ", bounds=" << bounds << ")";
+       
+        
         make_mps = threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MultiPolygons", //blockhandler_callback(
-                make_multipolygons(errs,style,box,bounds,mps),
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons),
                 makegeoms_split
             )
         );
@@ -172,48 +168,28 @@ block_callback process_geometry_blocks(
     
     
     block_callback reltags = make_mps;
-    if (add_rels) {
-        bool add_bounds = style.count("boundary")>0;
-        bool add_admin_levels=style.count("min_admin_level")>0;
-        std::set<std::string> routes;
-        for (const auto& st : style) {
-            auto k = st.first;
-            if ((k.size()>7) && (k.compare(k.size()-7, 7, "_routes")==0)) {
-                routes.insert(k.substr(0,k.size()-7));
-            }
-        }
-        std::cout << "make_handlerelations("
-            << "add_bounds=" << (add_bounds ? "t" : "f") << ", "
-            << "add_admin_levels=" << (add_admin_levels ? "t" : "f") << ", "
-            << "routes={";
-        bool f=true;
-        for (const auto& r : routes) {
-            if (!f) { std::cout << ", ";}
-            std::cout << r;
-            f=false;
-        }
-        std::cout <<"})" <<std::endl;
-        
+    
+    if (!params.relation_tag_spec.empty()) {
         reltags = threaded_callback<PrimitiveBlock>::make(
-            BlockhandlerCallbackTime::make("HandleRelations", //blockhandler_callback(
-                make_handlerelations(add_bounds, add_admin_levels, routes),
+            BlockhandlerCallbackTime::make("HandleRelations",
+                make_handlerelations(params.relation_tag_spec),
                 make_mps
             )
         );
-    }        
+    }
     
     block_callback apt = reltags;
-    if (!apt_spec.empty()) {
+    if (!params.parent_tag_spec.empty()) {
         apt = threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("AddParentTags", //blockhandler_callback(
-                make_addparenttags(apt_spec),
+                make_addparenttags(params.parent_tag_spec),
                 reltags
             )
         );
     }
     
     block_callback awn;
-    if (addwn_split) {
+    if (params.addwn_split) {
         awn=make_waynodes_cb_split(apt);
     } else {
         awn=make_addwaynodes_cb(apt);
@@ -228,89 +204,57 @@ block_callback process_geometry_blocks(
 
 
 
-
 block_callback process_geometry_blocks_nothread(
     block_callback final_callback,
-    const style_info_map& style, bbox box,
-    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
-    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
+    
+    const GeometryParameters& params,
     std::function<void(mperrorvec&)> errors_callback) {
     
-    auto errs = std::make_shared<mperrorvec>();
     
-    block_callback make_geom = [&style, box, final_callback, errs, errors_callback, recalcqts, findmz](PrimitiveBlockPtr bl) {
-        if (!bl) {
-            std::cout << "make_geom done" << std::endl;
-            final_callback(bl);
-            if ((errs) && (!errs->empty())) {
-                errors_callback(*errs);
-            }
-            return;
-        }
-                
-        auto gg = make_geometries(style,box, bl);
-        if (recalcqts) {
-            recalculate_quadtree(gg, 18, 0.05);
-        }
-        if (findmz) {
-            calculate_minzoom(gg, findmz);
-        }
-        final_callback(gg);
-            
-    };
     
-    block_callback make_mps = make_geom;
-    if (add_mps) {
+    auto make_geom = BlockhandlerCallbackTime::make("GeometryProcess",
+        make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz),
         
-        bool bounds = style.count("boundary")>0;
-        bool mps = false;
-        for (const auto& s: style) {
-            if ((s.first!="boundary") && (s.second.IsArea)) {
-                mps=true;
-                break;
-            }
-        }
-        make_mps = blockhandler_callback(
-            make_multipolygons(errs,style,box,bounds,mps),
-            make_geom);
+        final_callback
+    );
+        
+    block_callback mp = make_geom;
+    
+    
+    
+    if (params.add_multipolygons || params.add_boundary_polygons) {
+        
+        
+        mp = 
+            BlockhandlerCallbackTime::make("MultiPolygons",
+            
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons),
+                make_geom
+        );
+    }
+            
+    
+    block_callback hr = mp;
+    
+    if (!params.relation_tag_spec.empty()) {
+        hr = 
+            BlockhandlerCallbackTime::make("HandleRelations",
+           
+                make_handlerelations(params.relation_tag_spec),
+                mp
+            
+        );
     }
     
-        
-    block_callback reltags = make_mps;
-    if (add_rels) {
-        bool add_bounds = style.count("boundary")>0;
-        bool add_admin_levels=style.count("min_admin_level")>0;
-        std::set<std::string> routes;
-        for (const auto& st : style) {
-            auto k = st.first;
-            if ((k.size()>7) && (k.compare(k.size()-7, 7, "_routes")==0)) {
-                routes.insert(k.substr(0,k.size()-7));
-            }
-        }
-        std::cout << "make_handlerelations("
-            << "add_bounds=" << (add_bounds ? "t" : "f") << ", "
-            << "add_admin_levels=" << (add_admin_levels ? "t" : "f") << ", "
-            << "routes={";
-        bool f=true;
-        for (const auto& r : routes) {
-            if (!f) { std::cout << ", ";}
-            std::cout << r;
-            f=false;
-        }
-        std::cout <<"})" <<std::endl;
-        
-        reltags = blockhandler_callback(
-                make_handlerelations(add_bounds, add_admin_levels, routes),
-                make_mps
-            );
-    }        
-    
-    block_callback apt = reltags;
-    if (!apt_spec.empty()) {
-        apt = blockhandler_callback(
-                make_addparenttags(apt_spec),
-                reltags
-            );
+    block_callback apt = hr;
+    if (!params.parent_tag_spec.empty()) {
+        apt = 
+            BlockhandlerCallbackTime::make("AddParentTags",
+            
+                make_addparenttags(params.parent_tag_spec),
+                hr
+            
+        );
     }
         
     return make_addwaynodes_cb(apt);
@@ -460,11 +404,8 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
     
     
     
-    auto addwns = process_geometry_blocks(
-            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
-            params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
-    );
+    auto addwns = process_geometry_blocks(writer, params, [&errors_res](mperrorvec& ee) { errors_res = ee; });
+    
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
       
@@ -484,11 +425,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     auto sb = make_sortblocks(params.locs.size()/16, params.groups, params.outfn+"-interim",50, params.numchan, 0);
     auto sb_callbacks = sb->make_addblocks_cb(false);
   
-    auto addwns = process_geometry_blocks(
-            sb_callbacks, params.style, params.box, params.parent_tag_spec, params.add_rels,
-            params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
-    );
+    auto addwns = process_geometry_blocks(sb_callbacks, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
     
@@ -545,11 +482,7 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     }
     
     
-    block_callback addwns = process_geometry_blocks_nothread(
-            writer, params.style, params.box, params.parent_tag_spec, params.add_rels,
-            params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }
-    );
+    block_callback addwns = process_geometry_blocks_nothread(writer, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
     
     read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, ReadBlockFlags::Empty);
       
@@ -565,6 +498,7 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
 mperrorvec process_geometry_from_vec(
     std::vector<PrimitiveBlockPtr> blocks,
     const GeometryParameters& params,
+    bool nothread,
     block_callback callback) {
 
 
@@ -573,12 +507,12 @@ mperrorvec process_geometry_from_vec(
     
     mperrorvec errors_res;
     
-    
-    auto addwns = process_geometry_blocks(
-            {callback}, params.style, params.box, params.parent_tag_spec, params.add_rels,
-            params.add_mps, params.recalcqts, params.findmz,
-            [&errors_res](mperrorvec& ee) { errors_res.swap(ee); }, params.addwn_split
-    );
+    block_callback addwns;
+    if (nothread) {
+        addwns = process_geometry_blocks_nothread({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+    } else {
+        addwns = process_geometry_blocks({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+    }
     
     for (auto bl : blocks) {
         addwns(bl);

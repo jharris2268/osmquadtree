@@ -108,8 +108,8 @@ To see if the installation has worked, try running
     python
     
     >>> import oqt
-    >>> res = oqt.run_count('example.pbf')
-    >>> print res.str()
+    >>> print oqt.run_count('example.pbf')
+
 
 Which should produce the same output as the previous example.
 

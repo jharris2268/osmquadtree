@@ -23,6 +23,7 @@
 from __future__ import print_function
 
 from . import _count
+from ._count import run_count, compare_element, diffreason
 
-run_count = _count.run_count
+_count.Count.__str__ = lambda count: count.long_str()
 

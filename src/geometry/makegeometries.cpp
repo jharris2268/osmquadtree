@@ -101,7 +101,7 @@ int64 calc_zorder(const std::vector<Tag>& tags) {
     return result;
 }
 
-
+/*
 std::pair<std::vector<Tag>,bool> filter_tags(const style_info_map& style, const std::vector<Tag>& tags, bool passnode, bool passway, bool is_ring, const std::string& extra_tags_key) {
     std::vector<Tag> res;
     bool isf=false;
@@ -357,7 +357,140 @@ PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, 
     return result;
 }
 
+*/
 
+
+
+
+std::tuple<bool, std::vector<Tag>, int64> filter_tags(
+    const std::set<std::string>& feature_keys,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const std::vector<Tag> in_tags) {
+        
+    
+        
+    bool has_feature=false;
+    std::vector<Tag> out_tags;
+    int64 layer=0;
+        
+    if (in_tags.empty()) {
+        return std::make_tuple(has_feature, out_tags, layer);
+    }
+    
+    for (const auto& tg: in_tags) {
+        
+        if (feature_keys.count(tg.key)>0) {
+            has_feature=true;
+            out_tags.push_back(tg);
+        } else if (all_other_keys || (other_keys.count(tg.key)>0)) {
+            out_tags.push_back(tg);
+        }
+        if (tg.key=="layer") {
+            try {
+                layer = std::stoll(tg.val);
+            } catch (...) {
+                //pass
+            }
+        }
+    }
+    
+    return std::make_tuple(has_feature, out_tags, layer);
+}
+
+
+bool check_polygon_tags(const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags, const std::vector<Tag>& tags) {
+    
+    
+    for (const auto& tg: tags) {
+        
+        auto it = polygon_tags.find(tg.key);
+        if (it != polygon_tags.end()) {
+            
+            if (it->second.first) {
+                return true;
+            } else if (it->second.second.count(tg.val)>0) {
+                
+                return true;
+            }
+        }
+        
+    }
+    return false;
+}
+            
+            
+            
+        
+      
+
+
+PrimitiveBlockPtr make_geometries(
+    const std::set<std::string>& feature_keys,
+    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const bbox& box,
+    PrimitiveBlockPtr in) {
+        
+    if (!in) { return in; }
+    if (in->Objects().empty()) { return in; }
+    
+    auto result = std::make_shared<PrimitiveBlock>(in->Index(), in->size());
+    result->CopyMetadata(in);
+    
+    for (auto obj: in->Objects()) {
+        if (obj->Type()==ElementType::Node) {
+            
+            bool passes; std::vector<Tag> tags; int64 layer;
+            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
+            if (passes) {
+                auto n = std::dynamic_pointer_cast<Node>(obj);
+                if (contains_point(box, n->Lon(),n->Lat())) {
+                    result->add(std::make_shared<Point>(n, tags,layer,-1));
+                }
+            }
+        } else if (obj->Type() == ElementType::WayWithNodes) {
+            
+            bool passes; std::vector<Tag> tags; int64 layer;
+            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
+            
+            if (passes) {
+                auto w = std::dynamic_pointer_cast<WayWithNodes>(obj);
+                if (w->Refs().size()<2) {
+                    continue;
+                }
+
+                if (!overlaps(box, w->Bounds())) {
+                    continue;
+                }
+                bool is_poly = (w->IsRing() && check_polygon_tags(polygon_tags, tags));
+            
+                if (is_poly) {
+                    result->add(std::make_shared<SimplePolygon>(w, tags,0,layer,-1));
+                } else {
+                    int64 z_order = calc_zorder(tags);
+                    result->add(std::make_shared<Linestring>(w, tags, z_order, layer, -1));
+                }
+            }
+        } else if (obj->Type()==ElementType::Relation) {
+             //pass
+        } else {
+
+            result->add(obj);
+        }
+    }
+
+
+    return result;
+}
+
+        
+        
+        
+        
+    
+        
 
 
 
@@ -397,13 +530,25 @@ class GeometryProcess : public BlockHandler {
         /*GeometryProcess(const style_info_map& style_, const bbox& box_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
             : style(style_), box(box_),makegeometry(makegeometry_), recalc(recalc_), fmz(fmz_) {}*/
             
-        GeometryProcess(std::shared_ptr<MakeGeometry> makegeometry_, bool recalc_, std::shared_ptr<FindMinZoom> fmz_)
-            : makegeometry(makegeometry_), recalc(recalc_), fmz(fmz_) {}
+        GeometryProcess(
+            const std::set<std::string>& feature_keys_,
+            const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags_,
+            const std::set<std::string>& other_keys_,
+            bool all_other_keys_,
+            const bbox& box_,
+            bool recalc_,
+            std::shared_ptr<FindMinZoom> fmz_)
+            
+            
+            :feature_keys(feature_keys_), polygon_tags(polygon_tags_),
+            other_keys(other_keys_), all_other_keys(all_other_keys_),
+            box(box_), recalc(recalc_), fmz(fmz_) {}
             
 
         virtual primblock_vec process(primblock_ptr bl) {
-            //auto res = make_geometries(style,box,bl);
-            auto res = makegeometry->process_block(bl);
+            
+            auto res = make_geometries(feature_keys, polygon_tags, other_keys, all_other_keys, box, bl);
+            
             if (recalc) {
                 recalculate_quadtree(res, 18, fmz ? 0 : 0.05);
             }
@@ -413,17 +558,30 @@ class GeometryProcess : public BlockHandler {
             return primblock_vec(1, res);
         }
         virtual ~GeometryProcess() {}
+    
+    
     private:
-        //style_info_map style;
-        //bbox box;
-        std::shared_ptr<MakeGeometry> makegeometry;
-        
+        std::set<std::string> feature_keys;
+        std::map<std::string, std::pair<bool,std::set<std::string>>> polygon_tags;
+        std::set<std::string> other_keys;
+        bool all_other_keys;
+        bbox box;
         bool recalc;
         std::shared_ptr<FindMinZoom> fmz;
 };
-std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<FindMinZoom> fmz) {
-    auto mg=std::make_shared<MakeGeometry>(style,box);
-    return std::make_shared<GeometryProcess>(mg,recalc,fmz);
+
+
+std::shared_ptr<BlockHandler> make_geometryprocess(
+    const std::set<std::string>& feature_keys,
+    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const bbox& box,
+    bool recalc,
+    std::shared_ptr<FindMinZoom> fmz){
+        
+    return std::make_shared<GeometryProcess>(feature_keys, polygon_tags, other_keys, all_other_keys, box, recalc, fmz);
+    
 }
 
     

@@ -61,7 +61,10 @@ class PrimitiveBlock {
             if (!o) { throw std::domain_error("tried to add nullptr to PrimitiveBlock"); };
             objects.push_back(o);
         }
-    
+        
+        void CopyMetadata(std::shared_ptr<PrimitiveBlock> other);
+        
+        
     private:
         int64 index;
         std::vector<ElementPtr> objects;
@@ -74,6 +77,7 @@ class PrimitiveBlock {
         
         
 };
+
 
 
 typedef std::shared_ptr<PrimitiveBlock> PrimitiveBlockPtr;

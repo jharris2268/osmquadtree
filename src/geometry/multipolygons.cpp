@@ -254,6 +254,8 @@ bool check_parts(const std::pair<std::vector<LonLat>,std::vector<Ring>>& part) {
     return true;
 }   
 
+
+
 class MakeMultiPolygons : public BlockHandler {
     struct pendingrel {
         int64 tile_quadtree;
@@ -270,32 +272,44 @@ class MakeMultiPolygons : public BlockHandler {
 
     std::map<int64,pendingrel> pendingrels;
     std::map<int64,pendingway> pendingways;
-    std::shared_ptr<mperrorvec> errors;
-    style_info_map style;
+    
+    std::function<void(mperrorvec&)> errors_callback;
+    mperrorvec errors;
+    
+    //style_info_map style;
+    std::set<std::string> feature_keys;
+    std::set<std::string> other_keys;
+    bool all_other_keys;
+    
     bbox box;
     int64 maxqt;
     int compcount;
     bool boundary, multipolygon;
-    std::string extra_tags_key;
+    //std::string extra_tags_key;
     bool allow_empty_role;
     public:
         MakeMultiPolygons(
-            std::shared_ptr<mperrorvec> errors_,
-            const style_info_map& style_,
+            std::function<void(mperrorvec&)> errors_callback_,
+            const std::set<std::string>& feature_keys_,  
+            const std::set<std::string>& other_keys_,
+            bool all_other_keys_,
             const bbox& box_,
             bool boundary_,
             bool multipolygon_) : 
-                errors(errors_), style(style_), box(box_), maxqt(-1),
+                errors_callback(errors_callback_),
+                feature_keys(feature_keys_), other_keys(other_keys_),
+                all_other_keys(all_other_keys_),
+                box(box_), maxqt(-1),
                 compcount(0), boundary(boundary_),
                 multipolygon(multipolygon_)
             {
                 //all_tags = style.count("*")!=0;
-                extra_tags_key = "";
+                /*extra_tags_key = "";
                 for (const auto& st: style) {
                     if (st.second.IsOtherTags) {
                         extra_tags_key=st.first;
                     }
-                }
+                }*/
                 
                 allow_empty_role=true;
             }
@@ -354,7 +368,9 @@ class MakeMultiPolygons : public BlockHandler {
         virtual ~MakeMultiPolygons() {}
 
         virtual primblock_vec finish() {
-            return check_finished(-1);
+            auto ff = check_finished(-1);
+            errors_callback(errors);
+            return ff;
         }
     private:
 
@@ -366,7 +382,7 @@ class MakeMultiPolygons : public BlockHandler {
             size_t cc=0;
             
             auto r=pr.rel;
-            bool is_bp = get_tag(r,"type")=="boundary";
+            //bool is_bp = get_tag(r,"type")=="boundary";
             std::vector<Ring> outers,inners;
             std::vector<std::pair<bool,Ring>> passes;
             std::tie(outers,inners,passes) = collect_rings(r);
@@ -384,13 +400,15 @@ class MakeMultiPolygons : public BlockHandler {
 
             if (!outers.empty()) {
                 
+                
+                bool passes; std::vector<Tag> tags; int64 layer;
+                std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, r->Tags());
+                int64 z_order=0;
+                //tagvector tgs; bool isring; int64 zorder, layer;
+                //std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
 
-
-                tagvector tgs; bool isring; int64 zorder, layer;
-                std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
-
-                if (!tgs.empty() && isring) {
-
+                //if (!tgs.empty() && isring) {
+                if (passes) {
 
                     std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
                     for (size_t i=0; i < outers.size(); i++) {
@@ -420,14 +438,14 @@ class MakeMultiPolygons : public BlockHandler {
                             continue;
                         }
                         
-                        auto cp = std::make_shared<ComplicatedPolygon>(r, pp.first, outers[pp.first], pp.second.second,tgs,zorder,layer,-1);
+                        auto cp = std::make_shared<ComplicatedPolygon>(r, pp.first, outers[pp.first], pp.second.second,tags,z_order,layer,-1);
                         finished[tq]->add(cp);
 
                         
                     }
                 } else {
-                    err += "?? isring=";
-                    if (isring) { err += "y"; } else { err += "n"; }
+                    //err += "?? isring=";
+                    //if (isring) { err += "y"; } else { err += "n"; }
                 }
             } else {
                 if (inners.empty() && (all_outofbox || passes.empty())) {
@@ -459,9 +477,13 @@ class MakeMultiPolygons : public BlockHandler {
             }
 
             if (!err.empty()) {
-                if (errors && (errors->size()<10000)) {
-                    errors->push_back(std::make_tuple(pr.rel,err,outers,inners,passes));
+                if (errors.size()<10000) {
+                    errors.push_back(std::make_tuple(pr.rel, err, outers, inners, passes));
                 }
+                
+                /*if (errors && (errors->size()<10000)) {
+                    errors->push_back(std::make_tuple(pr.rel,err,outers,inners,passes));
+                }*/
             }
             return cc;
         }
@@ -546,11 +568,14 @@ class MakeMultiPolygons : public BlockHandler {
 };
 
 std::shared_ptr<BlockHandler> make_multipolygons(
-    std::shared_ptr<mperrorvec> multipolygon_errors,
-    const style_info_map& style, const bbox& box,
+    std::function<void(mperrorvec&)> add_error,
+    const std::set<std::string>& feature_keys,  
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const bbox& box,
     bool boundary, bool multipolygon) {
 
-    return std::make_shared<MakeMultiPolygons>(multipolygon_errors,style,box,boundary,multipolygon);
+    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, all_other_keys,box,boundary,multipolygon);
 }
 
 

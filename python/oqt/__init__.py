@@ -32,6 +32,9 @@ from .utils import intm
 from .pbfformat import read_poly_file, Poly
 
 from .update.xmlchange import read_timestamp
+
+from .count import run_count, compare_element, diffreason
+
 import time
 
 time_str = lambda t: time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(t))

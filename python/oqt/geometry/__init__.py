@@ -50,3 +50,5 @@ Point.to_json = property(make_json_feat)
 Linestring.to_json = property(make_json_feat)
 SimplePolygon.to_json = property(make_json_feat)
 ComplicatedPolygon.to_json = property(make_json_feat)
+
+_geometry.RelationTagSpec.Type = _geometry.RelationTagSpec_Type

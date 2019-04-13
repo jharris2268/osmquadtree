@@ -1,5 +1,6 @@
 set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/baseelement.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/block.cpp
     ${CMAKE_CURRENT_LIST_DIR}/combineblocks.cpp
     ${CMAKE_CURRENT_LIST_DIR}/element.cpp
     ${CMAKE_CURRENT_LIST_DIR}/geometry.cpp

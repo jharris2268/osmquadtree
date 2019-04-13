@@ -324,7 +324,7 @@ int main(int argc, char** argv) {
     
     
     
-    Logger::Message() << "numchan=" << numchan;
+    //Logger::Message() << "numchan=" << numchan;
 
     //auto lg = make_default_logger();
 
@@ -333,12 +333,17 @@ int main(int argc, char** argv) {
         
         
         //bool useminimal = (countflags&32)==0;
-        Logger::Message() <<  "count fn=" << origfn << ", numchan=" << numchan << ", countgeom=" << countgeom << ", countflags=" << countflags;// << ", useminimal=" << useminimal;
+        //Logger::Message() <<  "count fn=" << origfn << ", numchan=" << numchan << ", countgeom=" << countgeom << ", countflags=" << countflags;// << ", useminimal=" << useminimal;
         auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), true);//useminimal);
+        Logger::Get().timing_messages();
         if (!res) { return 1; }
+        
+        
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "count_full") {
         auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), false);
+        Logger::Get().timing_messages();
+        
         if (!res) { return 1; }
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "calcqts") {
@@ -347,7 +352,7 @@ int main(int argc, char** argv) {
         } else {
             run_calcqts(origfn, qtsfn, numchan, splitways, true, buffer, max_depth, use_48bit_quadtrees);
         }
-
+    Logger::Get().timing_messages();
     } else if (operation=="sortblocks") {
         std::shared_ptr<QtTree> groups;
         //if (usefindgroupscopy) {
@@ -383,7 +388,7 @@ int main(int argc, char** argv) {
             
             resp = run_sortblocks(origfn,qtsfn,outfn,timestamp,  numchan, groups, tempfn, grptiles, fixstrs, seperate_filelocs);
         }
-        
+        Logger::Get().timing_messages();
 
     } else if (operation=="mergechanges") {
         if (grptiles==0) { grptiles=500; }
@@ -396,12 +401,14 @@ int main(int argc, char** argv) {
         }
         
         run_mergechanges(origfn, outfn, numchan, sort_objs, filter_objs, filter_box, poly, timestamp, tempfn, grptiles, sortfile,inmem);
+        Logger::Get().timing_messages();
         
     } else if (operation=="applychange") {
         if (outfn.empty()) {
             outfn = origfn.substr(0,origfn.size()-4)+std::string("-withchanges.pbf");
         }
         run_applychange(origfn, outfn, numchan, changes);
+        Logger::Get().timing_messages();
     } else if (operation=="readfile") {
         
         std::ifstream file(origfn, std::ios::binary | std::ios::in);
@@ -416,13 +423,15 @@ int main(int argc, char** argv) {
             bl = read_file_block(idx, file);
         }
         file.close();
+        Logger::Get().timing_messages();
+        
         Logger::Message() << "uncompressed size: " << tl;
     }
     
             
         
         
-    checkstats();
-    Logger::Get().timing_messages();
+    //checkstats();
+    
     return resp;
 }

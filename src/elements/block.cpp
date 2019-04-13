@@ -20,27 +20,18 @@
  *
  *****************************************************************************/
 
-#ifndef GEOMETRY_MULTIPOLYGONS_HPP
-#define GEOMETRY_MULTIPOLYGONS_HPP
 
-#include "oqt/geometry/makegeometries.hpp"
-#include "oqt/geometry/elements/ring.hpp"
+#include "oqt/elements/block.hpp"
 
-#include "oqt/geometry/utils.hpp"
-#include <map>
 namespace oqt {
-namespace geometry {
+    
+    
+void PrimitiveBlock::CopyMetadata(PrimitiveBlockPtr src) {
+    SetQuadtree(src->Quadtree());
+    SetStartDate(src->StartDate());
+    SetEndDate(src->EndDate());
+    SetFilePosition(src->FilePosition());
+    SetFileProgress(src->FileProgress());
+}
 
-
-typedef std::tuple<std::shared_ptr<Relation>,std::string,std::vector<Ring>,std::vector<Ring>,std::vector<std::pair<bool,Ring>>> mperror;
-typedef std::vector<mperror> mperrorvec;
-std::shared_ptr<BlockHandler> make_multipolygons(
-    std::function<void(mperrorvec&)> errors_callback,
-    const std::set<std::string>& feature_keys,  
-    const std::set<std::string>& other_keys,
-    bool all_other_keys, const bbox& box,
-    bool boundary, bool multipolygon);
-
-}}
-
-#endif //MULTIPOLYGONS_HPP
+}

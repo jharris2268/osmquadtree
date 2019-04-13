@@ -118,7 +118,9 @@ class LonLatStoreImpl : public LonLatStore {
         }
         
         virtual void add_tile(PrimitiveBlockPtr block) {
-            
+            if (!block) {
+                Logger::Message() << "add_tile empty block??"; 
+            }
             auto lls = std::make_shared<loctile>();
             populate_tile(*lls, block);
             add_populated_tile(block->Quadtree(), lls);
@@ -147,14 +149,15 @@ std::shared_ptr<LonLatStore> make_lonlatstore() {
 
 //PrimitiveBlockPtr add_waynodes(const std::map<int64,std::shared_ptr<loctile>>& tiles, PrimitiveBlockPtr in_bl) {
 PrimitiveBlockPtr add_waynodes(std::shared_ptr<LonLatStore> lls, PrimitiveBlockPtr in_bl) {
+    if (!in_bl) { 
+        Logger::Message() << "add_waynodes empty block??";         
+        return in_bl;
+    }
     
     auto out_bl = std::make_shared<PrimitiveBlock>(in_bl->Index(), in_bl->size());
-    out_bl->SetQuadtree(in_bl->Quadtree());
-    out_bl->SetStartDate(in_bl->StartDate());
-    out_bl->SetEndDate(in_bl->EndDate());
-    out_bl->SetFilePosition(in_bl->FilePosition());
-    out_bl->SetFileProgress(in_bl->FileProgress());
-
+    out_bl->CopyMetadata(in_bl);
+    
+    
     for (auto& o : in_bl->Objects()) {
         if (o->Type()==ElementType::Node) {
             if (!o->Tags().empty()) {

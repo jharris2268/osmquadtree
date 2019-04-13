@@ -30,7 +30,8 @@ namespace oqt {
 namespace geometry {
 
 
-struct StyleInfo {
+
+/*struct StyleInfo {
     bool IsFeature;
     bool IsArea;
     bool IsWay;
@@ -43,17 +44,43 @@ struct StyleInfo {
 
 typedef std::map<std::string,StyleInfo> style_info_map;
 
+
 std::pair<tagvector,int64> filter_node_tags(const style_info_map& style, const tagvector& tags, const std::string& extra_tags_key);
 std::tuple<tagvector, bool, int64, int64> filter_way_tags(const style_info_map& style, const tagvector& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key);
 
-PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, PrimitiveBlockPtr in);
+PrimitiveBlockPtr make_geometries(const , const bbox& box, PrimitiveBlockPtr in);
+*/
 
+int64 calc_zorder(const std::vector<Tag>& tags);
+
+std::tuple<bool, std::vector<Tag>, int64> filter_tags(
+    const std::set<std::string>& feature_keys,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const std::vector<Tag> in_tags);
+
+bool check_polygon_tags(const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags, const std::vector<Tag>& tags); 
+
+PrimitiveBlockPtr make_geometries(
+    const std::set<std::string>& feature_keys,
+    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const bbox& box,
+    PrimitiveBlockPtr in);
 
 
 size_t recalculate_quadtree(PrimitiveBlockPtr block, uint64 maxdepth, double buf);
 void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> minzoom);
 
-std::shared_ptr<BlockHandler> make_geometryprocess(const style_info_map& style, const bbox& box, bool recalc, std::shared_ptr<FindMinZoom> fmz);
+std::shared_ptr<BlockHandler> make_geometryprocess(
+    const std::set<std::string>& feature_keys,
+    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::set<std::string>& other_keys,
+    bool all_other_keys,
+    const bbox& box,
+    bool recalc,
+    std::shared_ptr<FindMinZoom> fmz);
 
 }}
 

@@ -24,6 +24,7 @@ from __future__ import print_function
 
 import json
 from . import _geometry
+import oqt.elements
 
 
 class KeySpec:
@@ -99,7 +100,87 @@ default_keys = {
 'water': KeySpec(IsArea=True, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 'waterway': KeySpec(IsArea=True, IsFeature=True, IsNode=True, IsWay=True, OnlyArea=False),
 }
-    
+
+default_feature_keys = ['aerialway',
+    'aeroway',
+    'amenity',
+    'barrier',
+    'boundary',
+    'bridge',
+    'building',
+    'construction',
+    'embankment',
+    'highway',
+    'historic',
+    'junction',
+    'landuse',
+    'leisure',
+    'lock',
+    'man_made',
+    'military',
+    'natural',
+    'place',
+    'power',
+    'railway',
+    'route',
+    'service',
+    'shop',
+    'tourism',
+    'tunnel',
+    'water',
+    'waterway',
+]
+
+default_other_keys = None
+standard_other_keys = [
+    'access',
+    'addr:housename',
+    'addr:housenumber',
+    'addr:interpolation',
+    'admin_level',
+    'bicycle',
+    'covered',
+    'foot',
+    'horse',
+    'layer',
+    'name',
+    'oneway',
+    'ref',
+    'religion',
+    'surface',
+    'tracktype'
+]
+
+
+default_polygon_tags = {
+    'aeroway': ['taxiway'],
+    'amenity': None,
+    'area': None,
+    'area:highway': None,
+    'barrier': ['city_wall', 'ditch', 'wall', 'spikes'],
+    'boundary': None,
+    'building': None,
+    'building:part': None,
+    'golf': None,
+    'highway': ['services', 'rest_area', 'escape', 'elevator'],
+    'historic': None,
+    'landuse': None,
+    'leisure': None,
+    'man_made': ['cutline', 'embankment', 'pipeline'],
+    'military': None,
+    'natural': ['coastline', 'cliff', 'ridge', 'arete', 'tree_row'],
+    'office': None,
+    'place': None,
+    'power': ['plant', 'substation', 'generator', 'transformer'],
+    'public_transport': None,
+    'railway': ['station', 'turntable', 'roundhouse', 'platform'],
+    'shop': None,
+    'tourism': None,
+    'waterway': ['riverbank', 'dock', 'boatyard', 'dam'],
+}
+
+
+
 highway_prio_old = {
     'footway':1,'cycleway':1,'bridleway': 1,
     'path':1, 'steps': 1, 'pedestrian': 1,
@@ -153,34 +234,44 @@ default_parent_tags = {
 'parent_highway': ParentTag(['highway','railway'],'highway',highway_prio),
 'parent_service': ParentTag(['highway'],'service',{}),
 }
-        
-class ParentRelation:
-    __slots__ = ['relation_tags','relation_key', 'operation']
-    def __init__(self, relation_tags, relation_key, operation):
-        self.relation_tags = relation_tags
-        self.relation_key = relation_key
-        self.operation = operation
+    
+class RelationTag:
+    __slots__ = ['target_key', 'source_filter', 'source_key', 'type']
+    def __init__(self, target_key, source_filter, source_key, type):
+        self.target_key = target_key
+        self.source_filter = source_filter
+        self.source_key = source_key
+        self.type=type
     
     def to_json(self):
-        return {'relation_tags': self.relation_tags, 'relation_key': self.relation_key, 'operation': self.operation}
+        return {'target_key': self.target_key, 'source_filter': self.source_filter, 'source_key': self.source_key, 'type': self.type}
     
-    def to_cpp(self, key):
-        pass
+    def to_cpp(self):
+        return _geometry.RelationTagSpec(
+            self.target_key,
+            [oqt.elements.Tag(k,v) for k,v in self.source_filter.items()],
+            self.source_key,
+            _geometry.RelationTagSpec.Type.Min if self.type=='min' else
+                _geometry.RelationTagSpec.Type.Max if self.type=='max' else
+                _geometry.RelationTagSpec.Type.List if self.type=='list' else
+                None
+        )
+        
     
     @staticmethod
     def from_json(jj):
-        return ParentRelation(jj['relation_tags'],jj['relation_key'], jj['operation'])
+        return RelationTag(jj['target_key'],jj['source_filter'], jj['source_key'], jj['type'])
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %s" % (k,repr(getattr(self,k))) for k in self.__slots__),)
 
 
-default_parent_relations = {
-'min_admin_level': ParentRelation({'type':'boundary', 'boundary':'administrative'}, 'admin_level', 'min'),
-'max_admin_level': ParentRelation({'type':'boundary', 'boundary':'administrative'}, 'admin_level', 'max'),
-'bus_routes': ParentRelation({'type':'route', 'route':'bus'}, 'ref', 'list'),
-'bicycle_routes': ParentRelation({'type':'route', 'route':'bicycle'}, 'ref', 'list'),
-}
+default_relation_tag_spec = [
+RelationTag('min_admin_level',   {'type':'boundary', 'boundary': 'administrative'}, 'admin_level', 'min'),
+RelationTag('max_admin_level',   {'type':'boundary', 'boundary': 'administrative'}, 'admin_level', 'max'),
+RelationTag('bus_routes',        {'type':'route',    'route':'bus'},                'ref', 'list'),
+RelationTag('bicycle_routes',    {'type':'route',    'route':'bicycle'},            'ref', 'list'),
+]
 
 
 def write_entry(obj, key, val, ident, last=False):
@@ -196,7 +287,7 @@ def write_entries(obj, key, vals, ident, last=False):
     print >>obj, '%s}%s' % ('  '*ident, '' if last else ',')
 
 
-class GeometryStyle:
+class GeometryStyleOld:
     __slots__ = ['keys','parent_tags','parent_relations','multipolygons','boundary_relations','other_tags']
     def __init__(self,
             keys=None,
@@ -296,4 +387,121 @@ class GeometryStyle:
         return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %.50s" % (k,repr(getattr(self,k))) for k in self.__slots__),)
     
     
+class GeometryStyle:
+    __slots__ = ['feature_keys','other_keys','polygon_tags','parent_tags','relation_tag_spec','multipolygons','boundary_relations']
+    def __init__(self,
+            feature_keys=None,
+            other_keys=None,
+            polygon_tags=None,
+            parent_tags=None,
+            relation_tag_spec=None,
+            multipolygons=True,
+            boundary_relations=True):
+        
+        self.feature_keys = default_feature_keys if feature_keys is None else feature_keys
+        self.other_keys = default_other_keys if other_keys is None else other_keys
+        self.polygon_tags = default_polygon_tags if polygon_tags is None else polygon_tags
+        self.parent_tags = default_parent_tags if parent_tags is None else parent_tags
+        self.relation_tag_spec = default_relation_tag_spec if relation_tag_spec is None else relation_tag_spec
+        self.multipolygons = multipolygons
+        self.boundary_relations=boundary_relations
+        
+        
     
+    def to_json(self):
+        
+        result = {}
+        result['feature_keys'] = self.feature_keys
+        result['polygon_tags'] = self.polygon_tags
+        result['other_keys'] = self.other_keys
+        result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
+        result['relation_tag_spec'] = [p.to_json() for p in self.relation_tag_spec],
+        result['multipolygons']=self.multipolygons
+        result['boundary_relations']=self.boundary_relations
+        return result
+    
+    def dump(self, obj, pretty=False):
+        
+        
+        
+        if pretty:
+            res = self.to_json()
+            
+            
+            print >>obj, "{"
+            write_entries(obj, 'feature_keys', res['feature_keys'], 1)
+            write_entries(obj, 'polygon_tags', res['polygon_tags'], 1)
+            write_entries(obj, 'other_keys', res['other_keys'], 1)
+            write_entries(obj, 'parent_tags', res['parent_tags'], 1)
+            write_entries(obj, 'parent_relations', res['parent_relations'], 1)
+            write_entry(obj, 'multipolygons',self.multipolygons,1)
+            write_entry(obj, 'boundary_relations',self.boundary_relations,1,last=True)
+            print >>obj, "}"
+            
+        else:
+            json.dump(self.to_json(), obj)
+    
+    
+    @staticmethod
+    def from_json(jj):
+        
+        
+        parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
+        relation_tag_spec = [RelationTag.from_json(v) for v in jj['relation_tag_spec']]
+        
+        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj['polygon_tags'], parent_tags, parent_relations, jj['multipolygons'], jj['boundary_relations'])
+    
+    @staticmethod
+    def load(obj):
+        return GeometryStyle.from_json(json.load(obj))
+    
+    
+    def set_params(self, params, add_min_zoom=False):
+        
+        
+        params.all_other_keys=True
+        
+        params.feature_keys = set(self.feature_keys)
+        params.polygon_tags = dict((k, (True,set([])) if v is None else (False,set(v))) for k,v in self.polygon_tags.items())
+        
+        
+        
+        parent_tag_spec=[]
+        if self.parent_tags:
+            for k,v in self.parent_tags.items():
+                parent_tag_spec += v.to_cpp(k)
+            
+        params.parent_tag_spec = parent_tag_spec
+        
+        
+        if self.relation_tag_spec:
+            params.relation_tag_spec = [p.to_cpp() for p in self.relation_tag_spec]
+        
+        
+        if not self.other_keys is None:
+            params.all_other_keys=False
+            other_keys = [k for k in self.other_keys]
+                        
+            if add_min_zoom:
+                other_keys.append('min_zoom')
+            
+            for k in self.parent_tags:
+                other_keys.append(p.node_key)
+            
+            
+            for p in self.relation_tag_spec.items():
+                other_keys.append(p.target_key)
+        
+            params.other_keys=set(other_keys)
+        
+        
+        
+        params.add_multipolygons = self.multipolygons
+        params.add_boundary_polygons = self.boundary_relations
+        
+    
+    
+    
+        
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %.50s" % (k,repr(getattr(self,k))) for k in self.__slots__),)

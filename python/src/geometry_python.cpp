@@ -104,12 +104,13 @@ PrimitiveBlockPtr read_blocks_geometry_convfunc(std::shared_ptr<FileBlock> fb) {
 geometry::mperrorvec process_geometry_from_vec_py(
     std::vector<PrimitiveBlockPtr> blocks,
     const geometry::GeometryParameters& params,
+    bool nothread, 
     external_callback cb) {
 
     py::gil_scoped_release r;
     block_callback wrapped = prep_callback(cb, params.numblocks);
     
-    return process_geometry_from_vec(blocks, params, wrapped);
+    return process_geometry_from_vec(blocks, params, nothread, wrapped);
 }
 
 
@@ -254,6 +255,8 @@ void geometry_defs(py::module& m) {
         .def_readonly("y", &geometry::XY::y)
         .def_property_readonly("transform", [](const geometry::XY& ll) { return geometry::inverse_transform(ll.x,ll.y); })
     ;
+    
+    /*
     py::class_<geometry::StyleInfo>(m,"StyleInfo")
         .def(py::init<bool,bool,bool,bool,bool>(),py::arg("IsFeature"),py::arg("IsArea"),py::arg("IsWay"),py::arg("IsNode"),py::arg("IsOtherTags"))
         .def_readwrite("IsFeature",&geometry::StyleInfo::IsFeature)
@@ -266,7 +269,8 @@ void geometry_defs(py::module& m) {
         .def("addValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.insert(v); })
         .def("removeValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.erase(v); })
     ;
-
+    */  
+    
     py::class_<geometry::ParentTagSpec>(m,"ParentTagSpec")
         .def(py::init<std::string,std::string,std::string,std::map<std::string,int>>())
         .def_readwrite("node_tag", &geometry::ParentTagSpec::node_tag)
@@ -274,6 +278,22 @@ void geometry_defs(py::module& m) {
         .def_readwrite("way_tag", &geometry::ParentTagSpec::way_tag)
         .def_readwrite("priority", &geometry::ParentTagSpec::priority)
     ;
+    
+    
+    py::enum_<geometry::RelationTagSpec::Type>(m,"RelationTagSpec_Type")
+        .value("Min", geometry::RelationTagSpec::Type::Min)
+        .value("Max", geometry::RelationTagSpec::Type::Max)
+        .value("List", geometry::RelationTagSpec::Type::List)
+    ;
+    
+    py::class_<geometry::RelationTagSpec>(m,"RelationTagSpec")
+        .def(py::init<std::string,std::vector<Tag>,std::string,geometry::RelationTagSpec::Type>())
+        .def_readwrite("target_key", &geometry::RelationTagSpec::target_key)
+        .def_readwrite("source_filter", &geometry::RelationTagSpec::source_filter)
+        .def_readwrite("source_key", &geometry::RelationTagSpec::source_key)
+        .def_readwrite("type", &geometry::RelationTagSpec::type)
+    ;
+    
 
     py::class_<geometry::Ring::Part>(m,"RingPart")
         .def(py::init<int64,const std::vector<int64>&,const std::vector<LonLat>&,bool>())
@@ -302,6 +322,7 @@ void geometry_defs(py::module& m) {
     ;
     
     
+    
     m.def("findminzoom_onetag", &geometry::make_findminzoom_onetag);
     /*py::class_<findminzoom_onetag, geometry::findminzoom, std::shared_ptr<findminzoom_onetag>>(m,"findminzoom_onetag")
         .def(py::init<findminzoom_onetag::tag_spec, double, double>(), py::arg("spec"), py::arg("minlen"), py::arg("minarea"))
@@ -309,9 +330,14 @@ void geometry_defs(py::module& m) {
         .def("areaminzoom", &findminzoom_onetag::areaminzoom)
     ;*/
 
-    m.def("make_geometries", &geometry::make_geometries, py::arg("style"), py::arg("bbox"), py::arg("block"));
-    m.def("filter_node_tags", &geometry::filter_node_tags, py::arg("style"), py::arg("tags"), py::arg("extra_tags_key"));
-    m.def("filter_way_tags", &geometry::filter_way_tags, py::arg("style"), py::arg("tags"), py::arg("is_ring"), py::arg("is_bp"), py::arg("extra_tags_key"));
+    m.def("make_geometries", &geometry::make_geometries, py::arg("feature_keys"), py::arg("polygon_tags"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("bbox"), py::arg("block"));
+    
+    m.def("filter_tags", &geometry::filter_tags, py::arg("feature_keys"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("tags"));
+    m.def("check_polygon_tags", &geometry::check_polygon_tags, py::arg("polygon_tags"), py::arg("tags"));
+    m.def("calc_zorder", &geometry::calc_zorder, py::arg("tags"));
+    
+    //m.def("filter_node_tags", &geometry::filter_node_tags, py::arg("style"), py::arg("tags"), py::arg("extra_tags_key"));
+    //m.def("filter_way_tags", &geometry::filter_way_tags, py::arg("style"), py::arg("tags"), py::arg("is_ring"), py::arg("is_bp"), py::arg("extra_tags_key"));
 
 
     m.def("pack_tags", &geometry::pack_tags);
@@ -330,11 +356,18 @@ void geometry_defs(py::module& m) {
         .def_readwrite("locs", &geometry::GeometryParameters::locs)
         .def_readwrite("numchan", &geometry::GeometryParameters::numchan)
         .def_readwrite("numblocks", &geometry::GeometryParameters::numblocks)
-        .def_readwrite("style", &geometry::GeometryParameters::style)
+        //.def_readwrite("style", &geometry::GeometryParameters::style)
+        .def_readwrite("feature_keys", &geometry::GeometryParameters::feature_keys)
+        .def_readwrite("other_keys", &geometry::GeometryParameters::other_keys)
+        .def_readwrite("all_other_keys", &geometry::GeometryParameters::all_other_keys)
+        .def_readwrite("polygon_tags", &geometry::GeometryParameters::polygon_tags)
+        
         .def_readwrite("box", &geometry::GeometryParameters::box)
         .def_readwrite("parent_tag_spec", &geometry::GeometryParameters::parent_tag_spec)
-        .def_readwrite("add_rels", &geometry::GeometryParameters::add_rels)
-        .def_readwrite("add_mps", &geometry::GeometryParameters::add_mps)
+        .def_readwrite("relation_tag_spec", &geometry::GeometryParameters::relation_tag_spec)
+        .def_readwrite("add_multipolygons", &geometry::GeometryParameters::add_multipolygons)
+        .def_readwrite("add_boundary_polygons", &geometry::GeometryParameters::add_boundary_polygons)
+        
         .def_readwrite("recalcqts", &geometry::GeometryParameters::recalcqts)
         .def_readwrite("findmz", &geometry::GeometryParameters::findmz)
         .def_readwrite("outfn", &geometry::GeometryParameters::outfn)

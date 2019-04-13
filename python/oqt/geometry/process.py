@@ -59,9 +59,10 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
         box_in=utils.bbox(-1800000000,-900000000,1800000000,900000000)
     
     
+    if not prfx is None:
     
-    params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
-    print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
+        params.filenames,params.locs, params.box = get_locs(prfx,box_in,lastdate)
+    #print("%d fns, %d qts, %d blocks" % (len(params.filenames),len(params.locs),sum(len(v) for k,v in params.locs.items())))
     
     
     if style is None:
@@ -69,7 +70,7 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
     
     style.set_params(params, minzoom != [])
     
-    print("%d styles" % len(params.style))
+    #print("%d styles" % len(params.style))
     
     
     if minzoom != []:
@@ -79,7 +80,7 @@ def prep_geometry_params(prfx, box_in, style, lastdate, minzoom, numchan, minlen
             minzoom=[t[:4] for t in minzoomvalues.read(minzoom)]
         
         params.findmz = _geometry.findminzoom_onetag(minzoom,minlen,minarea)
-        print ('findmz', params.findmz)
+        #print ('findmz', params.findmz)
         
     return params, style
 
@@ -140,12 +141,24 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
                 if len(b):
                     b.sort()
                     res.append(b)
-            return res
+            return errs, res
         else:
-            return tiles
+            return errs, tiles
     
-    return errs
+    return errs, None
 
+
+def process_geometry_from_vec(blocks, style=None, nothread=False):
+    params,style = prep_geometry_params(None, None, style, 0, None, 4, 0, 5)
+    
+    tiles=[]
+    callback=Prog(addto(tiles))
+    
+    errs = _geometry.process_geometry_from_vec(blocks, params, nothread, callback)
+    
+    return errs, tiles
+    
+    
 
 
 

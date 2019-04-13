@@ -44,8 +44,8 @@ namespace geometry {
 
 struct GeometryParameters {
     GeometryParameters() 
-        : numchan(4), numblocks(512), box(), add_rels(false),
-            add_mps(false), recalcqts(false), outfn(""), indexed(false),
+        : numchan(4), numblocks(512), all_other_keys(false), box(), add_multipolygons(false),
+            add_boundary_polygons(false), recalcqts(false), outfn(""), indexed(false),
             addwn_split(false) {}
     
     std::vector<std::string> filenames;
@@ -53,11 +53,21 @@ struct GeometryParameters {
     src_locs_map locs;
     size_t numchan;
     size_t numblocks;
-    style_info_map style;
+    //style_info_map style;
+    std::set<std::string> feature_keys;
+    std::map<std::string, std::pair<bool,std::set<std::string>>> polygon_tags;
+    std::set<std::string> other_keys;
+    bool all_other_keys;
+    
+    
     bbox box;
+    
+    
     std::vector<ParentTagSpec> parent_tag_spec;
-    bool add_rels;
-    bool add_mps;
+    std::vector<RelationTagSpec> relation_tag_spec;
+    bool add_multipolygons;
+    bool add_boundary_polygons;
+    
     bool recalcqts;
     std::shared_ptr<FindMinZoom> findmz;
     std::string outfn;
@@ -82,17 +92,12 @@ block_callback pack_and_write_callback_nothread(
     
 block_callback process_geometry_blocks(
     std::vector<block_callback> final_callbacks,
-    const style_info_map& style, bbox box,
-    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
-    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
-    std::function<void(mperrorvec&)> errors_callback,
-    bool addwn_split);
+    const GeometryParameters& params,
+    std::function<void(mperrorvec&)> errors_callback);
     
 block_callback process_geometry_blocks_nothread(
     block_callback final_callback,
-    const style_info_map& style, bbox box,
-    const std::vector<ParentTagSpec>& apt_spec, bool add_rels, bool add_mps,
-    bool recalcqts, std::shared_ptr<FindMinZoom> findmz,
+    const GeometryParameters& params,
     std::function<void(mperrorvec&)> errors_callback);
 
 mperrorvec process_geometry(const GeometryParameters& params, block_callback wrapped);
@@ -102,6 +107,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
 mperrorvec process_geometry_from_vec(
     std::vector<PrimitiveBlockPtr> blocks,
     const GeometryParameters& params,
+    bool nothread,
     block_callback callback);
     
 }
