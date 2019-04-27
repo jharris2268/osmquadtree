@@ -140,12 +140,16 @@ void utils_defs(py::module& m) {
     m.def("PbfData", [](size_t tag, py::bytes data) { return PbfTag{tag,0,data}; });
 
     m.def("read_all_pbf_tags", &read_all_pbf_tags);
-    m.def("pack_pbf_tags", &pack_pbf_tags);
+    m.def("pack_pbf_tags", [](const std::list<PbfTag>& tgs) { return py::bytes(pack_pbf_tags(tgs,false)); });
     
     
     // include/oqt/utils/pbf/varint.hpp
     m.def("read_packed_delta", &read_packed_delta);
     m.def("read_packed_int", &read_packed_int);
+    
+    m.def("write_packed_delta", [](const std::vector<int64> vls) { return py::bytes(write_packed_delta(vls)); });
+    m.def("write_packed_int", [](const std::vector<uint64> vls) { return py::bytes(write_packed_int(vls)); });
+    
     m.def("zig_zag", &zig_zag);
     m.def("un_zig_zag", &un_zig_zag);
 };

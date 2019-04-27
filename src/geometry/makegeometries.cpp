@@ -399,7 +399,7 @@ std::tuple<bool, std::vector<Tag>, int64> filter_tags(
 }
 
 
-bool check_polygon_tags(const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags, const std::vector<Tag>& tags) {
+bool check_polygon_tags(const std::map<std::string, PolygonTag>& polygon_tags, const std::vector<Tag>& tags) {
     
     
     for (const auto& tg: tags) {
@@ -407,11 +407,10 @@ bool check_polygon_tags(const std::map<std::string, std::pair<bool,std::set<std:
         auto it = polygon_tags.find(tg.key);
         if (it != polygon_tags.end()) {
             
-            if (it->second.first) {
+            if (it->second.type == PolygonTag::Type::All) {
                 return true;
-            } else if (it->second.second.count(tg.val)>0) {
-                
-                return true;
+            } else if (it->second.values.count(tg.val)>0) {
+                return (it->second.type == PolygonTag::Type::Include);
             }
         }
         
@@ -427,11 +426,12 @@ bool check_polygon_tags(const std::map<std::string, std::pair<bool,std::set<std:
 
 PrimitiveBlockPtr make_geometries(
     const std::set<std::string>& feature_keys,
-    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
     bool all_other_keys,
     const bbox& box,
-    PrimitiveBlockPtr in) {
+    PrimitiveBlockPtr in,
+    std::function<bool(ElementPtr)> check_feat) {
         
     if (!in) { return in; }
     if (in->Objects().empty()) { return in; }
@@ -440,6 +440,11 @@ PrimitiveBlockPtr make_geometries(
     result->CopyMetadata(in);
     
     for (auto obj: in->Objects()) {
+        if (check_feat) {
+            if (!check_feat(obj)) {
+                continue;
+            }
+        }
         if (obj->Type()==ElementType::Node) {
             
             bool passes; std::vector<Tag> tags; int64 layer;
@@ -532,28 +537,32 @@ class GeometryProcess : public BlockHandler {
             
         GeometryProcess(
             const std::set<std::string>& feature_keys_,
-            const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags_,
+            const std::map<std::string, PolygonTag>& polygon_tags_,
             const std::set<std::string>& other_keys_,
             bool all_other_keys_,
             const bbox& box_,
             bool recalc_,
-            std::shared_ptr<FindMinZoom> fmz_)
+            std::shared_ptr<FindMinZoom> fmz_,
+            int64 max_min_zoom_level_)
             
             
             :feature_keys(feature_keys_), polygon_tags(polygon_tags_),
             other_keys(other_keys_), all_other_keys(all_other_keys_),
-            box(box_), recalc(recalc_), fmz(fmz_) {}
+            box(box_), recalc(recalc_), fmz(fmz_), max_min_zoom_level(max_min_zoom_level_) {}
             
 
         virtual primblock_vec process(primblock_ptr bl) {
-            
-            auto res = make_geometries(feature_keys, polygon_tags, other_keys, all_other_keys, box, bl);
+            std::function<bool(ElementPtr)> check_feat;
+            if (max_min_zoom_level>0) {
+                check_feat = [this](ElementPtr e) { return this->fmz->check_feature(e, this->max_min_zoom_level); };
+            }
+            auto res = make_geometries(feature_keys, polygon_tags, other_keys, all_other_keys, box, bl, check_feat);
             
             if (recalc) {
                 recalculate_quadtree(res, 18, fmz ? 0 : 0.05);
             }
             if (fmz) {
-                calculate_minzoom(res, fmz);
+                calculate_minzoom(res, fmz,max_min_zoom_level);
             }
             return primblock_vec(1, res);
         }
@@ -562,34 +571,43 @@ class GeometryProcess : public BlockHandler {
     
     private:
         std::set<std::string> feature_keys;
-        std::map<std::string, std::pair<bool,std::set<std::string>>> polygon_tags;
+        std::map<std::string, PolygonTag> polygon_tags;
         std::set<std::string> other_keys;
         bool all_other_keys;
         bbox box;
         bool recalc;
         std::shared_ptr<FindMinZoom> fmz;
+        int64 max_min_zoom_level;
 };
 
 
 std::shared_ptr<BlockHandler> make_geometryprocess(
     const std::set<std::string>& feature_keys,
-    const std::map<std::string, std::pair<bool,std::set<std::string>>>& polygon_tags,
+    const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
     bool all_other_keys,
     const bbox& box,
     bool recalc,
-    std::shared_ptr<FindMinZoom> fmz){
+    std::shared_ptr<FindMinZoom> fmz,
+    int64 max_min_zoom_level){
         
-    return std::make_shared<GeometryProcess>(feature_keys, polygon_tags, other_keys, all_other_keys, box, recalc, fmz);
+    return std::make_shared<GeometryProcess>(feature_keys, polygon_tags, other_keys, all_other_keys, box, recalc, fmz, max_min_zoom_level);
     
 }
 
     
 
-void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> minzoom) {
+void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> minzoom, int64 max_min_zoom_level) {
+    std::vector<ElementPtr> out;
+    
     for (auto ele: block->Objects()) {
         int64 mz = minzoom->calculate(ele);
+        
         if (mz>=0) {
+            if ((max_min_zoom_level > 0) && (mz > max_min_zoom_level)) {
+                continue;
+            }
+            
             if ((ele->Quadtree()&31) > mz) {
                 ele->SetQuadtree(quadtree::round(ele->Quadtree(),mz));
             }
@@ -597,8 +615,13 @@ void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> min
             if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
             if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<SimplePolygon>(ele)->SetMinZoom(mz); }
             if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<ComplicatedPolygon>(ele)->SetMinZoom(mz); }
-            
+            if (max_min_zoom_level > 0) {
+                out.push_back(ele);
+            }
         }
+    }
+    if (max_min_zoom_level > 0) {
+        block->Objects().swap(out);
     }
 }
 

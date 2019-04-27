@@ -89,7 +89,9 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
     
     
     params,style = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
-    
+    if not maxtilelevel is None:
+        params.max_min_zoom_level = maxtilelevel
+        
     if not groups is None:
         params.groups=groups
     

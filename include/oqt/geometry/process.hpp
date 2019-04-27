@@ -46,7 +46,7 @@ struct GeometryParameters {
     GeometryParameters() 
         : numchan(4), numblocks(512), all_other_keys(false), box(), add_multipolygons(false),
             add_boundary_polygons(false), recalcqts(false), outfn(""), indexed(false),
-            addwn_split(false) {}
+            max_min_zoom_level(0) {}
     
     std::vector<std::string> filenames;
     
@@ -55,7 +55,7 @@ struct GeometryParameters {
     size_t numblocks;
     //style_info_map style;
     std::set<std::string> feature_keys;
-    std::map<std::string, std::pair<bool,std::set<std::string>>> polygon_tags;
+    std::map<std::string, PolygonTag> polygon_tags;
     std::set<std::string> other_keys;
     bool all_other_keys;
     
@@ -74,7 +74,7 @@ struct GeometryParameters {
     bool indexed;
     
     std::shared_ptr<QtTree> groups;
-    bool addwn_split;
+    int64 max_min_zoom_level;
     
 };
 

@@ -138,7 +138,7 @@ block_callback process_geometry_blocks(
        
         makegeoms[i]  =threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MakeGeometries["+std::to_string(i)+"]",
-                make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz),
+                make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
                 finalcb
             )
         );
@@ -188,14 +188,7 @@ block_callback process_geometry_blocks(
         );
     }
     
-    block_callback awn;
-    if (params.addwn_split) {
-        awn=make_waynodes_cb_split(apt);
-    } else {
-        awn=make_addwaynodes_cb(apt);
-    }
-    
-    return threaded_callback<PrimitiveBlock>::make(awn);
+    return threaded_callback<PrimitiveBlock>::make(make_addwaynodes_cb(apt));
         
 
     
@@ -213,7 +206,7 @@ block_callback process_geometry_blocks_nothread(
     
     
     auto make_geom = BlockhandlerCallbackTime::make("GeometryProcess",
-        make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz),
+        make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
         
         final_callback
     );

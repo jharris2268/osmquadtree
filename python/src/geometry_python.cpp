@@ -269,7 +269,20 @@ void geometry_defs(py::module& m) {
         .def("addValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.insert(v); })
         .def("removeValue", [](geometry::StyleInfo& s, std::string v) { s.ValueList.erase(v); })
     ;
-    */  
+    */ 
+    py::enum_<geometry::PolygonTag::Type>(m,"PolygonTag_Type")
+        .value("All", geometry::PolygonTag::Type::All)
+        .value("Include", geometry::PolygonTag::Type::Include)
+        .value("Exclude", geometry::PolygonTag::Type::Exclude)
+    ;
+    
+    
+    py::class_<geometry::PolygonTag>(m,"PolygonTag")
+        .def(py::init<std::string,geometry::PolygonTag::Type,std::set<std::string>>())
+        .def_readwrite("key",&geometry::PolygonTag::key)
+        .def_readwrite("type",&geometry::PolygonTag::type)
+        .def_readwrite("values",&geometry::PolygonTag::values)
+    ;
     
     py::class_<geometry::ParentTagSpec>(m,"ParentTagSpec")
         .def(py::init<std::string,std::string,std::string,std::map<std::string,int>>())
@@ -319,6 +332,7 @@ void geometry_defs(py::module& m) {
     
     py::class_<geometry::FindMinZoom, std::shared_ptr<geometry::FindMinZoom>>(m,"FindMinZoom")
         .def("calculate", &geometry::FindMinZoom::calculate)
+        .def("check_feature", &geometry::FindMinZoom::check_feature);
     ;
     
     
@@ -330,7 +344,7 @@ void geometry_defs(py::module& m) {
         .def("areaminzoom", &findminzoom_onetag::areaminzoom)
     ;*/
 
-    m.def("make_geometries", &geometry::make_geometries, py::arg("feature_keys"), py::arg("polygon_tags"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("bbox"), py::arg("block"));
+    m.def("make_geometries", &geometry::make_geometries, py::arg("feature_keys"), py::arg("polygon_tags"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("bbox"), py::arg("block"), py::arg("max_min_zoom_level")=0);
     
     m.def("filter_tags", &geometry::filter_tags, py::arg("feature_keys"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("tags"));
     m.def("check_polygon_tags", &geometry::check_polygon_tags, py::arg("polygon_tags"), py::arg("tags"));
@@ -375,7 +389,7 @@ void geometry_defs(py::module& m) {
         
             
         .def_readwrite("groups", &geometry::GeometryParameters::groups)
-        .def_readwrite("addwn_split", &geometry::GeometryParameters::addwn_split)
+        .def_readwrite("max_min_zoom_level", &geometry::GeometryParameters::max_min_zoom_level)
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;
     

@@ -32,6 +32,7 @@ namespace geometry {
 class FindMinZoom {
     public:
         virtual int64 calculate(ElementPtr ele)=0;
+        virtual bool check_feature(ElementPtr ele, int64 max_min_zoom_level)=0;
         virtual ~FindMinZoom() {}
 };
 

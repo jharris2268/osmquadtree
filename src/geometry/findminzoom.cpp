@@ -64,33 +64,70 @@ class FindMinZoomOneTag : public FindMinZoom {
         
         virtual ~FindMinZoomOneTag() {}
         
-        virtual int64 calculate(ElementPtr ele) {
-            //int64 minzoom=100;
-            int64 ty = (ele->Type()==ElementType::Point) ? 0 : (ele->Type()==ElementType::Linestring ? 1 : ((ele->Type()==ElementType::SimplePolygon) || (ele->Type()==ElementType::ComplicatedPolygon)) ? 2 : -1);
+        
+        virtual bool check_feature(ElementPtr ele, int64 min_max_zoom_level) {
+            int mz = tags_zoom(ele);
+            if (mz<0) {
+                return false;
+            }
+            return mz <= min_max_zoom_level;
+        }
+        
+        void check_tag(tagmap::iterator& curr_it, int64 ty, const Tag& t) {
+        
+            auto it = tm.find(std::make_tuple(ty,t.key,t.val));
+            if (it!=tm.end()) {
+                if ((curr_it==tm.end()) || (it->second.first < curr_it->second.first)) {
+                    curr_it=it;
+                }
+            } else {
+                it = tm.find(std::make_tuple(ty,t.key,"*"));
+                if (it!=tm.end()) {
+                    if ((curr_it==tm.end()) || (it->second.first < curr_it->second.first)) {
+                        curr_it=it;
+                    }
+                }
+            }
+        }
+        
+        
+        int64 tags_zoom(ElementPtr ele) {
+            int64 ty = -1;
+            if ((ele->Type()==ElementType::Node) || (ele->Type()==ElementType::Point)) {
+                ty = 0;
+            } else if (ele->Type()==ElementType::Linestring) {
+                ty = 1;
+            } else if ((ele->Type()==ElementType::SimplePolygon) || (ele->Type()==ElementType::ComplicatedPolygon)) {
+                ty = 2;
+            } else if (ele->Type()==ElementType::WayWithNodes) { 
+                ty = 3;
+            }
+            
+            
             if (ty==-1) { return -1; }
             
             auto curr_it = tm.end();
             
             for (const auto& t: ele->Tags()) {
                 if (keys.count(t.key)>0) {
-                    auto it = tm.find(std::make_tuple(ty,t.key,t.val));
-                    if (it!=tm.end()) {
-                        if ((curr_it==tm.end()) || (it->second.first < curr_it->second.first)) {
-                            curr_it=it;
-                        }
+                    if (ty==3) {
+                        check_tag(curr_it, 1,t);                        
+                        check_tag(curr_it, 2,t);
                     } else {
-                        it = tm.find(std::make_tuple(ty,t.key,"*"));
-                        if (it!=tm.end()) {
-                            if ((curr_it==tm.end()) || (it->second.first < curr_it->second.first)) {
-                                curr_it=it;
-                            }
-                        }
+                        check_tag(curr_it, ty,t);
                     }
                 }
             }
+                    
             if (curr_it==tm.end()) { return -1; }
             curr_it->second.second++;
-            int64 minzoom = curr_it->second.first;
+            return curr_it->second.first;
+        }
+        
+        virtual int64 calculate(ElementPtr ele) {
+            //int64 minzoom=100;
+            int64 minzoom = tags_zoom(ele);
+            if (minzoom < 0) { return minzoom; }
         
             int64 area_minzoom = areaminzoom(ele);
             if (area_minzoom > minzoom) {

@@ -153,30 +153,30 @@ standard_other_keys = [
 
 
 default_polygon_tags = {
-    'aeroway': ['taxiway'],
-    'amenity': None,
-    'area': None,
-    'area:highway': None,
-    'barrier': ['city_wall', 'ditch', 'wall', 'spikes'],
-    'boundary': None,
-    'building': None,
-    'building:part': None,
-    'golf': None,
-    'highway': ['services', 'rest_area', 'escape', 'elevator'],
-    'historic': None,
-    'landuse': None,
-    'leisure': None,
-    'man_made': ['cutline', 'embankment', 'pipeline'],
-    'military': None,
-    'natural': ['coastline', 'cliff', 'ridge', 'arete', 'tree_row'],
-    'office': None,
-    'place': None,
-    'power': ['plant', 'substation', 'generator', 'transformer'],
-    'public_transport': None,
-    'railway': ['station', 'turntable', 'roundhouse', 'platform'],
-    'shop': None,
-    'tourism': None,
-    'waterway': ['riverbank', 'dock', 'boatyard', 'dam'],
+    'aeroway': ['exclude',['taxiway']],
+    'amenity': ['all',None],
+    'area': ['all',None],
+    'area:highway': ['all',None],
+    'barrier': ['include',['city_wall', 'ditch', 'wall', 'spikes']],
+    'boundary': ['all',None],
+    'building': ['all',None],
+    'building:part': ['all',None],
+    'golf': ['all',None],
+    'highway': ['include',['services', 'rest_area', 'escape', 'elevator']],
+    'historic': ['all',None],
+    'landuse': ['all',None],
+    'leisure': ['all',None],
+    'man_made': ['exclude',['cutline', 'embankment', 'pipeline']],
+    'military': ['all',None],
+    'natural': ['exclude',['coastline', 'cliff', 'ridge', 'arete', 'tree_row']],
+    'office': ['all',None],
+    'place': ['all',None],
+    'power': ['include',['plant', 'substation', 'generator', 'transformer']],
+    'public_transport': ['all',None],
+    'railway': ['include',['station', 'turntable', 'roundhouse', 'platform']],
+    'shop': ['all',None],
+    'tourism': ['all',None],
+    'waterway': ['include',['riverbank', 'dock', 'boatyard', 'dam']],
 }
 
 
@@ -287,106 +287,6 @@ def write_entries(obj, key, vals, ident, last=False):
     print >>obj, '%s}%s' % ('  '*ident, '' if last else ',')
 
 
-class GeometryStyleOld:
-    __slots__ = ['keys','parent_tags','parent_relations','multipolygons','boundary_relations','other_tags']
-    def __init__(self,
-            keys=None,
-            parent_tags=None,
-            parent_relations=None,
-            multipolygons=True,
-            boundary_relations=True,
-            other_tags=True):
-        
-        self.keys = default_keys if keys is None else keys
-        self.parent_tags = default_parent_tags if parent_tags is None else parent_tags
-        self.parent_relations = default_parent_relations if parent_relations is None else parent_relations
-        self.multipolygons = multipolygons
-        self.boundary_relations=boundary_relations
-        self.other_tags=other_tags
-        
-    
-    def to_json(self):
-        
-        result = {}
-        result['keys'] = dict((k, v.to_json()) for k,v in self.keys.items())
-        result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
-        result['parent_relations'] = dict((k, v.to_json()) for k,v in self.parent_relations.items())
-        result['multipolygons']=self.multipolygons
-        result['boundary_relations']=self.boundary_relations
-        result['other_tags']=self.other_tags
-        return result
-    
-    def dump(self, obj, pretty=False):
-        
-        
-        
-        if pretty:
-            res = self.to_json()
-            
-            
-            print >>obj, "{"
-            write_entries(obj, 'keys', res['keys'], 1)
-            write_entries(obj, 'parent_tags', res['parent_tags'], 1)
-            write_entries(obj, 'parent_relations', res['parent_relations'], 1)
-            write_entry(obj, 'multipolygons',self.multipolygons,1)
-            write_entry(obj, 'boundary_relations',self.boundary_relations,1)
-            write_entry(obj, 'other_tags',self.other_tags,1,last=True)
-            print >>obj, "}"
-            
-        else:
-            json.dump(self.to_json(), obj)
-    
-    
-    @staticmethod
-    def from_json(jj):
-        
-        keys = dict((k, KeySpec.from_json(v)) for k,v in jj['keys'].items())
-        parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
-        parent_relations = dict((k, ParentRelation.from_json(v)) for k,v in jj['parent_relations'].items())
-        
-        return GeometryStyle(keys, parent_tags, parent_relations, jj['multipolygons'], jj['boundary_relations'], jj['other_tags'])
-    
-    @staticmethod
-    def load(obj):
-        return GeometryStyle.from_json(json.load(obj))
-    
-    
-    def set_params(self, params, add_min_zoom=False):
-        
-        style = dict((k, v.to_cpp()) for k,v in self.keys.items())
-        if self.other_tags:
-            style['XXX']=_geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=True)
-        
-        if add_min_zoom:
-            style['minzoom'] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=True,IsOtherTags=False)
-        
-        parent_tag_spec=[]
-        for k,v in self.parent_tags.items():
-            if not self.other_tags:
-                style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=False,IsNode=True,IsOtherTags=False)
-            parent_tag_spec+=v.to_cpp(k)
-        
-        if not self.other_tags or True:
-            for k,v in self.parent_relations.items():
-                style[k] = _geometry.StyleInfo(IsFeature=False,IsArea=False,IsWay=True,IsNode=False,IsOtherTags=False)
-            
-        params.style = style
-        if self.parent_relations:
-            params.add_rels=True
-        
-        
-        if parent_tag_spec:
-            params.parent_tag_spec = parent_tag_spec
-        params.add_mps = self.multipolygons
-        
-    
-    
-    
-        
-    def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__,", ".join("%s: %.50s" % (k,repr(getattr(self,k))) for k in self.__slots__),)
-    
-    
 class GeometryStyle:
     __slots__ = ['feature_keys','other_keys','polygon_tags','parent_tags','relation_tag_spec','multipolygons','boundary_relations']
     def __init__(self,
@@ -462,8 +362,15 @@ class GeometryStyle:
         params.all_other_keys=True
         
         params.feature_keys = set(self.feature_keys)
-        params.polygon_tags = dict((k, (True,set([])) if v is None else (False,set(v))) for k,v in self.polygon_tags.items())
-        
+        params.polygon_tags = {}
+        for key,(ty,tt) in self.polygon_tags.items():
+            if ty == 'all':
+                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, [])
+            elif ty == 'include':
+                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, tt)
+            elif ty == 'exclude':
+                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, tt)
+                
         
         
         parent_tag_spec=[]

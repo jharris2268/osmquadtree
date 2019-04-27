@@ -149,7 +149,7 @@ def fetch_diff(srcprfx, diffsLocation, state_in):
     state, timestamp = get_state(srcprfx, state_in)
     diff_url = get_diff_url(srcprfx, state)
     outfn = "%s%d.osc.gz" % (diffsLocation, state)
-    subprocess.call(['wget', '-O', outfn, diff_url])
+    subprocess.check_call(['wget', '-O', outfn, diff_url])
     return state,timestamp
 
 def get_diff_url(srcprfx, state, return_state=False):

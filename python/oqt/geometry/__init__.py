@@ -52,3 +52,4 @@ SimplePolygon.to_json = property(make_json_feat)
 ComplicatedPolygon.to_json = property(make_json_feat)
 
 _geometry.RelationTagSpec.Type = _geometry.RelationTagSpec_Type
+_geometry.PolygonTag.Type = _geometry.PolygonTag_Type

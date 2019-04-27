@@ -26,7 +26,7 @@ from ._utils import bbox_empty, bbox_planet, get_logger
 from ._utils import LonLat, point_in_poly, segment_intersects, line_intersects, line_box_intersects
 from ._utils import compress, decompress, compress_gzip, decompress_gzip
 from ._utils import checkstats, file_size
-from ._utils import PbfTag, PbfValue, PbfData, read_all_pbf_tags, pack_pbf_tags, read_packed_delta, read_packed_int, zig_zag, un_zig_zag
+from ._utils import PbfTag, PbfValue, PbfData, read_all_pbf_tags, pack_pbf_tags, read_packed_delta, read_packed_int, write_packed_delta, write_packed_int, zig_zag, un_zig_zag
 
 from .misc import *
 
