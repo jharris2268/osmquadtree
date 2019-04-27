@@ -362,16 +362,17 @@ class GeometryStyle:
         params.all_other_keys=True
         
         params.feature_keys = set(self.feature_keys)
-        params.polygon_tags = {}
+        
+        polygon_tags = {}
         for key,(ty,tt) in self.polygon_tags.items():
             if ty == 'all':
-                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, [])
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, set([]))
             elif ty == 'include':
-                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, tt)
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, set(tt))
             elif ty == 'exclude':
-                params.polygon_tags = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, tt)
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, set(tt))
                 
-        
+        params.polygon_tags=polygon_tags
         
         parent_tag_spec=[]
         if self.parent_tags:

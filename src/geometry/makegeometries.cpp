@@ -409,8 +409,14 @@ bool check_polygon_tags(const std::map<std::string, PolygonTag>& polygon_tags, c
             
             if (it->second.type == PolygonTag::Type::All) {
                 return true;
-            } else if (it->second.values.count(tg.val)>0) {
-                return (it->second.type == PolygonTag::Type::Include);
+            } else if (it->second.type == PolygonTag::Type::Include) {
+                if (it->second.values.count(tg.val)>0) {
+                    return true;
+                }
+            } else if (it->second.type == PolygonTag::Type::Exclude) {
+                if (it->second.values.count(tg.val)==0) {
+                    return true;
+                }
             }
         }
         
