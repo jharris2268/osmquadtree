@@ -57,59 +57,96 @@ double fix_ring_direction(Ring& outers, std::vector<Ring>& inners) {
 }
 
 ComplicatedPolygon::ComplicatedPolygon(
-    std::shared_ptr<Relation> rel, int64 part_,
-    const Ring& outers_, const std::vector<Ring>& inners_,
+    std::shared_ptr<Relation> rel, //int64 part_,
+    //const Ring& outers_, const std::vector<Ring>& inners_,
+    const std::vector<PolygonPart>& parts_,
     const std::vector<Tag>& tags, int64 zorder_,
     int64 layer_, int64 minzoom_) :
     
     BaseGeometry(ElementType::ComplicatedPolygon, changetype::Normal, rel->Id(), rel->Quadtree(), rel->Info(), tags,minzoom_),
-    part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_) {
+    parts(parts_)/*, outers(outers_), inners(inners_)*/,zorder(zorder_), layer(layer_) {
 
-    area = fix_ring_direction(outers, inners);
+
+    CheckParts();
+
     
-    for (const auto& o : outers.parts) {
-        for (const auto& ll : o.lonlats) {
-            expand_point(bounds, ll.lon,ll.lat);
-        }
-    }
 
 }
 
-ComplicatedPolygon::ComplicatedPolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 part_, const Ring& outers_, const std::vector<Ring>& inners_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_)
+ComplicatedPolygon::ComplicatedPolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, 
+    //int64 part_, const Ring& outers_, const std::vector<Ring>& inners_,
+    const std::vector<PolygonPart>& parts_,
+    int64 zorder_, int64 layer_, /*double area_,*/ const bbox& bounds_, int64 minzoom_)
     : BaseGeometry(ElementType::ComplicatedPolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
-    part(part_), outers(outers_), inners(inners_),zorder(zorder_), layer(layer_), area(area_), bounds(bounds_) {}
+    parts(parts_),/* outers(outers_), inners(inners_),*/ zorder(zorder_), layer(layer_), /*area(area_),*/ bounds(bounds_) {}
 
 
 uint64 ComplicatedPolygon::InternalId() const {
-    return (6ull<<61) | (((uint64) Id()) << 16) | ((uint64) part);
+    //return (6ull<<61) | (((uint64) Id()) << 16) | ((uint64) part);
+    return (6ull<<61) | (uint64) Id();
 }   
-        
+
+void ComplicatedPolygon::CheckParts() {
+    for (auto& part: parts) {
+        part.area = fix_ring_direction(part.outer, part.inners);
+    
+        for (const auto& o : part.outer.parts) {
+            for (const auto& ll : o.lonlats) {
+                expand_point(bounds, ll.lon,ll.lat);
+            }
+        }
+    }
+}
+
 
 ElementType ComplicatedPolygon::OriginalType() const { return ElementType::Relation; }
-const Ring& ComplicatedPolygon::OuterRing() const { return outers; }
-const std::vector<Ring>& ComplicatedPolygon::InnerRings() const { return inners; }
+//const Ring& ComplicatedPolygon::OuterRing() const { return outers; }
+//const std::vector<Ring>& ComplicatedPolygon::InnerRings() const { return inners; }
+
+const std::vector<PolygonPart>& ComplicatedPolygon::Parts() const { return parts; }
+
 int64 ComplicatedPolygon::ZOrder() const { return zorder; }
 int64 ComplicatedPolygon::Layer() const { return layer; }
-double ComplicatedPolygon::Area() const { return area; }
-int64 ComplicatedPolygon::Part() const { return part; }
+double ComplicatedPolygon::Area() const {
+    double a=0;
+    for (const auto& p: parts) {
+        a+=p.area;
+    }
+    return a;
+}
+//int64 ComplicatedPolygon::Part() const { return part; }
 ElementPtr ComplicatedPolygon::copy() { return std::make_shared<ComplicatedPolygon>(
-    Id(),Quadtree(),Info(),Tags(),part,outers,inners,zorder,layer,area,bounds,MinZoom()); }
+    Id(),Quadtree(),Info(),Tags(),parts/*,outers,inners*/,zorder,layer,/*area,*/bounds,MinZoom()); }
 
 bbox ComplicatedPolygon::Bounds() const { return bounds; }
 
 
-
-
-
 std::string ComplicatedPolygon::Wkb(bool transform, bool srid) const {
-    size_t sz=13;
+    if (parts.size()==0) {
+        return make_multi_wkb(7, {}, transform, srid);
+    }
+    if (parts.size()==1) {
+        return polygon_part_wkb(parts[0], transform, srid);
+    }
+    
+    std::vector<std::string> pp;
+    for (const auto& p: parts) {
+        pp.push_back(polygon_part_wkb(p, transform, false));
+    }
+    return make_multi_wkb(6, pp, transform, srid);
+}
+
+
+std::string polygon_part_wkb(const PolygonPart& part, bool transform, bool srid) {
+    
+    size_t sz=9;
     if (srid) { sz+=4; }
-    size_t outer_len = ringpart_numpoints(outers);
+    size_t outer_len = ringpart_numpoints(part.outer);
 
     sz += 4+16*outer_len;
     std::vector<size_t> inners_lens;
 
-    for (const auto& inner : inners) {
+    for (const auto& inner : part.inners) {
         size_t l=ringpart_numpoints(inner);
         inners_lens.push_back(l);
         sz += 4+16*l;
@@ -125,16 +162,19 @@ std::string ComplicatedPolygon::Wkb(bool transform, bool srid) const {
         pos = write_uint32(res,pos,epsg_code(transform));
     }
 
-    pos = write_uint32(res,pos, 1+inners.size());
+    pos = write_uint32(res,pos, 1+part.inners.size());
 
-    pos = write_ringpart_ring(res, pos, outers, outer_len,transform);
-    if (!inners.empty()) {
-        for (size_t i=0; i < inners.size(); i++) {
-            pos = write_ringpart_ring(res,pos,inners[i],inners_lens[i],transform);
+    pos = write_ringpart_ring(res, pos, part.outer, outer_len,transform);
+    if (!part.inners.empty()) {
+        for (size_t i=0; i < part.inners.size(); i++) {
+            pos = write_ringpart_ring(res,pos,part.inners[i],inners_lens[i],transform);
         }
     }
     return res;
 }
+
+            
+    
 
 
 std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
@@ -144,17 +184,21 @@ std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
     extras.push_back(PbfTag{12,zig_zag(zorder),""});
     extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
 
-    extras.push_back(PbfTag{17,0,pack_ring(outers)});
-    for (const auto& ii : inners) {
-        extras.push_back(PbfTag{18,0,pack_ring(ii)});
-    }
-    extras.push_back(PbfTag{19,zig_zag(part),""});
+    //extras.push_back(PbfTag{17,0,pack_ring(outers)});
+    //for (const auto& ii : inners) {
+    //    extras.push_back(PbfTag{18,0,pack_ring(ii)});
+    //}
+    //extras.push_back(PbfTag{19,zig_zag(part),""});
     if (MinZoom()>=0) {
         extras.push_back(PbfTag{22,uint64(MinZoom()),""});
     }
     if (layer!=0) {
         extras.push_back(PbfTag{24,zig_zag(layer),""});
     }
+    for (const auto& part: parts) {
+        extras.push_back(PbfTag{25, 0, pack_polygon_part(part)});
+    }
+    
     return extras;
 }
 

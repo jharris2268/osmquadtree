@@ -24,7 +24,7 @@ from __future__ import print_function
 
 from . import _geometry, style, process, minzoomvalues
 
-from ._geometry import Point,Linestring,SimplePolygon, ComplicatedPolygon, WayWithNodes, read_blocks_geometry
+from ._geometry import Point,Linestring,SimplePolygon, ComplicatedPolygon, WayWithNodes, PolygonPart, read_blocks_geometry
 from oqt.elements import find_tag
 from .process import process_geometry, read_blocks, make_json_feat, to_json
 #from .postgis import write_to_csvfile, write_to_postgis
@@ -35,16 +35,16 @@ Linestring.find_tag = find_tag
 SimplePolygon.find_tag = find_tag
 ComplicatedPolygon.find_tag = find_tag
 
-ComplicatedPolygon.OuterRefs = property(lambda cp: _geometry.ringpart_refs(cp.OuterRing))
-ComplicatedPolygon.OuterLonLats = property(lambda cp: _geometry.ringpart_lonlats(cp.OuterRing))
-ComplicatedPolygon.InnerRefs = property(lambda cp: [_geometry.ringpart_refs(ii) for ii in cp.InnerRings])
-ComplicatedPolygon.InnerLonLats = property(lambda cp: [_geometry.ringpart_lonlats(ii) for ii in cp.InnerRings])
+PolygonPart.outer_refs = property(lambda cp: _geometry.ringpart_refs(cp.outer))
+PolygonPart.outer_lonlats = property(lambda cp: _geometry.ringpart_lonlats(cp.outer))
+PolygonPart.inner_refs = property(lambda cp: [_geometry.ringpart_refs(ii) for ii in cp.inners])
+PolygonPart.inner_lonlats = property(lambda cp: [_geometry.ringpart_lonlats(ii) for ii in cp.inners])
 
 
 Point.__repr__ = lambda p: "Point(%10d %.50s %-18s [% 8d % 8d] )" % (p.Id,p.Tags,p.Quadtree,p.LonLat.lon,p.LonLat.lat)
 Linestring.__repr__ = lambda l: "Linestring(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (l.Id,l.Tags,l.Quadtree,len(l.Refs),l.Length)
 SimplePolygon.__repr__ = lambda p: "SimplePolygon(%10d %.50s %-18s [% 4d pts, %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,len(p.Refs),p.Area)
-ComplicatedPolygon.__repr__ = lambda p: "ComplicatedPolygon(%10d %.50s %-18s [P. %2d % 4d pts (%2d ints), %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,p.Part,len(p.OuterRefs),len(p.InnerRings),p.Area)
+ComplicatedPolygon.__repr__ = lambda p: "ComplicatedPolygon(%10d %.50s %-18s [%2d parts % 4d pts (%2d ints), %6.1fm] )" % (p.Id,p.Tags,p.Quadtree,len(p.Parts),sum(len(pt.outer_refs) for pt in p.Parts),sum(len(pt.inners) for pt in p.Parts),p.Area)
 
 Point.to_json = property(make_json_feat)
 Linestring.to_json = property(make_json_feat)

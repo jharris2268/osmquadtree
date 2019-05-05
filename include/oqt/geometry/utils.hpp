@@ -90,7 +90,9 @@ std::string pack_hstoretags(const tagvector& tags);
 std::string pack_jsontags_picojson(const tagvector& tags);
 std::string pack_hstoretags_binary(const tagvector& tags);
 
-
+void read_lonlats_lons(std::vector<LonLat>& lonlats, const std::string& data);
+void read_lonlats_lats(std::vector<LonLat>& lonlats, const std::string& data);
+std::string make_multi_wkb(size_t type, const std::vector<std::string>& wkbs, bool transform, bool srid);
 } }
 
 #endif

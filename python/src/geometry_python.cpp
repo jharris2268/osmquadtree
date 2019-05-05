@@ -58,15 +58,14 @@ ElementPtr make_simplepolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, 
 }
 
 ElementPtr make_complicatedpolygon(int64 id, ElementInfo inf, std::vector<Tag> tags, int64 qt,
-    int64 part, geometry::Ring exterior, std::vector<geometry::Ring> interiors, int64 zorder, int64 layer, int64 minzoom) {
-    double ar = geometry::calc_ring_area(exterior);
-    if (!interiors.empty()) {
-        for (const auto& ii : interiors) {
-            ar -= geometry::calc_ring_area(ii);
-        }
-    }
-    bbox bounds = geometry::lonlats_bounds(geometry::ringpart_lonlats(exterior));
-    return std::make_shared<geometry::ComplicatedPolygon>(id, qt, inf, tags, part, exterior, interiors, zorder, layer, ar, bounds, minzoom);
+    //int64 part, geometry::Ring exterior, std::vector<geometry::Ring> interiors,
+    const std::vector<geometry::PolygonPart>& parts,
+    int64 zorder, int64 layer, int64 minzoom) {
+        
+    
+    auto cp = std::make_shared<geometry::ComplicatedPolygon>(id, qt, inf, tags, parts, zorder, layer, bbox(), minzoom);
+    cp->CheckParts();
+    return cp;
 }
 
 
@@ -229,11 +228,12 @@ void geometry_defs(py::module& m) {
     ;
 
     py::class_<geometry::ComplicatedPolygon, BaseGeometry, std::shared_ptr<geometry::ComplicatedPolygon>>(m, "ComplicatedPolygon")
-    .def_property_readonly("Part", &geometry::ComplicatedPolygon::Part)
-        .def_property_readonly("InnerRings", &geometry::ComplicatedPolygon::InnerRings)
-        .def_property_readonly("OuterRing", &geometry::ComplicatedPolygon::OuterRing)
+        //.def_property_readonly("Part", &geometry::ComplicatedPolygon::Part)
+        //.def_property_readonly("InnerRings", &geometry::ComplicatedPolygon::InnerRings)
+        //.def_property_readonly("OuterRing", &geometry::ComplicatedPolygon::OuterRing)
        
         .def_property_readonly("Area", &geometry::ComplicatedPolygon::Area)
+        .def_property_readonly("Parts", &geometry::ComplicatedPolygon::Parts)
         .def_property_readonly("ZOrder", &geometry::ComplicatedPolygon::ZOrder)
         .def_property_readonly("Layer", &geometry::ComplicatedPolygon::Layer)
         
@@ -242,7 +242,7 @@ void geometry_defs(py::module& m) {
     m.def("make_point", &make_point, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("lon"), py::arg("lat"),py::arg("layer"),py::arg("minzoom"));
     m.def("make_linestring", &make_linestring, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("refs"), py::arg("lonlats"), py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
     m.def("make_simplepolygon", &make_simplepolygon, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("refs"), py::arg("lonlats"), py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
-    m.def("make_complicatedpolygon", &make_complicatedpolygon, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("part"), py::arg("exterior"), py::arg("interiors"), py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
+    m.def("make_complicatedpolygon", &make_complicatedpolygon, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("quadtree"), py::arg("parts")/*, py::arg("exterior"), py::arg("interiors")*/, py::arg("zorder"),py::arg("layer"),py::arg("minzoom"));
 
 
     
@@ -319,6 +319,19 @@ void geometry_defs(py::module& m) {
         .def(py::init<std::vector<geometry::Ring::Part>>())
         .def_readonly("parts", &geometry::Ring::parts)
     ;
+    py::class_<geometry::PolygonPart>(m, "PolygonPart")
+        .def(py::init<int64,geometry::Ring,std::vector<geometry::Ring>,double>())
+        .def_readonly("index", &geometry::PolygonPart::index)
+        .def_readonly("outer", &geometry::PolygonPart::outer)
+        .def_readonly("inners", &geometry::PolygonPart::inners)
+        .def_readonly("area", &geometry::PolygonPart::area)
+    ;
+    m.def("polygon_part_wkb",
+        [](const geometry::PolygonPart& part, bool transform, bool srid) {
+                return py::bytes(geometry::polygon_part_wkb(part,transform,srid));
+            }, py::arg("part"), py::arg("transform")=true, py::arg("srid")=true);
+    m.def("pack_polygon_part", [](const geometry::PolygonPart& part) { return py::bytes(geometry::pack_polygon_part(part)); } );
+    m.def("unpack_polygon_part", &geometry::unpack_polygon_part);
     
     m.def("lonlats_bounds", &geometry::lonlats_bounds);
     m.def("calc_ring_area", [](std::vector<LonLat> ll) { return geometry::calc_ring_area(ll); });

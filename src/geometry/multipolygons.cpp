@@ -413,6 +413,8 @@ class MakeMultiPolygons : public BlockHandler {
                     std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
                     for (size_t i=0; i < outers.size(); i++) {
                         parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<Ring>(0));
+                        
+                        
                     }
                     if (!inners.empty()) {
                         for (const auto& r : inners) {
@@ -430,19 +432,25 @@ class MakeMultiPolygons : public BlockHandler {
                             }
                         }
                     }
-
+                    
+                    std::vector<PolygonPart> checked;
                     for (const auto& pp : parts) {
                         
                         if (!check_parts(pp.second)) {
                             Logger::Message() << "invalid polygon part " << r->Id() << " " << pp.first;
                             continue;
                         }
-                        
-                        auto cp = std::make_shared<ComplicatedPolygon>(r, pp.first, outers[pp.first], pp.second.second,tags,z_order,layer,-1);
-                        finished[tq]->add(cp);
-
-                        
+                        checked.push_back(PolygonPart(checked.size(), outers[pp.first], pp.second.second, 0));
                     }
+                    
+                    if (checked.empty()) {
+                        Logger::Message() << "no polygons for " << r->Id();
+                    } else {
+                        auto cp = std::make_shared<ComplicatedPolygon>(r, checked,tags,z_order,layer,-1);
+                        finished[tq]->add(cp);
+                    }
+
+                    
                 } else {
                     //err += "?? isring=";
                     //if (isring) { err += "y"; } else { err += "n"; }

@@ -206,34 +206,11 @@ void read_lonlats_lats(std::vector<LonLat>& lonlats, const std::string& data) {
     }
 }
 
-Ring::Part unpack_ringpart(const std::string& data) {
-    size_t pos=0;
-    Ring::Part res{0,{},{},false};
-    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
-        if (tag.tag==1) { res.orig_id = tag.value; }
-        if (tag.tag==2) { res.refs = read_packed_delta(tag.data); }
-        if (tag.tag==3) { read_lonlats_lons(res.lonlats, tag.data); }
-        if (tag.tag==4) { read_lonlats_lats(res.lonlats, tag.data); }
-        if (tag.tag==5) { res.reversed=(tag.value==1); }
-
-    }
-    return res;
-}
-
 
 void expand_bbox(bbox& bx, const std::vector<LonLat>& llv) {
     for (const auto& l : llv) {
         expand_point(bx, l.lon,l.lat);
     }
-}
-
-Ring unpack_ringpart_vec(const std::string& data) {
-    Ring res;
-    size_t pos=0;
-    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
-        if (tag.tag==1) { res.parts.push_back(unpack_ringpart(tag.data)); }
-    }
-    return res;
 }
 
 ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std::vector<Tag>& tgs, int64 qt, const std::list<PbfTag>& pbftags, changetype ct) {
@@ -276,33 +253,42 @@ ElementPtr readGeometry_int(ElementType ty, int64 id, ElementInfo inf, const std
         }
     } else if ((ty==ElementType::ComplicatedPolygon)) {
         int64 minzoom=-1;
-        int64 zorder=0, layer=0, part=0; double area=0;
-        Ring outer;
-        std::vector<Ring> inners;
-
+        int64 zorder=0, layer=0;//, part=0; double area=0;
+        
+        PolygonPart part;
+        std::vector<PolygonPart> parts;
+        
+        
         for (const auto& t : pbftags) {
             if (t.tag==12) { zorder=un_zig_zag(t.value); }
-            if (t.tag==16) { area=un_zig_zag(t.value)*0.01; }
+            if (t.tag==16) { part.area=un_zig_zag(t.value)*0.01; }
             if (t.tag==17) {
-                if (!outer.parts.empty()) {
+                if (!part.outer.parts.empty()) {
                     throw std::domain_error("multiple outers??");
                 }
-                outer = unpack_ringpart_vec(t.data);
+                part.outer = unpack_ring(t.data);
 
             }
-            if (t.tag==18) { inners.push_back(unpack_ringpart_vec(t.data)); }
-            if (t.tag==19) { part = un_zig_zag(t.value); }
+            if (t.tag==18) { part.inners.push_back(unpack_ring(t.data)); }
+            if (t.tag==19) { part.index = un_zig_zag(t.value); }
             if (t.tag==22) { minzoom = (int64) t.value; }
             if (t.tag==24) { layer=un_zig_zag(t.value); }
+            if (t.tag==25) { parts.push_back(unpack_polygon_part(t.data)); }
             //if (t.tag==20) { bounds=unpack_bounds(t.data); }
         }
+        if ((parts.empty()) && (!part.outer.parts.empty())) {
+            parts.push_back(part);
+        }
         bbox bounds;
-        for (const auto& rp : outer.parts) {
-            expand_bbox(bounds,rp.lonlats);
+        for (const auto& pp: parts) {
+            for (const auto& rp : pp.outer.parts) {
+                expand_bbox(bounds,rp.lonlats);
+            }
         }
 
 
-        return std::make_shared<ComplicatedPolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
+        //return std::make_shared<ComplicatedPolygon>(id,qt,inf,tgs,part,outer,inners,zorder,layer,area,bounds,minzoom);
+        return std::make_shared<ComplicatedPolygon>(id,qt,inf,tgs,parts,zorder,layer,bounds,minzoom);
     } else if ((ty==ElementType::WayWithNodes)) {
         std::vector<int64> refs;
         std::vector<LonLat> lonlats;
@@ -514,6 +500,29 @@ std::string pack_hstoretags_binary(const tagvector& tags) {
     return out;
 }
 
+ 
+std::string make_multi_wkb(size_t type, const std::vector<std::string>& wkbs, bool transform, bool srid) {
+    
+    size_t sz=9;
+    if (srid) { sz+=4; }
+    for (const auto& w: wkbs) { sz += w.size(); }
+    
+    std::string res(sz, '\0');
+    
+    res[4]=type;
+    size_t pos=5;
+    if (srid) {
+        res[1]=' ';
+        pos = write_uint32(res,pos,epsg_code(transform));
+    }
 
+    pos = write_uint32(res,pos, wkbs.size());
+
+    for (const auto& w : wkbs) {
+        pos = _write_data(res, pos, w);
+    }
+    
+    return res;
+}
 }}
 

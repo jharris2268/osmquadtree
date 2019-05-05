@@ -53,6 +53,24 @@ std::string pack_ring(const Ring& rps);
 size_t ringpart_numpoints(const Ring& rpv);
 size_t write_ringpart_ring(std::string& data, size_t pos, const Ring& rpv, size_t r, bool transform);
 
+struct PolygonPart {
+    PolygonPart(int64 index_, const Ring& outer_, const std::vector<Ring>& inners_, double area_) :
+        index(index_), outer(outer_), inners(inners_), area(area_) {}
+    PolygonPart() : index(0), area(0) {}
+        
+    int64 index;
+    Ring outer;
+    std::vector<Ring> inners;
+    double area;
+};
+
+std::string pack_ring(const Ring& ring);
+Ring unpack_ring(const std::string& data);
+
+std::string pack_polygon_part(const PolygonPart& poly);
+PolygonPart unpack_polygon_part(const std::string& data);
+
+
 
 }
 }

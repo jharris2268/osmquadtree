@@ -156,6 +156,67 @@ size_t write_ringpart_ring(std::string& data, size_t pos, const Ring& rpv, size_
 }
 
 
+Ring::Part unpack_ringpart(const std::string& data) {
+    size_t pos=0;
+    Ring::Part res{0,{},{},false};
+    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
+        if (tag.tag==1) { res.orig_id = tag.value; }
+        if (tag.tag==2) { res.refs = read_packed_delta(tag.data); }
+        if (tag.tag==3) { read_lonlats_lons(res.lonlats, tag.data); }
+        if (tag.tag==4) { read_lonlats_lats(res.lonlats, tag.data); }
+        if (tag.tag==5) { res.reversed=(tag.value==1); }
+
+    }
+    return res;
+}
+
+
+
+
+Ring unpack_ring(const std::string& data) {
+    Ring res;
+    size_t pos=0;
+    for (auto tag=read_pbf_tag(data,pos); tag.tag>0; tag=read_pbf_tag(data,pos)) {
+        if (tag.tag==1) { res.parts.push_back(unpack_ringpart(tag.data)); }
+    }
+    return res;
+}
+
+std::string pack_polygon_part(const PolygonPart& part) {
+    std::list<PbfTag> tt;
+    
+    tt.push_back(PbfTag{1, (uint64) part.index, ""});
+    tt.push_back(PbfTag{2, 0, pack_ring(part.outer)});
+    for (const auto& ii: part.inners) {
+        tt.push_back(PbfTag{3, 0, pack_ring(ii)});
+    }
+    tt.push_back(PbfTag{4, zig_zag(to_int(part.area*100)),""});
+    return pack_pbf_tags(tt,false);
+}
+
+PolygonPart unpack_polygon_part(const std::string& data) {
+    PolygonPart part;
+    part.area=0;
+    
+    size_t pos=0;
+    PbfTag tg = read_pbf_tag(data,pos);
+    for ( ; tg.tag>0; tg = read_pbf_tag(data,pos)) {
+        if (tg.tag==1) {
+            part.index=tg.value;
+        } else if (tg.tag==2) {
+            part.outer = unpack_ring(tg.data);
+        } else if (tg.tag==3) {
+            part.inners.push_back(unpack_ring(tg.data));
+        } else if (tg.tag==4) {
+            part.area = un_zig_zag(tg.value)*0.001;
+        }
+    }
+    
+    return part;
+}
+
+
+
 
 
 }
