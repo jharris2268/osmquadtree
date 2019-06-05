@@ -158,10 +158,10 @@ void sorting_defs(py::module& m) {
         .def("__len__", &QtTree::size)
     ;
     m.def("make_tree_empty",&make_tree_empty);
-    m.def("make_qts_tree_maxlevel", &make_qts_tree_maxlevel_py);
-    m.def("tree_rollup", &tree_rollup_py);
-    m.def("find_groups_copy", &find_groups_copy_py);
-    m.def("tree_round_copy", &tree_round_copy_py);
+    m.def("make_qts_tree_maxlevel", &make_qts_tree_maxlevel_py, py::arg("filename"), py::arg("numchan")=4, py::arg("maxlevel")=17);
+    m.def("tree_rollup", &tree_rollup_py, py::arg("tree"), py::arg("minsize"));
+    m.def("find_groups_copy", &find_groups_copy_py, py::arg("tree"), py::arg("targetsize"), py::arg("minsize"));
+    m.def("tree_round_copy", &tree_round_copy_py, py::arg("tree"), py::arg("minsize"));
 
     py::class_<QtTree::Item>(m,"QtTreeItem")
         .def_readonly("qt", &QtTree::Item::qt)

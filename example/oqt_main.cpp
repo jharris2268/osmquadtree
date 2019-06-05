@@ -205,11 +205,11 @@ int main(int argc, char** argv) {
     int64 timestamp = 0;
 
     bool rollup=false;
-    int64 targetsize=8000;
-    int64 minsize   =4000;
+    int64 targetsize=40000;
+    int64 minsize   =20000;
     size_t grptiles = 0;
     double buffer = 0.05;
-    size_t max_depth=17;
+    size_t max_depth=0;
 
     bool sort_objs=false;
     bool sortfile=true;
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
     std::vector<LonLat> poly;
     size_t countflags=0;
     bool use_tree=false;
-    bool use_48bit_quadtrees=false;
+    bool use_48bit_quadtrees=true;
     bool fixstrs=false;
     bool seperate_filelocs=true;
     //bool usefindgroupscopy=false;
@@ -304,9 +304,9 @@ int main(int argc, char** argv) {
                 countflags = std::stoull(val);  
             } else if (key=="usetree") {
                 use_tree=true;
-            } else if (key=="48bitqt") {
-                use_48bit_quadtrees=true;
-                Logger::Message() << "use_48bit_quadtrees=true";
+            } else if (key=="dontuse48bitqt") {
+                use_48bit_quadtrees=false;
+                Logger::Message() << "use_48bit_quadtrees=false";
             } else if (key=="fixstrs") {
                 fixstrs=true;
             } else if (key=="notseperatefilelocs") {
@@ -350,7 +350,7 @@ int main(int argc, char** argv) {
         if (inmem) {
             run_calcqts_inmem(origfn, qtsfn, numchan, true);
         } else {
-            run_calcqts(origfn, qtsfn, numchan, splitways, true, buffer, max_depth, use_48bit_quadtrees);
+            run_calcqts(origfn, qtsfn, numchan, splitways, true, buffer, (max_depth==0 ? 17 : max_depth), use_48bit_quadtrees);
         }
     Logger::Get().timing_messages();
     } else if (operation=="sortblocks") {
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {
         }
         
         if (true) {
-            auto tree = make_qts_tree_maxlevel(qtsfn=="NONE" ? origfn : qtsfn, numchan, max_depth);
+            auto tree = make_qts_tree_maxlevel(qtsfn=="NONE" ? origfn : qtsfn, numchan,  (max_depth==0 ? 15 : max_depth));
             Logger::Get().time("load qts");
             if (rollup) {
                 tree_rollup(tree,minsize);

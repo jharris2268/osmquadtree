@@ -87,7 +87,10 @@ std::shared_ptr<BlobStore> make_blobstore_file(std::string tempfn, bool sortfile
 class BlobStoreFileSplit : public BlobStore {
     public:
         BlobStoreFileSplit(std::string tempfn_, int64 splitat_) 
-            : tempfn(tempfn_), splitat(splitat_) { }
+            : tempfn(tempfn_), splitat(splitat_) {
+                
+                if (splitat<=0) { splitat=1; }
+            }
         
         void add(keystring_ptr p) {
             if (!p) {

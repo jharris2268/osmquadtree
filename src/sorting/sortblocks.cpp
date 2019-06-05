@@ -363,7 +363,7 @@ class SortBlocksImpl : public SortBlocks {
             
             Logger::Message() << "orig_file_size=" << orig_file_size << "mb; blocksplit=" << blocksplit << "num_splits=" << num_splits << ", groups->size() = " << groups->size() << ", group_split=" << group_split;
             
-            blobs = (num_splits>2) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, false);
+            blobs = ((num_splits>2) && (group_split > (2*blocksplit))) ? make_blobstore_filesplit(tempfn, group_split/blocksplit) : make_blobstore_file(tempfn, false);
             tempobjs = make_tempobjs(blobs, numchan);
         
         

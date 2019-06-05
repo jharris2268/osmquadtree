@@ -74,6 +74,7 @@ setup(
     name='oqt',
     #packages=['oqt','oqt.geometry','oqt.geometry.postgis','oqt.utils','oqt.elements','oqt.pbfformat','oqt.update','oqt.sorting','oqt.calcqts','oqt.count'],
     packages=['oqt','oqt.geometry','oqt.utils','oqt.elements','oqt.pbfformat','oqt.update','oqt.sorting','oqt.calcqts','oqt.count'],
+    scripts=['scripts/oqt_initial.py', 'scripts/oqt_update.py'],
     version='0.0.1',
     long_description='',
     ext_modules=ext_modules,

@@ -83,20 +83,20 @@ Python Bindings
 
 The python bindings require pybind11_. To install:
 
-.. code:
+.. code::
     git clone https://github.com/pybind/pybind11.git
     sudo cp -R pybind11/include/pybind11 /usr/local/include/
     
 You may need to install the python dev package. On ubuntu:
 
-.. code:
+.. code::
     sudo apt install python-dev  # for python version 2
     sudo apt install python3-dev # for python version 3
 
 
 To build and install:
 
-.. code:
+.. code::
     cd python
     python setup.py install --user  # for python version 2
     python3 setup.py install --user # for python version 3
