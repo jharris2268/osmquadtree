@@ -88,8 +88,9 @@ double calc_ring_area(const std::vector<LonLat>& ll) {
 
     XY lastpt = forward_transform(ll[0].lon,ll[0].lat);
 
-    for (size_t i = 0; i < ll.size(); i++) {
-        size_t j = (i == (ll.size()-1)) ? 0 : i+1;
+    /*for (size_t i = 0; i < ll.size(); i++) {
+        size_t j = (i == (ll.size()-1)) ? 0 : i+1;*/
+    for (size_t j = 1; j < ll.size(); j++) {
         XY nextpt = forward_transform(ll[j].lon, ll[j].lat);
 
         area += lastpt.x * nextpt.y;
@@ -99,6 +100,39 @@ double calc_ring_area(const std::vector<LonLat>& ll) {
 
     return -1.0 * area / 2.0; //want polygon exteriors to be anti-clockwise
 }
+
+XY calc_ring_centroid(const std::vector<LonLat>& ll) {
+    if (ll.size() < 1) {
+        return XY(0,0);
+    }
+    XY lastpt = forward_transform(ll[0].lon, ll[0].lat);
+    
+    if (ll.size() == 1) {
+        return lastpt;
+    }
+    XY nextpt = forward_transform(ll[1].lon, ll[1].lat);
+    if (ll.size()==2) {
+        return XY((lastpt.x+nextpt.x)/2.0, (lastpt.y+nextpt.y)/2.);
+    }
+    
+    double area=0;
+    double x=0;
+    double y=0;
+    
+    for (size_t j=1; j < ll.size(); j++) {
+        nextpt = forward_transform(ll[j].lon, ll[j].lat);
+        
+        double cross = (lastpt.x * nextpt.y - nextpt.x * lastpt.y);
+        x += (lastpt.x + nextpt.x) * cross;
+        y += (lastpt.y + nextpt.y) * cross;
+        area += cross;
+        lastpt=nextpt;
+    }
+    
+    area /= 2;
+    return XY(x / (area*6), y / (area*6) );
+}
+    
 
 bbox lonlats_bounds(const std::vector<LonLat>& llv) {
     bbox r;

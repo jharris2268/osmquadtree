@@ -104,13 +104,22 @@ class ReadBlocksSingle : public ReadBlocksCaller {
                 }
             }
         }
-        void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter) {
-            read_blocks_split_primitiveblock(fn, cbs, locs, filter, false, ReadBlockFlags::Empty);
+        void read_primitive(std::vector<primitiveblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter) {
+            read_blocks_split_primitiveblock(fn, cbs, locs, filter, false, flags);
         }
         
-        void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)  {
-            read_blocks_split_minimalblock(fn, cbs, locs, ReadBlockFlags::Empty);
+        void read_minimal(std::vector<minimalblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter)  {
+            read_blocks_split_minimalblock(fn, cbs, locs, flags);
         }
+        
+        void read_primitive_nothread(primitiveblock_callback cb, ReadBlockFlags flags, IdSetPtr filter) {
+            read_blocks_nothread_primitiveblock(fn, cb, locs, filter, false, flags);
+        }
+        
+        void read_minimal_nothread(minimalblock_callback cb, ReadBlockFlags flags, IdSetPtr filter) {
+            read_blocks_nothread_minimalblock(fn, cb, locs, flags);
+        }
+        
         
         size_t num_tiles() { return locs.size(); }
     private:
@@ -157,14 +166,21 @@ class ReadBlocksMerged : public ReadBlocksCaller {
             
         }
         
-        void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter) {
+        void read_primitive(std::vector<primitiveblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter) {
             
-            read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, ReadBlockFlags::Empty, buffer);
+            read_blocks_split_merge<PrimitiveBlock>(filenames, cbs, locs, filter, flags, buffer);
         }
-        void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)  {
-            read_blocks_split_merge<minimal::Block>(filenames, cbs, locs, filter, ReadBlockFlags::Empty, buffer);
+        void read_minimal(std::vector<minimalblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter)  {
+            read_blocks_split_merge<minimal::Block>(filenames, cbs, locs, filter, flags, buffer);
         }
         
+        void read_primitive_nothread(primitiveblock_callback cb, ReadBlockFlags flags, IdSetPtr filter) {
+            read_blocks_merge_nothread<PrimitiveBlock>(filenames, cb, locs, filter, flags);
+        }
+        
+        void read_minimal_nothread(minimalblock_callback cb, ReadBlockFlags flags, IdSetPtr filter) {
+            read_blocks_merge_nothread<minimal::Block>(filenames, cb, locs, filter, flags);
+        }
         
         int64 actual_enddate() { return enddate; }
         bbox actual_filter_box() { return filter_box; }

@@ -30,6 +30,12 @@ if len(sys.argv)>=3 and sys.argv[1]=='update':
     r=update.run_update(sys.argv[2], nd)
     sys.exit(r)
 
+elif len(sys.argv)==3 and sys.argv[1]=='update_downloaded':
+    
+    r=update.run_update(sys.argv[2], None, False)
+    sys.exit(r)
+
+
 elif len(sys.argv)>=7 and sys.argv[1]=='initial':
     prfx = sys.argv[2]
     origfn = sys.argv[3]

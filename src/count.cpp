@@ -558,17 +558,13 @@ class CountProgress {
             
     
     
-std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal) {
+std::shared_ptr<Count> run_count(std::shared_ptr<ReadBlocksCaller> rbc, bool change, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal) {
     
     
     auto& lg=Logger::Get();
     
-    std::ifstream infile(fn, std::ifstream::in | std::ifstream::binary);
-    if (!infile.good()) {
-        Logger::Message() << "failed to open " << fn;
-        return nullptr;
-    }
-    bool change = ends_with(fn, "pbfc");
+    
+    
     
     auto result = std::make_shared<Count>(0,tiles,geom,change);
     
@@ -585,9 +581,12 @@ std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool til
         };
         if (numchan==0) {
 
-            read_blocks_nothread_minimalblock(fn, cb, {}, objflags);
+            //read_blocks_nothread_minimalblock(fn, cb, {}, objflags);
+            rbc->read_minimal_nothread(cb,objflags,nullptr);
         } else {
-            read_blocks_minimalblock(fn, cb, {}, numchan, objflags);
+            //read_blocks_minimalblock(fn, cb, {}, numchan, objflags);
+            auto cbs = multi_threaded_callback<minimal::Block>::make(cb, numchan);
+            rbc->read_minimal(cbs,objflags,nullptr);
         }
         
         
@@ -610,7 +609,8 @@ std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool til
                 });
                 result_parts.push_back(rr);  
             }
-            read_blocks_split_primitiveblock(fn, cbs, {}, nullptr, change, objflags);
+            //read_blocks_split_primitiveblock(fn, cbs, {}, nullptr, change, objflags);
+            rbc->read_primitive(cbs,objflags,nullptr);
             
             for (auto rr: result_parts) {
                 result->expand(*rr);
@@ -622,7 +622,8 @@ std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool til
                     result->add(bl->Index(), bl);
                 }
             };
-            read_blocks_nothread_primitiveblock(fn, cbx, {}, nullptr, change, objflags);
+            //read_blocks_nothread_primitiveblock(fn, cbx, {}, nullptr, change, objflags);
+            rbc->read_primitive_nothread(cbx,objflags,nullptr);
         }
     }
     

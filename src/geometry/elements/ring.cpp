@@ -208,7 +208,7 @@ PolygonPart unpack_polygon_part(const std::string& data) {
         } else if (tg.tag==3) {
             part.inners.push_back(unpack_ring(tg.data));
         } else if (tg.tag==4) {
-            part.area = un_zig_zag(tg.value)*0.001;
+            part.area = un_zig_zag(tg.value)*0.01;
         }
     }
     

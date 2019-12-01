@@ -56,6 +56,10 @@ struct block_data {
     
 };
 
+bool check_id(const block_data& data, ElementType ty, int64 id) {
+    if (!data.ids) { return true; }
+    return data.ids->contains(ty,id);
+}
 
 struct node_data {
     int64 id, qt;
@@ -127,7 +131,8 @@ ElementPtr read_node(const std::string& data, size_t pos, size_t lim, const bloc
         handle_pbf_value{20, [&nd](uint64 v) { nd.qt=un_zig_zag(v); }}
     );
     if (nd.id==0) { return nullptr; }
-    
+    if (!check_id(block,ElementType::Node,nd.id)) { return nullptr; }
+
     return std::make_shared<Node>(c, nd.id, nd.qt, nd.info, nd.tags, nd.lon, nd.lat);
 }
     
@@ -202,7 +207,8 @@ void read_dense(std::vector<ElementPtr>& objects, const std::string& data, size_
     
     for (const auto& nd: nds) {
         
-        if (nd.id!=0) {
+        if ((nd.id!=0) && check_id(block,ElementType::Node,nd.id)) {
+            
             objects.push_back(
                 std::make_shared<Node>(c, nd.id, nd.qt, nd.info, nd.tags, nd.lon, nd.lat)
             );
@@ -233,7 +239,7 @@ ElementPtr read_way(const std::string& data, size_t pos, size_t lim, const block
         handle_pbf_value{20, [&wy](uint64 v) { wy.qt=un_zig_zag(v); }}
     );
     if (wy.id==0) { return nullptr; }
-    
+    if (!check_id(block,ElementType::Way,wy.id)) { return nullptr; }
     return std::make_shared<Way>(c, wy.id, wy.qt, wy.info, wy.tags, wy.refs);
 }
 
@@ -270,7 +276,7 @@ ElementPtr read_relation(const std::string& data, size_t pos, size_t lim, const 
         handle_pbf_value{20, [&rl](uint64 v) { rl.qt=un_zig_zag(v); }}
     );
     if (rl.id==0) { return nullptr; }
-    
+    if (!check_id(block,ElementType::Relation,rl.id)) { return nullptr; }
     return std::make_shared<Relation>(c, rl.id, rl.qt, rl.info, rl.tags, rl.members);
 }
 
@@ -349,8 +355,8 @@ using oqt::readblock_detail::block_data;
 using oqt::readblock_detail::read_string_table;
 using oqt::readblock_detail::read_quadtree;
 using oqt::readblock_detail::read_primitive_group;
-PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change, ReadBlockFlags objflags, IdSetPtr ids, read_geometry_func readGeometry) {
-    
+
+void read_primitive_block_new_into(PrimitiveBlockPtr primblock, const std::string& data, bool change, ReadBlockFlags objflags, IdSetPtr ids, read_geometry_func readGeometry) {
     block_data block{{},change,ids,readGeometry,
         has_flag(objflags,ReadBlockFlags::SkipNodes),
         has_flag(objflags,ReadBlockFlags::SkipWays),
@@ -359,12 +365,8 @@ PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, b
         has_flag(objflags,ReadBlockFlags::SkipStrings),
         has_flag(objflags,ReadBlockFlags::SkipInfo)};
    
-    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=ReadBlockFlags::Empty)) ? 0: 8000);
-
-
+   
     std::vector<std::pair<size_t,size_t>> group_poses;
-    
-
     read_pbf_messages(data, 0, data.size(),
         handle_pbf_data{block.skip_strings ? 0ull : 1, [&block](const std::string& d, size_t p, size_t l) { read_string_table(block.stringtable, d, p, l); }},
         handle_pbf_data{2, [&group_poses](const std::string&, size_t p, size_t l) { group_poses.push_back(std::make_pair(p,l)); }},
@@ -377,7 +379,15 @@ PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, b
     for (const auto& pl: group_poses) {
         read_primitive_group(primblock->Objects(), block, data, pl.first, pl.second);
     }
+}
+    
 
+PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, bool change, ReadBlockFlags objflags, IdSetPtr ids, read_geometry_func readGeometry) {
+    
+    
+    auto primblock = std::make_shared<PrimitiveBlock>(idx,(change || ids || (objflags!=ReadBlockFlags::Empty)) ? 0: 8000);
+    
+    read_primitive_block_new_into(primblock, data,change,objflags,ids,readGeometry);
     return primblock;
 }
 }

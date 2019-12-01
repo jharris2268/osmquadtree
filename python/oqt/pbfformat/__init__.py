@@ -38,7 +38,9 @@ class ReadBlocksCaller:
     def __init__(self, prfx, bbox, poly=None, lastdate=None):
         if not lastdate is None:
             if not isinstance(lastdate, numbers.Integral):
-                raise Exception("??")# = _oqt.read_date(lastdate)
+                lastdate=utils.get_date(lastdate)
+                
+                #raise Exception("??")# = _oqt.read_date(lastdate)
         else:
             lastdate=0
         
@@ -51,13 +53,15 @@ class ReadBlocksCaller:
                 self.bbox=utils.bbox(min(ln),min(lt),max(ln),max(lt))
             else:
                 self.bbox=utils.bbox(-1800000000,-900000000,1800000000,900000000)
+        if self.poly is None:
+            self.poly=[]
         self.rbc = _pbfformat.make_read_blocks_caller(prfx, self.bbox, self.poly, lastdate)
     
-    def read_primitive(self, cb, numblocks=512, numchan=4, filter=None):
-        return _pbfformat.read_blocks_caller_read_primitive(self.rbc, cb, numblocks, numchan, filter)
+    def read_primitive(self, cb, numblocks=512, numchan=4, flags=ReadBlockFlags(),filter=None):
+        return _pbfformat.read_blocks_caller_read_primitive(self.rbc, cb, numchan, numblocks, flags, filter)
                     
-    def read_minimal(self, cb, numblocks=512, numchan=4, filter=None):
-        return _pbfformat.read_blocks_caller_read_minimal(self.rbc, cb, numblocks, numchan, filter)            
+    def read_minimal(self, cb, numblocks=512, numchan=4, flags=ReadBlockFlags(),filter=None):
+        return _pbfformat.read_blocks_caller_read_minimal(self.rbc, cb, numchan, numblocks, flags, filter)            
 
     def num_tiles(self):
         return self.rbc.num_tiles()

@@ -83,5 +83,11 @@ PrimitiveBlockPtr read_primitive_block_new(int64 idx, const std::string& data, b
     ReadBlockFlags flags=ReadBlockFlags::Empty, IdSetPtr ids=IdSetPtr(),
     read_geometry_func readGeometry = read_geometry_func());
 
+void read_primitive_block_new_into(
+    PrimitiveBlockPtr primblock,
+    const std::string& data, bool change,
+    ReadBlockFlags flags=ReadBlockFlags::Empty, IdSetPtr ids=IdSetPtr(),
+    read_geometry_func readGeometry = read_geometry_func());
+
 }
 #endif //PBFFORMAT_READBLOCK_HPP

@@ -29,6 +29,7 @@
 
 #include "oqt/utils/logger.hpp"
 #include "oqt/utils/date.hpp"
+#include "oqt/utils/compress.hpp"
 
 #include "oqt/utils/multithreadedcallback.hpp"
 
@@ -308,7 +309,7 @@ IdSetPtr calc_idset_filter(std::shared_ptr<ReadBlocksCaller> read_blocks_caller,
     }
     auto cfi = std::make_shared<CalculateIdSetFilter>(filter_impl, filter_box, poly.empty(), poly);
     auto rc = multi_threaded_callback<minimal::Block>::make([cfi](minimal::BlockPtr mb) { cfi->call(mb); }, numchan);
-    read_blocks_caller->read_minimal(rc, nullptr);
+    read_blocks_caller->read_minimal(rc, ReadBlockFlags::Empty, nullptr);
     
     Logger::Message() << filter_impl->str();
     
@@ -435,8 +436,6 @@ primitiveblock_callback log_progress(primitiveblock_callback cb) {
 }
 
 
-        
-
 void run_mergechanges(
     const std::string& infile_name,
     const std::string& outfn,
@@ -472,7 +471,7 @@ void run_mergechanges(
             
             addobjs = FilterRels::make(filter,addobjs);
         }
-        read_blocks_caller->read_primitive(addobjs, filter);
+        read_blocks_caller->read_primitive(addobjs, ReadBlockFlags::Empty, filter);
     };
         
     if (sort_objs) {
@@ -511,16 +510,16 @@ void run_mergechanges(
             auto temps = make_tempobjs(blobs, numchan);
             
             
-            
-            std::vector<primitiveblock_callback> splits;
-            for (size_t i=0; i < numchan; i++) {
-                //splits.push_back(make_splitbyid_callback(temps->add_func(i), blocksize, 2000000, (1ll)<<20));
-                splits.push_back(make_splitbyid_callback(temps->add_func(i), blocksize, 2000000, (1ll)<<19));
+            if (true) {
+                std::vector<primitiveblock_callback> splits;
+                for (size_t i=0; i < numchan; i++) {
+                    //splits.push_back(make_splitbyid_callback(temps->add_func(i), blocksize, 2000000, (1ll)<<20));
+                    splits.push_back(make_splitbyid_callback(temps->add_func(i), blocksize, 1500000, (1ll)<<21));
+                }
+                read_data(splits);
+                temps->finish();
+                Logger::Get().time("read file");
             }
-            read_data(splits);
-            temps->finish();
-            Logger::Get().time("read file");
-        
         
                         
             auto collect = make_collectobjs(packers,8000);

@@ -315,7 +315,7 @@ class GeometryStyle:
         result['polygon_tags'] = self.polygon_tags
         result['other_keys'] = self.other_keys
         result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
-        result['relation_tag_spec'] = [p.to_json() for p in self.relation_tag_spec],
+        result['relation_tag_spec'] = [p.to_json() for p in self.relation_tag_spec]
         result['multipolygons']=self.multipolygons
         result['boundary_relations']=self.boundary_relations
         return result
@@ -349,7 +349,7 @@ class GeometryStyle:
         parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
         relation_tag_spec = [RelationTag.from_json(v) for v in jj['relation_tag_spec']]
         
-        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj['polygon_tags'], parent_tags, parent_relations, jj['multipolygons'], jj['boundary_relations'])
+        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj['polygon_tags'], parent_tags, relation_tag_spec, jj['multipolygons'], jj['boundary_relations'])
     
     @staticmethod
     def load(obj):

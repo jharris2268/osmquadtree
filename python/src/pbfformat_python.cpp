@@ -93,13 +93,14 @@ size_t read_blocks_caller_read_primitive(
     std::function<bool(std::vector<PrimitiveBlockPtr>)> callback,
     size_t numchan,
     size_t numblocks,
+    ReadBlockFlags flags,
     IdSetPtr filter) {
         
     
     py::gil_scoped_release r;
     auto cb = std::make_shared<collect_blocks<PrimitiveBlock>>(wrap_callback(callback),numblocks);
     auto cbf = multi_threaded_callback<PrimitiveBlock>::make([cb](PrimitiveBlockPtr bl) { cb->call(bl); },numchan);
-    rbc->read_primitive(cbf, filter);
+    rbc->read_primitive(cbf, flags, filter);
     return cb->total();
     
     
@@ -110,6 +111,7 @@ size_t read_blocks_caller_read_minimal(
     std::function<bool(std::vector<minimal::BlockPtr>)> callback,
     size_t numchan,
     size_t numblocks,
+    ReadBlockFlags flags,
     IdSetPtr filter) {
         
     
@@ -117,7 +119,7 @@ size_t read_blocks_caller_read_minimal(
     auto cb = std::make_shared<collect_blocks<minimal::Block>>(wrap_callback(callback),numblocks);
     auto cbf = multi_threaded_callback<minimal::Block>::make([cb](minimal::BlockPtr bl) { cb->call(bl); },numchan);
     
-    rbc->read_minimal(cbf, filter);
+    rbc->read_minimal(cbf, flags, filter);
     return cb->total();
     
     
@@ -399,7 +401,8 @@ class WritePbfFileImpl : public WritePbfFile {
 std::shared_ptr<WritePbfFile> make_WritePbfFile(const std::string& fn, bbox bounds, size_t numchan, bool indexed, bool dropqts, bool change, bool tempfile) {
     return std::make_shared<WritePbfFileImpl>(fn,bounds,indexed,numchan,dropqts,change,tempfile);
 }
-
+   
+    
 
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void pbfformat_defs(py::module& m) {
@@ -422,6 +425,14 @@ void pbfformat_defs(py::module& m) {
         .def("add", &ObjsIdSet::add)
 
     ;
+    
+    py::class_<IdSetRange,IdSet,std::shared_ptr<IdSetRange>>(m,"IdSetRange")
+        .def(py::init<ElementType,int64,int64>())
+        .def_readonly("ty", &IdSetRange::ty)
+        .def_readonly("min_id", &IdSetRange::min_id)
+        .def_readonly("max_id", &IdSetRange::max_id)
+    ;
+    
     py::class_<IdSetInvert, IdSet, std::shared_ptr<IdSetInvert>>(m, "IdSetInvert")
         .def(py::init<IdSetPtr>())
     ;
@@ -434,7 +445,7 @@ void pbfformat_defs(py::module& m) {
     
     
     m.def("read_minimal_block", &read_minimal_block);
-
+    m.def("read_header_block", &read_header_block);
 
     
     
@@ -533,6 +544,24 @@ void pbfformat_defs(py::module& m) {
             py::arg("tempfile")=true);
     
    
+    py::class_<FileBlock,std::shared_ptr<FileBlock>>(m, "FileBlock")
+        .def_readonly("idx", &FileBlock::idx)
+        .def_readonly("blocktype", &FileBlock::blocktype)
+        .def_readonly("uncompressed_size", &FileBlock::uncompressed_size)
+        .def_readonly("compressed", &FileBlock::compressed)
+        .def_readonly("file_position", &FileBlock::file_position)
+        .def_readonly("file_progress", &FileBlock::file_progress)
+        .def_property_readonly("data", [](const FileBlock& fb) { return py::bytes(fb.data); })
+        .def("get_data", [](FileBlock& fb) { return py::bytes(fb.get_data()); })
+    ;
+   
+    py::class_<ReadFile,std::shared_ptr<ReadFile>>(m, "ReadFile")
+        .def("file_position", &ReadFile::file_position)
+        .def("next", &ReadFile::next)
+    ;
+        
+    m.def("make_readfile", make_readfile, py::arg("filename"), py::arg("locs")=std::vector<int64>(), py::arg("index_offset")=0, py::arg("buffer")=0, py::arg("file_size")=0);
+    
 }
 
 #ifdef INDIVIDUAL_MODULES

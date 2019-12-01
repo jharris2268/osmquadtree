@@ -97,6 +97,24 @@ std::function<void(ElementPtr)> make_collectobjs(std::vector<primitiveblock_call
     };
 }
 
+int64 split_id_key(ElementPtr obj, int64 node_split_at, int64 way_split_at, int64 offset) {
+    int64 i = obj->Id();
+    ElementType t = obj->Type();
+    if (t==ElementType::Node) {
+        int64 x = i / node_split_at;
+        if (x>=offset) { x=offset-1; }
+        return x;
+    } else if (t==ElementType::Way) {
+        int64 x = i / way_split_at;
+        if (x>=offset) { x=offset-1; }
+        return offset+x;
+    } else if (t==ElementType::Relation) {
+        int64 x =  i / (way_split_at/10);
+        if (x>=offset) { x=offset-1; }
+        return 2*offset+x;
+    }
+    return -1;
+}
         
 class SplitById : public SplitBlocks {
     public:
@@ -105,22 +123,7 @@ class SplitById : public SplitBlocks {
         
         virtual ~SplitById() {}
         virtual size_t find_tile(ElementPtr obj) {
-            int64 i = obj->Id();
-            ElementType t = obj->Type();
-            if (t==ElementType::Node) {
-                int64 x = i / node_split_at;
-                if (x>=offset) { x=offset-1; }
-                return x;
-            } else if (t==ElementType::Way) {
-                int64 x = i / way_split_at;
-                if (x>=offset) { x=offset-1; }
-                return offset+x;
-            } else if (t==ElementType::Relation) {
-                int64 x =  i / (way_split_at/10);
-                if (x>=offset) { x=offset-1; }
-                return 2*offset+x;
-            }
-            return -1;
+            return split_id_key(obj, node_split_at, way_split_at, offset);
         }
         virtual size_t max_tile() { return 3*offset; }
         

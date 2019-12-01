@@ -26,7 +26,7 @@
 #include "oqt/elements/minimalblock.hpp"
 #include "oqt/elements/element.hpp"
 #include "oqt/elements/block.hpp"
-
+#include "oqt/pbfformat/readblockscaller.hpp"
 #include <map>
 
 namespace oqt {
@@ -109,7 +109,7 @@ class CountRelation : public CountElement {
 
 struct BlockSummary {
     size_t idx;
-    int64 quadtree, len;
+    int64 quadtree, file_position;
     size_t num_nodes, num_ways, num_relations, num_geometries;
 };
 
@@ -166,6 +166,6 @@ class Count {
         std::vector<BlockSummary> tiles;
 };
 enum class ReadBlockFlags;
-std::shared_ptr<Count> run_count(const std::string& fn, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal);
+std::shared_ptr<Count> run_count(std::shared_ptr<ReadBlocksCaller> rbc, bool change, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal);
 }
 #endif //COUNT_HPP

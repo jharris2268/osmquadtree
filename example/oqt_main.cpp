@@ -334,14 +334,18 @@ int main(int argc, char** argv) {
         
         //bool useminimal = (countflags&32)==0;
         //Logger::Message() <<  "count fn=" << origfn << ", numchan=" << numchan << ", countgeom=" << countgeom << ", countflags=" << countflags;// << ", useminimal=" << useminimal;
-        auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), true);//useminimal);
+        auto rbc = make_read_blocks_caller(origfn, filter_box, poly, timestamp);
+        bool change = ends_with(origfn, "pbfc");
+        auto res = run_count(rbc, change,numchan,false, countgeom, read_flags(countflags), true);//useminimal);
         Logger::Get().timing_messages();
         if (!res) { return 1; }
         
         
         Logger::Message() << "\n"<<res->long_str();
     } else if (operation == "count_full") {
-        auto res = run_count(origfn, numchan,false, countgeom, read_flags(countflags), false);
+        auto rbc = make_read_blocks_caller(origfn, filter_box, poly, timestamp);
+        bool change = ends_with(origfn, "pbfc");
+        auto res = run_count(rbc, change,numchan,false, countgeom, read_flags(countflags), false);
         Logger::Get().timing_messages();
         
         if (!res) { return 1; }

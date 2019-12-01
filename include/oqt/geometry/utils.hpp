@@ -50,6 +50,8 @@ LonLat inverse_transform(double x, double y);
 
 double calc_line_length(const std::vector<LonLat>& ll);
 double calc_ring_area(const std::vector<LonLat>& ll);
+XY calc_ring_centroid(const std::vector<LonLat>& ll);
+
 bbox lonlats_bounds(const std::vector<LonLat>& llv);
 
 

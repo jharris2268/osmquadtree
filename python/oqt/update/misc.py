@@ -242,7 +242,7 @@ def run_update(prfx, nd=None, check_new_diffs=True):
     merge_osc_files = settings['MergeOscFiles'] if 'MergeOscFiles' in settings else False
     
     
-    diffs, tms = check_diffslocation(diffsLocation, settings['InitialState'],settings['SourcePrfx'])
+    diffs, tms = check_diffslocation(diffsLocation, settings['InitialState'],settings['SourcePrfx'] if check_new_diffs else None)
 
     files = json.load(open(prfx+'filelist.json'))
 

@@ -27,3 +27,16 @@ from ._count import run_count, compare_element, diffreason
 
 _count.Count.__str__ = lambda count: count.long_str()
 
+class _CountBlocks:
+    def __init__(self, cc):
+        self.cc=cc
+    def __len__(self):
+        return self.cc.blocks_size()
+    def __getitem__(self, i):
+        if i<0:
+            i+=len(self)
+        
+        return self.cc.blocks_at(i)
+
+_count.Count.blocks = property(lambda cc: _CountBlocks(cc))
+        

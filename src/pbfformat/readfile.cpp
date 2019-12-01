@@ -27,6 +27,7 @@
 #include "oqt/utils/threadedcallback.hpp"
 #include "oqt/utils/multithreadedcallback.hpp"
 #include "oqt/utils/invertedcallback.hpp"
+#include "oqt/utils/operatingsystem.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -46,12 +47,17 @@ class ReadFileImpl : public ReadFile {
             if (!infile.good()) {
                 throw std::domain_error("can't open "+filename);
             }
+            
+            if (file_size==0) {
+                file_size = oqt::file_size(filename);
+            }
+            
             if (startpos>0) {
                 infile.seekg(startpos);
             }
             
         }
-        int64 file_position() { return infile.tellg(); }
+        virtual int64 file_position() { return infile.tellg(); }
         
         virtual std::shared_ptr<FileBlock> next() {
             if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
@@ -82,6 +88,7 @@ class ReadFileLocs : public ReadFile {
                 throw std::domain_error("can't open "+filename);
             }
         }
+        virtual int64 file_position() { return infile.tellg(); }
         
         virtual std::shared_ptr<FileBlock> next() {
             if (index < locs.size()) {
@@ -112,6 +119,7 @@ class ReadFileImplXX : public ReadFile {
         ReadFileImplXX(std::ifstream& infile_, size_t index_offset_, int64 file_size_) : infile(infile_), index_offset(index_offset_), file_size(file_size_), index(0) {
            
         }
+        virtual int64 file_position() { return -1; }
         
         virtual std::shared_ptr<FileBlock> next() {
             if (infile.good() && (infile.peek()!=std::istream::traits_type::eof())) {
@@ -136,6 +144,8 @@ class ReadFileBuffered : public ReadFile {
     public:
         ReadFileBuffered(std::shared_ptr<ReadFile> readfile_, size_t sz_)
             : readfile(readfile_), sz(sz_) {}
+
+        virtual int64 file_position() { return readfile->file_position(); }
 
         virtual std::shared_ptr<FileBlock> next() {
             if (pending.empty()) {

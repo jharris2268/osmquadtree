@@ -31,7 +31,7 @@ std::function<void(ElementPtr)> make_collectobjs(std::vector<primitiveblock_call
 
 primitiveblock_callback make_splitbyid_callback(primitiveblock_callback packers, size_t blocksplit, size_t writeat, int64 split_at);
 
-
+int64 split_id_key(ElementPtr obj, int64 node_split_at, int64 way_split_at, int64 offset);
 }
 
 #endif //SORTING_SORTBYID_HPP

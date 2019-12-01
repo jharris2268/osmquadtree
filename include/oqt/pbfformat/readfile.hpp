@@ -30,6 +30,7 @@ namespace oqt {
 
 class ReadFile {
     public:
+        virtual int64 file_position()=0;
         virtual std::shared_ptr<FileBlock> next()=0;
         virtual ~ReadFile() {}
 };

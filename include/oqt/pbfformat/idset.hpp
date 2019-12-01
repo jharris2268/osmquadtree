@@ -36,6 +36,25 @@ class IdSet {
 
 typedef std::shared_ptr<IdSet> IdSetPtr;
 
+class IdSetRange : public IdSet {
+    public:
+        IdSetRange(ElementType ty_, int64 min_id_, int64 max_id_) : 
+            ty(ty_), min_id(min_id_), max_id(max_id_) {}
+        
+        virtual ~IdSetRange() {}
+        
+        virtual bool contains(ElementType t, int64 id) const {
+            if (t != ty) { return false; }
+            if (id < min_id) { return false; }
+            if ((max_id > 0) && (id >= max_id)) { return false; }
+            return true;
+        }
+        
+        ElementType ty;
+        int64 min_id;
+        int64 max_id;
+};
+         
 }
 
 #endif //PBFFORMAT_IDSET_HPP

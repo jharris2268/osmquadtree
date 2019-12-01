@@ -24,6 +24,7 @@
 #define PBFFORMAT_READBLOCKSCALLER_HPP
 
 #include "oqt/pbfformat/idset.hpp"
+#include "oqt/pbfformat/readblock.hpp"
 
 #include "oqt/elements/block.hpp"
 #include "oqt/elements/minimalblock.hpp"
@@ -37,8 +38,11 @@ namespace oqt {
 std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx, int64 enddate);
 class ReadBlocksCaller {
     public:
-        virtual void read_primitive(std::vector<primitiveblock_callback> cbs, IdSetPtr filter)=0;
-        virtual void read_minimal(std::vector<minimalblock_callback> cbs, IdSetPtr filter)=0;
+        virtual void read_primitive(std::vector<primitiveblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter)=0;
+        virtual void read_minimal(std::vector<minimalblock_callback> cbs, ReadBlockFlags flags, IdSetPtr filter)=0;
+        
+        virtual void read_primitive_nothread(primitiveblock_callback cb, ReadBlockFlags flags, IdSetPtr filter)=0;
+        virtual void read_minimal_nothread(minimalblock_callback cb, ReadBlockFlags flags, IdSetPtr filter)=0;
         virtual size_t num_tiles()=0;
 };
 

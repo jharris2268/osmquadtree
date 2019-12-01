@@ -33,6 +33,9 @@ from .misc import *
 from . import _utils
 import oqt.elements
 
+import time,calendar
+get_date=lambda t: calendar.timegm(time.strptime(t,"%Y-%m-%dT%H:%M:%S"))
+
 bbox = _utils.bbox
 bbox.__repr__=lambda b: "bbox(% 10d, % 10d, % 10d, % 10d)" % (b.minx,b.miny,b.maxx,b.maxy)
 bbox.__len__ = lambda b: 4

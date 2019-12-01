@@ -335,6 +335,7 @@ void geometry_defs(py::module& m) {
     
     m.def("lonlats_bounds", &geometry::lonlats_bounds);
     m.def("calc_ring_area", [](std::vector<LonLat> ll) { return geometry::calc_ring_area(ll); });
+    m.def("calc_ring_centroid", &geometry::calc_ring_centroid);
     m.def("calc_ring_area", [](geometry::Ring rp) { return geometry::calc_ring_area(rp); });
     m.def("ringpart_refs", &geometry::ringpart_refs);
     m.def("ringpart_lonlats", &geometry::ringpart_lonlats);
