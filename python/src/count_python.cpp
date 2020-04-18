@@ -41,17 +41,18 @@
 using namespace oqt;
 
 
-std::shared_ptr<Count> run_count_py(const std::string& fn, size_t numchan, ReadBlockFlags objflags, bool use_minimal) {
+std::shared_ptr<Count> run_count_py(std::shared_ptr<ReadBlocksCaller> rbc, bool change, size_t numchan, bool tiles, bool geom, ReadBlockFlags objflags, bool use_minimal) {
 
     
     Logger::Get().reset_timing();
     py::gil_scoped_release r;
-    auto res = run_count(fn,numchan,true,true,objflags, use_minimal);
+    auto res = run_count(rbc,change,numchan,tiles,geom,objflags,use_minimal);
 
     Logger::Get().timing_messages();
 
     return res;
 }
+
 
 
 class obj_iter2 {
@@ -380,8 +381,11 @@ void count_defs(py::module& m) {
     ;
 
     m.def("run_count", &run_count_py, "count pbf file contents",
-         py::arg("fn"),
+         py::arg("rbc"),
+         py::arg("change")=false,
          py::arg("numchan")=4,
+         py::arg("tiles")=false,
+         py::arg("geom")=true,
          py::arg("objflags")=ReadBlockFlags::Empty,
          py::arg("use_minimal")=true
     );

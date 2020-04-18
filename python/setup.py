@@ -3,6 +3,7 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import customize_compiler
 
 import shutil, os.path
+import pybind11
 
 xmlinspector_path = os.path.abspath("../thirdparty/xmlinspector")
 
@@ -59,6 +60,7 @@ for modname,srcs in mods.items():
                     '/usr/local/include',
                     os.path.abspath('../include/'),
                     os.path.abspath('../thirdparty/'),
+                    pybind11.get_include(),
                     xmlinspector_path,
                     #postgresql_path,
                 ],

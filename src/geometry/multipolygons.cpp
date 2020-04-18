@@ -401,14 +401,14 @@ class MakeMultiPolygons : public BlockHandler {
             if (!outers.empty()) {
                 
                 
-                bool passes; std::vector<Tag> tags; int64 layer;
-                std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, r->Tags());
+                bool tags_pass; std::vector<Tag> tags; int64 layer;
+                std::tie(tags_pass, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, r->Tags());
                 int64 z_order=0;
                 //tagvector tgs; bool isring; int64 zorder, layer;
                 //std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
 
                 //if (!tgs.empty() && isring) {
-                if (passes) {
+                if (tags_pass) {
 
                     std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
                     for (size_t i=0; i < outers.size(); i++) {

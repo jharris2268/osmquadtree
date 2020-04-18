@@ -40,36 +40,36 @@ class quadtree:
 
     @classmethod
     def from_tuple(cls, a,b,c):
-        return cls(_block.quadtree_from_xyz(a,b,c))
+        return cls(quadtree_from_xyz(a,b,c))
     @classmethod
     def from_string(cls, s):
-        return cls(_block.quadtree_from_string(s))
+        return cls(quadtree_from_string(s))
 
     @classmethod
     def calculate(cls, minx, miny, maxx, maxy, buffer=0.05, maxlevel=18):
-        return cls(_block.calculate(minx,miny,maxx,maxy,buffer,maxlevel))
+        return cls(quadtree_calculate(minx,miny,maxx,maxy,buffer,maxlevel))
 
 
     def __int__(self):
         return self.q
 
     def __str__(self):
-        return _elements.quadtree_string(self.q)
+        return quadtree_string(self.q)
 
     def __repr__(self):
         return "quadtree(%s)" % str(self)
 
     def tuple(self):
-        return _elements.quadtree_tuple(self.q)
+        return quadtree_tuple(self.q)
 
     def common(self, other):
-        return quadtree(_elements.quadtree_common(self,other))
+        return quadtree(quadtree_common(self,other))
 
     def round(self, nl):
-        return quadtree(_elements.quadtree_round(self.q, nl))
+        return quadtree(quadtree_round(self.q, nl))
 
     def bbox(self, buffer=0.05):
-        return _elements.quadtree_bbox(self.q, buffer)
+        return quadtree_bbox(self.q, buffer)
        
     def __eq__(self,other):
         return self.q==other.q
