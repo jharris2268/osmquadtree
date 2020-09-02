@@ -431,7 +431,14 @@ void geometry_defs(py::module& m) {
     m.def("res_zoom", &geometry::res_zoom);
     
     
-    
+    py::class_<geometry::mperrorvec>(m, "mperrorvec")
+        .def_readonly("count", &geometry::mperrorvec::count)
+        .def("__len__", [](const geometry::mperrorvec& e) { return e.errors.size(); })
+        .def("__getitem__", [](const geometry::mperrorvec& e, int64 i) {
+            if (i<0) { i += e.errors.size(); }
+            return e.errors.at(i);
+        })
+    ;
     
     
     py::class_<geometry::LonLatStore, std::shared_ptr<geometry::LonLatStore>>(m, "LonLatStore")
@@ -445,9 +452,9 @@ void geometry_defs(py::module& m) {
     
 }
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_geometry) {
-    py::module m("_geometry", "pybind11 example plugin");
+PYBIND11_MODULE(_geometry, m) {
+    //py::module m("_geometry", "pybind11 example plugin");
     geometry_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

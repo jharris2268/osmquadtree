@@ -30,8 +30,8 @@
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 
 
-PYBIND11_PLUGIN(_oqt) {
-    py::module m("_oqt", "pybind11 example plugin");
+PYBIND11_MODULE(_oqt, m) {
+    //py::module m("_oqt", "pybind11 example plugin");
 
     calcqts_defs(m);
     count_defs(m);

@@ -430,9 +430,9 @@ void count_defs(py::module& m) {
    
 }
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_count) {
-    py::module m("_count", "pybind11 example plugin");
+PYBIND11_MODULE(_count, m) {
+    //py::module m("_count", "pybind11 example plugin");
     count_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

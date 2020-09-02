@@ -185,7 +185,7 @@ std::vector<std::pair<bool,std::deque<Ring::Part>>> merge_rings(const std::vecto
 }
 
 
-bool is_ring(const auto& ring) {
+bool is_ring(const Ring& ring) {
     auto ll=ringpart_refs(ring);
     return ((ll.size()>3) && (ll.front()==ll.back()));
 }
@@ -285,6 +285,7 @@ class MakeMultiPolygons : public BlockHandler {
     int64 maxqt;
     int compcount;
     bool boundary, multipolygon;
+    int64 max_number_errors;
     //std::string extra_tags_key;
     bool allow_empty_role;
     public:
@@ -295,13 +296,15 @@ class MakeMultiPolygons : public BlockHandler {
             bool all_other_keys_,
             const bbox& box_,
             bool boundary_,
-            bool multipolygon_) : 
+            bool multipolygon_,
+            int64 max_number_errors_) : 
                 errors_callback(errors_callback_),
                 feature_keys(feature_keys_), other_keys(other_keys_),
                 all_other_keys(all_other_keys_),
                 box(box_), maxqt(-1),
                 compcount(0), boundary(boundary_),
-                multipolygon(multipolygon_)
+                multipolygon(multipolygon_),
+                max_number_errors(max_number_errors_)
             {
                 //all_tags = style.count("*")!=0;
                 /*extra_tags_key = "";
@@ -485,8 +488,9 @@ class MakeMultiPolygons : public BlockHandler {
             }
 
             if (!err.empty()) {
-                if (errors.size()<10000) {
-                    errors.push_back(std::make_tuple(pr.rel, err, outers, inners, passes));
+                errors.count+=1;
+                if ((int64) errors.errors.size() < max_number_errors) {
+                    errors.errors.push_back(std::make_tuple(pr.rel, err, outers, inners, passes));
                 }
                 
                 /*if (errors && (errors->size()<10000)) {
@@ -581,9 +585,9 @@ std::shared_ptr<BlockHandler> make_multipolygons(
     const std::set<std::string>& other_keys,
     bool all_other_keys,
     const bbox& box,
-    bool boundary, bool multipolygon) {
+    bool boundary, bool multipolygon, int64 max_number_errors) {
 
-    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, all_other_keys,box,boundary,multipolygon);
+    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, all_other_keys,box,boundary,multipolygon,max_number_errors);
 }
 
 

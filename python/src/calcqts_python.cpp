@@ -143,9 +143,9 @@ void calcqts_defs(py::module& m) {
 
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_calcqts) {
-    py::module m("_calcqts", "pybind11 example plugin");
+PYBIND11_MODULE(_calcqts, m) {
+    //py::module m("_calcqts", "pybind11 example plugin");
     calcqts_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

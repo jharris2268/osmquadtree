@@ -565,9 +565,9 @@ void pbfformat_defs(py::module& m) {
 }
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_pbfformat) {
-    py::module m("_pbfformat", "pybind11 example plugin");
+PYBIND11_MODULE(_pbfformat, m) {
+    //py::module m("_pbfformat", "pybind11 example plugin");
     pbfformat_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

@@ -33,13 +33,21 @@ namespace geometry {
 
 
 typedef std::tuple<std::shared_ptr<Relation>,std::string,std::vector<Ring>,std::vector<Ring>,std::vector<std::pair<bool,Ring>>> mperror;
-typedef std::vector<mperror> mperrorvec;
+//typedef std::vector<mperror> mperrorvec;
+struct mperrorvec{
+    mperrorvec() : count(0) {}
+    
+    std::vector<mperror> errors;
+    size_t count;
+};
+
+
 std::shared_ptr<BlockHandler> make_multipolygons(
     std::function<void(mperrorvec&)> errors_callback,
     const std::set<std::string>& feature_keys,  
     const std::set<std::string>& other_keys,
     bool all_other_keys, const bbox& box,
-    bool boundary, bool multipolygon);
+    bool boundary, bool multipolygon, int64 max_number_errors);
 
 }}
 

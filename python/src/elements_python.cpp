@@ -256,9 +256,9 @@ void elements_defs(py::module& m) {
 
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_elements) {
-    py::module m("_elements", "pybind11 example plugin");
+PYBIND11_MODULE(_elements, m) {
+    //py::module m("_elements", "pybind11 example plugin");
     elements_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

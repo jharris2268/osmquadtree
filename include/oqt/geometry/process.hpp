@@ -46,7 +46,7 @@ struct GeometryParameters {
     GeometryParameters() 
         : numchan(4), numblocks(512), all_other_keys(false), box(), add_multipolygons(false),
             add_boundary_polygons(false), recalcqts(false), outfn(""), indexed(false),
-            max_min_zoom_level(0) {}
+            max_min_zoom_level(0), max_number_errors(1000) {}
     
     std::vector<std::string> filenames;
     
@@ -75,6 +75,7 @@ struct GeometryParameters {
     
     std::shared_ptr<QtTree> groups;
     int64 max_min_zoom_level;
+    int64 max_number_errors;
     
 };
 

@@ -159,7 +159,7 @@ block_callback process_geometry_blocks(
         
         make_mps = threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MultiPolygons", //blockhandler_callback(
-                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons),
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons,params.max_number_errors),
                 makegeoms_split
             )
         );
@@ -221,7 +221,7 @@ block_callback process_geometry_blocks_nothread(
         mp = 
             BlockhandlerCallbackTime::make("MultiPolygons",
             
-                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons),
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons, params.max_number_errors),
                 make_geom
         );
     }
@@ -409,6 +409,7 @@ mperrorvec process_geometry(const GeometryParameters& params, block_callback wra
 
 
 
+
 mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_callback cb) {
 
 
@@ -418,7 +419,7 @@ mperrorvec process_geometry_sortblocks(const GeometryParameters& params, block_c
     auto sb = make_sortblocks(params.locs.size()/16, params.groups, params.outfn+"-interim",50, params.numchan, 0);
     auto sb_callbacks = sb->make_addblocks_cb(false);
   
-    auto addwns = process_geometry_blocks(sb_callbacks, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+    auto addwns = process_geometry_blocks(sb_callbacks, params, [&errors_res](mperrorvec& ee) { errors_res.errors.swap(ee.errors); errors_res.count=ee.count; });
     
     read_blocks_merge(params.filenames, addwns, params.locs, params.numchan, nullptr, ReadBlockFlags::Empty, 1<<14);
     
@@ -475,7 +476,7 @@ mperrorvec process_geometry_nothread(const GeometryParameters& params, block_cal
     }
     
     
-    block_callback addwns = process_geometry_blocks_nothread(writer, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+    block_callback addwns = process_geometry_blocks_nothread(writer, params, [&errors_res](mperrorvec& ee) { errors_res.errors.swap(ee.errors); errors_res.count=ee.count; });
     
     read_blocks_merge_nothread(params.filenames, addwns, params.locs, nullptr, ReadBlockFlags::Empty);
       
@@ -502,9 +503,9 @@ mperrorvec process_geometry_from_vec(
     
     block_callback addwns;
     if (nothread) {
-        addwns = process_geometry_blocks_nothread({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+        addwns = process_geometry_blocks_nothread({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.errors.swap(ee.errors); errors_res.count=ee.count; });
     } else {
-        addwns = process_geometry_blocks({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.swap(ee); });
+        addwns = process_geometry_blocks({callback}, params, [&errors_res](mperrorvec& ee) { errors_res.errors.swap(ee.errors); errors_res.count=ee.count; });
     }
     
     for (auto bl : blocks) {

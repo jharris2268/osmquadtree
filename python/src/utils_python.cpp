@@ -154,9 +154,9 @@ void utils_defs(py::module& m) {
     m.def("un_zig_zag", &un_zig_zag);
 };
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_utils) {
-    py::module m("_utils", "bindings for oqt/utils/");
+PYBIND11_MODULE(_utils, m) {
+    //py::module m("_utils". "bindings for oqt/utils/");
     utils_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

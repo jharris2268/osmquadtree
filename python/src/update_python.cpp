@@ -185,9 +185,9 @@ void update_defs(py::module& m) {
 }
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_update) {
-    py::module m("_update", "pybind11 example plugin");
+PYBIND11_MODULE(_update, m) {
+    //py::module m("_update", "pybind11 example plugin");
     update_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif

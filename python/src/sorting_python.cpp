@@ -181,9 +181,9 @@ void sorting_defs(py::module& m) {
 
 
 #ifdef INDIVIDUAL_MODULES
-PYBIND11_PLUGIN(_sorting) {
-    py::module m("_sorting", "pybind11 example plugin");
+PYBIND11_MODULE(_sorting, m) {
+    //py::module m("_sorting", "pybind11 example plugin");
     sorting_defs(m);
-    return m.ptr();
+    //return m.ptr();
 }
 #endif
