@@ -266,7 +266,9 @@ void CountRelation::add (ElementPtr obj) {
 
 
     }
-
+    if (rel->Members().empty()) {
+        num_empties++;
+    }
 
     if (((int64) rel->Members().size()) > max_len) {
         max_len=rel->Members().size();
@@ -282,21 +284,26 @@ void CountRelation::add (const minimal::Relation& obj) {
 
 
     int64 nm=0;
-    int64 curr=0;
-    size_t pos=0;
-    size_t pos_ty=0;
-    while ( pos < obj.refs_data.size()) {
-        uint64 ty=read_unsigned_varint(obj.tys_data, pos_ty);
+    
+    
+    if (obj.refs_data.empty()) {
+        num_empties++;
+    } else {
+        int64 curr=0;
+        size_t pos=0;
+        size_t pos_ty=0;
+        while ( pos < obj.refs_data.size()) {
+            uint64 ty=read_unsigned_varint(obj.tys_data, pos_ty);
 
-        curr += read_varint(obj.refs_data,pos);
-        nm++;
-        if (ty==0) { num_nodes++; }
-        if (ty==1) { num_ways++; }
-        if (ty==2) { num_rels++; }
+            curr += read_varint(obj.refs_data,pos);
+            nm++;
+            if (ty==0) { num_nodes++; }
+            if (ty==1) { num_ways++; }
+            if (ty==2) { num_rels++; }
 
 
+        }
     }
-
 
     if (nm > max_len) {
         max_len=nm;

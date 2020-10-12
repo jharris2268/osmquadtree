@@ -192,7 +192,7 @@ def run_initial(prfx, orig_fn, end_date, diffs_location, initial_state, **kw):
         "RoundTime": kw['roundtime'].lower() in ('yes','true') if 'roundtime' in kw else True,
         "DiffsLocation": diffs_location,
         "InitialState": initial_state,
-        "SourcePrfx": kw['sourceprfx'] if 'sourceprfx' in kw else "http://planet.openstreetmap.org/replication/day/",
+        "SourcePrfx": kw['sourceprfx'] if 'sourceprfx' in kw else "https://planet.openstreetmap.org/replication/day/",
     }
     if 'allowmissingusers' in kw and kw['allowmissingusers'].lower() in ('yes','true'):
         settings['AllowMissingUsers']=True
