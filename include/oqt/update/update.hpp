@@ -23,7 +23,7 @@
 #ifndef UPDATE_UPDATE_HPP
 #define UPDATE_UPDATE_HPP
 #include "oqt/calcqts/qtstore.hpp"
-#include "oqt/pbfformat/idset.hpp"
+#include "oqt/pbfformat/objsidset.hpp"
 #include "oqt/update/xmlchange.hpp"
 #include "oqt/elements/combineblocks.hpp"
 #include "oqt/pbfformat/fileblock.hpp"
@@ -70,6 +70,6 @@ std::vector<PrimitiveBlockPtr> find_change_tiles(
 
 std::pair<int64,int64> find_change_all(const std::vector<std::string>& src_filenames, const std::string& prfx, const std::vector<std::string>& fls, int64 st, int64 et, const std::string& outfn);
 
-
+std::shared_ptr<ObjsIdSet> make_idset(typeid_element_map_ptr em);
 }
 #endif

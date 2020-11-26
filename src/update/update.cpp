@@ -77,14 +77,17 @@ void checkIndexBlock(const std::string& ss, IdSetPtr ids, std::shared_ptr<std::s
         if (tg.tag==2) {
             if (has_id(ElementType::Node, tg.data, ids)) {
                 blocks->insert(qt);
+                return;
             }
         } else if (tg.tag==3) {
             if (has_id(ElementType::Way, tg.data, ids)) {
                 blocks->insert(qt);
+                return;
             }
         } else if (tg.tag==4) {
             if (has_id(ElementType::Relation, tg.data, ids)) {
                 blocks->insert(qt);
+                return;
             }
         }
 
@@ -274,7 +277,7 @@ std::vector<PrimitiveBlockPtr> read_file_blocks(
     return res;
 }
 
-IdSetPtr make_idset(typeid_element_map_ptr em) {
+std::shared_ptr<ObjsIdSet> make_idset(typeid_element_map_ptr em) {
     auto ids = std::make_shared<ObjsIdSet>();
     for (auto& tie : *em) {
         ids->add(tie.first.first, tie.first.second);

@@ -86,7 +86,19 @@ size_t read_blocks_minimalblock_py(
     read_blocks_minimalblock(filename, cbf, locs, numchan, objflags);
     return cb->total();
 }
+size_t read_blocks_quadtree_vector_py(
+    const std::string& filename,
+    std::function<bool(std::vector<std::shared_ptr<quadtree_vector>>)> callback,
+    std::vector<int64> locs, size_t numchan, size_t numblocks,
+    ReadBlockFlags objflags) {
 
+
+    py::gil_scoped_release r;
+    auto cb = std::make_shared<collect_blocks<quadtree_vector>>(wrap_callback(callback),numblocks);
+    std::function<void(std::shared_ptr<quadtree_vector>)> cbf = [cb](std::shared_ptr<quadtree_vector> bl) { cb->call(bl); };
+    read_blocks_quadtree_vector(filename, cbf, locs, numchan, objflags);
+    return cb->total();
+}
 
 size_t read_blocks_caller_read_primitive(
     std::shared_ptr<ReadBlocksCaller> rbc,
@@ -445,6 +457,7 @@ void pbfformat_defs(py::module& m) {
     
     
     m.def("read_minimal_block", &read_minimal_block);
+    m.def("read_quadtree_vector_block", [](py::bytes b) { return read_quadtree_vector_block(b, ReadBlockFlags::Empty);});
     m.def("read_header_block", &read_header_block);
 
     
@@ -488,6 +501,11 @@ void pbfformat_defs(py::module& m) {
         py::arg("filter")=nullptr, py::arg("ischange")=false,py::arg("objflags")=ReadBlockFlags::Empty);
     
     m.def("read_blocks_minimal", &read_blocks_minimalblock_py,
+        py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
+        py::arg("numchan")=4,py::arg("numblocks")=32,
+        py::arg("objflags")=ReadBlockFlags::Empty);
+        
+    m.def("read_blocks_quadtree_vector", &read_blocks_quadtree_vector_py,
         py::arg("filename"), py::arg("callback"), py::arg("locs")=std::vector<int64>(),
         py::arg("numchan")=4,py::arg("numblocks")=32,
         py::arg("objflags")=ReadBlockFlags::Empty);

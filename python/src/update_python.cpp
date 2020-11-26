@@ -182,6 +182,8 @@ void update_defs(py::module& m) {
         py::gil_scoped_release r;
         return read_file_blocks(fn,locs,numchan,index_offset,change,objflags,ids);
     });
+    
+    m.def("make_idset", [](element_map &em) { return make_idset(em.u);  });
 }
 
 #ifdef INDIVIDUAL_MODULES

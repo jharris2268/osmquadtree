@@ -317,10 +317,48 @@ std::vector<std::pair<int64,ElementPtr>> filter_weird(std::vector<PrimitiveBlock
     }
     return res;
 }
-    
-            
-    
+ElementPtr  ele_at(PrimitiveBlockPtr bl, size_t i) {
+    if (i>=bl->size()) {
+        return nullptr;
+    }
+    return bl->at(i);
+}
 
+std::vector<std::tuple<diffreason,ElementPtr,ElementPtr>> compare_block(PrimitiveBlockPtr left, PrimitiveBlockPtr right) {
+    std::vector<std::tuple<diffreason,ElementPtr,ElementPtr>> res;
+    if ((!left) || (left->size()==0)) {
+        if ((right) && (right->size()>0)) {
+            for (auto r: right->Objects()) {
+                res.push_back(std::make_tuple(diffreason::NoLeft, nullptr, r));
+            }
+        }
+    } else if ((!right) || (right->size()==0)) {
+        for (auto l: left->Objects()) {
+            res.push_back(std::make_tuple(diffreason::NoRight, l, nullptr));
+        }
+        
+    } else {
+        size_t li=0; ElementPtr l = ele_at(left,li);
+        size_t ri=0; ElementPtr r = ele_at(right, ri);
+        while (l || r) {
+            if ((!l) || (r->InternalId() < l->InternalId())) {
+                res.push_back(std::make_tuple(diffreason::NoLeft, nullptr, r));
+                ri++; r=ele_at(right,ri);
+            } else if ((!r) || (l->InternalId() < r->InternalId())) {
+                res.push_back(std::make_tuple(diffreason::NoRight, left->at(li), nullptr));
+                li++; l=ele_at(left, li);
+            } else {
+                auto c = compare_element(l,r);
+                if (c!=diffreason::Same) {
+                    res.push_back(std::make_tuple(c,l,r));
+                }
+                li++; l=ele_at(left, li);
+                ri++; r=ele_at(right,ri);
+            }
+        }
+    }
+    return res;
+}
 PYBIND11_DECLARE_HOLDER_TYPE(XX, std::shared_ptr<XX>);
 void count_defs(py::module& m) {
     py::class_<CountElement>(m,"CountElement")
@@ -415,16 +453,10 @@ void count_defs(py::module& m) {
     //m.def("find_difference", &find_difference);
     m.def("find_difference2", &find_difference2);
     m.def("compare_element", &compare_element);
-    
+    m.def("compare_block", &compare_block);
     m.def("fix_str", [](const std::string& s) { return py::bytes(fix_str(s)); });
     
     
-    
-    
-    
-    
-   
-   
    m.def("has_weird_string", &has_weird_string);
    m.def("filter_weird", &filter_weird);
    

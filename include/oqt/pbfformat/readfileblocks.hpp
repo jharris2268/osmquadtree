@@ -228,10 +228,20 @@ void read_blocks_nothread_minimalblock(
     std::vector<int64> locs, 
     ReadBlockFlags objflags);
 
+
+
+void read_blocks_quadtree_vector(
+    const std::string& filename,
+    std::function<void(std::shared_ptr<quadtree_vector>)> callback,
+    std::vector<int64> locs,
+    size_t numchan, 
+    ReadBlockFlags objflags); 
+
+
 void read_blocks_split_quadtree_vector(
     const std::string& filename,
     std::vector<std::function<void(std::shared_ptr<quadtree_vector>)>> callbacks,
-    std::vector<int64> locs, 
+    std::vector<int64> locs,
     ReadBlockFlags objflags);   
 
 void read_blocks_nothread_quadtree_vector(

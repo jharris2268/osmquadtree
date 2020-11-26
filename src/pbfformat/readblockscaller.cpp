@@ -86,20 +86,28 @@ std::pair<std::vector<std::string>,int64> read_filenames(const std::string& prfx
 class ReadBlocksSingle : public ReadBlocksCaller {
     public:
         ReadBlocksSingle(const std::string& fn_, bbox filter_box, const std::vector<LonLat>& poly) : fn(fn_) {
+            //std::cout << "ReadBlocksSingle..." << std::endl;
             if (!box_empty(filter_box)) {
-                auto head = get_header_block(fn);
-                if (head && (!head->Index().empty())) {
-                    for (const auto& l : head->Index()) {
-                        if (overlaps_quadtree(filter_box,std::get<0>(l))) {
-                            if (poly.empty() || polygon_box_intersects(poly, quadtree::bbox(std::get<0>(l), 0.05))) {
-                            
-                            
-                                locs.push_back(std::get<1>(l));
+                try {
+                    auto head = get_header_block(fn);
+                    if (head && (!head->Index().empty())) {
+                        for (const auto& l : head->Index()) {
+                            if (overlaps_quadtree(filter_box,std::get<0>(l))) {
+                                if (poly.empty() || polygon_box_intersects(poly, quadtree::bbox(std::get<0>(l), 0.05))) {
+                                
+                                
+                                    locs.push_back(std::get<1>(l));
+                                }
                             }
                         }
+                        if (locs.empty()) {
+                            throw std::domain_error("no tiles match filter box");
+                        }
                     }
-                    if (locs.empty()) {
-                        throw std::domain_error("no tiles match filter box");
+                } catch (const std::domain_error& e) {
+                    //std::cout << "caught " << e.what() << std::endl;
+                    if (std::string(e.what()) != "first block not a header") {
+                        throw e;
                     }
                 }
             }
@@ -199,9 +207,16 @@ std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
         bbox& filter_box, const std::vector<LonLat>& poly, int64& enddate) {
    
     if (ends_with(infile_name, ".pbf")) {
-        auto hh = get_header_block(infile_name);
-        if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {
-            filter_box = hh->BBox();
+        try {
+            auto hh = get_header_block(infile_name);
+            if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {
+                filter_box = hh->BBox();
+            }
+        } catch (const std::domain_error& e) {
+            //std::cout << "caught " << e.what() << std::endl;
+            if (std::string(e.what()) != "first block not a header") {
+                throw e;
+            }
         }
         return std::make_shared<ReadBlocksSingle>(infile_name, filter_box, poly);
     }

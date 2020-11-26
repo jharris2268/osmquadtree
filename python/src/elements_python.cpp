@@ -173,7 +173,14 @@ void elements_defs(py::module& m) {
     m.def("make_way", &make_way, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("refs"), py::arg("quadtree"), py::arg("changetype"));
     m.def("make_relation", &make_relation, py::arg("id"), py::arg("info"), py::arg("tags"), py::arg("members"), py::arg("quadtree"), py::arg("changetype"));
     
-    
+    py::class_<quadtree_vector, std::shared_ptr<quadtree_vector>>(m,"quadtree_vector")
+        .def_readonly("idx", &quadtree_vector::idx)
+        .def_readonly("file_progress", &quadtree_vector::file_progress)
+        .def("ids_len", [](const quadtree_vector& x) { return x.ids.size(); })
+        .def("ids_at", [](const quadtree_vector& x, int i) { if (i<0) { i+= x.ids.size(); } return x.ids.at(i); })
+        .def("quadtrees_len", [](const quadtree_vector& x) { return x.quadtrees.size(); })
+        .def("quadtrees_at", [](const quadtree_vector& x, int i) { if (i<0) { i+= x.quadtrees.size(); } return x.quadtrees.at(i); })
+    ;
     
     py::class_<minimal::Block, std::shared_ptr<minimal::Block>>(m, "MinimalBlock")
         .def_readonly("index", &minimal::Block::index)
