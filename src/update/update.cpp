@@ -443,18 +443,120 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtT
     return std::make_tuple(allocs, qts,tree);
 }
 
+
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>> add_orig_elements_altxx(
+    typeid_element_map_ptr em, const std::string& prfx, const std::vector<std::string>& fls) {
+
+
+    auto ids = make_idset(em);
+    
+/*
+    std::vector<HeaderPtr> headers;
+
+    std::set<int64> tt;
+    size_t fi=0;
+    for (auto& f: fls) {
+        headers.push_back(get_header_block(prfx+f));
+        Logger::Progress(fi*100/fls.size()) << "scan " << f+"-index.pbf [" << tt.size() << " locs]";
+        auto p = check_index_file(prfx+f+"-index.pbf", headers.back(), (headers.back()->Index().size()>20000 ? 4 : 1), ids);
+        for (auto& q: p) { tt.insert(q); }
+        ++fi;
+    }
+    Logger::Progress(100) << "scaned " << fls.size() << " files, have" << tt.size() << " locs";
+*/
+    
+    auto tree=make_tree_empty();
+    /*for (auto& q: headers[0]->Index()) {
+        tree->add(std::get<0>(q),1);
+    }*/
+    auto allocs = make_qtstore_map();
+    auto qts = make_qtstore_map();
+    std::set<int64> dels;
+    size_t ne=0;
+    for (size_t i=0; i < fls.size(); i++) {
+        size_t j = fls.size()-i-1;
+        auto fn=prfx+fls[j];
+        std::set<int64> tt;
+        auto head = get_header_block(fn);
+        Logger::Progress(i*100/fls.size()) << "scan " << fn+"-index.pbf [" << tt.size() << " locs]";
+        auto p = check_index_file(fn+"-index.pbf", head, (head->Index().size()>20000 ? 4 : 1), ids);
+        for (auto& q: p) { tt.insert(q); }
+        
+        std::vector<int64> locs;
+        for (auto& p: head->Index()) {
+            if (tt.count(std::get<0>(p))==1) {
+                locs.push_back(std::get<1>(p));
+            }
+        }
+        if (!locs.empty()) {
+            Logger::Progress(i*100.0/fls.size()) << "have " << em->size() << "objs (" << ne << " empty blocks): read " << locs.size() << " blocks from " << fn;
+            auto bb = read_file_blocks(fn,locs,4,0,true,ReadBlockFlags::Empty,ids);
+            for (auto bl: bb) {
+                if (bl->size() == 0) {
+                    
+                    ne++;
+                } else {
+                    for (auto o : bl->Objects()) {
+                        int64 k =o->InternalId();//(o->Type() << 61) | o->Id();
+                        if (dels.count(k)==1) { continue; }
+                        if ((o->ChangeType()==changetype::Normal) || (o->ChangeType()==changetype::Unchanged) || (o->ChangeType()==changetype::Modify) || (o->ChangeType()==changetype::Create)) {
+
+                            if (allocs->contains(k)==0) {
+                                allocs->expand(k, bl->Quadtree());
+                                qts->expand(k, o->Quadtree());
+                                if (o->Type()==ElementType::Node) {
+                                    o->SetChangeType(changetype::Normal);
+                                    auto k2=std::make_pair(o->Type(),o->Id());
+                                    if (em->count(k2)==0) {
+                                        (*em)[k2] = o;
+                                    }
+                                }
+                            }
+                        }
+                        if (o->ChangeType()==changetype::Delete) {
+                            dels.insert(k);
+                        }
+                    }
+                }
+            }
+            
+        }
+        
+        if (j==0) {
+            for (auto& q: head->Index()) {
+                tree->add(std::get<0>(q),1);
+            }
+        }
+   
+        
+    }
+    Logger::Progress(100) << " have " << em->size() << "objs (" << ne << " empty blocks)";
+
+    return std::make_tuple(allocs, qts,tree);
+}
+
+const size_t MISSING_NODE_LIMIT=10;
 void calc_change_qts(typeid_element_map_ptr em, std::shared_ptr<QtStore> qts) {
     std::set<int64> nq;
     Logger::Message() << "calc way qts";
+    
+    size_t missing_nodes=0;
     for (auto& pp : (*em)) {
         if ((pp.first.first == ElementType::Way) && (pp.second->ChangeType()>changetype::Delete)) {
             bbox bx;
             auto o = std::dynamic_pointer_cast<Way>(pp.second);
             for (auto& n: o->Refs()) {
                 auto it=em->find(std::make_pair(ElementType::Node,n));
-                if (it==em->end()) { throw std::domain_error("node not present"); }
-                auto no = std::dynamic_pointer_cast<Node>(it->second);
-                expand_point(bx, no->Lon(),no->Lat());
+                if (it==em->end()) {
+                    std::cout << "[" << missing_nodes << "] missing node " << n << " from way " << o->Id() << std::endl;
+                    missing_nodes+=1;
+                    if (missing_nodes>MISSING_NODE_LIMIT) {
+                        throw std::domain_error("too many nodes missing");
+                    }
+                } else {
+                    auto no = std::dynamic_pointer_cast<Node>(it->second);
+                    expand_point(bx, no->Lon(),no->Lat());
+                }
             }
             int64 k = pp.second->InternalId();//(1ll<<61) | pp.first.second;
             qts->expand(k, -1);

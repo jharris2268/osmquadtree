@@ -76,3 +76,22 @@ class ReadBlocksCaller:
         return _pbfformat.calc_idset_filter(self.rbc, bbox, poly, 4)
 
 _pbfformat.ReadBlocksCaller=ReadBlocksCaller
+
+
+class ReadFile:
+    def __init__(self, fn):
+        self.fn=fn
+        self.readfile = None
+    
+    def __iter__(self):
+        self.readfile = _pbfformat.make_readfile(self.fn)
+        return self
+    
+    def __next__(self):
+        
+        a = self.readfile.next()
+        if not a:
+            raise StopIteration()
+        return a
+            
+        

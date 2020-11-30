@@ -206,7 +206,7 @@ std::shared_ptr<ReadBlocksCaller> make_read_blocks_caller(
         const std::string& infile_name, 
         bbox& filter_box, const std::vector<LonLat>& poly, int64& enddate) {
    
-    if (ends_with(infile_name, ".pbf")) {
+    if (ends_with(infile_name, ".pbf") || ends_with(infile_name, ".pbfc")) {
         try {
             auto hh = get_header_block(infile_name);
             if (box_empty(filter_box) || (!box_empty(hh->BBox()) && bbox_contains(filter_box, hh->BBox()))) {

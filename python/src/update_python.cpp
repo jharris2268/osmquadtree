@@ -78,7 +78,11 @@ std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtT
     py::gil_scoped_release r;
     return add_orig_elements(em.u,prfx,fls);
 }
-
+std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>>
+    add_orig_elements_altxx_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
+    py::gil_scoped_release r;
+    return add_orig_elements_altxx(em.u,prfx,fls);
+}
 std::tuple<std::shared_ptr<QtStore>,std::shared_ptr<QtStore>,std::shared_ptr<QtTree>>
     add_orig_elements_alt_py(element_map& em, const std::string& prfx, std::vector<std::string> fls) {
     py::gil_scoped_release r;
@@ -169,6 +173,7 @@ void update_defs(py::module& m) {
     
     m.def("add_orig_elements", &add_orig_elements_py);
     m.def("add_orig_elements_alt", &add_orig_elements_alt_py);
+    m.def("add_orig_elements_altxx", &add_orig_elements_altxx_py);
 
     m.def("find_change_tiles", &find_change_tiles_py);
     m.def("calc_change_qts", &calc_change_qts_py);

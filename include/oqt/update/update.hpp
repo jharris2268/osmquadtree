@@ -52,6 +52,15 @@ std::tuple<
     std::shared_ptr<QtStore>, //orig allocs
     std::shared_ptr<QtStore>, //qts
     std::shared_ptr<QtTree>   //tree
+> add_orig_elements_altxx(
+        typeid_element_map_ptr objs,
+        const std::string& prfx,
+        const std::vector<std::string>& fls);
+
+std::tuple<
+    std::shared_ptr<QtStore>, //orig allocs
+    std::shared_ptr<QtStore>, //qts
+    std::shared_ptr<QtTree>   //tree
 > add_orig_elements_alt(
         typeid_element_map_ptr objs,
         const std::string& prfx,

@@ -80,7 +80,7 @@ def find_change(src_filenames, prfx, infiles, startdate, enddate, outfn, use_alt
         _update.read_xml_change_file_em(src,True,objs,allow_missing_users)
     tm("read xml")
     
-    aoe = _update.add_orig_elements_alt if use_alt else _update.add_orig_elements
+    aoe = _update.add_orig_elements_altxx if use_alt else _update.add_orig_elements
     
     orig_allocs,qts,tree = aoe(objs,prfx, infiles)
     tm("find orig")

@@ -88,6 +88,7 @@ enum class diffreason {
     Refs,
     Members,
     Quadtree,
+    ChangeType,
     NoLeft,
     NoRight,
     GeomTags
@@ -111,6 +112,7 @@ bool pbftag_equals(const PbfTag& left, const PbfTag& right) {
 }
 
 diffreason compare_element(ElementPtr left, ElementPtr right) {
+    if ((!left) && (!right)) { return diffreason::Same; }
     if (!left) { return diffreason::NoLeft; }
     if (!right) { return diffreason::NoRight; }
     if (left->InternalId()!=right->InternalId()) { return diffreason::Object; }
@@ -182,6 +184,9 @@ diffreason compare_element(ElementPtr left, ElementPtr right) {
     
     if (left->Quadtree()!=right->Quadtree()) {
         return diffreason::Quadtree;
+    }
+    if (left->ChangeType()!=right->ChangeType()) {
+        return diffreason::ChangeType;
     }
     
     return diffreason::Same;
@@ -341,10 +346,16 @@ std::vector<std::tuple<diffreason,ElementPtr,ElementPtr>> compare_block(Primitiv
         size_t li=0; ElementPtr l = ele_at(left,li);
         size_t ri=0; ElementPtr r = ele_at(right, ri);
         while (l || r) {
-            if ((!l) || (r->InternalId() < l->InternalId())) {
+            if (!l) {
                 res.push_back(std::make_tuple(diffreason::NoLeft, nullptr, r));
                 ri++; r=ele_at(right,ri);
-            } else if ((!r) || (l->InternalId() < r->InternalId())) {
+            } else if (!r) {
+                res.push_back(std::make_tuple(diffreason::NoRight, left->at(li), nullptr));
+                li++; l=ele_at(left, li);
+            } else if (r->InternalId() < l->InternalId()) {
+                res.push_back(std::make_tuple(diffreason::NoLeft, nullptr, r));
+                ri++; r=ele_at(right,ri);
+            } else if (l->InternalId() < r->InternalId()) {
                 res.push_back(std::make_tuple(diffreason::NoRight, left->at(li), nullptr));
                 li++; l=ele_at(left, li);
             } else {
@@ -439,6 +450,7 @@ void count_defs(py::module& m) {
         .value("Refs", diffreason::Refs)
         .value("Members", diffreason::Members)
         .value("Quadtree", diffreason::Quadtree)
+        .value("ChangeType", diffreason::ChangeType)
         .value("NoLeft", diffreason::NoLeft)
         .value("NoRight", diffreason::NoRight)
         .value("GeomTags", diffreason::GeomTags)
