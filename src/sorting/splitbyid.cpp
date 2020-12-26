@@ -109,7 +109,7 @@ int64 split_id_key(ElementPtr obj, int64 node_split_at, int64 way_split_at, int6
         if (x>=offset) { x=offset-1; }
         return offset+x;
     } else if (t==ElementType::Relation) {
-        int64 x =  i / (way_split_at/10);
+        int64 x =  i / (way_split_at/2);
         if (x>=offset) { x=offset-1; }
         return 2*offset+x;
     }

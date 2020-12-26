@@ -103,7 +103,7 @@ bool line_intersects(const std::vector<LonLat>& line1, const std::vector<LonLat>
     if ((line1.size()<2) || (line2.size()<2)) { return false; }
     
     for (size_t i=0; i < (line1.size()-1); i++) {
-        for (size_t j=0; i < (line2.size()-1); j++) {
+        for (size_t j=0; j < (line2.size()-1); j++) {
             if (segment_intersects(line1[i],line1[i+1],line2[i],line2[j+1])) {
                 return true;
             }

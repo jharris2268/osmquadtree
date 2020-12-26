@@ -224,15 +224,15 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
     while (left.second || right.second) {
         
         if (!left.second || (right.second->InternalId() < left.second->InternalId())) {
-            curr.push_back(objdiff{diffreason::Object,0,nullptr,right.first,right.second});
+            curr.push_back(objdiff{diffreason::NoLeft,0,nullptr,right.first,right.second});
             
             right=right_obj.next();
-            tot[diffreason::Object]++;
+            tot[diffreason::NoLeft]++;
         } else if (!right.second || (left.second->InternalId() < right.second->InternalId())) {
-            curr.push_back(objdiff{diffreason::Object,left.first,left.second,0,nullptr});
+            curr.push_back(objdiff{diffreason::NoRight,left.first,left.second,0,nullptr});
             
             left=left_obj.next();
-            tot[diffreason::Object]++;
+            tot[diffreason::NoRight]++;
         } else  {
             if (left.second->InternalId()>next_obj) {
                 std::cout   << "\r[" << TmStr{ts.since(),7,1} <<"]"
@@ -240,12 +240,13 @@ std::pair<std::map<diffreason,size_t>,std::map<std::string,std::string>> find_di
                             << " " << std::setw(10) << left.second->Id()
                             << " [" << std::setw(10) << left.first
                             << "//" << std::setw(10)  << right.first
-                            << ": " << std::setw(5) << tot[diffreason::Object]
-                            << " " << std::setw(5) << tot[diffreason::Info]
-                            << " " << std::setw(5) << tot[diffreason::Tags]
-                            << " " << std::setw(5) << tot[diffreason::LonLat]
-                            << " " << std::setw(5) << tot[diffreason::Refs]
-                            << " " << std::setw(5) << tot[diffreason::Members]
+                            << ": " << std::setw(5) << (tot.count(diffreason::NoLeft) ? tot.at(diffreason::NoLeft) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::NoRight) ? tot.at(diffreason::NoRight) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::Info) ? tot.at(diffreason::Info) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::Tags) ? tot.at(diffreason::Tags) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::LonLat) ? tot.at(diffreason::LonLat) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::Refs) ? tot.at(diffreason::Refs) : 0)
+                            << " " << std::setw(5) << (tot.count(diffreason::Members) ? tot.at(diffreason::Members) : 0)
                             << ", found " << std::setw(6) << users.size() << " changed users]" << std::flush;
                 if (left.second->Type()==ElementType::Node) {
                     next_obj = left.second->InternalId() + (1ll<<20);

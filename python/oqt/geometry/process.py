@@ -191,7 +191,8 @@ def to_json(tile,split=True):
 
 def coord_json(ll):
     xy = ll.transform
-    return [round(xy.x,1),round(xy.y,1)]
+    #return [round(xy.x,1),round(xy.y,1)]
+    return [xy.x,xy.y]
 
 def ring_bbox(cc):
     x,y=zip(*cc)
@@ -203,35 +204,85 @@ def collect_bbox(bboxes):
 
 def make_json_feat(obj):
     res = {'type':'Feature',}
-    if obj.Type==elements.ElementType.ComplicatedPolygon:
-        res['id'] = -1*obj.Id
-    else:
-        res['id'] = obj.Id
-    res['quadtree'] = elements.quadtree_tuple(obj.Quadtree)
-    res['minzoom']  = obj.MinZoom
+    #if obj.Type==elements.ElementType.ComplicatedPolygon:
+    #    res['id'] = -1*obj.Id
+    #else:
+    res['id'] = obj.Id
+    res['quadtree'] = list(elements.quadtree_tuple(obj.Quadtree))
+    if obj.MinZoom >= 0:
+        res['minzoom']  = obj.MinZoom
     res['properties'] = dict((t.key,t.val) for t in obj.Tags)
+    if obj.Layer != 0 or obj.find_tag('layer')=='0':
+        res['layer'] = obj.Layer
     if obj.Type==elements.ElementType.Point:
         res['geometry'] = {'type':'Point','coordinates':coord_json(obj.LonLat)}
-        res['bbox'] = res['geometry']['coordinates']*2
+        res['bounds'] = res['geometry']['coordinates']*2
     elif obj.Type==elements.ElementType.Linestring:
-        res['geometry'] = {'type':'LineString', 'coordinates': map(coord_json, obj.LonLats)}
-        res['bbox'] = ring_bbox(res['geometry']['coordinates'])
-        res['properties']['way_length'] = round(obj.Length,1)
-        res['properties']['z_order'] = obj.ZOrder
+        res['geometry'] = {'type':'LineString', 'coordinates': [coord_json(l) for l in obj.LonLats]}
+        res['bounds'] = ring_bbox(res['geometry']['coordinates'])
+        res['way_length'] = round(obj.Length,1)
+        if obj.ZOrder!=0:
+            res['z_order'] = obj.ZOrder
     elif obj.Type==elements.ElementType.SimplePolygon:
-        res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.LonLats)]}
-        res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
-        res['properties']['way_area'] = round(obj.Area,1)
-        res['properties']['z_order'] = obj.ZOrder
+        cc = [coord_json(l) for l in obj.LonLats]
+        if obj.Reversed:
+            cc.reverse()
+        res['geometry'] = {'type':'Polygon', 'coordinates': [cc]}
+        res['bounds'] = ring_bbox(res['geometry']['coordinates'][0])
+        res['way_area'] = round(obj.Area,1)
+        if obj.ZOrder!=0:
+            res['z_order'] = obj.ZOrder
 
     elif obj.Type==elements.ElementType.ComplicatedPolygon:
-        res['geometry'] = {'type':'Polygon', 'coordinates': [map(coord_json, obj.OuterLonLats)]+[map(coord_json,ii) for ii in obj.InnerLonLats]}
-        res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
-        res['properties']['way_area'] = round(obj.Area,1)
-        res['properties']['z_order'] = obj.ZOrder
+        if len(obj.Parts)==0:
+            res['geometry'] = {'type':'GeometryCollection','geometries':[]}
+        elif len(obj.Parts)==1:
+            res['geometry'] = {'type':'Polygon', 'coordinates': [[coord_json(l) for l in obj.Parts[0].outer_lonlats]]+[[coord_json(l) for l  in ii] for ii in obj.Parts[0].inner_lonlats]}
+            res['bounds'] = ring_bbox(res['geometry']['coordinates'][0])
+        else:
+            cc = []
+            xx,yy=[],[]
+            for p in obj.Parts:
+                pp = [[coord_json(l) for l in p.outer_lonlats]]+[[coord_json(l) for l in ii] for ii in p.inner_lonlats]
+                cc.append(pp)
+                xx.extend(x for x,y in pp[0])
+                yy.extend(y for x,y in pp[0])
+                
+            res['geometry'] = {'type':'MultiPolygon', 'coordinates': cc}
+            res['bounds']=[min(xx),min(yy),max(xx),max(yy)]
+            
+            
+        
+        res['way_area'] = round(obj.Area,1)
+        if obj.ZOrder!=0:
+            res['z_order'] = obj.ZOrder
     return res
 
-
+def collect_all_geojson(tiles):
+    tile={'quadtree':[0,0,0],'index':0,'end_date': None,'points':[],'linestrings':[],'simple_polygons': [], 'complicated_polygons': []}
+    
+    tbs = {
+        elements.ElementType.Point: 'points',
+        elements.ElementType.Linestring: 'linestrings',
+        elements.ElementType.SimplePolygon: 'simple_polygons',
+        elements.ElementType.ComplicatedPolygon: 'complicated_polygons'
+    }
+    
+    
+    for tl in tiles:
+        if tl.EndDate and tile['end_date'] is None:
+            tile['end_date'] = time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(tl.EndDate))
+        
+        for obj in tl:
+            tb = tbs.get(obj.Type)
+            if not tb is None:
+                tile[tb].append(make_json_feat(obj))
+    
+    tile['points'].sort(key=lambda x: x['id'])
+    tile['linestrings'].sort(key=lambda x: x['id'])
+    tile['simple_polygons'].sort(key=lambda x: x['id'])
+    tile['complicated_polygons'].sort(key=lambda x: x['id'])
+    return tile
 
 
 

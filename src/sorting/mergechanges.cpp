@@ -504,7 +504,7 @@ void run_mergechanges(
         } else {
             
             auto blobs = (read_blocks_caller->num_tiles() > 50000)
-                ? make_blobstore_filesplit(tempfn, 8000/50)  //changed 32 to 50 // 25?
+                ? make_blobstore_filesplit(tempfn, 128)  //changed 32 to 50 // 25?
                 : make_blobstore_file(tempfn, sortfile);
             
             auto temps = make_tempobjs(blobs, numchan);

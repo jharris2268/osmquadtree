@@ -376,14 +376,16 @@ std::string pack_primitive_block(PrimitiveBlockPtr block, bool includeQts, bool 
 
     msgs.push_front(PbfTag{1,0,writeblock_detail::packStringTable(stringtable)});
 
-    if (block->Quadtree()>=0) {
-        msgs.push_back(PbfTag{32,zig_zag(block->Quadtree()),""});
-    }
-    if (block->StartDate()>0) {
-        msgs.push_back(PbfTag{33,uint64(block->StartDate()),""});
-    }
-    if (block->EndDate()>0) {
-        msgs.push_back(PbfTag{34,uint64(block->EndDate()),""});
+    if (includeQts) {
+        if (block->Quadtree()>=0) {
+            msgs.push_back(PbfTag{32,zig_zag(block->Quadtree()),""});
+        }
+        if (block->StartDate()>0) {
+            msgs.push_back(PbfTag{33,uint64(block->StartDate()),""});
+        }
+        if (block->EndDate()>0) {
+            msgs.push_back(PbfTag{34,uint64(block->EndDate()),""});
+        }
     }
 
     return pack_pbf_tags(msgs);

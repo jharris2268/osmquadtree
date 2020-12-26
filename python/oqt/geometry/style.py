@@ -152,7 +152,7 @@ standard_other_keys = [
 ]
 
 
-default_polygon_tags = {
+default_polygon_tags_old = {
     'aeroway': ['exclude',['taxiway']],
     'amenity': ['all',None],
     'area': ['all',None],
@@ -177,6 +177,33 @@ default_polygon_tags = {
     'shop': ['all',None],
     'tourism': ['all',None],
     'waterway': ['include',['riverbank', 'dock', 'boatyard', 'dam']],
+}
+
+default_polygon_tags = {
+    'aeroway': {'exclude': ['taxiway']},
+    'amenity': 'all',
+    'area': 'all',
+    'area:highway': 'all',
+    'barrier': {'include': ['city_wall', 'ditch', 'wall', 'spikes']},
+    'boundary': 'all',
+    'building': 'all',
+    'building:part': 'all',
+    'golf': 'all',
+    'highway': {'include': ['services', 'rest_area', 'escape', 'elevator']},
+    'historic': 'all',
+    'landuse': 'all',
+    'leisure': 'all',
+    'man_made': {'exclude': ['cutline', 'embankment', 'pipeline']},
+    'military': 'all',
+    'natural': {'exclude': ['coastline', 'cliff', 'ridge', 'arete', 'tree_row']},
+    'office': 'all',
+    'place': 'all',
+    'power': {'include': ['plant', 'substation', 'generator', 'transformer']},
+    'public_transport': 'all',
+    'railway': {'include': ['station', 'turntable', 'roundhouse', 'platform']},
+    'shop': 'all',
+    'tourism': 'all',
+    'waterway': {'include': ['riverbank', 'dock', 'boatyard', 'dam']},
 }
 
 
@@ -275,16 +302,16 @@ RelationTag('bicycle_routes',    {'type':'route',    'route':'bicycle'},        
 
 
 def write_entry(obj, key, val, ident, last=False):
-    print >>obj, '%s"%s": %s%s' % ('  '*ident, key, json.dumps(val), '' if last else ',')
+    print('%s"%s": %s%s' % ('  '*ident, key, json.dumps(val), '' if last else ','), file=obj)
 
 def write_entries(obj, key, vals, ident, last=False):
-    print >>obj, '%s"%s": {' % ('  '*ident, key,)
+    print('%s"%s": {' % ('  '*ident, key,),file=obj)
     
     li = len(vals)-1
     for i,(k,v) in enumerate(sorted(vals.items())):
         write_entry(obj, k, v, ident+1, i==li)
     
-    print >>obj, '%s}%s' % ('  '*ident, '' if last else ',')
+    print('%s}%s' % ('  '*ident, '' if last else ','),file=obj)
 
 
 class GeometryStyle:
@@ -325,18 +352,20 @@ class GeometryStyle:
         
         
         if pretty:
-            res = self.to_json()
+            json.dump(self.to_json(), obj, indent=4, sort_keys=True)
+            
+            #res = self.to_json()
             
             
-            print >>obj, "{"
-            write_entries(obj, 'feature_keys', res['feature_keys'], 1)
-            write_entries(obj, 'polygon_tags', res['polygon_tags'], 1)
-            write_entries(obj, 'other_keys', res['other_keys'], 1)
-            write_entries(obj, 'parent_tags', res['parent_tags'], 1)
-            write_entries(obj, 'parent_relations', res['parent_relations'], 1)
-            write_entry(obj, 'multipolygons',self.multipolygons,1)
-            write_entry(obj, 'boundary_relations',self.boundary_relations,1,last=True)
-            print >>obj, "}"
+            #print("{",file=obj)
+            #write_entries(obj, 'feature_keys', json.dumps(res['feature_keys']), 1)
+            #write_entries(obj, 'polygon_tags', res['polygon_tags'], 1)
+            #write_entries(obj, 'other_keys', res['other_keys'], 1)
+            #write_entries(obj, 'parent_tags', res['parent_tags'], 1)
+            #write_entries(obj, 'parent_relations', res['parent_relations'], 1)
+            #write_entry(obj, 'multipolygons',self.multipolygons,1)
+            #write_entry(obj, 'boundary_relations',self.boundary_relations,1,last=True)
+            #print("}",file=obj)
             
         else:
             json.dump(self.to_json(), obj)
@@ -364,13 +393,13 @@ class GeometryStyle:
         params.feature_keys = set(self.feature_keys)
         
         polygon_tags = {}
-        for key,(ty,tt) in self.polygon_tags.items():
-            if ty == 'all':
+        for key,tt in self.polygon_tags.items():
+            if tt == 'all':
                 polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, set([]))
-            elif ty == 'include':
-                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, set(tt))
-            elif ty == 'exclude':
-                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, set(tt))
+            elif 'include' in tt:
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, set(tt['include']))
+            elif 'exclude' in tt:
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, set(tt['exclude']))
                 
         params.polygon_tags=polygon_tags
         

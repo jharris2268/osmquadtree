@@ -27,7 +27,7 @@ import csv
 read = lambda minzoomfn: [(int(a),b,c,int(d),e) for a,b,c,d,e in (r[:5] for r in csv.reader(open(minzoomfn)) if len(r)>=5)]
 
 def write(fn, spec):
-    out = csv.writer(open(fn,'w'))
+    out = csv.writer(open(fn,'wt'))
     for a,b,c,d,e in spec:
         out.writerow([a,b,c,d,e])
     

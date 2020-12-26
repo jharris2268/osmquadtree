@@ -171,7 +171,7 @@ class BlobStoreFileSplit : public BlobStore {
                 while (it != ll.end()) {
                     size_t t = 0;
                     src_locs_map ll2;
-                    while ( (it != ll.end()) && (t < (100ll*1024*1024))) {
+                    while ( (it != ll.end()) && (t < (128ll*1024*1024))) {
                         ll2[it->first] = it->second;
                         t += tot.at(it->first);
                         it++;
