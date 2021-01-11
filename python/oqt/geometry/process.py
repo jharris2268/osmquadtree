@@ -189,10 +189,13 @@ def to_json(tile,split=True):
         
     return res.values()
 
-def coord_json(ll):
-    xy = ll.transform
-    #return [round(xy.x,1),round(xy.y,1)]
-    return [xy.x,xy.y]
+def coord_json(ll,transform=False):
+    if transform:
+        xy = ll.transform
+        return [xy.x,xy.y]
+    else:
+        return [ll.lon*0.0000001, ll.lat*0.0000001]
+        
 
 def ring_bbox(cc):
     x,y=zip(*cc)
@@ -202,7 +205,7 @@ def collect_bbox(bboxes):
     mx,my,Mx,My = zip(*bboxes)
     return [min(mx),min(my),max(Mx),max(My)]
 
-def make_json_feat(obj):
+def make_json_feat(obj, transform=False):
     res = {'type':'Feature',}
     #if obj.Type==elements.ElementType.ComplicatedPolygon:
     #    res['id'] = -1*obj.Id
@@ -215,20 +218,20 @@ def make_json_feat(obj):
     if obj.Layer != 0 or obj.find_tag('layer')=='0':
         res['layer'] = obj.Layer
     if obj.Type==elements.ElementType.Point:
-        res['geometry'] = {'type':'Point','coordinates':coord_json(obj.LonLat)}
-        res['bounds'] = res['geometry']['coordinates']*2
+        res['geometry'] = {'type':'Point','coordinates':coord_json(obj.LonLat,transform)}
+        res['bbox'] = res['geometry']['coordinates']*2
     elif obj.Type==elements.ElementType.Linestring:
-        res['geometry'] = {'type':'LineString', 'coordinates': [coord_json(l) for l in obj.LonLats]}
-        res['bounds'] = ring_bbox(res['geometry']['coordinates'])
+        res['geometry'] = {'type':'LineString', 'coordinates': [coord_json(l,transform) for l in obj.LonLats]}
+        res['bbox'] = ring_bbox(res['geometry']['coordinates'])
         res['way_length'] = round(obj.Length,1)
         if obj.ZOrder!=0:
             res['z_order'] = obj.ZOrder
     elif obj.Type==elements.ElementType.SimplePolygon:
-        cc = [coord_json(l) for l in obj.LonLats]
+        cc = [coord_json(l,transform) for l in obj.LonLats]
         if obj.Reversed:
             cc.reverse()
         res['geometry'] = {'type':'Polygon', 'coordinates': [cc]}
-        res['bounds'] = ring_bbox(res['geometry']['coordinates'][0])
+        res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         res['way_area'] = round(obj.Area,1)
         if obj.ZOrder!=0:
             res['z_order'] = obj.ZOrder
@@ -237,13 +240,13 @@ def make_json_feat(obj):
         if len(obj.Parts)==0:
             res['geometry'] = {'type':'GeometryCollection','geometries':[]}
         elif len(obj.Parts)==1:
-            res['geometry'] = {'type':'Polygon', 'coordinates': [[coord_json(l) for l in obj.Parts[0].outer_lonlats]]+[[coord_json(l) for l  in ii] for ii in obj.Parts[0].inner_lonlats]}
-            res['bounds'] = ring_bbox(res['geometry']['coordinates'][0])
+            res['geometry'] = {'type':'Polygon', 'coordinates': [[coord_json(l,transform) for l in obj.Parts[0].outer_lonlats]]+[[coord_json(l,transform) for l  in ii] for ii in obj.Parts[0].inner_lonlats]}
+            res['bbox'] = ring_bbox(res['geometry']['coordinates'][0])
         else:
             cc = []
             xx,yy=[],[]
             for p in obj.Parts:
-                pp = [[coord_json(l) for l in p.outer_lonlats]]+[[coord_json(l) for l in ii] for ii in p.inner_lonlats]
+                pp = [[coord_json(l,transform) for l in p.outer_lonlats]]+[[coord_json(l,transform) for l in ii] for ii in p.inner_lonlats]
                 cc.append(pp)
                 xx.extend(x for x,y in pp[0])
                 yy.extend(y for x,y in pp[0])
@@ -259,7 +262,8 @@ def make_json_feat(obj):
     return res
 
 def collect_all_geojson(tiles):
-    tile={'quadtree':[0,0,0],'index':0,'end_date': None,'points':[],'linestrings':[],'simple_polygons': [], 'complicated_polygons': []}
+    make_fc = lambda: {'type':'FeatureCollection','features': []}
+    tile={'points':make_fc(),'linestrings':make_fc(),'simple_polygons': make_fc(), 'complicated_polygons': make_fc()}
     
     tbs = {
         elements.ElementType.Point: 'points',
@@ -270,19 +274,32 @@ def collect_all_geojson(tiles):
     
     
     for tl in tiles:
-        if tl.EndDate and tile['end_date'] is None:
-            tile['end_date'] = time.strftime("%Y-%m-%dT%H:%M:%S",time.gmtime(tl.EndDate))
         
         for obj in tl:
             tb = tbs.get(obj.Type)
             if not tb is None:
-                tile[tb].append(make_json_feat(obj))
+                tile[tb]['features'].append(make_json_feat(obj))
     
-    tile['points'].sort(key=lambda x: x['id'])
-    tile['linestrings'].sort(key=lambda x: x['id'])
-    tile['simple_polygons'].sort(key=lambda x: x['id'])
-    tile['complicated_polygons'].sort(key=lambda x: x['id'])
+    tile['points']['features'].sort(key=lambda x: x['id'])
+    tile['linestrings']['features'].sort(key=lambda x: x['id'])
+    tile['simple_polygons']['features'].sort(key=lambda x: x['id'])
+    tile['complicated_polygons']['features'].sort(key=lambda x: x['id'])
     return tile
 
+def geojson_diff(left, right):
+    res = {}
+    for k,v in left.items():
+        if not k in right:
+            res[k] = [(o,None) for o in v['features']]
+        else:
+            d = [(a,b) for a,b in zip(v['features'], right[k]['features']) if a!=b]
+            if d:
+                res[k] = d
+    
+    for k,v in right.items():
+        if not k in left:
+            res[k]=[(None,o) for o in v['features']]
+    
+    return res
 
 

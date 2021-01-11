@@ -34,6 +34,18 @@ from .filelocs import prep_poly,  get_locs, get_locs_single, Poly, read_poly_fil
 _pbfformat._ReadBlocksCaller = _pbfformat.ReadBlocksCaller
 import numbers
 
+def read_blocks_iter(fn, locs=[], numchan=4, numblocks=32, filter=None, ischange=False, objflags=ReadBlockFlags()):
+    rbi = ReadBlocksIter(fn, locs, numchan, numblocks, filter, ischange, objflags)
+    bb = rbi.next()
+    while bb:
+        for b in bb:
+            yield b
+        bb = rbi.next()
+
+
+    
+    
+
 class ReadBlocksCaller:
     def __init__(self, prfx, bbox, poly=None, lastdate=None):
         if not lastdate is None:

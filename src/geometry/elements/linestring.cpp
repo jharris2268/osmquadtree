@@ -39,12 +39,12 @@ Linestring::Linestring(std::shared_ptr<WayWithNodes> wy) :
         length=calc_line_length(lonlats);
     }
 
-Linestring::Linestring(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
+Linestring::Linestring(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, std::optional<int64> zorder_, std::optional<int64> layer_, std::optional<int64> minzoom_) :
     BaseGeometry(ElementType::Linestring, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
     refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()){
         length=calc_line_length(lonlats);
     }
-Linestring::Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double length_, const bbox& bounds_, int64 minzoom_) :
+Linestring::Linestring(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, std::optional<int64> zorder_, std::optional<int64> layer_, double length_, const bbox& bounds_, std::optional<int64> minzoom_) :
     BaseGeometry(ElementType::Linestring,changetype::Normal,id,qt,inf,tags,minzoom_), refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), length(length_), bounds(bounds_) {}
 
 
@@ -53,8 +53,8 @@ ElementType Linestring::OriginalType() const { return ElementType::Way; }
 const std::vector<int64>& Linestring::Refs() const { return refs; }
 const std::vector<LonLat>& Linestring::LonLats() const { return lonlats; }
 double Linestring::Length() const { return length; }
-int64 Linestring::ZOrder() const { return zorder; }
-int64 Linestring::Layer() const { return layer; }
+std::optional<int64> Linestring::ZOrder() const { return zorder; }
+std::optional<int64> Linestring::Layer() const { return layer; }
 ElementPtr Linestring::copy() { return std::make_shared<Linestring>(//*this); }
     Id(),Quadtree(),Info(),Tags(),refs,lonlats,zorder,layer,length,bounds,MinZoom()); }
 
@@ -79,15 +79,15 @@ std::list<PbfTag> Linestring::pack_extras() const {
     std::list<PbfTag> extras;
     
     extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
-    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{12,zig_zag(zorder.value_or(0)),""});
     extras.push_back(PbfTag{13,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lon; })}); //lons
     extras.push_back(PbfTag{14,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lat; })}); //lats
     extras.push_back(PbfTag{15,zig_zag(to_int(length*100)),""});
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
+    if (MinZoom()) {
+        extras.push_back(PbfTag{22,uint64(*MinZoom()),""});
     }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zig_zag(layer),""});
+    if (layer) {
+        extras.push_back(PbfTag{24,zig_zag(*layer),""});
     }
     return extras;
 }

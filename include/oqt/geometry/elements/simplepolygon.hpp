@@ -36,9 +36,13 @@ class SimplePolygon : public BaseGeometry {
     public:
         SimplePolygon(std::shared_ptr<WayWithNodes> wy);
 
-        SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_);
+        SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs,
+            std::optional<int64> zorder_, std::optional<int64> layer_, std::optional<int64> minzoom_);
 
-        SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_);
+        SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags,
+            const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_,
+            std::optional<int64> zorder_, std::optional<int64> layer_, double area_,
+            const bbox& bounds_, std::optional<int64> minzoom_, bool reversed_);
 
         virtual ~SimplePolygon() {}
 
@@ -48,8 +52,8 @@ class SimplePolygon : public BaseGeometry {
         const std::vector<LonLat>& LonLats() const;
         bool Reversed() const;
         
-        int64 ZOrder() const;
-        int64 Layer() const;
+        std::optional<int64> ZOrder() const;
+        std::optional<int64> Layer() const;
         double Area() const;
 
         virtual ElementPtr copy();
@@ -62,8 +66,8 @@ class SimplePolygon : public BaseGeometry {
         
         std::vector<int64> refs;
         std::vector<LonLat> lonlats;
-        int64 zorder;
-        int64 layer;
+        std::optional<int64> zorder;
+        std::optional<int64> layer;
         double area;
         bbox bounds;
         bool reversed;

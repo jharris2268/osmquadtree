@@ -39,14 +39,14 @@ class Linestring : public BaseGeometry {
         Linestring(std::shared_ptr<WayWithNodes> wy);
 
         Linestring(std::shared_ptr<WayWithNodes> wy,
-            const std::vector<Tag>& tgs, int64 zorder_,
-            int64 layer_, int64 minzoom_);
+            const std::vector<Tag>& tgs, std::optional<int64> zorder_,
+            std::optional<int64> layer_, std::optional<int64> minzoom_);
             
         Linestring(int64 id, int64 qt, const ElementInfo& inf,
             const std::vector<Tag>& tags,
             const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_,
-            int64 zorder_, int64 layer_, double length_,
-            const bbox& bounds_, int64 minzoom_);
+            std::optional<int64> zorder_, std::optional<int64> layer_, double length_,
+            const bbox& bounds_, std::optional<int64> minzoom_);
 
         virtual ~Linestring() {}
 
@@ -55,8 +55,8 @@ class Linestring : public BaseGeometry {
         const std::vector<int64>& Refs() const;
         const std::vector<LonLat>& LonLats() const;
         double Length() const;
-        int64 ZOrder() const;
-        int64 Layer() const;
+        std::optional<int64> ZOrder() const;
+        std::optional<int64> Layer() const;
         virtual ElementPtr copy();
         virtual std::list<PbfTag> pack_extras() const;
         virtual bbox Bounds() const;
@@ -67,8 +67,8 @@ class Linestring : public BaseGeometry {
         
         std::vector<int64> refs;
         std::vector<LonLat> lonlats;
-        int64 zorder;
-        int64 layer;
+        std::optional<int64> zorder;
+        std::optional<int64> layer;
         double length;
         bbox bounds;
         

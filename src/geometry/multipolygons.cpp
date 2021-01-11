@@ -404,7 +404,7 @@ class MakeMultiPolygons : public BlockHandler {
             if (!outers.empty()) {
                 
                 
-                bool tags_pass; std::vector<Tag> tags; int64 layer;
+                bool tags_pass; std::vector<Tag> tags; std::optional<int64> layer;
                 std::tie(tags_pass, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, r->Tags());
                 int64 z_order=0;
                 //tagvector tgs; bool isring; int64 zorder, layer;

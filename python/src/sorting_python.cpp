@@ -128,7 +128,7 @@ void sorting_defs(py::module& m) {
         py::arg("timestamp") = 0,
         py::arg("numchan") = 4,
         py::arg("tempfn") = "",
-        py::arg("blocksplit")=500,
+        py::arg("blocksplit")=0,
         py::arg("fixstrs")=false,
         py::arg("seperate_filelocs")=true
     );
@@ -145,7 +145,7 @@ void sorting_defs(py::module& m) {
         py::arg("poly") = py::none(),
         py::arg("timestamp") = 0,
         py::arg("tempfn") = "",
-        py::arg("grptiles") = 500,
+        py::arg("grptiles") = 0,
         py::arg("sortfile")=true,
         py::arg("inmem")=false
 

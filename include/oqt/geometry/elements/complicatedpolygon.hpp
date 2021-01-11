@@ -40,16 +40,16 @@ class ComplicatedPolygon : public BaseGeometry {
             std::shared_ptr<Relation> rel,// int64 part_,
             const std::vector<PolygonPart>& parts_,
             
-            const std::vector<Tag>& tags, int64 zorder_,
-            int64 layer_, int64 minzoom_);
+            const std::vector<Tag>& tags, std::optional<int64> zorder_,
+            std::optional<int64> layer_, std::optional<int64> minzoom_);
         
         
         ComplicatedPolygon(
             int64 id, int64 qt, const ElementInfo& inf,
             const std::vector<Tag>& tags, //int64 part_,
             const std::vector<PolygonPart>& parts_,
-            int64 zorder_, int64 layer_, //double area_,
-            const bbox& bounds_, int64 minzoom_);
+            std::optional<int64> zorder_, std::optional<int64> layer_, //double area_,
+            const bbox& bounds_, std::optional<int64> minzoom_);
         
         void CheckParts();
         
@@ -60,8 +60,8 @@ class ComplicatedPolygon : public BaseGeometry {
         const std::vector<PolygonPart>& Parts() const;
         //const Ring& OuterRing() const;
         //const std::vector<Ring>& InnerRings() const;
-        int64 ZOrder() const;
-        int64 Layer() const;
+        std::optional<int64> ZOrder() const;
+        std::optional<int64> Layer() const;
         double Area() const;
         //int64 Part() const;
         virtual ElementPtr copy();
@@ -80,8 +80,8 @@ class ComplicatedPolygon : public BaseGeometry {
         std::vector<PolygonPart> parts;
         
         
-        int64 zorder;
-        int64 layer;
+        std::optional<int64> zorder;
+        std::optional<int64> layer;
         double area;
         bbox bounds;
         

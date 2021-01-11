@@ -45,7 +45,7 @@ SimplePolygon::SimplePolygon(std::shared_ptr<WayWithNodes> wy) :
         }
     }
 
-SimplePolygon::SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, int64 zorder_, int64 layer_, int64 minzoom_) :
+SimplePolygon::SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector<Tag>& tgs, std::optional<int64> zorder_, std::optional<int64> layer_, std::optional<int64> minzoom_) :
     BaseGeometry(ElementType::SimplePolygon, changetype::Normal, wy->Id(), wy->Quadtree(), wy->Info(), tgs,minzoom_),
     refs(wy->Refs()), lonlats(wy->LonLats()), zorder(zorder_), layer(layer_), bounds(wy->Bounds()), reversed(false) {
         area = calc_ring_area(lonlats);
@@ -55,7 +55,7 @@ SimplePolygon::SimplePolygon(std::shared_ptr<WayWithNodes> wy, const std::vector
         }
     }
 
-SimplePolygon::SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, int64 zorder_, int64 layer_, double area_, const bbox& bounds_, int64 minzoom_, bool reversed_) :
+SimplePolygon::SimplePolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, const std::vector<int64>& refs_, const std::vector<LonLat>& lonlats_, std::optional<int64> zorder_, std::optional<int64> layer_, double area_, const bbox& bounds_, std::optional<int64> minzoom_, bool reversed_) :
     BaseGeometry(ElementType::SimplePolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
     refs(refs_), lonlats(lonlats_), zorder(zorder_), layer(layer_), area(area_), bounds(bounds_),reversed(reversed_) {}
 
@@ -65,8 +65,8 @@ const std::vector<int64>& SimplePolygon::Refs() const { return refs; }
 const std::vector<LonLat>& SimplePolygon::LonLats() const { return lonlats; }
 bool SimplePolygon::Reversed() const { return reversed; }
 
-int64 SimplePolygon::ZOrder() const { return zorder; }
-int64 SimplePolygon::Layer() const { return layer; }
+std::optional<int64> SimplePolygon::ZOrder() const { return zorder; }
+std::optional<int64> SimplePolygon::Layer() const { return layer; }
 double SimplePolygon::Area() const { return area; }
 
 ElementPtr SimplePolygon::copy() { return std::make_shared<SimplePolygon>(//*this); }
@@ -101,19 +101,19 @@ std::list<PbfTag> SimplePolygon::pack_extras() const {
     std::list<PbfTag> extras;
     
     extras.push_back(PbfTag{8,0,write_packed_delta(refs)}); //refs
-    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{12,zig_zag(zorder.value_or(0)),""});
     extras.push_back(PbfTag{13,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lon; })}); //lons
     extras.push_back(PbfTag{14,0,write_packed_delta_func<LonLat>(lonlats,[](const LonLat& l)->int64 { return l.lat; })}); //lats
     extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
     
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
+    if (MinZoom()) {
+        extras.push_back(PbfTag{22,uint64(*MinZoom()),""});
     }
     if (reversed) {
         extras.push_back(PbfTag{23,1,""});
     }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zig_zag(layer),""});
+    if (layer) {
+        extras.push_back(PbfTag{24,zig_zag(*layer),""});
     }
     return extras;
 }

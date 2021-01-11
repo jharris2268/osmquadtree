@@ -25,7 +25,7 @@
 
 #include "oqt/elements/element.hpp"
 #include "oqt/elements/quadtree.hpp"
-
+#include <optional>
 #include "oqt/utils/pbf/protobuf.hpp"
 
 namespace oqt {
@@ -33,7 +33,7 @@ bool is_geometry_type(ElementType ty);
 
 class BaseGeometry : public Element {
     protected:
-        BaseGeometry(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, int64 minzoom_) :
+        BaseGeometry(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag> tags, std::optional<int64> minzoom_) :
             Element(t,c,i,q,inf,tags), minzoom(minzoom_) {};
             
     public:
@@ -42,22 +42,22 @@ class BaseGeometry : public Element {
 
         virtual std::string Wkb(bool transform, bool srid) const=0;
 
-        virtual int64 MinZoom() const { return minzoom; }
-        void SetMinZoom(int64 mz) { minzoom = mz; }
+        virtual std::optional<int64> MinZoom() const { return minzoom; }
+        void SetMinZoom(int64 mz) { *minzoom = mz; }
         
         virtual ~BaseGeometry() {}
         
         virtual std::list<PbfTag> pack_extras() const=0;
         
     private:
-        int64 minzoom;
+        std::optional<int64> minzoom;
         
         
 };
 
 class GeometryPacked : public BaseGeometry {
     public:
-        GeometryPacked(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag>, int64 minzoom_, std::list<PbfTag> geom_messages_);
+        GeometryPacked(ElementType t, changetype c, int64 i, int64 q, ElementInfo inf, std::vector<Tag>, std::optional<int64> minzoom_, std::list<PbfTag> geom_messages_);
         virtual uint64 InternalId() const;
         
         

@@ -60,8 +60,8 @@ ComplicatedPolygon::ComplicatedPolygon(
     std::shared_ptr<Relation> rel, //int64 part_,
     //const Ring& outers_, const std::vector<Ring>& inners_,
     const std::vector<PolygonPart>& parts_,
-    const std::vector<Tag>& tags, int64 zorder_,
-    int64 layer_, int64 minzoom_) :
+    const std::vector<Tag>& tags, std::optional<int64> zorder_,
+    std::optional<int64> layer_, std::optional<int64> minzoom_) :
     
     BaseGeometry(ElementType::ComplicatedPolygon, changetype::Normal, rel->Id(), rel->Quadtree(), rel->Info(), tags,minzoom_),
     parts(parts_)/*, outers(outers_), inners(inners_)*/,zorder(zorder_), layer(layer_) {
@@ -76,7 +76,7 @@ ComplicatedPolygon::ComplicatedPolygon(
 ComplicatedPolygon::ComplicatedPolygon(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, 
     //int64 part_, const Ring& outers_, const std::vector<Ring>& inners_,
     const std::vector<PolygonPart>& parts_,
-    int64 zorder_, int64 layer_, /*double area_,*/ const bbox& bounds_, int64 minzoom_)
+    std::optional<int64> zorder_, std::optional<int64> layer_, /*double area_,*/ const bbox& bounds_, std::optional<int64> minzoom_)
     : BaseGeometry(ElementType::ComplicatedPolygon,changetype::Normal,id,qt,inf,tags,minzoom_),
     parts(parts_),/* outers(outers_), inners(inners_),*/ zorder(zorder_), layer(layer_), /*area(area_),*/ bounds(bounds_) {}
 
@@ -105,8 +105,8 @@ ElementType ComplicatedPolygon::OriginalType() const { return ElementType::Relat
 
 const std::vector<PolygonPart>& ComplicatedPolygon::Parts() const { return parts; }
 
-int64 ComplicatedPolygon::ZOrder() const { return zorder; }
-int64 ComplicatedPolygon::Layer() const { return layer; }
+std::optional<int64> ComplicatedPolygon::ZOrder() const { return zorder; }
+std::optional<int64> ComplicatedPolygon::Layer() const { return layer; }
 double ComplicatedPolygon::Area() const {
     double a=0;
     for (const auto& p: parts) {
@@ -181,7 +181,7 @@ std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
     
 
     std::list<PbfTag> extras;
-    extras.push_back(PbfTag{12,zig_zag(zorder),""});
+    extras.push_back(PbfTag{12,zig_zag(zorder.value_or(0)),""});
     extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
 
     //extras.push_back(PbfTag{17,0,pack_ring(outers)});
@@ -189,11 +189,11 @@ std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
     //    extras.push_back(PbfTag{18,0,pack_ring(ii)});
     //}
     //extras.push_back(PbfTag{19,zig_zag(part),""});
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
+    if (MinZoom()) {
+        extras.push_back(PbfTag{22,uint64(*MinZoom()),""});
     }
-    if (layer!=0) {
-        extras.push_back(PbfTag{24,zig_zag(layer),""});
+    if (layer) {
+        extras.push_back(PbfTag{24,zig_zag(*layer),""});
     }
     for (const auto& part: parts) {
         extras.push_back(PbfTag{25, 0, pack_polygon_part(part)});

@@ -38,17 +38,17 @@ namespace geometry {
 Point::Point(std::shared_ptr<Node> nd) :
     BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),nd->Tags(),-1),
     lon(nd->Lon()), lat(nd->Lat()) {}
-Point::Point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, int64 layer_, int64 minzoom_) :
+Point::Point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, std::optional<int64> layer_, std::optional<int64> minzoom_) :
     BaseGeometry(ElementType::Point,changetype::Normal,nd->Id(),nd->Quadtree(),nd->Info(),tgs,minzoom_),
     lon(nd->Lon()), lat(nd->Lat()),layer(layer_) {}
 
-Point::Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, int64 layer_, int64 minzoom_) :
+Point::Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, std::optional<int64> layer_, std::optional<int64> minzoom_) :
     BaseGeometry(ElementType::Point,changetype::Normal,id,qt,inf,tags,minzoom_), lon(lon_), lat(lat_),layer(layer_){}
 
 ElementType Point::OriginalType() const { return ElementType::Node; }
 
 oqt::LonLat Point::LonLat() const { return oqt::LonLat{lon,lat}; };
-int64 Point::Layer() const { return layer; }
+std::optional<int64> Point::Layer() const { return layer; }
 
 ElementPtr Point::copy() {
     return std::make_shared<Point>(//*this);
@@ -75,11 +75,11 @@ std::string Point::Wkb(bool transform, bool srid) const {
 std::list<PbfTag> Point::pack_extras() const {
     
     std::list<PbfTag> extras{PbfTag{8,zig_zag(lat),""}, PbfTag{9,zig_zag(lon),""}};    
-    if (MinZoom()>=0) {
-        extras.push_back(PbfTag{22,uint64(MinZoom()),""});
+    if (MinZoom()) {
+        extras.push_back(PbfTag{22,uint64(*MinZoom()),""});
     }
-    if (layer != 0) {
-        extras.push_back(PbfTag{24,zig_zag(layer),""});
+    if (layer) {
+        extras.push_back(PbfTag{24,zig_zag(*layer),""});
     }
     return extras;
     

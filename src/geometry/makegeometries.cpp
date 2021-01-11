@@ -34,7 +34,7 @@ namespace geometry {
 
 
 
-int64 get_zorder_value(const Tag& t) {
+std::optional<int64> get_zorder_value(const Tag& t) {
     if (t.key == "highway") {
         if (t.val == "motorway") { return 380; }
         if (t.val == "trunk") {return 370;}
@@ -61,7 +61,7 @@ int64 get_zorder_value(const Tag& t) {
         if (t.val == "steps") { return 90;}
         if (t.val == "platform") { return 90;}
         if (t.val == "construction") { return 10;}
-        return 0;
+        return std::optional<int64>();
     }
     
     if (t.key=="railway") {
@@ -78,291 +78,33 @@ int64 get_zorder_value(const Tag& t) {
         if (t.val == "disused") { return 400; }
         if (t.val == "construction") { return 400; }
         if (t.val == "platform") { return 90; }
-        return 0;
+        return std::optional<int64>();
     }
     
     if (t.key=="aeroway") {
         if (t.val == "runway") { return 60; }
         if (t.val == "taxiway") { return 50; }
-        return 0;
+        return std::optional<int64>();
     }
-    return 0;
+    return std::optional<int64>();
 }
 
 
-int64 calc_zorder(const std::vector<Tag>& tags) {
-    int64 result=0;
+std::optional<int64> calc_zorder(const std::vector<Tag>& tags) {
+    std::optional<int64> result;
     for (const auto& t: tags) {
-        int64 v = get_zorder_value(t);
-        if (v>result) {
+        std::optional<int64> v = get_zorder_value(t);
+        if (v > result) {
             result=v;
+            
         }
     }
     return result;
 }
 
-/*
-std::pair<std::vector<Tag>,bool> filter_tags(const style_info_map& style, const std::vector<Tag>& tags, bool passnode, bool passway, bool is_ring, const std::string& extra_tags_key) {
-    std::vector<Tag> res;
-    bool isf=false;
-    bool hasarea=false;
-    bool notarea=false;
-    
-    bool all_tags = !extra_tags_key.empty();
-    std::vector<Tag> extra_tags;
-    
-    for (const auto& t : tags) {
-        bool added=false;
-        if ((t.key=="layer") && all_tags) {
-            extra_tags.push_back(Tag{"orig_layer", t.val});
-            added=true;
-        } else if (style.count(t.key)>0) {
-
-            auto ss=style.find(t.key)->second;
-            if ((passnode && ss.IsNode) || (passway && ss.IsWay)) {
-                if (ss.ValueList.empty() || (ss.ValueList.count(t.val)>0)) {
-                    if (ss.OnlyArea && !is_ring) { continue; }
-
-                    res.push_back(t);
-                    added=true;
-                    if (!isf && ss.IsFeature) {
-                        isf=true;
-                    }
-                    if (ss.IsArea) {
-                        hasarea=true;
-                    }
-                    if ((t.key=="area") && (t.val=="no")) {
-                        notarea=true;
-                    }
-                }
-            }
-        }
-        if (!added && all_tags) {
-            extra_tags.push_back(t);
-        }
-    }
-    
-    if (!isf) {
-        
-        res.clear();
-        return std::make_pair(res,false);
-    }
-    
-    if (!extra_tags_key.empty() && !extra_tags.empty()) {
-        if (extra_tags_key=="XXX") {
-            for (auto t: extra_tags) {
-                res.push_back(t);
-            }
-        } else {
-            res.push_back(Tag{extra_tags_key, pack_tags(extra_tags)});
-        }
-    }
-    
-    
-    if (notarea) {
-        hasarea=false;
-    }
-    
-    
-    
-    return std::make_pair(res,hasarea);
-}
-
-std::pair<std::vector<Tag>,int64> filter_node_tags(const style_info_map& style, const std::vector<Tag>& tags, const std::string& extra_tags_key) {
-    auto tgs = filter_tags(style,tags,true,false,false,extra_tags_key).first;
-    int64 layer=0;
-    for (const auto& t: tags) {
-        if (t.key=="layer") {
-            try {
-                layer = std::stoll(t.val);
-            } catch (...) {
-                //pass
-            }
-        }
-    }
-    return std::make_pair(tgs,layer);
-}
-
-std::tuple<std::vector<Tag>, bool,int64, int64> filter_way_tags(const style_info_map& style, const std::vector<Tag>& tags, bool is_ring, bool is_bp, const std::string& extra_tags_key) {
-    std::vector<Tag> res; bool hasarea;
-    
-    std::tie(res,hasarea) = filter_tags(style, tags, false, true,is_ring,extra_tags_key);
-    if (hasarea || is_bp) { hasarea=is_ring; }
-
-    int64 zorder=0;
-    zorder=calc_zorder(tags);
-    
-    int64 layer=0;
-    for (const auto& t: tags) {
-        if (t.key=="layer") {
-            try {
-                layer = std::stoll(t.val);
-            } catch (...) {
-                //pass
-            }
-        }
-    }
-    
-    return std::make_tuple(res,hasarea,zorder,layer);
-}
 
 
-
-
-void copy_metadata(PrimitiveBlockPtr into, PrimitiveBlockPtr from) {
-    into->SetQuadtree(from->Quadtree());
-    into->SetStartDate(from->StartDate());
-    into->SetEndDate(from->EndDate());
-    into->SetFilePosition(from->FilePosition());
-    into->SetFileProgress(from->FileProgress());
-}
-
-
-class MakeGeometry {
-    public:
-        MakeGeometry(const style_info_map& style_, const bbox& box_) : 
-            style(style_), box(box_) {
-        
-            for (const auto& st: style) {
-                if (st.second.IsOtherTags) {
-                    extra_tag_key=st.first;
-                }
-            }
-        }
-        
-        
-        PrimitiveBlockPtr process_block(PrimitiveBlockPtr in) {
-            
-            auto result = std::make_shared<PrimitiveBlock>(in->Index(),0);
-            copy_metadata(result, in);
-
-            for (auto e : in->Objects()) {
-                if(e->Type()==ElementType::Node) {
-                    auto pt = process_node(std::dynamic_pointer_cast<Node>(e));
-                    if (pt) {
-                        result->add(pt);
-                    }
-                } else if (e->Type()==ElementType::WayWithNodes) {
-                    auto geom = process_way(std::dynamic_pointer_cast<WayWithNodes>(e));
-                    if (geom) {
-                        result->add(geom);
-                    }
-                } else if (e->Type()==ElementType::Relation) {
-                    //pass;
-                } else {
-                    result->add(e);
-                }
-            }
-            return result;
-            
-        }
-                
-        ElementPtr process_node(std::shared_ptr<Node> nd) {
-            if (!nd) { return nullptr; }
-            if (!contains_point(box, nd->Lon(),nd->Lat())) {
-                return nullptr;
-            }
-            
-            std::vector<Tag> tgs; int64 ly;
-            
-            std::tie(tgs,ly) = filter_node_tags(style, nd->Tags(), extra_tag_key);
-            if (tgs.empty()) {
-                return nullptr;
-            }
-            
-            return std::make_shared<Point>(nd, tgs,ly,-1);
-        }
-    
-        ElementPtr process_way(std::shared_ptr<WayWithNodes> w) {
-            if (!w) { return nullptr; }
-            if (w->Refs().size()<2) { return nullptr; }
-            if (!overlaps(box, w->Bounds())) { return nullptr; }
-            
-            std::vector<Tag> tgs; bool ispoly; int64 zo, ly;
-            std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
-            if (!tgs.empty()) {
-                if (ispoly) {
-                    return std::make_shared<SimplePolygon>(w, tgs,zo,ly,-1);
-                } else {
-                    return std::make_shared<Linestring>(w, tgs,zo,ly,-1);
-                }
-            }
-            return nullptr;
-        }
-        
-    private:
-        style_info_map style;
-        bbox box;
-        std::string extra_tag_key;
-};
-
-
-
-
-
-PrimitiveBlockPtr make_geometries(const style_info_map& style, const bbox& box, PrimitiveBlockPtr in) {
-
-    auto result = std::make_shared<PrimitiveBlock>(in->Index(),0);
-    copy_metadata(result, in);
-    
-    
-    std::string extra_tag_key;
-    for (const auto& st: style) {
-        if (st.second.IsOtherTags) {
-            extra_tag_key=st.first;
-        }
-    }
-    
-    //bool all_tags = style.count("*")!=0;
-
-    for (auto e : in->Objects()) {
-        if(e->Type()==ElementType::Node) {
-
-            std::vector<Tag> tgs; int64 ly;
-        
-            std::tie(tgs,ly) = filter_node_tags(style, e->Tags(), extra_tag_key);
-            if (!tgs.empty()) {
-                auto n = std::dynamic_pointer_cast<Node>(e);
-                if (contains_point(box, n->Lon(),n->Lat())) {
-                    result->add(std::make_shared<Point>(n, tgs,ly,-1));
-                }
-            }
-        } else if (e->Type()==ElementType::WayWithNodes) {
-            auto w = std::dynamic_pointer_cast<WayWithNodes>(e);
-            if (w->Refs().size()<2) {
-                continue;
-            }
-
-            if (!overlaps(box, w->Bounds())) {
-                continue;
-            }
-            std::vector<Tag> tgs; bool ispoly; int64 zo, ly;
-            std::tie(tgs,ispoly,zo,ly) = filter_way_tags(style, w->Tags(), w->IsRing(), false, extra_tag_key);
-            if (!tgs.empty()) {
-                if (ispoly) {
-                    result->add(std::make_shared<SimplePolygon>(w, tgs,zo,ly,-1));
-                } else {
-                    result->add(std::make_shared<Linestring>(w, tgs,zo,ly,-1));
-                }
-            }
-        } else if (e->Type()==ElementType::Relation) {
-             //pass
-        } else {
-
-            result->add(e);
-        }
-    }
-
-
-    return result;
-}
-
-*/
-
-
-
-
-std::tuple<bool, std::vector<Tag>, int64> filter_tags(
+std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
     const std::set<std::string>& feature_keys,
     const std::set<std::string>& other_keys,
     bool all_other_keys,
@@ -372,7 +114,7 @@ std::tuple<bool, std::vector<Tag>, int64> filter_tags(
         
     bool has_feature=false;
     std::vector<Tag> out_tags;
-    int64 layer=0;
+    std::optional<int64> layer;
         
     if (in_tags.empty()) {
         return std::make_tuple(has_feature, out_tags, layer);
@@ -388,7 +130,7 @@ std::tuple<bool, std::vector<Tag>, int64> filter_tags(
         }
         if (tg.key=="layer") {
             try {
-                layer = std::stoll(tg.val);
+                *layer = std::stoll(tg.val);
             } catch (...) {
                 //pass
             }
@@ -453,7 +195,7 @@ PrimitiveBlockPtr make_geometries(
         }
         if (obj->Type()==ElementType::Node) {
             
-            bool passes; std::vector<Tag> tags; int64 layer;
+            bool passes; std::vector<Tag> tags; std::optional<int64> layer;
             std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
             if (passes) {
                 auto n = std::dynamic_pointer_cast<Node>(obj);
@@ -463,7 +205,7 @@ PrimitiveBlockPtr make_geometries(
             }
         } else if (obj->Type() == ElementType::WayWithNodes) {
             
-            bool passes; std::vector<Tag> tags; int64 layer;
+            bool passes; std::vector<Tag> tags; std::optional<int64> layer;
             std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
             
             if (passes) {
@@ -478,9 +220,9 @@ PrimitiveBlockPtr make_geometries(
                 bool is_poly = (w->IsRing() && check_polygon_tags(polygon_tags, tags));
             
                 if (is_poly) {
-                    result->add(std::make_shared<SimplePolygon>(w, tags,0,layer,-1));
+                    result->add(std::make_shared<SimplePolygon>(w, tags,std::optional<int64>(),layer,-1));
                 } else {
-                    int64 z_order = calc_zorder(tags);
+                    std::optional<int64> z_order = calc_zorder(tags);
                     result->add(std::make_shared<Linestring>(w, tags, z_order, layer, -1));
                 }
             }

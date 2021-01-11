@@ -35,15 +35,15 @@ namespace geometry {
 class Point : public BaseGeometry {
     public:
         Point(std::shared_ptr<Node> nd);
-        Point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, int64 layer_, int64 minzoom_);
-        Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, int64 layer_, int64 minzoom_);
+        Point(std::shared_ptr<Node> nd, const std::vector<Tag>& tgs, std::optional<int64> layer_, std::optional<int64> minzoom_);
+        Point(int64 id, int64 qt, const ElementInfo& inf, const std::vector<Tag>& tags, int64 lon_, int64 lat_, std::optional<int64> layer_, std::optional<int64> minzoom_);
         
         virtual ~Point() {}
 
         virtual ElementType OriginalType() const;
 
         oqt::LonLat LonLat() const;
-        int64 Layer() const;
+        std::optional<int64> Layer() const;
 
         virtual ElementPtr copy();
 
@@ -57,7 +57,7 @@ class Point : public BaseGeometry {
     private:
        
         int64 lon, lat;
-        int64 layer;
+        std::optional<int64> layer;
         
 };    
 
