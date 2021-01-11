@@ -146,7 +146,7 @@ std::function<PrimitiveBlockPtr(std::shared_ptr<FileBlock>)> make_read_blocks_ge
         for (auto o: pb->Objects()) {
             auto g = std::dynamic_pointer_cast<BaseGeometry>(o);
             if ((!test_bbox) || test_bbox(g->Bounds())) {
-                if ((!test_minzoom) || test_minzoom(g->MinZoom())) {
+                if ((!test_minzoom) || ((g->MinZoom()) && (test_minzoom(*g->MinZoom())))) {
                     pb2->add(o);
                 }
             }

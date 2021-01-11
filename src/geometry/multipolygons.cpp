@@ -449,7 +449,7 @@ class MakeMultiPolygons : public BlockHandler {
                     if (checked.empty()) {
                         Logger::Message() << "no polygons for " << r->Id();
                     } else {
-                        auto cp = std::make_shared<ComplicatedPolygon>(r, checked,tags,z_order,layer,-1);
+                        auto cp = std::make_shared<ComplicatedPolygon>(r, checked,tags,z_order,layer,std::optional<int64>());
                         finished[tq]->add(cp);
                     }
 

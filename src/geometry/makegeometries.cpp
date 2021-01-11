@@ -130,7 +130,7 @@ std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
         }
         if (tg.key=="layer") {
             try {
-                *layer = std::stoll(tg.val);
+                layer = std::stoll(tg.val);
             } catch (...) {
                 //pass
             }
@@ -200,7 +200,7 @@ PrimitiveBlockPtr make_geometries(
             if (passes) {
                 auto n = std::dynamic_pointer_cast<Node>(obj);
                 if (contains_point(box, n->Lon(),n->Lat())) {
-                    result->add(std::make_shared<Point>(n, tags,layer,-1));
+                    result->add(std::make_shared<Point>(n, tags,layer,std::optional<int64>()));
                 }
             }
         } else if (obj->Type() == ElementType::WayWithNodes) {
@@ -220,10 +220,10 @@ PrimitiveBlockPtr make_geometries(
                 bool is_poly = (w->IsRing() && check_polygon_tags(polygon_tags, tags));
             
                 if (is_poly) {
-                    result->add(std::make_shared<SimplePolygon>(w, tags,std::optional<int64>(),layer,-1));
+                    result->add(std::make_shared<SimplePolygon>(w, tags,std::optional<int64>(),layer,std::optional<int64>()));
                 } else {
                     std::optional<int64> z_order = calc_zorder(tags);
-                    result->add(std::make_shared<Linestring>(w, tags, z_order, layer, -1));
+                    result->add(std::make_shared<Linestring>(w, tags, z_order, layer, std::optional<int64>()));
                 }
             }
         } else if (obj->Type()==ElementType::Relation) {
@@ -349,20 +349,20 @@ void calculate_minzoom(PrimitiveBlockPtr block, std::shared_ptr<FindMinZoom> min
     std::vector<ElementPtr> out;
     
     for (auto ele: block->Objects()) {
-        int64 mz = minzoom->calculate(ele);
+        std::optional<int64> mz = minzoom->calculate(ele);
         
-        if (mz>=0) {
-            if ((max_min_zoom_level > 0) && (mz > max_min_zoom_level)) {
+        if (mz) {
+            if ((max_min_zoom_level > 0) && (*mz > max_min_zoom_level)) {
                 continue;
             }
             
-            if ((ele->Quadtree()&31) > mz) {
-                ele->SetQuadtree(quadtree::round(ele->Quadtree(),mz));
+            if ((ele->Quadtree()&31) > *mz) {
+                ele->SetQuadtree(quadtree::round(ele->Quadtree(),*mz));
             }
-            if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<Point>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<SimplePolygon>(ele)->SetMinZoom(mz); }
-            if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<ComplicatedPolygon>(ele)->SetMinZoom(mz); }
+            if (ele->Type()==ElementType::Point) { std::dynamic_pointer_cast<Point>(ele)->SetMinZoom(*mz); }
+            if (ele->Type()==ElementType::Linestring) { std::dynamic_pointer_cast<Linestring>(ele)->SetMinZoom(*mz); }
+            if (ele->Type()==ElementType::SimplePolygon) { std::dynamic_pointer_cast<SimplePolygon>(ele)->SetMinZoom(*mz); }
+            if (ele->Type()==ElementType::ComplicatedPolygon) { std::dynamic_pointer_cast<ComplicatedPolygon>(ele)->SetMinZoom(*mz); }
             if (max_min_zoom_level > 0) {
                 out.push_back(ele);
             }

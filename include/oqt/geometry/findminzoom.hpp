@@ -24,6 +24,7 @@
 #define GEOMETRY_FINDMINZOOM_HPP
 
 #include "oqt/elements/element.hpp"
+#include <optional>
 
 namespace oqt {
 namespace geometry {
@@ -31,7 +32,7 @@ namespace geometry {
 
 class FindMinZoom {
     public:
-        virtual int64 calculate(ElementPtr ele)=0;
+        virtual std::optional<int64> calculate(ElementPtr ele)=0;
         virtual bool check_feature(ElementPtr ele, int64 max_min_zoom_level)=0;
         virtual ~FindMinZoom() {}
 };

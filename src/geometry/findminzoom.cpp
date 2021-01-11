@@ -66,11 +66,11 @@ class FindMinZoomOneTag : public FindMinZoom {
         
         
         virtual bool check_feature(ElementPtr ele, int64 min_max_zoom_level) {
-            int mz = tags_zoom(ele);
-            if (mz<0) {
+            std::optional<int64> mz = tags_zoom(ele);
+            if (!mz) {
                 return false;
             }
-            return mz <= min_max_zoom_level;
+            return *mz <= min_max_zoom_level;
         }
         
         void check_tag(tagmap::iterator& curr_it, int64 ty, const Tag& t) {
@@ -91,7 +91,7 @@ class FindMinZoomOneTag : public FindMinZoom {
         }
         
         
-        int64 tags_zoom(ElementPtr ele) {
+        std::optional<int64> tags_zoom(ElementPtr ele) {
             int64 ty = -1;
             if ((ele->Type()==ElementType::Node) || (ele->Type()==ElementType::Point)) {
                 ty = 0;
@@ -104,7 +104,7 @@ class FindMinZoomOneTag : public FindMinZoom {
             }
             
             
-            if (ty==-1) { return -1; }
+            if (ty==-1) { return std::optional<int64>(); }
             
             auto curr_it = tm.end();
             
@@ -119,24 +119,24 @@ class FindMinZoomOneTag : public FindMinZoom {
                 }
             }
                     
-            if (curr_it==tm.end()) { return -1; }
+            if (curr_it==tm.end()) { return std::optional<int64>(); }
             curr_it->second.second++;
             return curr_it->second.first;
         }
         
-        virtual int64 calculate(ElementPtr ele) {
+        virtual std::optional<int64> calculate(ElementPtr ele) {
             //int64 minzoom=100;
-            int64 minzoom = tags_zoom(ele);
-            if (minzoom < 0) { return minzoom; }
+            std::optional<int64> minzoom = tags_zoom(ele);
+            if (!minzoom) { return minzoom; }
         
-            int64 area_minzoom = areaminzoom(ele);
+            auto area_minzoom = areaminzoom(ele);
             if (area_minzoom > minzoom) {
                 return area_minzoom;
             }
             return minzoom;
         }
         
-        int64 areaminzoom(ElementPtr ele) {
+        std::optional<int64> areaminzoom(ElementPtr ele) {
         
             
             if ((ele->Type()==ElementType::Linestring) && (minlen>0)) {

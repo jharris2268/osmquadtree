@@ -65,7 +65,7 @@ for modname,srcs in mods.items():
                     #postgresql_path,
                 ],
                 libraries=libs,
-                extra_compile_args=['-std=c++14','-DINDIVIDUAL_MODULES'],
+                extra_compile_args=['-std=c++17','-DINDIVIDUAL_MODULES'],
                 
         )
     )

@@ -43,7 +43,7 @@ class BaseGeometry : public Element {
         virtual std::string Wkb(bool transform, bool srid) const=0;
 
         virtual std::optional<int64> MinZoom() const { return minzoom; }
-        void SetMinZoom(int64 mz) { *minzoom = mz; }
+        void SetMinZoom(int64 mz) { minzoom = mz; }
         
         virtual ~BaseGeometry() {}
         
