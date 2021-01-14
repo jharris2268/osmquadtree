@@ -254,6 +254,7 @@ void geometry_defs(py::module& m) {
         .def_readonly("x", &geometry::XY::x)
         .def_readonly("y", &geometry::XY::y)
         .def_property_readonly("transform", [](const geometry::XY& ll) { return geometry::inverse_transform(ll.x,ll.y); })
+        .def_property_readonly("round_2dp", &geometry::XY::round_2dp)
     ;
     
     /*
@@ -358,9 +359,9 @@ void geometry_defs(py::module& m) {
         .def("areaminzoom", &findminzoom_onetag::areaminzoom)
     ;*/
 
-    m.def("make_geometries", &geometry::make_geometries, py::arg("feature_keys"), py::arg("polygon_tags"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("bbox"), py::arg("block"), py::arg("max_min_zoom_level")=0);
+    m.def("make_geometries", &geometry::make_geometries, py::arg("feature_keys"), py::arg("polygon_tags"), py::arg("other_tags"), py::arg("drop_keys"), py::arg("all_other_tags"), py::arg("all_objs"), py::arg("bbox"), py::arg("block"), py::arg("max_min_zoom_level")=0);
     
-    m.def("filter_tags", &geometry::filter_tags, py::arg("feature_keys"), py::arg("other_tags"), py::arg("all_other_tags"), py::arg("tags"));
+    m.def("filter_tags", &geometry::filter_tags, py::arg("feature_keys"), py::arg("other_tags"), py::arg("drop_keys"), py::arg("all_other_tags"), py::arg("all_objs"), py::arg("tags"));
     m.def("check_polygon_tags", &geometry::check_polygon_tags, py::arg("polygon_tags"), py::arg("tags"));
     m.def("calc_zorder", &geometry::calc_zorder, py::arg("tags"));
     
@@ -387,7 +388,9 @@ void geometry_defs(py::module& m) {
         //.def_readwrite("style", &geometry::GeometryParameters::style)
         .def_readwrite("feature_keys", &geometry::GeometryParameters::feature_keys)
         .def_readwrite("other_keys", &geometry::GeometryParameters::other_keys)
+        .def_readwrite("drop_keys", &geometry::GeometryParameters::drop_keys)
         .def_readwrite("all_other_keys", &geometry::GeometryParameters::all_other_keys)
+        .def_readwrite("all_objs", &geometry::GeometryParameters::all_objs)
         .def_readwrite("polygon_tags", &geometry::GeometryParameters::polygon_tags)
         
         .def_readwrite("box", &geometry::GeometryParameters::box)

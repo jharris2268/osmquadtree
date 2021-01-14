@@ -231,7 +231,67 @@ highway_prio = dict((h,i) for i,h in enumerate([
     'motorway','motorway_link',
     'siding','rail',
 ]))
-
+osm_carto_drop_keys = {
+    'note',
+    'source',
+    'source_ref',
+    'attribution',
+    'comment',
+    'fixme',
+    'created_by',
+    'odbl',
+    'project:eurosha_2012',
+    'ref:UrbIS',
+    'accuracy:meters',
+    'waterway:type',
+    'statscan:rbuid',
+    'ref:ruian:addr',
+    'ref:ruian',
+    'building:ruian:type',
+    'dibavod:id',
+    'uir_adr:ADRESA_KOD',
+    'gst:feat_id',
+    'osak:identifier',
+    'maaamet:ETAK',
+    'ref:FR:FANTOIR',
+    'OPPDATERIN',
+    'addr:city:simc',
+    'addr:street:sym_ul',
+    'building:usage:pl',
+    'building:use:pl',
+    'teryt:simc',
+    'raba:id',
+    'linz2osm:objectid',
+    'dcgis:gis_id',
+    'nycdoitt:bin',
+    'chicago:building_id',
+    'lojic:bgnum',
+    'massgis:way_id',
+    'import',
+    'import_uuid',
+    'OBJTYPE',
+    'SK53_bulk:load',
+    'note:',
+    'source:',
+    'CLC:',
+    'geobase:',
+    'canvec:',
+    'geobase:',
+    'kms:',
+    'ngbe:',
+    'it:fvg:',
+    'KSJ2:',
+    'yh:',
+    'LINZ2OSM:',
+    'LINZ:',
+    'WroclawGIS:',
+    'naptan:',
+    'tiger:',
+    'gnis:',
+    'NHD:',
+    'nhd:',
+    'mvdgis:'
+}
 
 class ParentTag:
     __slots__ = ['node_keys', 'way_key', 'way_priority']
@@ -315,23 +375,27 @@ def write_entries(obj, key, vals, ident, last=False):
 
 
 class GeometryStyle:
-    __slots__ = ['feature_keys','other_keys','polygon_tags','parent_tags','relation_tag_spec','multipolygons','boundary_relations']
+    __slots__ = ['feature_keys','other_keys','drop_keys','polygon_tags','parent_tags','relation_tag_spec','multipolygons','boundary_relations','all_objs']
     def __init__(self,
             feature_keys=None,
             other_keys=None,
+            drop_keys=None,
             polygon_tags=None,
             parent_tags=None,
             relation_tag_spec=None,
             multipolygons=True,
-            boundary_relations=True):
+            boundary_relations=True,
+            all_objs=False):
         
         self.feature_keys = default_feature_keys if feature_keys is None else feature_keys
         self.other_keys = default_other_keys if other_keys is None else other_keys
+        self.drop_keys = set([]) if drop_keys is None else drop_keys,
         self.polygon_tags = default_polygon_tags if polygon_tags is None else polygon_tags
         self.parent_tags = default_parent_tags if parent_tags is None else parent_tags
         self.relation_tag_spec = default_relation_tag_spec if relation_tag_spec is None else relation_tag_spec
         self.multipolygons = multipolygons
         self.boundary_relations=boundary_relations
+        self.all_objs=all_objs
         
         
     
@@ -341,10 +405,12 @@ class GeometryStyle:
         result['feature_keys'] = self.feature_keys
         result['polygon_tags'] = self.polygon_tags
         result['other_keys'] = self.other_keys
+        result['drop_keys'] = self.drop_keys
         result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
         result['relation_tag_spec'] = [p.to_json() for p in self.relation_tag_spec]
         result['multipolygons']=self.multipolygons
         result['boundary_relations']=self.boundary_relations
+        result['all_objs'] = self.all_objs
         return result
     
     def dump(self, obj, pretty=False):
@@ -378,7 +444,7 @@ class GeometryStyle:
         parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
         relation_tag_spec = [RelationTag.from_json(v) for v in jj['relation_tag_spec']]
         
-        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj['polygon_tags'], parent_tags, relation_tag_spec, jj['multipolygons'], jj['boundary_relations'])
+        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj.get('drop_keys'), jj['polygon_tags'], parent_tags, relation_tag_spec, jj['multipolygons'], jj['boundary_relations'], jj['all_objs'] if 'all_objs' in jj else False)
     
     @staticmethod
     def load(obj):
@@ -435,7 +501,9 @@ class GeometryStyle:
         
         params.add_multipolygons = self.multipolygons
         params.add_boundary_polygons = self.boundary_relations
-        
+        if not self.drop_keys is None:
+            params.drop_keys = self.drop_keys
+        params.all_objs = self.all_objs
     
     
     

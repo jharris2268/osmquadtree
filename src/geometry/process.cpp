@@ -138,7 +138,7 @@ block_callback process_geometry_blocks(
        
         makegeoms[i]  =threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MakeGeometries["+std::to_string(i)+"]",
-                make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
+                make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.drop_keys, params.all_other_keys,params.all_objs,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
                 finalcb
             )
         );
@@ -159,7 +159,7 @@ block_callback process_geometry_blocks(
         
         make_mps = threaded_callback<PrimitiveBlock>::make(
             BlockhandlerCallbackTime::make("MultiPolygons", //blockhandler_callback(
-                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons,params.max_number_errors),
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.drop_keys, params.all_other_keys,params.all_objs,params.box,params.add_boundary_polygons, params.add_multipolygons,params.max_number_errors),
                 makegeoms_split
             )
         );
@@ -206,7 +206,7 @@ block_callback process_geometry_blocks_nothread(
     
     
     auto make_geom = BlockhandlerCallbackTime::make("GeometryProcess",
-        make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.all_other_keys,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
+        make_geometryprocess(params.feature_keys, params.polygon_tags, params.other_keys, params.drop_keys, params.all_other_keys,params.all_objs,params.box,params.recalcqts,params.findmz,params.max_min_zoom_level),
         
         final_callback
     );
@@ -221,7 +221,7 @@ block_callback process_geometry_blocks_nothread(
         mp = 
             BlockhandlerCallbackTime::make("MultiPolygons",
             
-                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.all_other_keys,params.box,params.add_boundary_polygons, params.add_multipolygons, params.max_number_errors),
+                make_multipolygons(errors_callback,params.feature_keys, params.other_keys, params.drop_keys, params.all_other_keys,params.all_objs,params.box,params.add_boundary_polygons, params.add_multipolygons, params.max_number_errors),
                 make_geom
         );
     }

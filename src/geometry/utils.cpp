@@ -51,8 +51,11 @@ uint32_t epsg_code(bool transform) {
 XY forward_transform(int64 ln, int64 lt) {
     double x = coordinate_as_float(ln)*earth_width / 180; 
     double y = latitude_mercator(coordinate_as_float(lt), earth_width);
-    return XY{round(x*100)/100, round(y*100)/100};
+    //return XY{round(x*100)/100, round(y*100)/100};
+    return XY{x,y};
 }
+
+
 
 LonLat inverse_transform(double x, double y) {
     return LonLat{coordinate_as_integer(x*180 /earth_width), coordinate_as_integer(latitude_un_mercator(y, earth_width))};

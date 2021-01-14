@@ -279,7 +279,9 @@ class MakeMultiPolygons : public BlockHandler {
     //style_info_map style;
     std::set<std::string> feature_keys;
     std::set<std::string> other_keys;
+    std::set<std::string> drop_keys;
     bool all_other_keys;
+    bool all_objs;
     
     bbox box;
     int64 maxqt;
@@ -293,14 +295,17 @@ class MakeMultiPolygons : public BlockHandler {
             std::function<void(mperrorvec&)> errors_callback_,
             const std::set<std::string>& feature_keys_,  
             const std::set<std::string>& other_keys_,
+            const std::set<std::string>& drop_keys_,
             bool all_other_keys_,
+            bool all_objs_,
             const bbox& box_,
             bool boundary_,
             bool multipolygon_,
             int64 max_number_errors_) : 
                 errors_callback(errors_callback_),
-                feature_keys(feature_keys_), other_keys(other_keys_),
-                all_other_keys(all_other_keys_),
+                feature_keys(feature_keys_),
+                other_keys(other_keys_), drop_keys(drop_keys_),
+                all_other_keys(all_other_keys_), all_objs(all_objs_),
                 box(box_), maxqt(-1),
                 compcount(0), boundary(boundary_),
                 multipolygon(multipolygon_),
@@ -405,8 +410,18 @@ class MakeMultiPolygons : public BlockHandler {
                 
                 
                 bool tags_pass; std::vector<Tag> tags; std::optional<int64> layer;
-                std::tie(tags_pass, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, r->Tags());
-                int64 z_order=0;
+                std::tie(tags_pass, tags, layer) = filter_tags(feature_keys, other_keys, drop_keys, all_other_keys, all_objs, r->Tags());
+                auto z_order=calc_zorder(tags);
+                
+                if (!drop_keys.empty()) {
+                    std::vector<Tag> tagsf;
+                    for (const auto& t: tags) {
+                        if (t.key!="type") {
+                            tagsf.push_back(t);
+                        }
+                    }
+                    tags.swap(tagsf);
+                }
                 //tagvector tgs; bool isring; int64 zorder, layer;
                 //std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
 
@@ -583,11 +598,13 @@ std::shared_ptr<BlockHandler> make_multipolygons(
     std::function<void(mperrorvec&)> add_error,
     const std::set<std::string>& feature_keys,  
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const bbox& box,
     bool boundary, bool multipolygon, int64 max_number_errors) {
 
-    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, all_other_keys,box,boundary,multipolygon,max_number_errors);
+    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, drop_keys, all_other_keys, all_objs, box,boundary,multipolygon,max_number_errors);
 }
 
 

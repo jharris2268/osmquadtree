@@ -60,7 +60,34 @@ std::optional<int64> get_zorder_value(const Tag& t) {
         if (t.val == "cycleway") { return 100;}
         if (t.val == "steps") { return 90;}
         if (t.val == "platform") { return 90;}
-        if (t.val == "construction") { return 10;}
+        //if (t.val == "construction") { return 10;}
+        return std::optional<int64>();
+    }
+    if (t.key == "construction") {
+        if (t.val == "motorway") { return 33; }
+        if (t.val == "trunk") {return 33;}
+        if (t.val == "primary") {return 33;}
+        if (t.val == "secondary") { return 33;}
+        if (t.val == "tertiary") { return 33;}
+        if (t.val == "residential") { return 33;}
+        if (t.val == "unclassified") { return 33;}
+        if (t.val == "road") { return 33;}
+        if (t.val == "living_street") { return 32;}
+        if (t.val == "pedestrian") { return 31;}
+        if (t.val == "raceway") { return 30;}
+        if (t.val == "motorway_link") { return 24;}
+        if (t.val == "trunk_link") { return 23;}
+        if (t.val == "primary_link") { return 2;}
+        if (t.val == "secondary_link") { return 21;}
+        if (t.val == "tertiary_link") { return 20;}
+        if (t.val == "service") { return 15;}
+        if (t.val == "track") { return 11;}
+        if (t.val == "path") { return 10;}
+        if (t.val == "footway") { return 10;}
+        if (t.val == "bridleway") { return 10;}
+        if (t.val == "cycleway") { return 10;}
+        if (t.val == "steps") { return 9;}
+        if (t.val == "platform") { return 9;}
         return std::optional<int64>();
     }
     
@@ -102,12 +129,27 @@ std::optional<int64> calc_zorder(const std::vector<Tag>& tags) {
     return result;
 }
 
-
+bool is_drop_key(const std::set<std::string>& drop_keys, const std::string& k) {
+    if (drop_keys.empty()) {
+        return false;
+    }
+    if (drop_keys.count(k) > 0) {
+        return true;
+    }
+    for (auto it = drop_keys.begin(); it!=drop_keys.end(); ++it) {
+        if ((it->size()>1) && (it->back()==':') && (k.substr(0,it->size()) == *it)) {
+            return true;
+        }
+    }
+    return false;
+}       
 
 std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
     const std::set<std::string>& feature_keys,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const std::vector<Tag> in_tags) {
         
     
@@ -126,7 +168,9 @@ std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
             has_feature=true;
             out_tags.push_back(tg);
         } else if (all_other_keys || (other_keys.count(tg.key)>0)) {
-            out_tags.push_back(tg);
+            if (!is_drop_key(drop_keys, tg.key)) {
+                out_tags.push_back(tg);
+            }
         }
         if (tg.key=="layer") {
             try {
@@ -136,7 +180,9 @@ std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
             }
         }
     }
-    
+    if (all_objs && (!out_tags.empty())) {
+        has_feature=true;
+    }
     return std::make_tuple(has_feature, out_tags, layer);
 }
 
@@ -176,7 +222,9 @@ PrimitiveBlockPtr make_geometries(
     const std::set<std::string>& feature_keys,
     const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const bbox& box,
     PrimitiveBlockPtr in,
     std::function<bool(ElementPtr)> check_feat) {
@@ -196,7 +244,7 @@ PrimitiveBlockPtr make_geometries(
         if (obj->Type()==ElementType::Node) {
             
             bool passes; std::vector<Tag> tags; std::optional<int64> layer;
-            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
+            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, drop_keys, all_other_keys, all_objs, obj->Tags());
             if (passes) {
                 auto n = std::dynamic_pointer_cast<Node>(obj);
                 if (contains_point(box, n->Lon(),n->Lat())) {
@@ -206,7 +254,7 @@ PrimitiveBlockPtr make_geometries(
         } else if (obj->Type() == ElementType::WayWithNodes) {
             
             bool passes; std::vector<Tag> tags; std::optional<int64> layer;
-            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, all_other_keys, obj->Tags());
+            std::tie(passes, tags, layer) = filter_tags(feature_keys, other_keys, drop_keys, all_other_keys, all_objs, obj->Tags());
             
             if (passes) {
                 auto w = std::dynamic_pointer_cast<WayWithNodes>(obj);
@@ -218,11 +266,11 @@ PrimitiveBlockPtr make_geometries(
                     continue;
                 }
                 bool is_poly = (w->IsRing() && check_polygon_tags(polygon_tags, tags));
-            
+                std::optional<int64> z_order = calc_zorder(tags);
                 if (is_poly) {
-                    result->add(std::make_shared<SimplePolygon>(w, tags,std::optional<int64>(),layer,std::optional<int64>()));
+                    result->add(std::make_shared<SimplePolygon>(w, tags,z_order,layer,std::optional<int64>()));
                 } else {
-                    std::optional<int64> z_order = calc_zorder(tags);
+                    
                     result->add(std::make_shared<Linestring>(w, tags, z_order, layer, std::optional<int64>()));
                 }
             }
@@ -287,7 +335,9 @@ class GeometryProcess : public BlockHandler {
             const std::set<std::string>& feature_keys_,
             const std::map<std::string, PolygonTag>& polygon_tags_,
             const std::set<std::string>& other_keys_,
+            const std::set<std::string>& drop_keys_,
             bool all_other_keys_,
+            bool all_objs_,
             const bbox& box_,
             bool recalc_,
             std::shared_ptr<FindMinZoom> fmz_,
@@ -295,7 +345,8 @@ class GeometryProcess : public BlockHandler {
             
             
             :feature_keys(feature_keys_), polygon_tags(polygon_tags_),
-            other_keys(other_keys_), all_other_keys(all_other_keys_),
+            other_keys(other_keys_), drop_keys(drop_keys_),
+            all_other_keys(all_other_keys_), all_objs(all_objs_),
             box(box_), recalc(recalc_), fmz(fmz_), max_min_zoom_level(max_min_zoom_level_) {}
             
 
@@ -304,7 +355,7 @@ class GeometryProcess : public BlockHandler {
             if (max_min_zoom_level>0) {
                 check_feat = [this](ElementPtr e) { return this->fmz->check_feature(e, this->max_min_zoom_level); };
             }
-            auto res = make_geometries(feature_keys, polygon_tags, other_keys, all_other_keys, box, bl, check_feat);
+            auto res = make_geometries(feature_keys, polygon_tags, other_keys, drop_keys, all_other_keys, all_objs, box, bl, check_feat);
             
             if (recalc) {
                 recalculate_quadtree(res, 18, fmz ? 0 : 0.05);
@@ -321,7 +372,9 @@ class GeometryProcess : public BlockHandler {
         std::set<std::string> feature_keys;
         std::map<std::string, PolygonTag> polygon_tags;
         std::set<std::string> other_keys;
+        std::set<std::string> drop_keys;
         bool all_other_keys;
+        bool all_objs;
         bbox box;
         bool recalc;
         std::shared_ptr<FindMinZoom> fmz;
@@ -333,13 +386,15 @@ std::shared_ptr<BlockHandler> make_geometryprocess(
     const std::set<std::string>& feature_keys,
     const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const bbox& box,
     bool recalc,
     std::shared_ptr<FindMinZoom> fmz,
     int64 max_min_zoom_level){
         
-    return std::make_shared<GeometryProcess>(feature_keys, polygon_tags, other_keys, all_other_keys, box, recalc, fmz, max_min_zoom_level);
+    return std::make_shared<GeometryProcess>(feature_keys, polygon_tags, other_keys, drop_keys, all_other_keys, all_objs, box, recalc, fmz, max_min_zoom_level);
     
 }
 

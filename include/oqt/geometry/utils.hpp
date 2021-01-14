@@ -37,15 +37,18 @@ namespace geometry {
 uint32_t epsg_code(bool transform);
 
 
-
+inline double round_2dp(double d) { return round(d*100.0)/100.0; };
 struct XY {
     XY() : x(0), y(0) {}
     XY(double x_, double y_) : x(x_), y(y_) {}
     double x, y;
+    
+    XY round_2dp() { return XY(oqt::geometry::round_2dp(x),oqt::geometry::round_2dp(y)); }
 };
 
 XY forward_transform(int64 ln, int64 lt);
 LonLat inverse_transform(double x, double y);
+
 
 
 double calc_line_length(const std::vector<LonLat>& ll);

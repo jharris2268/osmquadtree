@@ -72,7 +72,9 @@ std::optional<int64> calc_zorder(const std::vector<Tag>& tags);
 std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
     const std::set<std::string>& feature_keys,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const std::vector<Tag> in_tags);
 
 bool check_polygon_tags(const std::map<std::string, PolygonTag>& polygon_tags, const std::vector<Tag>& tags); 
@@ -81,7 +83,9 @@ PrimitiveBlockPtr make_geometries(
     const std::set<std::string>& feature_keys,
     const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const bbox& box,
     PrimitiveBlockPtr in,
     std::function<bool(ElementPtr)> check_feat);
@@ -94,7 +98,9 @@ std::shared_ptr<BlockHandler> make_geometryprocess(
     const std::set<std::string>& feature_keys,
     const std::map<std::string, PolygonTag>& polygon_tags,
     const std::set<std::string>& other_keys,
+    const std::set<std::string>& drop_keys,
     bool all_other_keys,
+    bool all_objs,
     const bbox& box,
     bool recalc,
     std::shared_ptr<FindMinZoom> fmz,

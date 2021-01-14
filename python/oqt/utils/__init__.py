@@ -52,6 +52,11 @@ def bbox_getitem(b, i):
 
 bbox.__getitem__ = bbox_getitem
 
+def bbox_transform(bx):
+    ll = LonLat(bx[0],bx[1]).transform
+    ur = LonLat(bx[2],bx[3]).transform
+    return [ll.x,ll.y,ur.x,ur.y]
+bbox.transform = bbox_transform
 
 
 PbfTag.__repr__ = lambda p: "(%d, %d, %.20s)" % (p.tag, p.value, p.data)

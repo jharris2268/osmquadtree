@@ -44,7 +44,7 @@ namespace geometry {
 
 struct GeometryParameters {
     GeometryParameters() 
-        : numchan(4), numblocks(512), all_other_keys(false), box(), add_multipolygons(false),
+        : numchan(4), numblocks(512), all_other_keys(false), all_objs(false), box(), add_multipolygons(false),
             add_boundary_polygons(false), recalcqts(false), outfn(""), indexed(false),
             max_min_zoom_level(0), max_number_errors(1000) {}
     
@@ -57,7 +57,9 @@ struct GeometryParameters {
     std::set<std::string> feature_keys;
     std::map<std::string, PolygonTag> polygon_tags;
     std::set<std::string> other_keys;
+    std::set<std::string> drop_keys;
     bool all_other_keys;
+    bool all_objs;
     
     
     bbox box;

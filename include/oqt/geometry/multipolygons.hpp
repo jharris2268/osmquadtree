@@ -46,7 +46,10 @@ std::shared_ptr<BlockHandler> make_multipolygons(
     std::function<void(mperrorvec&)> errors_callback,
     const std::set<std::string>& feature_keys,  
     const std::set<std::string>& other_keys,
-    bool all_other_keys, const bbox& box,
+    const std::set<std::string>& drop_keys,
+    bool all_other_keys,
+    bool all_objs, 
+    const bbox& box,
     bool boundary, bool multipolygon, int64 max_number_errors);
 
 }}
