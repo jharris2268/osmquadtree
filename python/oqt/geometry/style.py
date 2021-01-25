@@ -389,7 +389,7 @@ class GeometryStyle:
         
         self.feature_keys = default_feature_keys if feature_keys is None else feature_keys
         self.other_keys = default_other_keys if other_keys is None else other_keys
-        self.drop_keys = set([]) if drop_keys is None else drop_keys,
+        self.drop_keys = set([]) if drop_keys is None else drop_keys
         self.polygon_tags = default_polygon_tags if polygon_tags is None else polygon_tags
         self.parent_tags = default_parent_tags if parent_tags is None else parent_tags
         self.relation_tag_spec = default_relation_tag_spec if relation_tag_spec is None else relation_tag_spec
@@ -405,7 +405,8 @@ class GeometryStyle:
         result['feature_keys'] = self.feature_keys
         result['polygon_tags'] = self.polygon_tags
         result['other_keys'] = self.other_keys
-        result['drop_keys'] = self.drop_keys
+        if not self.drop_keys is None:
+            result['drop_keys'] = list(sorted(self.drop_keys))
         result['parent_tags'] = dict((k, v.to_json()) for k,v in self.parent_tags.items())
         result['relation_tag_spec'] = [p.to_json() for p in self.relation_tag_spec]
         result['multipolygons']=self.multipolygons
@@ -443,44 +444,21 @@ class GeometryStyle:
         
         parent_tags = dict((k, ParentTag.from_json(v)) for k,v in jj['parent_tags'].items())
         relation_tag_spec = [RelationTag.from_json(v) for v in jj['relation_tag_spec']]
-        
-        return GeometryStyle(jj['feature_keys'], jj['other_keys'], jj.get('drop_keys'), jj['polygon_tags'], parent_tags, relation_tag_spec, jj['multipolygons'], jj['boundary_relations'], jj['all_objs'] if 'all_objs' in jj else False)
+        drop_keys = None
+        if 'drop_keys' in jj:
+            drop_keys = set(jj['drop_keys'])
+        return GeometryStyle(jj['feature_keys'], jj['other_keys'], drop_keys, jj['polygon_tags'], parent_tags, relation_tag_spec, jj['multipolygons'], jj['boundary_relations'], jj['all_objs'] if 'all_objs' in jj else False)
     
     @staticmethod
     def load(obj):
         return GeometryStyle.from_json(json.load(obj))
     
     
-    def set_params(self, params, add_min_zoom=False):
-        
-        
+    def set_geometrytagparams(self, params):
         params.all_other_keys=True
         
         params.feature_keys = set(self.feature_keys)
-        
-        polygon_tags = {}
-        for key,tt in self.polygon_tags.items():
-            if tt == 'all':
-                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, set([]))
-            elif 'include' in tt:
-                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, set(tt['include']))
-            elif 'exclude' in tt:
-                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, set(tt['exclude']))
-                
-        params.polygon_tags=polygon_tags
-        
-        parent_tag_spec=[]
-        if self.parent_tags:
-            for k,v in self.parent_tags.items():
-                parent_tag_spec += v.to_cpp(k)
-            
-        params.parent_tag_spec = parent_tag_spec
-        
-        
-        if self.relation_tag_spec:
-            params.relation_tag_spec = [p.to_cpp() for p in self.relation_tag_spec]
-        
-        
+    
         if not self.other_keys is None:
             params.all_other_keys=False
             other_keys = [k for k in self.other_keys]
@@ -499,11 +477,43 @@ class GeometryStyle:
         
         
         
-        params.add_multipolygons = self.multipolygons
-        params.add_boundary_polygons = self.boundary_relations
-        if not self.drop_keys is None:
+        if self.drop_keys:
             params.drop_keys = self.drop_keys
         params.all_objs = self.all_objs
+    
+    def set_params(self, params, add_min_zoom=False):
+        
+        self.set_geometrytagparams(params)
+        
+        
+
+        polygon_tags = {}
+        for key,tt in self.polygon_tags.items():
+            if tt == 'all':
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.All, set([]))
+            elif 'include' in tt:
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Include, set(tt['include']))
+            elif 'exclude' in tt:
+                polygon_tags[key] = _geometry.PolygonTag(key, _geometry.PolygonTag.Type.Exclude, set(tt['exclude']))
+                
+        params.polygon_tags=polygon_tags
+    
+        parent_tag_spec=[]
+        if self.parent_tags:
+            for k,v in self.parent_tags.items():
+                parent_tag_spec += v.to_cpp(k)
+            
+        params.parent_tag_spec = parent_tag_spec
+        
+        
+        if self.relation_tag_spec:
+            params.relation_tag_spec = [p.to_cpp() for p in self.relation_tag_spec]
+    
+        params.add_multipolygons = self.multipolygons
+        params.add_boundary_polygons = self.boundary_relations
+        
+        
+        
     
     
     

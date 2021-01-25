@@ -190,10 +190,13 @@ bool is_ring(const Ring& ring) {
     return ((ll.size()>3) && (ll.front()==ll.back()));
 }
 
-std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const std::vector<std::shared_ptr<WayWithNodes>>& ways, const bbox& box) {
+std::pair<std::vector<Ring>,std::vector<std::pair<bool,Ring>>> make_rings(const std::vector<std::pair<bool,std::shared_ptr<WayWithNodes>>>& ways, bool is_inner, const bbox& box) {
     std::vector<std::pair<bool,std::deque<Ring::Part>>> rings;
     for (auto w : ways) {
-        add_to_rings(rings, w);
+        if (w.first==is_inner) {
+            add_to_rings(rings, w.second);
+        }
+        
     }
     size_t rl = rings.size();
     rings = merge_rings(rings);
@@ -276,12 +279,7 @@ class MakeMultiPolygons : public BlockHandler {
     std::function<void(mperrorvec&)> errors_callback;
     mperrorvec errors;
     
-    //style_info_map style;
-    std::set<std::string> feature_keys;
-    std::set<std::string> other_keys;
-    std::set<std::string> drop_keys;
-    bool all_other_keys;
-    bool all_objs;
+    GeometryTagsParams params;
     
     bbox box;
     int64 maxqt;
@@ -293,31 +291,19 @@ class MakeMultiPolygons : public BlockHandler {
     public:
         MakeMultiPolygons(
             std::function<void(mperrorvec&)> errors_callback_,
-            const std::set<std::string>& feature_keys_,  
-            const std::set<std::string>& other_keys_,
-            const std::set<std::string>& drop_keys_,
-            bool all_other_keys_,
-            bool all_objs_,
+            const GeometryTagsParams& params_,
             const bbox& box_,
             bool boundary_,
             bool multipolygon_,
             int64 max_number_errors_) : 
                 errors_callback(errors_callback_),
-                feature_keys(feature_keys_),
-                other_keys(other_keys_), drop_keys(drop_keys_),
-                all_other_keys(all_other_keys_), all_objs(all_objs_),
+                params(params_),
                 box(box_), maxqt(-1),
                 compcount(0), boundary(boundary_),
                 multipolygon(multipolygon_),
                 max_number_errors(max_number_errors_)
             {
-                //all_tags = style.count("*")!=0;
-                /*extra_tags_key = "";
-                for (const auto& st: style) {
-                    if (st.second.IsOtherTags) {
-                        extra_tags_key=st.first;
-                    }
-                }*/
+                
                 
                 allow_empty_role=true;
             }
@@ -381,144 +367,6 @@ class MakeMultiPolygons : public BlockHandler {
             return ff;
         }
     private:
-
-
-
-
-        size_t finish_relation(const pendingrel& pr, std::map<int64,primblock_ptr>& finished) {
-            auto tq=pr.tile_quadtree;
-            size_t cc=0;
-            
-            auto r=pr.rel;
-            //bool is_bp = get_tag(r,"type")=="boundary";
-            std::vector<Ring> outers,inners;
-            std::vector<std::pair<bool,Ring>> passes;
-            std::tie(outers,inners,passes) = collect_rings(r);
-
-            std::string err="";
-            //std::stringstream err;
-            //err << "relation " << pr.rel->Id() << " " << is_bp << " ";
-            if (!passes.empty()) {
-                err = "incomplete rings";
-            }
-            bool all_outofbox=true;
-            for (auto& p : passes) {
-                if (!p.first) { all_outofbox=false; }
-            }
-
-            if (!outers.empty()) {
-                
-                
-                bool tags_pass; std::vector<Tag> tags; std::optional<int64> layer;
-                std::tie(tags_pass, tags, layer) = filter_tags(feature_keys, other_keys, drop_keys, all_other_keys, all_objs, r->Tags());
-                auto z_order=calc_zorder(tags);
-                
-                if (!drop_keys.empty()) {
-                    std::vector<Tag> tagsf;
-                    for (const auto& t: tags) {
-                        if (t.key!="type") {
-                            tagsf.push_back(t);
-                        }
-                    }
-                    tags.swap(tagsf);
-                }
-                //tagvector tgs; bool isring; int64 zorder, layer;
-                //std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
-
-                //if (!tgs.empty() && isring) {
-                if (tags_pass) {
-
-                    std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
-                    for (size_t i=0; i < outers.size(); i++) {
-                        parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<Ring>(0));
-                        
-                        
-                    }
-                    if (!inners.empty()) {
-                        for (const auto& r : inners) {
-                            bool added=false;
-                            auto ll = ringpart_lonlats(r);
-                            for (auto& pp : parts) {
-                                if (!added && ring_contains(pp.second.first, ll)) {
-                                    pp.second.second.push_back(r);
-                                    added=true;
-                                }
-                            }
-                            if (!added) {
-                                if (!err.empty()) { err+=", "; }
-                                err += "orphan inner";
-                            }
-                        }
-                    }
-                    
-                    std::vector<PolygonPart> checked;
-                    for (const auto& pp : parts) {
-                        
-                        if (!check_parts(pp.second)) {
-                            Logger::Message() << "invalid polygon part " << r->Id() << " " << pp.first;
-                            continue;
-                        }
-                        checked.push_back(PolygonPart(checked.size(), outers[pp.first], pp.second.second, 0));
-                    }
-                    
-                    if (checked.empty()) {
-                        Logger::Message() << "no polygons for " << r->Id();
-                    } else {
-                        auto cp = std::make_shared<ComplicatedPolygon>(r, checked,tags,z_order,layer,std::optional<int64>());
-                        finished[tq]->add(cp);
-                    }
-
-                    
-                } else {
-                    //err += "?? isring=";
-                    //if (isring) { err += "y"; } else { err += "n"; }
-                }
-            } else {
-                if (inners.empty() && (all_outofbox || passes.empty())) {
-                    err="";
-                } else {
-                    err = "no outers!!!";
-                }
-            }
-
-
-
-            for (auto& m: pr.rel->Members()) {
-                if (m.type==ElementType::Way) {
-                    auto jt = pendingways.find(m.ref);
-                    if (jt==pendingways.end()) {
-                        Logger::Message() << "relation " << pr.rel->Id() << " missing way " << m.ref;
-                    } else {
-                        jt->second.rels--;
-                        if (jt->second.rels==0) {
-                            
-                            pendingways.erase(jt);
-                            cc++;
-                        }
-                    }
-
-
-
-                }
-            }
-
-            if (!err.empty()) {
-                errors.count+=1;
-                if ((int64) errors.errors.size() < max_number_errors) {
-                    errors.errors.push_back(std::make_tuple(pr.rel, err, outers, inners, passes));
-                }
-                
-                /*if (errors && (errors->size()<10000)) {
-                    errors->push_back(std::make_tuple(pr.rel,err,outers,inners,passes));
-                }*/
-            }
-            return cc;
-        }
-
-
-
-
-
         primblock_vec check_finished(int64 qt) {
            
 
@@ -565,34 +413,196 @@ class MakeMultiPolygons : public BlockHandler {
             return result;
         }
 
-        std::tuple<std::vector<Ring>, std::vector<Ring>,std::vector<std::pair<bool,Ring>>> collect_rings(std::shared_ptr<Relation> rel) {
-            std::vector<std::shared_ptr<WayWithNodes>> outers, inners;
+
+
+        size_t finish_relation(const pendingrel& pr, std::map<int64,primblock_ptr>& finished) {
+            auto tq=pr.tile_quadtree;
+            size_t cc=0;
+            
+            auto r=pr.rel;
+            //bool is_bp = get_tag(r,"type")=="boundary";
+            
+            auto ways = collect_ways(r);
+            
+            
+            auto res = process_multipolygon(params, box, r, ways);
+            
+            for (auto& m: pr.rel->Members()) {
+                if (m.type==ElementType::Way) {
+                    auto jt = pendingways.find(m.ref);
+                    if (jt==pendingways.end()) {
+                        Logger::Message() << "relation " << pr.rel->Id() << " missing way " << m.ref;
+                    } else {
+                        jt->second.rels--;
+                        if (jt->second.rels==0) {
+                            
+                            pendingways.erase(jt);
+                            cc++;
+                        }
+                    }
+
+
+
+                }
+            }
+            
+            if (res.first) {
+                finished[tq]->add(res.first);
+            }
+            if (res.second) {
+                errors.count+=1;
+                if ((int64) errors.errors.size() < max_number_errors) {
+                    errors.errors.push_back(*res.second);
+                }
+            }
+            return cc;
+        }
+            
+
+        std::vector<std::pair<bool,std::shared_ptr<WayWithNodes>>> collect_ways(std::shared_ptr<Relation> rel) {
+            std::vector<std::pair<bool,std::shared_ptr<WayWithNodes>>> ways;
             for (const auto& m: rel->Members()) {
                 if ((m.type==ElementType::Way)) {
                     auto w = pendingways[m.ref].wy;
                     if (w) {
-                        if (m.role=="inner") { inners.push_back(w); }
-                        else if (m.role=="outer") { outers.push_back(w); }
-                        else if (m.role.empty() && allow_empty_role) { outers.push_back(w); }
+                        if (m.role=="inner") { ways.push_back(std::make_pair(true,w)); }
+                        else if (m.role=="outer") { ways.push_back(std::make_pair(false,w)); }
+                        else if (m.role.empty() && allow_empty_role) { ways.push_back(std::make_pair(false,w)); }
                         else { continue; }
                     }
 
                 }
             }
-            auto oo = make_rings(outers,box);
-            auto ii = make_rings(inners,box);
-            if (!ii.second.empty()) {
-                std::copy(ii.second.begin(),ii.second.end(),std::back_inserter(oo.second));
 
-            }
-            return std::make_tuple(oo.first,ii.first,oo.second);
-            
+            return ways;
         }
+        
 
-
-
+        
 
 };
+
+std::pair<std::shared_ptr<ComplicatedPolygon>, std::optional<mperror>> process_multipolygon(
+    const GeometryTagsParams& params, const bbox& box,
+    std::shared_ptr<Relation> r,
+    const std::vector<std::pair<bool,std::shared_ptr<WayWithNodes>>>& ways) {
+    
+    
+    std::shared_ptr<ComplicatedPolygon> cp;
+    std::optional<mperror> error;
+    
+    
+    std::vector<Ring> outers,inners;
+    std::vector<std::pair<bool,Ring>> passes;
+    std::vector<std::pair<bool,Ring>> passes2;
+    
+    std::tie(outers,passes) = make_rings(ways,false,box);
+    std::tie(inners,passes2) = make_rings(ways,true,box);
+    if (!passes2.empty()) {
+        std::copy(passes2.begin(),passes2.end(),std::back_inserter(passes));
+
+    }
+    
+
+    std::string err="";
+    //std::stringstream err;
+    //err << "relation " << pr.rel->Id() << " " << is_bp << " ";
+    if (!passes.empty()) {
+        err = "incomplete rings";
+    }
+    bool all_outofbox=true;
+    for (auto& p : passes) {
+        if (!p.first) { all_outofbox=false; }
+    }
+
+    if (!outers.empty()) {
+        
+        
+        bool tags_pass; std::vector<Tag> tags; std::optional<int64> layer;
+        std::tie(tags_pass, tags, layer) = filter_tags(params.feature_keys, params.other_keys, params.drop_keys, params.all_other_keys, params.all_objs, r->Tags());
+        auto z_order=calc_zorder(tags);
+        
+        if (!params.drop_keys.empty()) {
+            std::vector<Tag> tagsf;
+            for (const auto& t: tags) {
+                if (t.key!="type") {
+                    tagsf.push_back(t);
+                }
+            }
+            tags.swap(tagsf);
+        }
+        //tagvector tgs; bool isring; int64 zorder, layer;
+        //std::tie(tgs,isring,zorder,layer) = filter_way_tags(style, r->Tags(),true, is_bp,extra_tags_key);
+
+        //if (!tgs.empty() && isring) {
+        if (tags_pass) {
+
+            std::map<size_t,std::pair<std::vector<LonLat>,std::vector<Ring>>> parts;
+            for (size_t i=0; i < outers.size(); i++) {
+                parts[i] = std::make_pair(ringpart_lonlats(outers[i]),std::vector<Ring>(0));
+                
+                
+            }
+            if (!inners.empty()) {
+                for (const auto& r : inners) {
+                    bool added=false;
+                    auto ll = ringpart_lonlats(r);
+                    for (auto& pp : parts) {
+                        if (!added && ring_contains(pp.second.first, ll)) {
+                            pp.second.second.push_back(r);
+                            added=true;
+                        }
+                    }
+                    if (!added) {
+                        if (!err.empty()) { err+=", "; }
+                        err += "orphan inner";
+                    }
+                }
+            }
+            
+            std::vector<PolygonPart> checked;
+            for (const auto& pp : parts) {
+                
+                if (!check_parts(pp.second)) {
+                    Logger::Message() << "invalid polygon part " << r->Id() << " " << pp.first;
+                    continue;
+                }
+                checked.push_back(PolygonPart(checked.size(), outers[pp.first], pp.second.second, 0));
+            }
+            
+            if (checked.empty()) {
+                Logger::Message() << "no polygons for " << r->Id();
+            } else {
+                cp = std::make_shared<ComplicatedPolygon>(r, checked,tags,z_order,layer,std::optional<int64>());
+                
+            }
+
+            
+        } else {
+            //err += "?? isring=";
+            //if (isring) { err += "y"; } else { err += "n"; }
+        }
+    } else {
+        if (inners.empty() && (all_outofbox || passes.empty())) {
+            err="";
+        } else {
+            err = "no outers!!!";
+        }
+    }
+    
+    
+
+    if (!err.empty()) {
+        
+        error = std::make_tuple(r, err, outers, inners, passes);
+    }
+    
+    return std::make_pair(cp,error);
+}
+        
+
+
+
 
 std::shared_ptr<BlockHandler> make_multipolygons(
     std::function<void(mperrorvec&)> add_error,
@@ -604,7 +614,16 @@ std::shared_ptr<BlockHandler> make_multipolygons(
     const bbox& box,
     bool boundary, bool multipolygon, int64 max_number_errors) {
 
-    return std::make_shared<MakeMultiPolygons>(add_error,feature_keys, other_keys, drop_keys, all_other_keys, all_objs, box,boundary,multipolygon,max_number_errors);
+    GeometryTagsParams params;
+    params.feature_keys=feature_keys;
+    params.other_keys=other_keys;
+    params.drop_keys=drop_keys;
+    params.all_other_keys=all_other_keys;
+    params.all_objs=all_objs;
+    
+    
+
+    return std::make_shared<MakeMultiPolygons>(add_error,params, box,boundary,multipolygon,max_number_errors);
 }
 
 

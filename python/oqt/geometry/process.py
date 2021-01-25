@@ -89,6 +89,10 @@ def process_geometry(prfx, box_in, stylefn=None, collect=True, outfn=None, lastd
     
     
     params,style = prep_geometry_params(prfx, box_in, stylefn, lastdate, minzoom, numchan, minlen, minarea)
+    
+    if numchan==0:
+        nothread=True
+    
     if not maxtilelevel is None:
         params.max_min_zoom_level = maxtilelevel
         
@@ -303,3 +307,7 @@ def geojson_diff(left, right):
     return res
 
 
+            
+                
+                
+    

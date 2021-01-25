@@ -82,7 +82,7 @@ class ComplicatedPolygon : public BaseGeometry {
         
         std::optional<int64> zorder;
         std::optional<int64> layer;
-        double area;
+        //double area;
         bbox bounds;
         
 };

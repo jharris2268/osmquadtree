@@ -136,11 +136,18 @@ bool is_drop_key(const std::set<std::string>& drop_keys, const std::string& k) {
     if (drop_keys.count(k) > 0) {
         return true;
     }
-    for (auto it = drop_keys.begin(); it!=drop_keys.end(); ++it) {
-        if ((it->size()>1) && (it->back()==':') && (k.substr(0,it->size()) == *it)) {
+    
+    auto colon_pos = k.find(":");
+    if (colon_pos != std::string::npos) {
+        if (drop_keys.count(k.substr(0, colon_pos+1))>0) {
             return true;
         }
     }
+    /*for (auto it = drop_keys.begin(); it!=drop_keys.end(); ++it) {
+        if ((it->size()>1) && (it->back()==':') && (k.substr(0,it->size()) == *it)) {
+            return true;
+        }
+    }*/
     return false;
 }       
 

@@ -25,7 +25,8 @@
 
 #include "oqt/geometry/makegeometries.hpp"
 #include "oqt/geometry/elements/ring.hpp"
-
+#include "oqt/geometry/elements/complicatedpolygon.hpp"
+#include "oqt/geometry/elements/waywithnodes.hpp"
 #include "oqt/geometry/utils.hpp"
 #include <map>
 namespace oqt {
@@ -41,6 +42,17 @@ struct mperrorvec{
     size_t count;
 };
 
+
+/*
+std::shared_ptr<BlockHandler> make_multipolygons(
+    std::function<void(mperrorvec&)> errors_callback,
+    const MultipolygonParams& params,
+    int64 max_number_errors);
+*/
+
+
+std::pair<std::shared_ptr<ComplicatedPolygon>, std::optional<mperror>> process_multipolygon(
+    const GeometryTagsParams& params, const bbox& box, std::shared_ptr<Relation> r, const std::vector<std::pair<bool,std::shared_ptr<WayWithNodes>>>& ways);
 
 std::shared_ptr<BlockHandler> make_multipolygons(
     std::function<void(mperrorvec&)> errors_callback,

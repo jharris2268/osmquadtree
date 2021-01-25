@@ -69,6 +69,16 @@ struct PolygonTag {
 
 std::optional<int64> calc_zorder(const std::vector<Tag>& tags);
 
+struct GeometryTagsParams {
+    std::set<std::string> feature_keys;
+    std::set<std::string> other_keys;
+    std::set<std::string> drop_keys;
+    bool all_other_keys;
+    bool all_objs;
+   
+};
+
+
 std::tuple<bool, std::vector<Tag>, std::optional<int64>> filter_tags(
     const std::set<std::string>& feature_keys,
     const std::set<std::string>& other_keys,

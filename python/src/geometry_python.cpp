@@ -410,8 +410,15 @@ void geometry_defs(py::module& m) {
         //.def_readwrite("csvblock_callback", &geometry_parameters::csvblock_callback)
     ;
     
-    
-
+    py::class_<geometry::GeometryTagsParams>(m, "GeometryTagsParams")
+        .def(py::init<>())
+        .def_readwrite("feature_keys", &geometry::GeometryTagsParams::feature_keys)
+        .def_readwrite("other_keys", &geometry::GeometryTagsParams::other_keys)
+        .def_readwrite("drop_keys", &geometry::GeometryTagsParams::drop_keys)
+        .def_readwrite("all_other_keys", &geometry::GeometryTagsParams::all_other_keys)
+        .def_readwrite("all_objs", &geometry::GeometryTagsParams::all_objs)
+    ;
+    m.def("process_multipolygon", &geometry::process_multipolygon);
 
     m.def("process_geometry", &process_geometry_py);
     

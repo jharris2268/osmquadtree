@@ -182,7 +182,7 @@ std::list<PbfTag> ComplicatedPolygon::pack_extras() const {
 
     std::list<PbfTag> extras;
     extras.push_back(PbfTag{12,zig_zag(zorder.value_or(0)),""});
-    extras.push_back(PbfTag{16,zig_zag(to_int(area*100)),""});
+    extras.push_back(PbfTag{16,zig_zag(to_int(Area()*100)),""});
 
     //extras.push_back(PbfTag{17,0,pack_ring(outers)});
     //for (const auto& ii : inners) {
