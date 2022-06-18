@@ -46,7 +46,8 @@ std::vector<int64> read_packed_delta(const std::string& data) {
         curr += read_varint(data,pos);
         ans.push_back(curr);
     }
-    return std::move(ans);
+    //return std::move(ans);
+    return ans;
 }
 
 
@@ -65,7 +66,8 @@ std::vector<uint64> read_packed_int(const std::string& data)
     while (pos<data.size()) {
         ans.push_back(read_unsigned_varint(data,pos));
     }
-    return std::move(ans);
+    //return std::move(ans);
+    return ans;
 }
 
 

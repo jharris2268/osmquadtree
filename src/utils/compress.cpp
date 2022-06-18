@@ -24,7 +24,7 @@
 #include "oqt/utils/pbf/fixedint.hpp"
 
 #include <zlib.h>
-
+#include <stdexcept>
 namespace oqt {
 
 

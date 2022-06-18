@@ -65,7 +65,8 @@ std::vector<size_t> find_index(const std::vector<minimal::Node>& nodes, size_t n
         }
     }
     nodes_ii.push_back(nodes.size());
-    return std::move(nodes_ii);
+    //return std::move(nodes_ii);
+    return nodes_ii;
 }
 
 std::vector<minimal::Node>::iterator find_indexed(size_t id, std::vector<minimal::Node>& nodes, const std::vector<size_t>& nodes_idx, size_t nsp) {
